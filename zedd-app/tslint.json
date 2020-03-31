@@ -1,0 +1,36 @@
+{
+  "defaultSeverity": "error",
+  "extends": ["tslint-config-prettier"],
+  "jsRules": {},
+  "rules": {
+    "no-var-keyword": true,
+    "yoda": true,
+    "triple-equals": true,
+    "member-access": true,
+    "member-ordering": [
+      true,
+      {
+        "order": "fields-first"
+      }
+    ],
+    "prefer-const": [
+      true,
+      {
+        "destructuring": "all"
+      }
+    ],
+    "no-unused-expression": true,
+    "no-unnecessary-qualifier": true,
+    "no-null-keyword": true,
+    "no-unnecessary-type-assertion": true,
+    "no-string-throw": true,
+    "ordered-imports": [
+      true,
+      {
+        "import-sources-order": "lowercase-last",
+        "named-imports-order": "lowercase-first"
+      }
+    ]
+  },
+  "rulesDirectory": []
+}

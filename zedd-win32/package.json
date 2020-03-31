@@ -1,0 +1,24 @@
+{
+  "name": "zedd-win32",
+  "version": "0.1.5",
+  "description": "Hello world app packaged with node-pre-gyp",
+  "main": "hello.js",
+  "license": "UNLICENSED",
+  "author": {
+    "name": "Adrian Leonhard",
+    "email": "adrianleonhard@gmail.com"
+  },
+  "private": true,
+  "dependencies": {
+    "bindings": "~1.2.1"
+  },
+  "devDependencies": {
+    "node-addon-api": "^1.0.0",
+    "rimraf": "^3.0.0"
+  },
+  "scripts": {
+    "test": "node index.js",
+    "clean": "rimraf bin build"
+  },
+  "gypfile": true
+}

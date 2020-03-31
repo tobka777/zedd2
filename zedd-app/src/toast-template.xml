@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<toast launch="lei">
+    <visual>
+        <binding template="ToastGeneric">
+            <text>%s</text>
+            <text>%s</text>
+        </binding>
+    </visual>
+    <actions>
+        <action content="%s" arguments="%s" />
+        <action content="%s" arguments="%s" />
+    </actions>
+</toast>

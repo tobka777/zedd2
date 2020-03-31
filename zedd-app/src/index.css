@@ -1,0 +1,47 @@
+html,
+body {
+  height: 100%;
+  overflow: hidden;
+}
+
+#react-root {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+/* 
+div:focus {
+  box-shadow: 0 0 10px blue; */
+/* outline-width: 0px 10px 0px 10px; */
+/* outline-style: solid; */
+/* outline-color: red; */
+/* outline: 0;
+  z-index: 1000;
+} */
+
+.block-handle {
+  position: absolute;
+  cursor: ns-resize;
+  border-color: black;
+  border-style: none;
+  height: 5px;
+  width: 30%;
+}
+.bottom-right {
+  right: 0;
+  bottom: 0;
+  border-width: 0px 2px 2px 0px;
+}
+.top-left {
+  top: 0;
+  left: 0;
+  border-width: 2px 0px 0px 2px;
+}
+.top-center {
+  border-width: 2px;
+  left: 35%;
+  top: -2.5px;
+}
+div:hover > .block-handle {
+  border-style: solid;
+}

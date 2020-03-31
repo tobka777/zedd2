@@ -1,0 +1,123 @@
+import { format } from 'date-fns'
+import { observer } from 'mobx-react-lite'
+import * as React from 'react'
+import { useCallback } from 'react'
+
+import { useTheme } from '@material-ui/core/styles'
+import { TimeSlice } from '../AppState'
+import { ClarityState } from '../ClarityState'
+import { SliceDragStartHandler, SliceSplitHandler } from './Calendar'
+
+export type BlockProps = {
+  slice: TimeSlice
+  startDrag?: SliceDragStartHandler<TimeSlice>
+  showTime?: boolean
+  onSplit?: SliceSplitHandler<TimeSlice>
+  onContextMenu: (e: React.MouseEvent, block: TimeSlice) => void
+  clarityState: ClarityState
+} & Omit<React.HTMLAttributes<HTMLDivElement>, 'onContextMenu'>
+
+export const BlockDisplay = observer(
+  ({
+    slice,
+    onSplit,
+    startDrag,
+    onContextMenu,
+    clarityState,
+    style,
+    ...attributes
+  }: BlockProps) => {
+    // console.log('rendering BlockDisplay')
+    const blockClickHandler = useCallback(
+      (e: React.MouseEvent) => {
+        console.log('Click', e)
+        if (e.ctrlKey && onSplit) onSplit(slice, e)
+        if (1 === e.button) onContextMenu(e, slice)
+      },
+      [slice, onSplit],
+    )
+    const startHandleHandler = useCallback((e: React.MouseEvent) => startDrag!(slice, e, 'start'), [
+      startDrag,
+      slice,
+    ])
+    const startPrevHandleHandler = useCallback(
+      (e: React.MouseEvent) => startDrag!(slice, e, 'start+prev'),
+      [startDrag, slice],
+    )
+    const endHandleHandler = useCallback((e: React.MouseEvent) => startDrag!(slice, e, 'end'), [
+      startDrag,
+      slice,
+    ])
+
+    const clarityTask = clarityState.resolveTask(slice.task.clarityTaskIntId)
+
+    const theme = useTheme()
+
+    return (
+      <div
+        {...attributes}
+        key={slice?.task?.name ?? 'UNDEFINED'}
+        className='block'
+        style={{
+          ...style,
+          padding: '2px',
+          fontSize: 'smaller',
+          fontWeight: 200,
+          position: 'absolute',
+          backgroundColor:
+            'task' in slice
+              ? slice.task
+                  .getColor()
+                  .set('hsl.s', 0.9)
+                  .set('hsl.l', 'dark' === theme.palette.type ? 0.2 : 0.8)
+                  .css()
+              : '#eeeeee',
+          right: 0,
+          left: 20,
+          borderRadius: 4,
+          boxSizing: 'border-box',
+        }}
+        // {...hotKeys}
+        onClick={blockClickHandler}
+        onContextMenu={(e) => onContextMenu(e, slice)}
+      >
+        {true && (
+          <div
+            style={{
+              position: 'absolute',
+              right: 0,
+              bottom: 0,
+              paddingRight: 2,
+              fontSize: '80%',
+              color: slice.task.getColor().set('hsl.s', 1).set('hsl.l', 0.38).css(),
+            }}
+          >
+            {format(slice.start, 'HH:mm')} - {format(slice.end, 'HH:mm')}
+          </div>
+        )}
+        {!clarityTask && (
+          <span title='Clarity Task is unset/invalid' style={{ cursor: 'help' }}>
+            ⚠️
+          </span>
+        )}
+        {slice.task.name}{' '}
+        {clarityTask && (
+          <span style={{ fontFamily: 'Consolas' }}>
+            {clarityTask.name}
+            {slice.task.clarityTaskComment && (
+              <span style={{ fontStyle: 'italic' }}>{' mK ' + slice.task.clarityTaskComment}</span>
+            )}
+          </span>
+        )}
+        {startDrag && (
+          <>
+            <div className='block-handle bottom-right' onMouseDown={endHandleHandler}></div>
+            <div className='block-handle top-left' onMouseDown={startHandleHandler}></div>
+            <div className='block-handle top-center' onMouseDown={startPrevHandleHandler}></div>
+          </>
+        )}
+      </div>
+    )
+  },
+)
+// export const BlockDisplayShortcuts: any = withHotKeys(BlockDisplay as any, {}) as any

@@ -1,0 +1,680 @@
+import * as assert from 'assert'
+import {
+  addMinutes,
+  areIntervalsOverlapping,
+  compareAsc,
+  compareDesc,
+  differenceInDays,
+  differenceInHours,
+  differenceInMinutes,
+  eachDayOfInterval,
+  endOfDay,
+  format as formatDate,
+  getDay,
+  getISODay,
+  isAfter,
+  isBefore,
+  isSameDay,
+  isValid,
+  max as dateMax,
+  min as dateMin,
+  parseISO,
+  set as dateSet,
+  startOfDay,
+  startOfMinute,
+  parse as dateParse,
+  subSeconds,
+} from 'date-fns'
+import { remote } from 'electron'
+import { promises as fsp } from 'fs'
+import { sum, uniq } from 'lodash'
+import { computed, observable, transaction } from 'mobx'
+import type { IObservableArray } from 'mobx'
+import * as path from 'path'
+import {
+  custom,
+  date,
+  deserialize,
+  identifier,
+  list,
+  object,
+  raw,
+  reference,
+  serializable,
+  serialize,
+  SKIP,
+  getDefaultModelSchema,
+} from 'serializr'
+
+import feiertage from './feiertage.json'
+import {
+  abs,
+  getDayInterval,
+  isoWeekInterval,
+  mkdirIfNotExists,
+  startOfNextMinute,
+  stringHashColor,
+  tryWithFilesInDir,
+  uniqCustom,
+  FILE_DATE_FORMAT,
+  readFilesWithDate,
+} from './util'
+import { ZeddSettings } from './ZeddSettings'
+
+export const MIN_GAP_TIME_MIN = 5
+
+export class Task {
+  @serializable(identifier())
+  @observable
+  public name: string
+
+  @serializable
+  @observable
+  public clarityTaskIntId: number | undefined
+
+  /**
+   * The internal key for JIRA-Issues.
+   * Used to prevent multiple tasks being created for the same issue.
+   */
+  @serializable
+  @observable
+  public key: string | undefined
+
+  @serializable
+  @observable
+  public clarityTaskComment: string = ''
+
+  constructor(
+    name: string = '',
+    clarityTaskIntId?: number | undefined,
+    key?: string,
+    clarityTaskComment?: string,
+  ) {
+    this.name = name
+    this.clarityTaskIntId = clarityTaskIntId
+    this.key = key
+    this.clarityTaskComment = clarityTaskComment || ''
+  }
+
+  public static same(a: Task, b: Task) {
+    return (a.key && b.key && a.key === b.key) || a.name === b.name
+  }
+
+  public getColor() {
+    return stringHashColor(this.name)
+  }
+}
+
+export const validDate = <T extends Date | number>(d: T) => {
+  if (!isValid(d)) throw new Error('date invalid: ' + d)
+  return d
+}
+export const dateFormatString = 'yyyy-MM-dd HH:mm'
+export const format = (date: Date | number) => formatDate(date, dateFormatString)
+export const formatInterval = (s: Interval) => format(s.start) + ' - ' + format(s.end)
+
+export class TimeSlice {
+  static parse(slice: string): [Date, Date, string] {
+    const [, startString, endString, taskName] = slice.match(/(.{16}) - (.{16}) (.*)/)!
+    const now = new Date()
+    return [
+      dateParse(startString, dateFormatString, now),
+      dateParse(endString, dateFormatString, now),
+      taskName,
+    ]
+  }
+  @observable
+  private _start: Date
+
+  @observable
+  private _end: Date
+
+  @serializable(date())
+  get start(): Date {
+    return this._start
+  }
+
+  set start(start: Date) {
+    this.setInterval(start, undefined)
+  }
+  @serializable(date())
+  get end(): Date {
+    return this._end
+  }
+
+  set end(end: Date) {
+    this.setInterval(undefined, end)
+  }
+
+  @serializable(reference(Task))
+  @observable
+  public task: Task
+
+  public setInterval(start = this._start, end = this._end) {
+    if (differenceInMinutes(end, start) <= 0) {
+      throw new Error(`start (${start}) must be at least one minute before end (${end})`)
+    }
+    this._start = start
+    this._end = end
+  }
+
+  constructor(start: Date, end: Date, task: Task) {
+    this.setInterval(start, end)
+    this.task = task
+  }
+  toString(): string {
+    return formatInterval(this) + ' ' + this.task.name
+  }
+}
+export const timeSliceStr = (ts: TimeSlice | undefined) => {
+  if (!ts) return undefined
+  return formatInterval(ts) + ' ' + ts.task.name
+}
+
+export class AppState {
+  /** CONSTANTS */
+  public static readonly APP_START_TIME = new Date()
+
+  /** FIELDS */
+  //   public tasks: Task[] = [
+  //     // {
+  //     //   name: 'ersatz-regi',
+  //     //   clarity: clarityTasks[0],
+  //     // },
+  //     AppState.UNDEFINED_TASK,
+  //   ]
+
+  @observable
+  @serializable
+  public timingInProgess: boolean = true
+
+  @observable
+  @serializable(
+    list(
+      custom(
+        (s: TimeSlice) => s.toString(),
+        (jsonValue, context, _oldValue, done) => {
+          const [start, end, taskName] =
+            'object' === typeof jsonValue
+              ? [new Date(jsonValue.start), new Date(jsonValue.end), jsonValue.task]
+              : TimeSlice.parse(jsonValue)
+          context.rootContext.await(getDefaultModelSchema(Task)!, taskName, (err, task) => {
+            if (err) done(err, undefined)
+            let result
+            try {
+              result = new TimeSlice(start, end, task)
+            } catch (e) {
+              result = SKIP
+            }
+            done(undefined, result)
+          })
+        },
+      ),
+    ),
+  )
+  public slices: IObservableArray<TimeSlice> = observable([])
+
+  @observable
+  public renameTaskDialogOpen: boolean = false
+
+  @observable
+  public settingsDialogOpen: boolean = false
+
+  @observable
+  public errors: string[] = []
+
+  @observable
+  @serializable
+  public submitTimesheets = false
+
+  @observable
+  public assignedIssueTasks: Task[] = []
+
+  @observable
+  public changingSliceTask: TimeSlice | undefined = undefined
+
+  /**
+   * init last, so this.slices is already set
+   */
+  @observable
+  @serializable(reference(Task))
+  public currentTask: Task = this.getUndefinedTask()
+
+  @observable
+  public focused: TimeSlice | undefined = undefined
+
+  @observable
+  public lastAction = 0
+
+  @serializable(
+    custom(
+      (x) => x,
+      (x, _, old) => (x.normal ? x : { ...old, normal: x }),
+    ),
+  )
+  public bounds = {
+    normal: { x: 100, y: 100, width: 800, height: 600 },
+    maximized: false,
+    hover: { x: 100, y: 100, width: 800, height: 600 },
+  }
+
+  public config: ZeddSettings = new ZeddSettings()
+
+  public idleSliceNotificationCallback: undefined | ((when: Interval) => void)
+
+  @observable
+  private _startDate: string = ''
+
+  @observable
+  private _endDate: string = ''
+
+  @observable
+  private _showing!: Interval
+
+  private _interval: NodeJS.Timeout
+
+  @serializable(
+    custom(
+      (s, _, state) => state.slices.indexOf(s),
+      (i, context) => context.target.slices[i],
+    ),
+  )
+  private lastTimedSlice: undefined | TimeSlice = undefined
+
+  @serializable(date())
+  private lastUserAction: Date = new Date()
+
+  /**
+   * Whether the always-on-top, title-bar-only "hover mode" is currently enabled.
+   */
+  @observable
+  @serializable
+  hoverMode: boolean = false
+
+  constructor() {
+    this.showing = isoWeekInterval(Date.now())
+  }
+
+  public static async saveToDir(instance: AppState, dir: string) {
+    // const allTasks = instance.slices.map(s => s.task)
+    // if (instance.currentTask) allTasks.push(instance.currentTask)
+    // instance.tasks = uniq(allTasks)
+    await mkdirIfNotExists(dir)
+    const newFile = 'data_' + formatDate(new Date(), FILE_DATE_FORMAT) + '.json'
+    try {
+      await fsp.writeFile(path.join(dir, newFile), instance.toJsonString(), 'utf8')
+    } catch (e) {
+      try {
+        await fsp.unlink(newFile)
+      } catch (e2) {
+        console.log('Error while trying to unlink file after error writing file.', e2)
+      }
+      throw e
+    }
+  }
+
+  public static loadFromJsonString(json: string): AppState {
+    return deserialize(AppState, JSON.parse(json))
+  }
+
+  public static async loadFromDir(dir: string): Promise<AppState> {
+    return await tryWithFilesInDir(dir, /^data_(.*).json$/, async (file, _date) => {
+      console.log('loadFromDir: loading AppState from', file)
+      const json = await fsp.readFile(path.join(dir, file), 'utf8')
+      return this.loadFromJsonString(json)
+    })
+  }
+
+  /**
+   * Delete old files in the directory. (Keeping some, the more recent, the more frequently).
+   * @returns The number of deleted files.
+   */
+  public static async cleanSaveDir(dir: string): Promise<number> {
+    const filesWithDate = await readFilesWithDate(dir, /^data_(.*).json$/)
+    const datesToKeep = filesWithDate.map(([_f, date]) => date)
+    filterDatesFalloff(datesToKeep)
+    const pathsToDelete = filesWithDate
+      .filter(([_f, date]) => !datesToKeep.includes(date))
+      .map(([f]) => path.join(dir, f))
+    await Promise.all(pathsToDelete.map(fsp.unlink))
+    return pathsToDelete.length
+  }
+
+  @serializable(list(object(Task), { afterDeserialize: (callback) => callback(undefined, SKIP) }))
+  @computed
+  get tasks() {
+    const allTasks = this.slices.map((s) => s.task)
+    if (this.currentTask) allTasks.push(this.currentTask)
+    return uniq(allTasks)
+  }
+
+  @computed
+  get tasksInfos() {
+    const UNDEFINED_TASK = this.getUndefinedTask()
+    const tasksInfos = this.slices.reduceRight((result, slice) => {
+      if (slice.task !== UNDEFINED_TASK) {
+        const info = result.find((i) => i.task === slice.task)
+        if (info) {
+          info.lastEnd = dateMax([info.lastEnd, slice.end])
+        } else {
+          result.push({ task: slice.task, lastEnd: slice.end })
+        }
+      }
+      return result
+    }, [] as { task: Task; lastEnd: Date }[])
+    tasksInfos.sort((a, b) => compareDesc(a.lastEnd, b.lastEnd))
+    return tasksInfos
+  }
+
+  public get startDate() {
+    return this._startDate
+  }
+  public set startDate(iso: string) {
+    this._startDate = iso
+    this.updateShowingFromStartEnd()
+  }
+  public get endDate() {
+    return this._endDate
+  }
+  public set endDate(iso: string) {
+    this._endDate = iso
+    this.updateShowingFromStartEnd()
+  }
+
+  public get showing() {
+    return this._showing
+  }
+
+  @serializable(object({ factory: () => ({}), props: { start: date(), end: date() } }))
+  public set showing(newShowing: Interval) {
+    // console.log('public set showing ', newShowing)
+    this._showing = newShowing
+    this._startDate = formatDate(newShowing.start, 'yyyy-MM-dd')
+    this._endDate = formatDate(newShowing.end, 'yyyy-MM-dd')
+  }
+  /**
+   * If tasks already contains a task with a matching key or name, return that,
+   * otherwise return the passed task.
+   */
+  public normalizeTask(taskToNormalize: Task): Task {
+    return this.tasks.find((t) => Task.same(taskToNormalize, t)) ?? taskToNormalize
+  }
+
+  /** METHODS */
+  public toggleTimingInProgress() {
+    this.timingInProgess = !this.timingInProgess
+  }
+
+  public getDayWorkedMinutes(day: Date): number {
+    return sum(
+      this.slices
+        .filter((s) => isSameDay(s.start, day))
+        .map((s) => differenceInMinutes(s.end, s.start)),
+    )
+  }
+
+  public getDayProgress(day: Date): number {
+    const dayMinutes = this.getDayWorkedMinutes(day)
+    const dayShouldWorkMinutes = (this.config.workmask[getISODay(day) - 1] || 0) * 60
+    return 0 === dayShouldWorkMinutes ? 1 : dayMinutes / dayShouldWorkMinutes
+  }
+
+  public getUndefinedTask(): Task {
+    return (
+      this.tasks.find((t) => 'UNDEFINED' === t.name) ||
+      new Task('UNDEFINED', undefined, 'UNDEFINED')
+    )
+  }
+
+  public getMostRecentTasks(n: number): Task[] {
+    return this.tasksInfos.slice(0, n).map((i) => i.task)
+  }
+
+  public getSuggestedTasks() {
+    return uniqCustom([...this.getMostRecentTasks(7), ...this.assignedIssueTasks], Task.same)
+  }
+
+  public getTaskMinutes(task: Task) {
+    return sum(
+      this.slices.filter((s) => s.task === task).map((s) => differenceInMinutes(s.end, s.start)),
+    )
+  }
+
+  public fillErsatz(when: Interval) {
+    for (const day of eachDayOfInterval(when)) {
+      this.addSliceIfDayEmpty(
+        this.makeFullDaySlice(day, this.getTaskForName(this.config.ersatzTask)),
+      )
+    }
+  }
+
+  public clearErsatz(when: Interval) {
+    const fixedWhen = { start: startOfDay(when.start), end: endOfDay(when.end) }
+    const ersatzTask = this.getTaskForName(this.config.ersatzTask)
+    const slicesToRemove = this.slices.filter(
+      (s) => s.task === ersatzTask && areIntervalsOverlapping(s, fixedWhen),
+    )
+    transaction(() => slicesToRemove.forEach((r) => this.slices.remove(r)))
+  }
+
+  public getPreviousSlice(slice: TimeSlice) {
+    return this.slices.reduce((result, s) => {
+      if (!isBefore(s.start, slice.start)) return result
+      if (!result || isAfter(s.start, result.start)) return s
+      return result
+    }, undefined as TimeSlice | undefined)
+  }
+
+  public getNextSlice(slice: TimeSlice) {
+    return this.slices.reduce((result, s) => {
+      if (!isAfter(s.start, slice.start)) return result
+      if (!result || isBefore(s.start, result.start)) return s
+      return result
+    }, undefined as TimeSlice | undefined)
+  }
+
+  public getTaskForName(name: Task | string | undefined) {
+    const taskName = ('string' === typeof name ? name : name?.name)?.trim()?.replace(/\s+/, ' ')
+    if (!taskName) {
+      return this.getUndefinedTask()
+    }
+    const taskNameLC = taskName.toLowerCase()
+    return (
+      this.tasks.find((t) => taskNameLC === t.name.toLowerCase()) ||
+      this.assignedIssueTasks.find((t) => taskNameLC === t.name.toLowerCase()) ||
+      new Task(taskName, undefined)
+    )
+  }
+
+  public addSlice(s: TimeSlice) {
+    validDate(s.start)
+    validDate(s.end)
+
+    this.slices.push(s)
+    this.slices.replace(
+      this.slices.slice().sort((a, b) => compareAsc(a.start, b.start) || compareAsc(a.end, b.end)),
+    )
+    return s
+  }
+
+  public startInterval() {
+    this._interval = setInterval(this.trackTime, 5_000)
+  }
+  public cleanup() {
+    if (this._interval) clearInterval(this._interval)
+  }
+
+  /**
+   * Tasks cannot overlap.
+   *
+   * Main time tracking loop. The currentTask can be assumed to have been set immediately
+   * after the last event. Call on('resume') to make assumption valid.
+   *
+   * The currently selected task eats/overrides existing slices in the way. When encountering
+   * a new slice, the currently selected task switches. The user is presented with an option
+   * to stay with the curent task.
+   */
+  public trackTime = (
+    now = new Date(),
+    secondsSinceLastUserInput = remote?.powerMonitor?.getSystemIdleTime() ?? 0,
+  ) => {
+    const prevLastUserAction = this.lastUserAction
+    this.lastUserAction = subSeconds(now, secondsSinceLastUserInput)
+    if (!this.timingInProgess || this.getUndefinedTask() === this.currentTask) {
+      this.lastTimedSlice = undefined
+      return
+    }
+    let lastSlice =
+      this.slices.reduce((prev, s) => {
+        if (abs(differenceInMinutes(now, s.end)) < 5 && isBefore(s.start, now)) {
+          if (!prev || isAfter(s.start, prev.start)) {
+            return s
+          }
+        }
+        return prev
+      }, undefined as TimeSlice | undefined) ?? this.lastTimedSlice
+
+    // console.log('lastSlice', strlastSlice)
+    if (differenceInMinutes(now, this.lastUserAction) > 15) {
+      if (lastSlice) {
+        lastSlice.end = startOfNextMinute(this.lastUserAction)
+        this.lastTimedSlice = undefined
+      }
+      return
+    }
+    if (
+      isAfter(this.lastUserAction, prevLastUserAction) &&
+      differenceInMinutes(now, prevLastUserAction) > 15
+    ) {
+      // console.log('user is back', timeSliceStr(lastSlice))
+
+      if (lastSlice) {
+        lastSlice.end = startOfNextMinute(prevLastUserAction)
+        // console.log('lastSlice', timeSliceStr(lastSlice))
+        lastSlice = undefined
+      }
+      try {
+        if (this.idleSliceNotificationCallback) {
+          this.idleSliceNotificationCallback({
+            start: startOfNextMinute(prevLastUserAction),
+            end: startOfMinute(now),
+          })
+        }
+      } catch (e) {
+        console.error('There was an error calling idleSliceNotificationCallback', e)
+      }
+    }
+
+    if (!lastSlice) {
+      const start = startOfMinute(now)
+      const newSlice: TimeSlice = new TimeSlice(start, addMinutes(start, 1), this.currentTask)
+      // console.log('ADDING SLICE', newSlice)
+
+      this.lastTimedSlice = this.addSlice(newSlice)
+    } else {
+      if (
+        abs(differenceInMinutes(lastSlice.end, lastSlice.start)) < 5 &&
+        lastSlice.task !== this.currentTask
+      ) {
+        // last slice is < 5min, convert it
+        lastSlice.task = this.currentTask
+      }
+      if (lastSlice.task === this.currentTask) {
+        if (isSameDay(lastSlice.start, now)) {
+          // extend current slice
+          lastSlice.end = startOfNextMinute(now)
+          this.lastTimedSlice = lastSlice
+        } else {
+          //   console.log('adding slice because of new day', now, timeSliceStr(lastSlice))
+          const boundary = startOfDay(now)
+          lastSlice.end = boundary
+          this.lastTimedSlice = this.addSlice(
+            new TimeSlice(boundary, startOfNextMinute(now), this.currentTask),
+          )
+        }
+      } else {
+        lastSlice.end = dateMin([lastSlice.end, startOfMinute(now)])
+        const newSlice = new TimeSlice(lastSlice.end, startOfNextMinute(now), this.currentTask)
+        // console.log('lastSlice is different, add', timeSliceStr(lastSlice), timeSliceStr(newSlice))
+        this.lastTimedSlice = this.addSlice(newSlice)
+      }
+    }
+  }
+
+  public isDayEmpty(timeInDay: Date) {
+    return !this.slices.some((s) => areIntervalsOverlapping(getDayInterval(timeInDay), s))
+  }
+
+  public addSliceIfDayEmpty(newSlice: TimeSlice | undefined) {
+    if (!newSlice) {
+      return
+    }
+    assert(isSameDay(newSlice.start, newSlice.end))
+    const dayIsEmpty = this.isDayEmpty(newSlice.start)
+    if (dayIsEmpty) {
+      this.addSlice(newSlice)
+    }
+    return dayIsEmpty
+  }
+
+  public importHolidays() {
+    for (const holidayDateStr of Object.keys(feiertage)) {
+      const date = new Date(holidayDateStr)
+      const slice = this.makeFullDaySlice(date, this.getTaskForName('URLAUB'))
+      this.addSliceIfDayEmpty(slice)
+    }
+  }
+
+  public toJsonString() {
+    const stateJsonObject = serialize(AppState, this)
+    return JSON.stringify(stateJsonObject, undefined, '  ')
+  }
+
+  private updateShowingFromStartEnd() {
+    try {
+      const start = parseISO(this.startDate)
+      const end = parseISO(this.endDate)
+      console.log('updateSHowingFromStartEnd', this.startDate, end)
+      if (start <= end) this.showing = { start, end }
+    } catch (e) {
+      console.error(e)
+    }
+  }
+
+  private makeFullDaySlice(day: Date, task: Task): TimeSlice | undefined {
+    const dayWorkHours = this.config.workmask[getDay(day) - 1]
+    if (dayWorkHours) {
+      return new TimeSlice(
+        dateSet(day, { hours: this.config.startHour }),
+        dateSet(day, {
+          hours: this.config.startHour + dayWorkHours,
+        }),
+        task,
+      )
+    }
+    return undefined
+  }
+}
+
+function filterDatesFalloff(dates: Date[], now = new Date()) {
+  dates.sort(compareDesc)
+  for (let i = 1; i < dates.length; i++) {
+    const prev = dates[i - 1]
+    const current = dates[i]
+    let keep
+    if (differenceInHours(now, current) < 1) {
+      // keep everything
+      keep = true
+    } else if (differenceInDays(now, current) < 1) {
+      // keep one per hour
+      keep = prev.getHours() !== current.getHours()
+    } else {
+      // keep one per day
+      keep = +startOfDay(prev) !== +startOfDay(current)
+    }
+    if (!keep) {
+      dates.splice(i, 1)
+      i--
+    }
+  }
+}
