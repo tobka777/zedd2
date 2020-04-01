@@ -24,12 +24,20 @@ import {
   formatMinutes as formatMinutesBT,
   formatMinutesHHmm,
   mkdirIfNotExists,
-  round,
+  floor,
 } from './util'
 import { ZeddSettings } from './ZeddSettings'
-import { floor } from '../out/zedd-app-win32-x64/resources/app/src/util'
 
-const { Tray, Menu, getCurrentWindow, app, shell, screen: electronScreen, powerMonitor } = remote
+const {
+  Tray,
+  Menu,
+  getCurrentWindow,
+  app,
+  shell,
+  screen: electronScreen,
+  powerMonitor,
+  autoUpdater,
+} = remote
 const currentWindow = getCurrentWindow()
 const saveDir = path.join(app.getPath('home'), 'zedd')
 
@@ -58,7 +66,36 @@ function quit() {
   ipcRenderer.send('user-quit')
 }
 
-const menuItems = [
+function setupAutoUpdater(state: AppState, config: ZeddSettings) {
+  if (global.isDev) return () => {}
+
+  autoUpdater.setFeedURL({
+    url: `${config.updateServer}/update/${process.platform}/${app.getVersion()}`,
+  })
+  const checkForUpdatesInterval = setInterval(
+    () => autoUpdater.checkForUpdates(),
+    2 * 60 * 60 * 1000, // every 2 hours
+  )
+  const onUpdateDownloaded = (
+    _event: Electron.Event,
+    _releaseNotes: string,
+    releaseName: string,
+    _releaseDate: Date,
+    _updateURL: string,
+  ) => {
+    state.updateAvailable = releaseName
+  }
+  const onError = (error: Error) => state.errors.push(error.message)
+  autoUpdater.on('update-downloaded', onUpdateDownloaded)
+  autoUpdater.on('error', onError)
+  return () => {
+    clearInterval(checkForUpdatesInterval)
+    autoUpdater.off('update-downloaded', onUpdateDownloaded)
+    autoUpdater.off('error', onError)
+  }
+}
+
+const getMenuItems = (state: AppState) => [
   {
     label: 'Open Config Dir',
     click: () => shell.showItemInFolder(userConfigFile),
@@ -70,25 +107,43 @@ const menuItems = [
   { label: 'Reload Config', click: () => getCurrentWindow().reload() },
   { label: 'Quit', click: () => quit() },
 ]
-let config: ZeddSettings
-let state: AppState
-let cleanup: () => void
-const saveWindowBounds = ({ sender }: { sender: BrowserWindow }) => {
-  if (state && !state.hoverMode) {
-    if (sender.isMaximized()) {
-      state.bounds.maximized = true
-    } else {
-      state.bounds.maximized = false
-      state.bounds.normal = sender.getBounds()
-    }
-  }
-  if (state && state.hoverMode) {
-    state.bounds.hover = sender.getBounds()
-  }
-}
 
 async function setup() {
+  await mkdirIfNotExists(saveDir)
+
+  const clarityState = new ClarityState(clarityDir)
+
+  const config = (await fileExists(userConfigFile))
+    ? await ZeddSettings.readFromFile(userConfigFile)
+    : new ZeddSettings(userConfigFile)
+
+  d('clarityDir=' + clarityDir)
+  clarityState.init()
+  clarityState.nikuLink = config.nikuLink
+
+  // await sleep(5000);
+  // importAndSaveClarityTasks();
+  try {
+    await clarityState.loadStateFromFile()
+  } catch (e) {
+    console.error('Could not load clarity tasks')
+    console.error(e)
+  }
+
+  try {
+    initJiraClient(config.cgJira, clarityState)
+  } catch (e) {
+    console.error('Could not init JiraClient')
+    console.error(e)
+  }
+  getTasksFromAssignedJiraIssues(clarityState.tasks)
+    .then((e) => (state.assignedIssueTasks = e.map((t) => state.normalizeTask(t))))
+    .catch((err) => state.errors.push(err.message))
+
+  window.addEventListener('beforeunload', cleanup)
+
   const currentWindowEvents: [string, Function][] = []
+  let state: AppState
   try {
     state = await AppState.loadFromDir(path.join(saveDir, 'data'))
     d(state)
@@ -164,6 +219,20 @@ async function setup() {
   const hoverModeOff = () => (state.hoverMode = false)
   const restoreUnmaximizedBoundsIfNotHoverMode = () =>
     !state.hoverMode && currentWindow.setBounds(state.bounds.normal)
+
+  const saveWindowBounds = ({ sender }: { sender: BrowserWindow }) => {
+    if (state && !state.hoverMode) {
+      if (sender.isMaximized()) {
+        state.bounds.maximized = true
+      } else {
+        state.bounds.maximized = false
+        state.bounds.normal = sender.getBounds()
+      }
+    }
+    if (state && state.hoverMode) {
+      state.bounds.hover = sender.getBounds()
+    }
+  }
 
   currentWindowEvents.push(['resize', saveWindowBounds])
   currentWindowEvents.push(['maximize', saveWindowBounds])
@@ -272,84 +341,53 @@ async function setup() {
     }
   })
 
+  const cleanupAutoUpdater = setupAutoUpdater(state, config)
+
   currentWindowEvents.forEach(([x, y]) => currentWindow.on(x as any, y))
 
-  return () => {
-    clearInterval(saveInterval)
-    clearInterval(lastActionInterval)
-    cleanupIconAutorun()
-    cleanupTrayMenuAutorun()
-    cleanupTrayTooltipAutorun()
-    state.cleanup()
-    tray.destroy()
-    cleanupHoverModeAutorun()
-    currentWindowEvents.forEach(([x, y]) => currentWindow.removeListener(x as any, y))
+  return {
+    cleanup: () => {
+      console.log('setup().cleanup')
+      clearInterval(saveInterval)
+      clearInterval(lastActionInterval)
+      cleanupIconAutorun()
+      cleanupTrayMenuAutorun()
+      cleanupTrayTooltipAutorun()
+      state.cleanup()
+      tray.destroy()
+      cleanupAutoUpdater()
+      cleanupHoverModeAutorun()
+      currentWindowEvents.forEach(([x, y]) => currentWindow.removeListener(x as any, y))
+    },
+    renderDOM: () => {
+      ReactDOM.render(
+        React.createElement(AppGui, {
+          state,
+          checkCgJira,
+          clarityState,
+          menuItems: getMenuItems(state),
+          getTasksForSearchString: (s) =>
+            getTasksForSearchString(s).then((ts) =>
+              ts.filter((t) => !state.tasks.some((t2) => t2.name === t.name)),
+            ),
+        }),
+        document.getElementById('react-root'),
+      )
+    },
   }
 }
 
-export const clarityState = new ClarityState(clarityDir)
+let cleanup: () => void
+let renderDOM: () => void
 
-function renderDom() {
-  ReactDOM.render(
-    React.createElement(AppGui, {
-      state,
-      checkCgJira,
-      clarityState,
-      menuItems,
-      getTasksForSearchString: (s) =>
-        getTasksForSearchString(s).then((ts) =>
-          ts.filter((t) => !state.tasks.some((t2) => t2.name === t.name)),
-        ),
-    }),
-    document.getElementById('react-root'),
-  )
-}
-
-async function main() {
-  await mkdirIfNotExists(saveDir)
-
-  config = (await fileExists(userConfigFile))
-    ? await ZeddSettings.readFromFile(userConfigFile)
-    : new ZeddSettings(userConfigFile)
-
-  d('clarityDir=' + clarityDir)
-  clarityState.init()
-  clarityState.nikuLink = config.nikuLink
-
-  // await sleep(5000);
-  // importAndSaveClarityTasks();
-  try {
-    await clarityState.loadStateFromFile()
-  } catch (e) {
-    console.error('Could not load clarity tasks')
-    console.error(e)
-  }
-
-  try {
-    initJiraClient(config.cgJira)
-  } catch (e) {
-    console.error('Could not init JiraClient')
-    console.error(e)
-  }
-  getTasksFromAssignedJiraIssues(clarityState.tasks)
-    .then((e) => (state.assignedIssueTasks = e.map((t) => state.normalizeTask(t))))
-    .catch((err) => state.errors.push(err.message))
-
-  cleanup = await setup()
-  // window.addEventListener('beforeunload', cleanup)
-
-  renderDom()
-}
-main()
+setup().then((r) => {
+  ;({ cleanup, renderDOM } = r)
+  renderDOM()
+})
 
 if (module.hot) {
   module.hot.accept('./components/AppGui', () => {
-    renderDom()
-  })
-  module.hot.accept('./AppState', async () => {
-    cleanup()
-    cleanup = await setup()
-    renderDom()
+    renderDOM()
   })
   module.hot.dispose(() => cleanup())
   module.hot.accept()

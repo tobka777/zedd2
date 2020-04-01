@@ -4,9 +4,7 @@ import JiraClient from 'jira-connector'
 import * as request from 'request'
 
 import { Task } from './AppState'
-import { ClarityTask } from './ClarityState'
-import './index.css'
-import { clarityState } from './renderer'
+import { ClarityTask, ClarityState } from './ClarityState'
 import { ZeddSettings } from './ZeddSettings'
 
 // Initialize
@@ -14,7 +12,8 @@ const jar = request.jar()
 let jiraConfig: ZeddSettings['cgJira']
 let jira: JiraClient
 
-export function initJiraClient(jc: ZeddSettings['cgJira']) {
+export function initJiraClient(jc: ZeddSettings['cgJira'], newClarityState: ClarityState) {
+  clarityState = newClarityState
   jiraConfig = jc
   const url = new URL(jc.url)
   jira = new JiraClient({
@@ -31,6 +30,7 @@ export function initJiraClient(jc: ZeddSettings['cgJira']) {
 }
 
 let lastJiraCall: Date | undefined = undefined
+let clarityState: ClarityState
 
 const externalJiraField = 'customfield_10216'
 const clarityTaskField = 'customfield_10301'

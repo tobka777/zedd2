@@ -246,6 +246,9 @@ export class AppState {
   @observable
   public lastAction = 0
 
+  @observable
+  public updateAvailable: string | undefined
+
   @serializable(
     custom(
       (x) => x,

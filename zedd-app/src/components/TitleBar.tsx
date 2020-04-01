@@ -1,4 +1,4 @@
-import { Button, AppBar, Menu as MuiMenu, MenuItem } from '@material-ui/core'
+import { Button, AppBar, Menu as MuiMenu, MenuItem, Badge } from '@material-ui/core'
 import { makeStyles, useTheme } from '@material-ui/core/styles'
 import {
   PlayArrow as PlayArrowIcon,
@@ -18,7 +18,7 @@ import { TaskSelect } from './TaskSelect'
 import { ZeddSvgIcon } from './ZeddSvgIcon'
 import { formatMinutes } from '../util'
 
-const { getCurrentWindow } = remote
+const { getCurrentWindow, app, autoUpdater } = remote
 
 interface TitleBarProps {
   state: AppState
@@ -87,7 +87,9 @@ export const TitleBar = observer(({ state, getTasksForSearchString, menuItems }:
       </div>
       {!state.hoverMode && (
         <Button onClick={handleClick} style={{ color: 'inherit' }}>
-          <MenuIcon />
+          <Badge variant='dot' color='secondary' invisible={!state.updateAvailable}>
+            <MenuIcon />
+          </Badge>
         </Button>
       )}
       <MuiMenu
@@ -111,6 +113,21 @@ export const TitleBar = observer(({ state, getTasksForSearchString, menuItems }:
             {label}
           </MenuItem>
         ))}
+        <MenuItem
+          // disabled={!state.updateAvailable}
+          onClick={() => {
+            if (state.updateAvailable) {
+              autoUpdater.quitAndInstall()
+            } else {
+              autoUpdater.checkForUpdates()
+            }
+            setAnchorEl(null)
+          }}
+        >
+          {state.updateAvailable
+            ? `Update ${app.getVersion()} → ${state.updateAvailable}`
+            : app.getVersion()}
+        </MenuItem>
       </MuiMenu>
       <Button
         style={{ width: '1em', color: 'inherit' }}
@@ -118,7 +135,7 @@ export const TitleBar = observer(({ state, getTasksForSearchString, menuItems }:
       >
         {state.timingInProgess ? <StopIcon /> : <PlayArrowIcon />}
       </Button>
-      {state.lastAction}
+      {/* {state.lastAction} */}
       <div style={{ fontSize: 'large', margin: theme.spacing(0, 1) }}>
         {formatMinutes(state.getTaskMinutes(state.currentTask))}&nbsp;BT
       </div>
