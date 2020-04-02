@@ -91,5 +91,5 @@ export class ZeddSettings {
   public keepHovering = true
 
   @serializable
-  public updateServer = 'https://hazel-peach.now.sh/'
+  public updateServer = 'https://hazel-peach.now.sh'
 }

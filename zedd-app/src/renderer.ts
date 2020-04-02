@@ -140,8 +140,6 @@ async function setup() {
     .then((e) => (state.assignedIssueTasks = e.map((t) => state.normalizeTask(t))))
     .catch((err) => state.errors.push(err.message))
 
-  window.addEventListener('beforeunload', cleanup)
-
   const currentWindowEvents: [string, Function][] = []
   let state: AppState
   try {
@@ -345,8 +343,12 @@ async function setup() {
 
   currentWindowEvents.forEach(([x, y]) => currentWindow.on(x as any, y))
 
+  let cleanup: () => void = undefined!
+
+  window.addEventListener('beforeunload', cleanup)
+
   return {
-    cleanup: () => {
+    cleanup: cleanup = () => {
       console.log('setup().cleanup')
       clearInterval(saveInterval)
       clearInterval(lastActionInterval)
@@ -358,6 +360,7 @@ async function setup() {
       cleanupAutoUpdater()
       cleanupHoverModeAutorun()
       currentWindowEvents.forEach(([x, y]) => currentWindow.removeListener(x as any, y))
+      window.removeEventListener('beforeunload', cleanup)
     },
     renderDOM: () => {
       ReactDOM.render(

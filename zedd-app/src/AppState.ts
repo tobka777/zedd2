@@ -176,13 +176,6 @@ export class AppState {
   public static readonly APP_START_TIME = new Date()
 
   /** FIELDS */
-  //   public tasks: Task[] = [
-  //     // {
-  //     //   name: 'ersatz-regi',
-  //     //   clarity: clarityTasks[0],
-  //     // },
-  //     AppState.UNDEFINED_TASK,
-  //   ]
 
   @observable
   @serializable
@@ -198,16 +191,19 @@ export class AppState {
             'object' === typeof jsonValue
               ? [new Date(jsonValue.start), new Date(jsonValue.end), jsonValue.task]
               : TimeSlice.parse(jsonValue)
-          context.rootContext.await(getDefaultModelSchema(Task)!, taskName, (err, task) => {
-            if (err) done(err, undefined)
-            let result
-            try {
-              result = new TimeSlice(start, end, task)
-            } catch (e) {
-              result = SKIP
-            }
-            done(undefined, result)
-          })
+          context.rootContext.await(
+            getDefaultModelSchema(Task)!,
+            taskName,
+            context.rootContext.createCallback((task) => {
+              let result
+              try {
+                result = new TimeSlice(start, end, task)
+              } catch (e) {
+                result = SKIP
+              }
+              done(undefined, result)
+            }),
+          )
         },
       ),
     ),
@@ -279,7 +275,10 @@ export class AppState {
   @serializable(
     custom(
       (s, _, state) => state.slices.indexOf(s),
-      (i, context) => context.target.slices[i],
+      (i, context) => {
+        console.log('deser' + i)
+        return context.target.slices[i]
+      },
     ),
   )
   private lastTimedSlice: undefined | TimeSlice = undefined
