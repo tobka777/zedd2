@@ -30,7 +30,7 @@ import { sortBy } from 'lodash'
 import { remote, MenuItemConstructorOptions } from 'electron'
 import { ArrowBack, ArrowForward, Delete as DeleteIcon } from '@material-ui/icons'
 
-const { Menu } = remote
+const { Menu, shell } = remote
 
 const useStyles = makeStyles((theme) => ({
   contentRoot: {
@@ -258,6 +258,11 @@ export const AppBody = observer(
                 </Button>
               </Tooltip>
             </ButtonGroup>
+            {state.links.map(([k, link]) => (
+              <Button size='large' variant='contained' onClick={() => shell.openExternal(link)}>
+                {k}
+              </Button>
+            ))}
           </div>
         </div>
         <Paper>

@@ -194,6 +194,8 @@ export class AppState {
           context.rootContext.await(
             getDefaultModelSchema(Task)!,
             taskName,
+            // pass createCallback, otherwise random errors from ref-counting
+            // TODO: fix in serializr
             context.rootContext.createCallback((task) => {
               let result
               try {
@@ -292,6 +294,12 @@ export class AppState {
   @observable
   @serializable
   hoverMode: boolean = false
+
+  /**
+   * Relevant links to display in the UI
+   */
+  @observable
+  links: [string, string][] = []
 
   constructor() {
     this.showing = isoWeekInterval(Date.now())

@@ -84,6 +84,9 @@ export class ZeddSettings {
     username: '',
     password: '',
     currentIssuesJql: 'assignee = currentUser() AND resolution = Unresolved ORDER BY updated DESC',
+
+    // updated automatically by the app
+    keys: [],
   }
 
   @observable

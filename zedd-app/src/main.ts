@@ -31,7 +31,7 @@ if (!app.requestSingleInstanceLock()) {
 app.on('second-instance', (_event, _commandLine, _workingDirectory) => {
   // Someone tried to run a second instance, we should focus our window.
   if (mainWindow) {
-    if (mainWindow.isMinimized()) mainWindow.restore()
+    mainWindow.show()
     mainWindow.focus()
   }
 })

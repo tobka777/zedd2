@@ -1,7 +1,7 @@
 {
   "name": "zedd-app",
   "productName": "zedd-app",
-  "version": "2.1.3",
+  "version": "2.1.4",
   "description": "My Electron application description",
   "main": ".webpack/main",
   "scripts": {

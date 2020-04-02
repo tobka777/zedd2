@@ -17,6 +17,7 @@ import {
   getTasksFromAssignedJiraIssues,
   initJiraClient,
   checkCgJira,
+  getLinksFromString,
 } from './plJiraConnector'
 import toastTemplate from './toast-template.xml'
 import {
@@ -27,6 +28,7 @@ import {
   floor,
 } from './util'
 import { ZeddSettings } from './ZeddSettings'
+import { createModelSchema, optional, custom, primitive, serialize, SKIP } from 'serializr'
 
 const {
   Tray,
@@ -46,6 +48,22 @@ const clarityDir = path.join(saveDir, 'clarity')
 const userConfigFile = path.join(saveDir, 'zeddconfig.json')
 
 const d = (...x: any[]) => console.log('renderer.ts', ...x)
+
+// class Todo {
+//   name: string
+// }
+
+// createModelSchema(Todo, {
+//   title: optional(primitive()),
+//   user: optional(
+//     custom(
+//       (value) => value.name,
+//       () => SKIP,
+//     ),
+//   ),
+// })
+
+// serialize(new Todo()) // {}
 
 function showNotification(
   title: string,
@@ -131,7 +149,7 @@ async function setup() {
   }
 
   try {
-    initJiraClient(config.cgJira, clarityState)
+    initJiraClient(config.cgJira, clarityState, () => config.saveToFile())
   } catch (e) {
     console.error('Could not init JiraClient')
     console.error(e)
@@ -256,6 +274,10 @@ async function setup() {
     getCurrentWindow().show()
   })
 
+  const cleanupSetStateLinks = autorun(() => {
+    state.links = getLinksFromString(state.currentTask.name)
+  })
+
   const cleanupTrayMenuAutorun = autorun(() => {
     tray.setContextMenu(
       Menu.buildFromTemplate([
@@ -274,6 +296,16 @@ async function setup() {
             type: 'checkbox',
             checked: state.currentTask === t,
             click: (x) => (state.currentTask = state.getTaskForName(x.label)),
+          }),
+        ),
+
+        ...(0 === state.links.length ? [] : [{ type: 'separator' } as MenuItemConstructorOptions]),
+
+        ...state.links.map(
+          ([key, link]): MenuItemConstructorOptions => ({
+            label: 'Open in Browser: ' + key,
+            type: 'normal',
+            click: () => shell.openExternal(link),
           }),
         ),
 
@@ -352,6 +384,7 @@ async function setup() {
       console.log('setup().cleanup')
       clearInterval(saveInterval)
       clearInterval(lastActionInterval)
+      cleanupSetStateLinks()
       cleanupIconAutorun()
       cleanupTrayMenuAutorun()
       cleanupTrayTooltipAutorun()

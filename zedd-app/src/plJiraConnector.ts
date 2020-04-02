@@ -6,15 +6,23 @@ import * as request from 'request'
 import { Task } from './AppState'
 import { ClarityTask, ClarityState } from './ClarityState'
 import { ZeddSettings } from './ZeddSettings'
+import { config } from 'process'
+import { isEqual } from 'lodash'
 
 // Initialize
 const jar = request.jar()
 let jiraConfig: ZeddSettings['cgJira']
 let jira: JiraClient
+let saveSettings: () => void
 
-export function initJiraClient(jc: ZeddSettings['cgJira'], newClarityState: ClarityState) {
+export function initJiraClient(
+  jc: ZeddSettings['cgJira'],
+  newClarityState: ClarityState,
+  newSaveSettings: () => {},
+) {
   clarityState = newClarityState
   jiraConfig = jc
+  saveSettings = newSaveSettings
   const url = new URL(jc.url)
   jira = new JiraClient({
     host: url.host,
@@ -40,6 +48,18 @@ const jiraConnectorErrorToMessage = (x: any) => {
   const { body, request } = JSON.parse(x)
   throw new Error(request.method + ' ' + request.uri.href + ' returned ' + body)
 }
+
+const updateJiraProjectKeys = () =>
+  callWithJsessionCookie(async () => {
+    const projects = await jira.project.getAllProjects()
+    console.warn(projects)
+    const keys = projects.map((p: { key: string }) => p.key)
+    if (!isEqual(keys, jiraConfig.keys)) {
+      console.log('retrieved project keys: ', keys)
+      jiraConfig.keys = keys
+      saveSettings()
+    }
+  })
 
 export const checkCgJira = (config: ZeddSettings['cgJira']) => {
   return new Promise((resolve, reject) =>
@@ -94,6 +114,8 @@ export const getTasksFromAssignedJiraIssues = (clarityTasks: ClarityTask[]): Pro
       })
       .catch(jiraConnectorErrorToMessage)
     console.log(result)
+
+    await updateJiraProjectKeys()
 
     return Promise.all(result.issues.map((i) => issueInfoToTask(clarityTasks, i)))
   })
@@ -157,4 +179,11 @@ const issueInfoToTask = async (clarityTasks: ClarityTask[], i: any): Promise<Tas
       i.fields.summary.replace(new RegExp('^' + externalKey + ':? ?'), ''),
     clarityTaskId,
   )
+}
+
+/** Extracts keys matching projects in connected jira and returns issue links from them. */
+export function getLinksFromString(str: string): [string, string][] {
+  const projectKeysRegex = new RegExp(`(?:${(jiraConfig.keys ?? []).join('|')})-\\d+`, 'g')
+  const keys = str.match(projectKeysRegex) ?? []
+  return keys.map((k) => [k, jiraConfig.url + '/browse/' + k])
 }
