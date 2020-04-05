@@ -168,10 +168,6 @@ export const roundDownToQuarterHour = (date: Date) => {
   return roundToNearestMinutes(addSeconds(date, -7.5 * 60), { nearestTo: 15 })
 }
 
-export const isoDay = (date: Date) => {
-  return formatDate(date, 'yyyy-MM-dd')
-}
-
 export function omap<K extends string, T, M>(x: { [P in K]: T }, f: (t: T) => M) {
   const result: { [P in K]: M } = {} as any
   for (const k of Object.keys(x)) result[k as K] = f(x[k as K])
@@ -187,3 +183,5 @@ export const stringHash = (str: string) => {
 export const stringHashColor = (str: string) => {
   return chroma.num(stringHash(str) & 0xffffff)
 }
+
+export const isoDayStr = (day: number | Date) => formatDate(day, 'yyyy-MM-dd')

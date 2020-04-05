@@ -1,5 +1,4 @@
 import * as React from 'react'
-import { CSSProperties } from 'react'
 
 export const ZeddSvgIcon = ({
   res,

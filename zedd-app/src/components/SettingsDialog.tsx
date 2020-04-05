@@ -11,8 +11,9 @@ import {
   Checkbox,
   FormControlLabel,
   Tooltip,
+  Button,
 } from '@material-ui/core'
-import Button from '@material-ui/core/Button'
+import { useTheme } from '@material-ui/core/styles'
 import * as React from 'react'
 import { useState, useEffect, useCallback } from 'react'
 import { remote } from 'electron'
@@ -29,6 +30,7 @@ import { ClarityTaskSelect } from './ClarityTaskSelect'
 import { ClarityState } from '../ClarityState'
 import { ZeddSettings } from '../ZeddSettings'
 import { toggle } from '../util'
+import { color } from 'chroma.ts'
 
 const { openExternal } = remote.shell
 
@@ -59,6 +61,8 @@ export const SettingsDialog = observer(
     const [cgJiraStatus, setCgJiraStatus] = useState(
       {} as { error?: any; ok?: true; checking?: true },
     )
+
+    const theme = useTheme()
 
     const updateVersions = () => {
       setChromeVersion({})
@@ -288,7 +292,7 @@ export const SettingsDialog = observer(
             </Grid>
             <Grid item xs={8} style={{ minHeight: '4em' }}>
               {chromeVersion.error ? (
-                <span style={{ color: 'red' }}>
+                <span style={{ color: theme.palette.error.main }}>
                   {'' + chromeVersion.error}{' '}
                   <a href='https://www.google.com/chrome/' onClick={inExternal}>
                     Download Google Chrome
@@ -307,7 +311,9 @@ export const SettingsDialog = observer(
             <Grid item xs={8} style={{ minHeight: '4em' }}>
               <span>
                 {installedDriverVersion.error ? (
-                  <span style={{ color: 'red' }}>{'' + installedDriverVersion.error}</span>
+                  <span style={{ color: theme.palette.error.main }}>
+                    {'' + installedDriverVersion.error}
+                  </span>
                 ) : installedDriverVersion.value ? (
                   installedDriverVersion.value
                 ) : (
@@ -322,7 +328,7 @@ export const SettingsDialog = observer(
             <Grid item xs={8} style={{ minHeight: '4em' }}>
               <span>
                 {latestDriverVersion.error ? (
-                  <span style={{ color: 'red' }}>
+                  <span style={{ color: theme.palette.error.main }}>
                     Could not GET latest chromedriver version. {'' + latestDriverVersion.error}
                   </span>
                 ) : latestDriverVersion.value ? (

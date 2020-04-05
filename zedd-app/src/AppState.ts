@@ -28,8 +28,9 @@ import {
 import { remote } from 'electron'
 import { promises as fsp } from 'fs'
 import { sum, uniq } from 'lodash'
-import { computed, observable, transaction } from 'mobx'
+import { computed, observable, transaction, intercept, trace } from 'mobx'
 import type { IObservableArray } from 'mobx'
+import { createTransformer } from 'mobx-utils'
 import * as path from 'path'
 import {
   custom,
@@ -58,8 +59,10 @@ import {
   uniqCustom,
   FILE_DATE_FORMAT,
   readFilesWithDate,
+  isoDayStr,
 } from './util'
 import { ZeddSettings } from './ZeddSettings'
+import { ObservableGroupMap } from './ObservableGroupMap'
 
 export const MIN_GAP_TIME_MIN = 5
 
@@ -210,7 +213,19 @@ export class AppState {
       ),
     ),
   )
-  public slices: IObservableArray<TimeSlice> = observable([])
+  private slices: IObservableArray<TimeSlice> = observable([])
+
+  private slicesByTask = new ObservableGroupMap(
+    this.slices,
+    (slice) => slice.task, //
+    { name: 'slicesByTask' },
+  )
+
+  private slicesByDay = new ObservableGroupMap(
+    this.slices,
+    (slice) => startOfDay(slice.start).getTime(),
+    { name: 'slicesByDay' },
+  )
 
   @observable
   public renameTaskDialogOpen: boolean = false
@@ -293,16 +308,24 @@ export class AppState {
    */
   @observable
   @serializable
-  hoverMode: boolean = false
+  public hoverMode: boolean = false
 
   /**
    * Relevant links to display in the UI
    */
   @observable
-  links: [string, string][] = []
+  public links: [string, string][] = []
 
   constructor() {
     this.showing = isoWeekInterval(Date.now())
+    intercept(this, 'slices', (change) => {
+      if ('update' === change.type) {
+        this.slices.replace(change.newValue)
+        return null
+      } else {
+        throw new Error(JSON.stringify(change))
+      }
+    })
   }
 
   public static async saveToDir(instance: AppState, dir: string) {
@@ -352,10 +375,8 @@ export class AppState {
 
   @serializable(list(object(Task), { afterDeserialize: (callback) => callback(undefined, SKIP) }))
   @computed
-  get tasks() {
-    const allTasks = this.slices.map((s) => s.task)
-    if (this.currentTask) allTasks.push(this.currentTask)
-    return uniq(allTasks)
+  get tasks(): Task[] {
+    return Array.from(this.slicesByTask.keys())
   }
 
   @computed
@@ -402,6 +423,14 @@ export class AppState {
     this._startDate = formatDate(newShowing.start, 'yyyy-MM-dd')
     this._endDate = formatDate(newShowing.end, 'yyyy-MM-dd')
   }
+
+  @computed
+  public get showingSlices(): TimeSlice[] {
+    return eachDayOfInterval(this.showing).flatMap(
+      (day) => this.slicesByDay.get(day.getTime()) || [],
+    )
+  }
+
   /**
    * If tasks already contains a task with a matching key or name, return that,
    * otherwise return the passed task.
@@ -444,11 +473,11 @@ export class AppState {
     return uniqCustom([...this.getMostRecentTasks(7), ...this.assignedIssueTasks], Task.same)
   }
 
-  public getTaskMinutes(task: Task) {
-    return sum(
-      this.slices.filter((s) => s.task === task).map((s) => differenceInMinutes(s.end, s.start)),
-    )
-  }
+  public getTaskMinutes = createTransformer(
+    (task: Task) =>
+      sum(this.slicesByTask.get(task)?.map((s) => differenceInMinutes(s.end, s.start))),
+    { debugNameGenerator: (t) => `getTaskMinutes${t?.name}` },
+  )
 
   public fillErsatz(when: Interval) {
     for (const day of eachDayOfInterval(when)) {
@@ -501,10 +530,14 @@ export class AppState {
     validDate(s.end)
 
     this.slices.push(s)
-    this.slices.replace(
-      this.slices.slice().sort((a, b) => compareAsc(a.start, b.start) || compareAsc(a.end, b.end)),
-    )
     return s
+  }
+
+  public removeSlice(s: TimeSlice) {
+    const index = this.slices.indexOf(s)
+    transaction(() => {
+      this.slices[index] = this.slices.pop()!
+    })
   }
 
   public startInterval() {

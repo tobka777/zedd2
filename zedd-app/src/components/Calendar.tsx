@@ -29,7 +29,7 @@ import { observer, useLocalStore } from 'mobx-react-lite'
 import * as React from 'react'
 import { useCallback, useEffect, useRef, ReactElement } from 'react'
 
-import { intRange, isoDay, min } from '../util'
+import { intRange, isoDayStr, min } from '../util'
 
 export type SliceDragStartHandler<T extends Interval> = (
   b: T,
@@ -287,7 +287,7 @@ const CalendarBase = <T extends Interval>({
       {/* Header with date */}
       {days.map((d) => (
         <div
-          key={'header-day-' + isoDay(d)}
+          key={'header-day-' + isoDayStr(d)}
           style={{
             width: percent(1 / days.length),
             backgroundColor: weekColors[getDay(d)],
@@ -307,7 +307,7 @@ const CalendarBase = <T extends Interval>({
 
         return (
           <div
-            key={'hours-block-' + isoDay(d)}
+            key={'hours-block-' + isoDayStr(d)}
             style={{
               position: 'relative',
               width: percent(1 / days.length),

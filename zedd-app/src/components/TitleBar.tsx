@@ -149,6 +149,7 @@ export const TitleBar = observer(({ state, getTasksForSearchString, menuItems }:
         // inputProps={{ classes: classes.input }}
         handleError={(err) => state.errors.push(err.message)}
         hoverMode={state.hoverMode}
+        getMinutesForTask={(t) => state.getTaskMinutes(t)}
       />
       {state.hoverMode && (
         <Button

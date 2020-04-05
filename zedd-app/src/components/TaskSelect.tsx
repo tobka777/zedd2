@@ -9,17 +9,20 @@ import * as React from 'react'
 
 import { useCallback, useState, useRef, useEffect, RefObject } from 'react'
 import { Task } from '../AppState'
+import { formatMinutes } from '../util'
 
 const { getCurrentWindow } = remote
 
 export type TaskSelectProps = {
   tasks: Task[]
+
   getTasksForSearchString: (search: string) => Promise<Task[]>
   onChange: (event: React.ChangeEvent<{}>, value: Task | string | undefined) => void
   value: Task
   handleError: (err: Error) => void
   textFieldStyle?: React.CSSProperties
   hoverMode?: boolean
+  getMinutesForTask: (t: Task) => number
 } & Omit<TextFieldProps, 'value' | 'onChange' | 'variant'>
 
 type CancellablePromise<T> = Promise<T> & { cancelled: boolean; cancel(): void }
@@ -66,7 +69,7 @@ function cancellingPrevious<T, F extends (...args: any[]) => Promise<T>>(
 
 const useDebouncedEffect = () => {}
 
-const useStyles = makeStyles({
+const useStyles = makeStyles((theme) => ({
   listbox: { maxHeight: 'calc(max(300px, 80vh))' },
   inputRoot: { color: 'inherit' },
   inputInput: { color: 'inherit' },
@@ -79,7 +82,12 @@ const useStyles = makeStyles({
       borderBottom: 'none',
     },
   },
-})
+  renderOptionBT: {
+    textAlign: 'right',
+    padding: '0px 8px',
+    color: theme.palette.text.secondary,
+  },
+}))
 const CustomPopper = (props: PopperProps) => {
   const ref: RefObject<PopperJs> = useRef<PopperJs>(null)
   useEffect(() => {
@@ -124,6 +132,7 @@ export const TaskSelect = observer(
     getTasksForSearchString,
     value,
     handleError,
+    getMinutesForTask,
     hoverMode = false,
     ...textFieldProps
   }: TaskSelectProps) => {
@@ -175,7 +184,7 @@ export const TaskSelect = observer(
             {...textFieldProps}
             style={textFieldStyle}
             onChange={onTextFieldChange}
-            placeholder={'Nothing. Nichts. Nada. Absolument rien.'}
+            placeholder='Nothing. Nichts. Nada. Absolument rien.'
             InputProps={{
               ...params.InputProps,
               classes: {
@@ -187,7 +196,12 @@ export const TaskSelect = observer(
             margin='dense'
           />
         )}
-        renderOption={(t: Task) => ('UNDEFINED' === t.name ? '' : t.name)}
+        renderOption={(t: Task) => (
+          <>
+            <span className={classes.renderOptionBT}>{formatMinutes(getMinutesForTask(t))} BT</span>
+            <span>{'UNDEFINED' === t.name ? '' : t.name}</span>
+          </>
+        )}
       ></Autocomplete>
     )
   },

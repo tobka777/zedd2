@@ -98,14 +98,14 @@ export const AppBody = observer(
             label: 'Start Timing This',
             click: () => (state.currentTask = slice.task),
           },
-          { type: 'normal', label: 'Delete', click: (_) => state.slices.remove(slice) },
+          { type: 'normal', label: 'Delete', click: (_) => state.removeSlice(slice) },
           {
             type: 'normal',
             label: 'Eat Previous Slice',
             click: (_) => {
               const previousSlice = state.getPreviousSlice(slice)
               if (!previousSlice) return
-              state.slices.remove(previousSlice)
+              state.removeSlice(previousSlice)
               slice.start = previousSlice.start
             },
           },
@@ -115,7 +115,7 @@ export const AppBody = observer(
             click: (_) => {
               const nextSlice = state.getNextSlice(slice)
               if (!nextSlice) return
-              state.slices.remove(nextSlice)
+              state.removeSlice(nextSlice)
               slice.end = nextSlice.end
             },
           },
@@ -268,7 +268,7 @@ export const AppBody = observer(
         <Paper>
           <Calendar
             showing={state.showing}
-            slices={state.slices}
+            slices={state.showingSlices}
             startHour={state.config.startHour}
             onSliceEndChange={(slice, newEnd) => {
               newEnd = dateMax([newEnd, addMinutes(slice.start, 1)])
@@ -294,7 +294,7 @@ export const AppBody = observer(
               }
             }}
             getVirtualSlice={(start, end) => new TimeSlice(start, end, state.getUndefinedTask())}
-            deleteSlice={(b) => state.slices.splice(state.slices.indexOf(b), 1)}
+            deleteSlice={(b) => state.removeSlice(b)}
             renderSlice={(attributes) => {
               return (
                 <BlockDisplay
@@ -309,7 +309,7 @@ export const AppBody = observer(
         <ErrorBoundary>
           <ClarityView
             showing={state.showing}
-            blocks={state.slices}
+            slices={state.showingSlices}
             clarityState={clarityState}
             submitTimesheets={state.submitTimesheets}
             onChangeSubmitTimesheets={(x) => (state.submitTimesheets = x)}

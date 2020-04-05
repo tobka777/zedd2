@@ -24,11 +24,11 @@ import { groupBy, uniqBy, sortBy } from 'lodash'
 
 import { validDate, TimeSlice } from '../AppState'
 import { ClarityState } from '../ClarityState'
-import { ceil, splitIntervalIntoCalendarDays, sum, omap } from '../util'
+import { ceil, splitIntervalIntoCalendarDays, sum, omap, isoDayStr } from '../util'
 
 export interface ClarityViewProps {
   showing: Interval
-  blocks: TimeSlice[]
+  slices: TimeSlice[]
   clarityState: ClarityState
   submitTimesheets: boolean
   onChangeSubmitTimesheets: (x: boolean) => void
@@ -52,8 +52,6 @@ const useStyles = makeStyles((theme) => ({
   },
 }))
 
-const dayToString = (day: Date | number) => formatDate(day, 'yyyy-MM-dd')
-
 const formatHours = (h: number) =>
   h ? h.toLocaleString('de-DE', { minimumFractionDigits: 2 }) : '-'
 
@@ -65,7 +63,7 @@ const placeholderClarityTask = {
   name: 'UNDEFINED',
 }
 
-function transform({ blocks, showing, clarityState }: ClarityViewProps): ClarityExportFormat {
+function transform({ slices, showing, clarityState }: ClarityViewProps): ClarityExportFormat {
   // add 1 to the end of showing, because we want the interval to go to the end of the
   // not just the begining
   const showInterval = { start: showing.start, end: addDays(showing.end, 1) }
@@ -73,33 +71,35 @@ function transform({ blocks, showing, clarityState }: ClarityViewProps): Clarity
   // in the first step, create a ClarityExportFormat with and entry for each
   // task/comment combination
   const dayMap: ClarityExportFormat = {}
-  for (const b of blocks) {
-    validDate(b.start)
-    validDate(b.end)
+  for (const slice of slices) {
+    validDate(slice.start)
+    validDate(slice.end)
     validDate(showing.start)
     validDate(showing.end)
     try {
-      if (!areIntervalsOverlapping(b, showInterval)) {
+      if (!areIntervalsOverlapping(slice, showInterval)) {
         continue
       }
     } catch (e) {
-      console.error(b, showInterval)
+      console.error(slice, showInterval)
       throw e
     }
     const task =
-      (b.task.clarityTaskIntId && clarityState.resolveTask(+b.task.clarityTaskIntId)) ||
+      (slice.task.clarityTaskIntId && clarityState.resolveTask(+slice.task.clarityTaskIntId)) ||
       placeholderClarityTask
     // fix start/end of b, as part of the interval may be outside showInterval
-    const bStartFixed = dateMax([b.start, showInterval.start])
-    const bEndFixed = dateMin([b.end, showInterval.end])
+    const bStartFixed = dateMax([slice.start, showInterval.start])
+    const bEndFixed = dateMin([slice.end, showInterval.end])
     for (const daySlice of splitIntervalIntoCalendarDays({
       start: bStartFixed,
       end: bEndFixed,
     })) {
-      const dayKey = dayToString(daySlice.start)
+      const dayKey = isoDayStr(daySlice.start)
       const dayHourss = dayMap[dayKey] || (dayMap[dayKey] = [])
       let dayHours = dayHourss.find(
-        (d) => d.taskIntId === b.task.clarityTaskIntId && d.comment === b.task.clarityTaskComment,
+        (d) =>
+          d.taskIntId === slice.task.clarityTaskIntId &&
+          d.comment === slice.task.clarityTaskComment,
       )
       if (!dayHours) {
         dayHours = {
@@ -107,7 +107,7 @@ function transform({ blocks, showing, clarityState }: ClarityViewProps): Clarity
           projectName: task.projectName,
           taskIntId: task.intId,
           taskName: task.name,
-          comment: b.task.clarityTaskComment,
+          comment: slice.task.clarityTaskComment,
         }
         dayHourss.push(dayHours)
       }
@@ -165,7 +165,7 @@ export const ClarityView = observer((props: ClarityViewProps) => {
           <tr>
             <th className='textHeader'>Project / Task</th>
             {days.map((d) => (
-              <th key={formatDate(d, 'yyyy-MM-dd')} className='numberHeader'>
+              <th key={isoDayStr(d)} className='numberHeader'>
                 {formatDate(d, 'EEEEEE, dd.MM')}
               </th>
             ))}
@@ -184,12 +184,12 @@ export const ClarityView = observer((props: ClarityViewProps) => {
                 <span style={{ whiteSpace: 'nowrap' }}>{taskToShow.taskName}</span>
               </td>
               {days.map((d) => {
-                const workEntry = clarityExport[dayToString(d)]?.find(
+                const workEntry = clarityExport[isoDayStr(d)]?.find(
                   (we) => we.taskIntId === taskToShow.taskIntId,
                 )
                 return (
                   <td
-                    key={taskToShow.taskIntId + '-' + formatDate(d, 'yyyy-MM-dd')}
+                    key={taskToShow.taskIntId + '-' + isoDayStr(d)}
                     title={workEntry?.comment}
                     style={{ cursor: workEntry?.comment ? 'help' : 'default' }}
                     className='numberCell'
@@ -215,8 +215,8 @@ export const ClarityView = observer((props: ClarityViewProps) => {
           <tr>
             <td></td>
             {days.map((d) => (
-              <td key={'total-' + formatDate(d, 'yyyy-MM-dd')} className='numberCell'>
-                {formatHours(sum(clarityExport[dayToString(d)]?.map((we) => we.hours) ?? []))}
+              <td key={'total-' + isoDayStr(d)} className='numberCell'>
+                {formatHours(sum(clarityExport[isoDayStr(d)]?.map((we) => we.hours) ?? []))}
               </td>
             ))}
             <td className='numberCell'>{formatHours(sum(allWorkEntries.map((we) => we.hours)))}</td>
