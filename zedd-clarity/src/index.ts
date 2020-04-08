@@ -105,7 +105,7 @@ export async function getProjectInfo(
   headless: boolean = false,
   downloadDir: string = __dirname + '/downloads',
 ): Promise<Project[]> {
-  return withErrorHandling('getProjectInfo', nikuLink, headless, downloadDir, ctx =>
+  return withErrorHandling('getProjectInfo', nikuLink, headless, downloadDir, (ctx) =>
     getProjectInfoInternal(nikuLink, ctx, downloadDir, excludeProject),
   )
 }
@@ -159,7 +159,7 @@ async function getProjects(ctx: Context, nikuLink: string): Promise<Project[]> {
 
   return Promise.all(
     as.map(
-      async a =>
+      async (a) =>
         ({
           name: await a.getText(),
           intId: +(await a.getAttribute('href')).replace(
@@ -201,8 +201,11 @@ async function getProjectTasks(
     await fsp.unlink(path.join(downloadDir, file))
   }
   d(' clicking on CSV export')
-  await $('.ppm_portlet_header_btn[title=Optionen]').click()
-  await $('[alt="In CSV exportieren"]').click()
+  // read "javascript:" link from the dom and run it manually
+  // clicking "options" gear can result in ElementClickInterceptedException, who knows why
+  const action = await $('[alt="In CSV exportieren"]').getAttribute('href')
+  d('  running csv export action ' + action)
+  await driver.executeScript(action.replace(/^javascript:/, ''))
   d('  waiting for new file in downloadDir')
   let files
   do {
@@ -216,7 +219,7 @@ async function getProjectTasks(
     .pipe(
       csv.parse({
         headers: (headersFromCsv: csv.ParserHeaderArray) => {
-          if (headersFromCsv.filter(h => h === 'Aufgabe').length === 2) {
+          if (headersFromCsv.filter((h) => h === 'Aufgabe').length === 2) {
             const indexFirstAufgabe = headersFromCsv.indexOf('Aufgabe')
             headersFromCsv[indexFirstAufgabe] = 'AufgabeJaNein'
           }
@@ -240,7 +243,7 @@ async function getProjectTasks(
       })
     })
     .on('error', console.error)
-  await new Promise(resolve => magic.on('end', resolve))
+  await new Promise((resolve) => magic.on('end', resolve))
   await fsp.unlink(csvPath)
   d(`  found ${tasks.length} tasks`)
   return tasks
@@ -248,8 +251,8 @@ async function getProjectTasks(
 function getPagination(ctx: Context, where?: WebElement) {
   const [$, $$, driver] = ctx
   return $(where, '.ppm_pagination_display_of')
-    .then(d => d && d.getText())
-    .then(t => {
+    .then((d) => d && d.getText())
+    .then((t) => {
       const [_, fromStr, toStr, ofStr] = t.match(/(\d+)\s*-\s+(\d+)\s*von\s*(\d+) angezeigt/)!
       return {
         from: +fromStr,
@@ -260,7 +263,7 @@ function getPagination(ctx: Context, where?: WebElement) {
 }
 
 function hasClass(e: WebElement, c: string) {
-  return e.getAttribute('class').then(classString => classString.split('\\s+').includes(c))
+  return e.getAttribute('class').then((classString) => classString.split('\\s+').includes(c))
 }
 
 async function getProjectInfoInternal(
@@ -271,7 +274,7 @@ async function getProjectInfoInternal(
 ) {
   const [$, $$, driver] = ctx
 
-  const projects = (await getProjects(ctx, nikuLink)).filter(p => !excludeProject(p.name))
+  const projects = (await getProjects(ctx, nikuLink)).filter((p) => !excludeProject(p.name))
 
   const tasks: Task[] = []
   for (const project of projects) {
@@ -289,10 +292,10 @@ async function addTasks(
 
   const as = await $$('#portlet-table-timeadmin\\.editTimesheet tbody td[column="9"] a')
   const addedIds = await Promise.all(
-    as.map(a => a.getAttribute('href').then(href => +urlHashQueryParam(href, 'id')!)),
+    as.map((a) => a.getAttribute('href').then((href) => +urlHashQueryParam(href, 'id')!)),
   )
   d('already have tasks with ids ' + addedIds)
-  tasks = tasks.filter(t => !addedIds.includes(t.intId))
+  tasks = tasks.filter((t) => !addedIds.includes(t.intId))
   d(`adding ${tasks.length} tasks...`)
   if (tasks.length == 0) {
     return
@@ -375,7 +378,7 @@ async function exportToClarity(
     )
     d(`found ${trs.length} trs`)
     return Promise.all(
-      trs.map(async tr => {
+      trs.map(async (tr) => {
         const projectNameTd = await $(tr, `td[column="${editMode ? 8 : 7}"]`)
         const rowNum = await projectNameTd.getAttribute('rownum')
         const projectName = await $(projectNameTd, 'a').getText()
@@ -383,7 +386,7 @@ async function exportToClarity(
         const taskName = await taskNameA.getText()
         const taskIntId = await taskNameA
           .getAttribute('href')
-          .then(href => +urlHashQueryParam(href, 'id')!)
+          .then((href) => +urlHashQueryParam(href, 'id')!)
         const hasComments = await hasClass(
           await $(tr, `td[column="${editMode ? 7 : 6}"] img`),
           'caui-ndeNotes',
@@ -403,7 +406,7 @@ async function exportToClarity(
     const comments = await Promise.all(
       (
         await $$('#ppm-portlet-grid-content-timeadmin\\.notesBrowser .ppm_gridcontent tbody tr')
-      ).map(async tr => {
+      ).map(async (tr) => {
         const checkbox = await $(tr, 'input[type=checkbox]')
         const content = await $(tr, 'td[column="6"]').getText()
         return { checkbox, content }
@@ -421,13 +424,13 @@ async function exportToClarity(
     const targetComments: { [dayString: string]: string } = {}
     for (const what of relevant) {
       const dayStr = format(what.day, 'EEEEEE', { locale: de }).toUpperCase()
-      const comment = (what.work.find(s => s.taskIntId == rowInfo.taskIntId) || {}).comment || ''
+      const comment = (what.work.find((s) => s.taskIntId == rowInfo.taskIntId) || {}).comment || ''
       targetComments[dayStr] = comment
     }
 
     d(targetComments, rowInfo)
 
-    if (!Object.values(targetComments).some(x => x) && !rowInfo.hasComments) {
+    if (!Object.values(targetComments).some((x) => x) && !rowInfo.hasComments) {
       // don't need to do anything
       return
     }
@@ -438,7 +441,7 @@ async function exportToClarity(
     const comments = await Promise.all(
       (
         await $$('#ppm-portlet-grid-content-timeadmin\\.notesBrowser .ppm_gridcontent tbody tr')
-      ).map(async tr => {
+      ).map(async (tr) => {
         const checkbox = await $(tr, 'input[type=checkbox]')
         const content = await $(tr, 'td[column="6"]').getText()
         return { checkbox, content }
@@ -446,15 +449,15 @@ async function exportToClarity(
     )
 
     // delete wrong comments
-    const [delComments, keepComments] = partition(comments, c => {
-      const x = Object.keys(targetComments).find(dayString =>
+    const [delComments, keepComments] = partition(comments, (c) => {
+      const x = Object.keys(targetComments).find((dayString) =>
         new RegExp('^\\[' + dayString + '\\]', 'i').test(c.content),
       )
       return x && (!targetComments[x] || x + ': ' + targetComments[x] != c.content)
     })
     if (delComments.length != 0) {
       await Promise.all(
-        delComments.map(c => {
+        delComments.map((c) => {
           d('  selecting for deletion ' + c.content)
           return c.checkbox.click()
         }),
@@ -477,7 +480,7 @@ async function exportToClarity(
     for (const dayString of Object.keys(targetComments)) {
       if (targetComments[dayString]) {
         const comment = '[' + dayString + '] ' + targetComments[dayString]
-        if (!keepComments.some(c => c.content == comment)) {
+        if (!keepComments.some((c) => c.content == comment)) {
           const noteInput = await $('#portlet-timeadmin\\.notesBrowser textarea[name=note]')
           await noteInput.sendKeys(comment)
           const catInput = await $('#portlet-timeadmin\\.notesBrowser input[name=category]')
@@ -498,25 +501,25 @@ async function exportToClarity(
   async function exportTimesheet(timesheetStartDate: Date, rowInfos: RowInfo[], days: Date[]) {
     d('exporting timesheet starting at ' + formatDayYYYY(timesheetStartDate))
     d('for days ' + days)
-    const daysInfo: { day: Date; work: WorkEntry[] }[] = days.map(d => ({ day: d, work: [] }))
+    const daysInfo: { day: Date; work: WorkEntry[] }[] = days.map((d) => ({ day: d, work: [] }))
     for (const rowInfo of rowInfos) {
       let comments: string[] = []
       if (rowInfo.hasComments) {
-        comments = await openCommentsDialogAndGetComments(rowInfo).then(cs =>
-          cs.map(c => c.content),
+        comments = await openCommentsDialogAndGetComments(rowInfo).then((cs) =>
+          cs.map((c) => c.content),
         )
         await $('#portlet-timeadmin\\.notesBrowser button[onclick="closeWindow();"]').click()
       }
 
       for (const day of days) {
         const dayStr = format(day, 'EEEEEE', { locale: de })
-        const dayComment = comments.find(c => c.startsWith(dayStr + ': '))
+        const dayComment = comments.find((c) => c.startsWith(dayStr + ': '))
         const columnIndex = 13 + differenceInCalendarDays(day, timesheetStartDate)
         const hoursStr = await $(rowInfo.tr, `td[column="${columnIndex}"]`).getText()
         const hours = +hoursStr.replace(',', '.')
         if (hours != 0)
           daysInfo
-            .find(di => di.day == day)!
+            .find((di) => di.day == day)!
             .work.push({
               taskIntId: rowInfo.taskIntId,
               taskName: rowInfo.taskName,
@@ -562,7 +565,7 @@ async function exportToClarity(
     d(`${what.length} days left to submit`)
     await forceGetSSO(ctx, nikuLink + '#action:timeadmin.timesheetBrowserReturn')
 
-    const minDate = dateMin(what.map(w => w.day))
+    const minDate = dateMin(what.map((w) => w.day))
     d(`minDate is ${formatDayYYYY(minDate)}`)
     await $('input[name=ff_date_type][value=userdefined]').click()
     await $('input[name=ff_from_date]').sendKeys(
@@ -579,12 +582,12 @@ async function exportToClarity(
     const txt = await $('select[name=timeperiod] > option[selected=true]').getText()
     const [start, end] = txt
       .split(' - ')
-      .map(ds => parseDate(ds, 'dd.MM.yy', Date.now(), { locale: de }))
+      .map((ds) => parseDate(ds, 'dd.MM.yy', Date.now(), { locale: de }))
     d('start ' + start)
     d('end ' + end)
     d('in timesheet ' + format(start, 'EEEEEE dd.MM') + ' - ' + format(end, 'EEEEEE dd.MM'))
 
-    const [relevant, others] = partition(what, w => isWithinInterval(w.day, { start, end }))
+    const [relevant, others] = partition(what, (w) => isWithinInterval(w.day, { start, end }))
 
     const saveTimesheetExitButton = (
       await $$(`button[onclick*="'timeadmin.saveTimesheetExit','status=2'"]`)
@@ -597,7 +600,7 @@ async function exportToClarity(
       const data = await exportTimesheet(
         start,
         await getRowInfos(false),
-        relevant.map(w => w.day),
+        relevant.map((w) => w.day),
       )
       d('  done')
       if (timeSheetDataEqual(data, relevant)) {
@@ -622,8 +625,8 @@ async function exportToClarity(
     await addTasks(
       ctx,
       uniqBy(
-        relevant.flatMap(w => w.work),
-        t => t.taskIntId,
+        relevant.flatMap((w) => w.work),
+        (t) => t.taskIntId,
       ).map(({ taskName, taskIntId, projectName }) => ({
         name: taskName,
         intId: taskIntId,
@@ -635,15 +638,15 @@ async function exportToClarity(
       await correctComments(relevant, ri)
     }
     // d('' + eachDayOfInterval({ start, end }))
-    d('' + relevant.map(w => w.day))
-    for (const day of uniq(relevant.map(w => w.day)).sort(compareAsc)) {
+    d('' + relevant.map((w) => w.day))
+    for (const day of uniq(relevant.map((w) => w.day)).sort(compareAsc)) {
       d('  filling out ' + format(day, 'EEEEEE dd.MM'))
-      const daySlices = (relevant.find(w => isSameDay(w.day, day)) || { work: [] }).work
+      const daySlices = (relevant.find((w) => isSameDay(w.day, day)) || { work: [] }).work
       await Promise.all(
-        rowInfos.map(async rowInfo => {
+        rowInfos.map(async (rowInfo) => {
           const hours = daySlices
-            .filter(s => s.taskIntId === rowInfo.taskIntId)
-            .map(s => s.hours)
+            .filter((s) => s.taskIntId === rowInfo.taskIntId)
+            .map((s) => s.hours)
             .reduce((a, b) => a + b, 0)
             .toLocaleString('de-DE', { maximumFractionDigits: 2 })
             .replace('.', ',')
@@ -680,7 +683,7 @@ export async function fillClarity(
   headless: boolean = false,
   downloadDir?: string,
 ): Promise<void> {
-  return withErrorHandling('fillClarity', nikuLink, headless, downloadDir, ctx =>
+  return withErrorHandling('fillClarity', nikuLink, headless, downloadDir, (ctx) =>
     exportToClarity(ctx, data, submitTimesheets, nikuLink),
   )
 }
