@@ -26,6 +26,42 @@ import { validDate, TimeSlice } from '../AppState'
 import { ClarityState } from '../ClarityState'
 import { ceil, splitIntervalIntoCalendarDays, sum, omap, isoDayStr } from '../util'
 
+const roundToNearest = (x: number, toNearest: number) => Math.round(x / toNearest) * toNearest
+const floorToNearest = (x: number, toNearest: number) => Math.floor(x / toNearest) * toNearest
+
+/**
+ * Rounds a bunch of (wrapped) values up or down so that the sum of the rounded values
+ * is equal to the rounded sum of the unrounded values.
+ */
+export function smartRound<T>(arr: T[], f: (t: T) => number, toNearest: number): [number, T][] {
+  let result: [number, T][] = arr.map((x) => [f(x), x])
+  const targetValue = roundToNearest(sum(result.map(([x]) => x)), toNearest)
+  const allFloored = sum(result.map(([x]) => floorToNearest(x, toNearest)))
+  const roundUpCount = Math.round((targetValue - allFloored) / toNearest)
+  result = sortBy(
+    result,
+    // sort those for which ceil(x) === x at end, as they have to effect on the calculation
+    ([x]) => +(ceilToNearest(x, toNearest) === x),
+    // sort those which are closest to their ceil value first
+    ([x]) => ceilToNearest(x, toNearest) - x,
+  )
+
+  for (let i = 0; i < result.length; i++) {
+    const roundedValue =
+      i < roundUpCount
+        ? ceilToNearest(result[i][0], toNearest)
+        : floorToNearest(result[i][0], toNearest)
+    result[i][0] = roundedValue
+  }
+
+  const smartRoundSum = sum(result.map(([x]) => x))
+  if (roundToNearest(smartRoundSum, toNearest) !== targetValue) {
+    throw new Error(`expected=${targetValue} actual=${smartRoundSum}`)
+  }
+
+  return result
+}
+
 export interface ClarityViewProps {
   showing: Interval
   slices: TimeSlice[]
@@ -117,8 +153,15 @@ function transform({ slices, showing, clarityState }: ClarityViewProps): Clarity
   }
   // round hours
   for (const dayHourss of Object.values(dayMap)) {
-    for (const dayHours of dayHourss) {
-      dayHours.hours = ceilToNearest(dayHours.hours, 0.25)
+    const smartRounded = smartRound(
+      // sort by task first so we have a stable result
+      // if there are multiple tasks with the same time
+      sortBy(dayHourss, 'projectName', 'taskName'),
+      (x) => x.hours,
+      0.25,
+    )
+    for (const [roundedHours, dayHours] of smartRounded) {
+      dayHours.hours = roundedHours
     }
   }
   // group entries with same task (but different comment)
