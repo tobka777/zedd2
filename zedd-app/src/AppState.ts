@@ -566,7 +566,7 @@ export class AppState {
   public trackTime = (
     now = new Date(),
     secondsSinceLastUserInput = remote?.powerMonitor?.getSystemIdleTime() ?? 0,
-    minIdleTimeInMin = 15,
+    minIdleTimeInMin = Math.max(this?.config?.minIdleTimeMin ?? 15, 1),
   ) => {
     const prevLastUserAction = this.lastUserAction
     this.lastUserAction = subSeconds(now, secondsSinceLastUserInput)
