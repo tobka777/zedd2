@@ -109,6 +109,7 @@ export const formatMinutesHHmm = (mins: number) => {
   return ((mins / 60) | 0) + ':' + ('' + (mins % 60)).padStart(2, '0')
 }
 export const formatMinutes = (mins: number) => {
+  if (0 === mins) return '-'
   return (mins / (60 * 8)).toLocaleString('de-DE', {
     minimumFractionDigits: 2,
     maximumFractionDigits: 2,

@@ -6,7 +6,6 @@ import {
   IObservableArray,
   transaction,
   ObservableMap,
-  trace,
 } from 'mobx'
 
 function bagRemove(arr: any[], index: number) {
@@ -69,7 +68,7 @@ export class ObservableGroupMap<G, T> extends ObservableMap<G, IObservableArray<
 
   private checkState() {
     for (const key of this.keys()) {
-      const arr = this.get(key)
+      const arr = this.get(key)!
       for (let i = 0; i < arr!.length; i++) {
         const item = arr[i]
         const info: GrouperItemInfo = item[this.grouperInfoKey]

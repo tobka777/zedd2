@@ -26,7 +26,7 @@ async function genIcon(name: string, svg: (res: number) => React.ReactElement) {
     })
   }
   const icoData = await icoConvert(
-    await Promise.all(ress.map(res => fsp.readFile(`./icons/${name}_${res}.png`))),
+    await Promise.all(ress.map((res) => fsp.readFile(`./icons/${name}_${res}.png`))),
   )
   await fsp.writeFile(`./icons/${name}.ico`, icoData)
 }
@@ -34,14 +34,16 @@ async function genIcon(name: string, svg: (res: number) => React.ReactElement) {
 ;(async () => {
   await fsp.mkdir('icons')
   const NUMBER_OF_SAMPLES = 13
-  await genIcon('paused', res => <ZeddSvgIcon res={res} stopped={true} progress={0} />)
+  await genIcon('paused', (res) => (
+    <ZeddSvgIcon stroke='white' res={res} stopped={true} progress={0} />
+  ))
   for (let i = 0; i < NUMBER_OF_SAMPLES; i++) {
     const progress = i / (NUMBER_OF_SAMPLES - 1)
-    await genIcon('progress' + i, res => (
-      <ZeddSvgIcon res={res} stopped={false} progress={progress} />
+    await genIcon('progress' + i, (res) => (
+      <ZeddSvgIcon stroke='white' res={res} stopped={false} progress={progress} />
     ))
   }
-  await genIcon('app', res => (
-    <ZeddSvgIcon res={res} stopped={false} progress={1 / 4} background='#326da8' />
+  await genIcon('app', (res) => (
+    <ZeddSvgIcon stroke='white' res={res} stopped={false} progress={1 / 4} background='#326da8' />
   ))
 })()

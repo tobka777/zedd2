@@ -84,7 +84,9 @@ const useStyles = makeStyles((theme) => ({
   },
   renderOptionBT: {
     textAlign: 'right',
-    padding: '0px 8px',
+    width: '90px',
+    paddingRight: '16px',
+    flex: '0 0 auto',
     color: theme.palette.text.secondary,
   },
 }))
@@ -199,7 +201,7 @@ export const TaskSelect = observer(
         renderOption={(t: Task) => (
           <>
             <span className={classes.renderOptionBT}>{formatMinutes(getMinutesForTask(t))} BT</span>
-            <span>{'UNDEFINED' === t.name ? '' : t.name}</span>
+            <span>{t.name}</span>
           </>
         )}
       ></Autocomplete>

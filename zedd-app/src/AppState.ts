@@ -213,7 +213,7 @@ export class AppState {
       ),
     ),
   )
-  private slices: IObservableArray<TimeSlice> = observable([])
+  public slices: IObservableArray<TimeSlice> = observable([])
 
   private slicesByTask = new ObservableGroupMap(
     this.slices,
@@ -535,9 +535,15 @@ export class AppState {
 
   public removeSlice(s: TimeSlice) {
     const index = this.slices.indexOf(s)
-    transaction(() => {
-      this.slices[index] = this.slices.pop()!
-    })
+    console.log('removing slice', s, index, this.slices.length)
+    if (index === this.slices.length - 1) {
+      this.slices.length--
+    } else {
+      transaction(() => {
+        this.slices[index] = this.slices.pop()!
+      })
+    }
+    console.log(this.slices.length)
   }
 
   public startInterval() {
@@ -560,6 +566,7 @@ export class AppState {
   public trackTime = (
     now = new Date(),
     secondsSinceLastUserInput = remote?.powerMonitor?.getSystemIdleTime() ?? 0,
+    minIdleTimeInMin = 15,
   ) => {
     const prevLastUserAction = this.lastUserAction
     this.lastUserAction = subSeconds(now, secondsSinceLastUserInput)
@@ -578,7 +585,7 @@ export class AppState {
       }, undefined as TimeSlice | undefined) ?? this.lastTimedSlice
 
     // console.log('lastSlice', strlastSlice)
-    if (differenceInMinutes(now, this.lastUserAction) > 15) {
+    if (differenceInMinutes(now, this.lastUserAction) > minIdleTimeInMin) {
       if (lastSlice) {
         lastSlice.end = startOfNextMinute(this.lastUserAction)
         this.lastTimedSlice = undefined
@@ -587,7 +594,7 @@ export class AppState {
     }
     if (
       isAfter(this.lastUserAction, prevLastUserAction) &&
-      differenceInMinutes(now, prevLastUserAction) > 15
+      differenceInMinutes(now, prevLastUserAction) > minIdleTimeInMin
     ) {
       // console.log('user is back', timeSliceStr(lastSlice))
 

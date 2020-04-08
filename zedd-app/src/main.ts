@@ -87,9 +87,8 @@ const createWindow = () => {
   })
 }
 
-ipcMain.on('user-quit', () => {
+ipcMain.on('user-will-quit', () => {
   userQuit = true
-  app.quit()
 })
 
 // This method will be called when Electron has finished

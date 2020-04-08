@@ -22,6 +22,7 @@ import {
   set as dateSet,
   startOfISOWeek,
   subMinutes,
+  isBefore,
 } from 'date-fns'
 import { last } from 'lodash'
 import groupBy from 'lodash/groupBy'
@@ -171,8 +172,14 @@ const CalendarBase = <T extends Interval>({
           start = minTime
         }
         local.virtualSlice = local.virtualSlice || getVirtualSlice(start, end)
-        local.virtualSlice.start = start
-        local.virtualSlice.end = end
+        // make sure we don't create an invalid slice in between the assignments
+        if (isBefore(start, local.virtualSlice.start)) {
+          local.virtualSlice.start = start
+          local.virtualSlice.end = end
+        } else {
+          local.virtualSlice.end = end
+          local.virtualSlice.start = start
+        }
       } else {
         local.virtualSlice = undefined
       }

@@ -81,7 +81,8 @@ function showNotification(
 }
 
 function quit() {
-  ipcRenderer.send('user-quit')
+  ipcRenderer.send('user-will-quit')
+  app.quit()
 }
 
 function setupAutoUpdater(state: AppState, config: ZeddSettings) {
@@ -94,22 +95,17 @@ function setupAutoUpdater(state: AppState, config: ZeddSettings) {
     () => autoUpdater.checkForUpdates(),
     2 * 60 * 60 * 1000, // every 2 hours
   )
-  const onUpdateDownloaded = (
-    _event: Electron.Event,
-    _releaseNotes: string,
-    releaseName: string,
-    _releaseDate: Date,
-    _updateURL: string,
-  ) => {
-    state.updateAvailable = releaseName
-  }
-  const onError = (error: Error) => state.errors.push(error.message)
-  autoUpdater.on('update-downloaded', onUpdateDownloaded)
-  autoUpdater.on('error', onError)
+
+  autoUpdater.on(
+    'update-downloaded',
+    (_event, _releaseNotes, releaseName, _releaseDate, _updateURL) =>
+      (state.updateAvailable = releaseName),
+  )
+  autoUpdater.on('error', (error: Error) => state.errors.push(error.message))
+  autoUpdater.on('before-quit-for-update', () => ipcRenderer.send('user-will-quit'))
   return () => {
     clearInterval(checkForUpdatesInterval)
-    autoUpdater.off('update-downloaded', onUpdateDownloaded)
-    autoUpdater.off('error', onError)
+    autoUpdater.removeAllListeners()
   }
 }
 
@@ -120,7 +116,7 @@ const getMenuItems = (state: AppState) => [
   },
   { label: 'Edit Settings', click: () => (state.settingsDialogOpen = true) },
 
-  { label: 'Github', click: () => shell.openExternal('https://github.com/NaridaL/zedd') },
+  { label: 'Github', click: () => shell.openExternal('https://github.com/NaridaL/zedd2') },
   { label: 'Open Dev', click: () => getCurrentWindow().webContents.openDevTools() },
   { label: 'Reload Config', click: () => getCurrentWindow().reload() },
   { label: 'Quit', click: () => quit() },

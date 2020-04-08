@@ -5,11 +5,13 @@ export const ZeddSvgIcon = ({
   progress,
   stopped,
   background,
+  stroke = 'currentColor',
 }: {
   res: number
   progress: number
   stopped: boolean
   background?: string
+  stroke: string
 }) => {
   const TAU = 2 * Math.PI
   const strokeWidth = res === 24 ? 2 : res === 16 ? 1.2 : Math.round(res * 0.1)
@@ -18,7 +20,7 @@ export const ZeddSvgIcon = ({
     strokeWidth,
     strokeLinejoin: 'round',
     strokeLinecap: 'round',
-    stroke: 'currentColor',
+    stroke,
   }
   const octRadius = (resHalf - strokeWidth / 2) / Math.cos(TAU / 8 / 2)
   const longHandLength = resHalf - strokeWidth
