@@ -428,5 +428,4 @@ const CalendarBase = <T extends Interval>({
   )
 }
 
-// cast here so generic <T extends Interval> is not lost
-export const Calendar: typeof CalendarBase = observer(CalendarBase) as any
+export const Calendar = observer(CalendarBase)
