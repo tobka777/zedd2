@@ -8,26 +8,39 @@ import {
   ObservableMap,
 } from 'mobx'
 
-function bagRemove(arr: any[], index: number) {
-  if (index >= arr.length) throw new Error()
-
-  console.log('bagRemove', arr.length, arr, index)
-  arr[index] = arr[arr.length - 1]
-  arr.length--
-}
-
 interface GrouperItemInfo {
   groupByValue: any
   reaction: IReactionDisposer
   grouperArrIndex: number
 }
 
+/**
+ * Reactively sorts a base observable array into multiple observable arrays based on the value of a
+ * `groupBy: (item: T) => G` function.
+ *
+ * This observes the individual computed groupBy values and only updates the source and dest arrays
+ * when there is an actual change, so this is far more efficient than, for example
+ * `base.filter(i => groupBy(i) === 'we')`.
+ *
+ * No guarantees are made about the order of items in the grouped arrays.
+ *
+ * @example
+ * const slices = observable([
+ *     { day: "mo", hours: 12 },
+ *     { day: "tu", hours: 2 },
+ * ])
+ * const slicesByDay = new ObservableGroupMap(slices, (slice) => slice.day)
+ * autorun(() => console.log(
+ *     slicesByDay.get("mo")?.length ?? 0,
+ *     slicesByDay.get("we"))) // outputs 1, undefined
+ * slices[0].day = "we" // outputs 0, [{ day: "we", hours: 12 }]
+ */
 export class ObservableGroupMap<G, T> extends ObservableMap<G, IObservableArray<T>> {
   private readonly keyToName: (group: G) => string
 
   private readonly groupBy: (x: T) => G
 
-  private readonly grouperInfoKey: symbol
+  private readonly grouperInfoKey: string
 
   private readonly base: IObservableArray<T>
 
@@ -61,17 +74,17 @@ export class ObservableGroupMap<G, T> extends ObservableMap<G, IObservableArray<
       arr.length--
     } else {
       arr[itemIndex] = arr[arr.length - 1]
-      arr[itemIndex][this.grouperInfoKey].grouperArrIndex = itemIndex
+      ;(arr[itemIndex] as any)[this.grouperInfoKey].grouperArrIndex = itemIndex
       arr.length--
     }
   }
 
   private checkState() {
-    for (const key of this.keys()) {
-      const arr = this.get(key)!
+    for (const key of Array.from(this.keys())) {
+      const arr = this.get(key as any)!
       for (let i = 0; i < arr!.length; i++) {
         const item = arr[i]
-        const info: GrouperItemInfo = item[this.grouperInfoKey]
+        const info: GrouperItemInfo = (item as any)[this.grouperInfoKey]
         if (info.grouperArrIndex != i) {
           throw new Error(info.grouperArrIndex + ' ' + i)
         }
@@ -95,7 +108,7 @@ export class ObservableGroupMap<G, T> extends ObservableMap<G, IObservableArray<
           const grouperItemInfo = (item as any)[this.grouperInfoKey]
           this._removeFromGroupArr(grouperItemInfo.groupByValue, grouperItemInfo.grouperArrIndex)
 
-          const newGroupArr = this._getGroupArr(groupByValue)
+          const newGroupArr = this._getGroupArr(newGroupByValue)
           const newGrouperArrIndex = newGroupArr.length
           newGroupArr.push(item)
           grouperItemInfo.groupByValue = newGroupByValue
@@ -131,7 +144,10 @@ export class ObservableGroupMap<G, T> extends ObservableMap<G, IObservableArray<
     super()
     this.keyToName = keyToName
     this.groupBy = groupBy
-    this.grouperInfoKey = Symbol('grouperInfo' + name)
+    this.grouperInfoKey =
+      'function' == typeof Symbol
+        ? ((Symbol('grouperInfo' + name) as unknown) as string)
+        : '__grouperInfo' + name
     this.base = base
 
     for (let i = 0; i < base.length; i++) {
@@ -170,58 +186,3 @@ export class ObservableGroupMap<G, T> extends ObservableMap<G, IObservableArray<
     }
   }
 }
-
-// type Slice = { day: string; hours: number }
-
-// const base = observable(
-//   [
-//     { day: "mo", hours: 3 },
-//     { day: "mo", hours: 3 },
-//     { day: "tu", hours: 3 },
-//     { day: "we", hours: 3 },
-//   ],
-//   { name: "base" }
-// )
-
-// const slicesByDay: Map<string, Slice[]> = new ObservableGroupMap(
-//   base,
-//   (s) => s.day
-// )
-
-// const dayHours = createTransformer(
-//   (day: string) => {
-//     trace()
-//     return slicesByDay.get(day)!.reduce((a, b) => a + b.hours, 0)
-//   },
-//   { debugNameGenerator: (x) => x + "Hours" }
-// )
-
-// const mapToObj = (map: Map<any, any>) =>
-//   Array.from(map.keys()).reduce(
-//     (r, key) => ((r[key] = slicesByDay.get(key)), r),
-//     {} as any
-//   )
-
-// const dispose = autorun(() => {
-//   trace()
-//   untracked(() => console.log(JSON.stringify(mapToObj(slicesByDay))))
-//   console.log("moHours", dayHours("mo"))
-//   console.log("tuHours", dayHours("tu"))
-// })
-
-// console.log(
-//   "getDependencyTree",
-//   JSON.stringify(getDependencyTree(dispose), null, "    ")
-// )
-
-// console.log(">> add tu 4")
-// base.push({ day: "tu", hours: 4 })
-
-// console.log(">> remove we slice")
-// base.splice(3, 1)
-
-// console.log(">> set first mo slice hours")
-// base[0].hours = 12
-
-// console.log(">> replace tu slice")
-// base[2] = { day: "tu", hours: 4.5 }
