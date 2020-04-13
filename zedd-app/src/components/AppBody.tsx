@@ -259,7 +259,12 @@ export const AppBody = observer(
               </Tooltip>
             </ButtonGroup>
             {state.links.map(([k, link]) => (
-              <Button size='large' variant='contained' onClick={() => shell.openExternal(link)}>
+              <Button
+                size='large'
+                variant='contained'
+                onClick={() => shell.openExternal(link)}
+                key={k}
+              >
                 {k}
               </Button>
             ))}
