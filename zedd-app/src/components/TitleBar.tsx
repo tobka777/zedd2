@@ -7,7 +7,7 @@ import {
   OpenWith as ExpandIcon,
   Remove as ToHoverIcon,
 } from '@material-ui/icons'
-import { remote, BrowserWindow } from 'electron'
+import { remote, BrowserWindow, ipcRenderer } from 'electron'
 import { observer, useLocalStore } from 'mobx-react-lite'
 import * as React from 'react'
 import { useEffect, useState } from 'react'
@@ -117,6 +117,7 @@ export const TitleBar = observer(({ state, getTasksForSearchString, menuItems }:
           // disabled={!state.updateAvailable}
           onClick={() => {
             if (state.updateAvailable) {
+              ipcRenderer.send('user-will-quit')
               autoUpdater.quitAndInstall()
             } else {
               autoUpdater.checkForUpdates()
