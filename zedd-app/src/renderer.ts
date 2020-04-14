@@ -7,6 +7,7 @@ import { autorun, computed } from 'mobx'
 import * as path from 'path'
 import * as React from 'react'
 import * as ReactDOM from 'react-dom'
+import 'win-ca' // use windows root certificates
 
 import { dateFormatString, format, AppState, TimeSlice } from './AppState'
 import { ClarityState } from './ClarityState'

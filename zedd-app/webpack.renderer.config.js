@@ -14,7 +14,7 @@ module.exports = {
     rules,
   },
   externals: [
-    function(context, request, callback) {
+    function (context, request, callback) {
       if (
         [
           'bindings',
@@ -26,6 +26,7 @@ module.exports = {
           'selenium-webdriver/chrome',
           'electron-windows-notifications',
           'zedd-win32',
+          'win-ca',
         ].includes(request) ||
         /^\w:\\.*/.test(request)
       ) {
