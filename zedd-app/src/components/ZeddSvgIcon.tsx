@@ -11,7 +11,7 @@ export const ZeddSvgIcon = ({
   progress: number
   stopped: boolean
   background?: string
-  stroke: string
+  stroke?: string
 }) => {
   const TAU = 2 * Math.PI
   const strokeWidth = res === 24 ? 2 : res === 16 ? 1.2 : Math.round(res * 0.1)
