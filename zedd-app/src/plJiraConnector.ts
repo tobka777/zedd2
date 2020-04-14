@@ -183,7 +183,9 @@ const issueInfoToTask = async (clarityTasks: ClarityTask[], i: any): Promise<Tas
 
 /** Extracts keys matching projects in connected jira and returns issue links from them. */
 export function getLinksFromString(str: string): [string, string][] {
-  const projectKeysRegex = new RegExp(`(?:${(jiraConfig.keys ?? []).join('|')})-\\d+`, 'g')
+  const projectKeysRegex = jiraConfig.keys?.length
+    ? new RegExp(`(?:${jiraConfig.keys.join('|')})-\\d+`, 'g')
+    : /[A-Z]+-\d+/g
   const keys = str.match(projectKeysRegex) ?? []
   return keys.map((k) => [k, jiraConfig.url + '/browse/' + k])
 }
