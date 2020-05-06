@@ -95,4 +95,8 @@ export class ZeddSettings {
 
   @serializable
   public updateServer = 'https://hazel-peach.now.sh'
+
+  @observable
+  @serializable
+  public chromePath: string = ''
 }

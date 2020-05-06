@@ -12,16 +12,18 @@ import {
   FormControlLabel,
   Tooltip,
   Button,
+  IconButton,
 } from '@material-ui/core'
 import { useTheme } from '@material-ui/core/styles'
 import * as React from 'react'
 import { useState, useEffect, useCallback } from 'react'
 import { remote } from 'electron'
+import { MoreHoriz as PickFileIcon } from '@material-ui/icons'
 import { observer } from 'mobx-react-lite'
 import { uniq, debounce } from 'lodash'
 
 import {
-  getCurrentChromeDriverVersion,
+  getChromeDriverVersion,
   getLatestChromeDriverVersion,
   getChromeVersion,
   installChromeDriver,
@@ -32,7 +34,10 @@ import { ZeddSettings } from '../ZeddSettings'
 import { toggle } from '../util'
 import { color } from 'chroma.ts'
 
-const { openExternal } = remote.shell
+const {
+  shell: { openExternal },
+  dialog,
+} = remote
 
 const inExternal = (e: React.MouseEvent<HTMLAnchorElement>) => {
   openExternal(e.currentTarget.href)
@@ -45,18 +50,16 @@ export const SettingsDialog = observer(
     clarityState,
     settings,
     checkCgJira,
+    checkChromePath,
   }: {
     done: () => void
     clarityState: ClarityState
     settings: ZeddSettings
     checkCgJira: (cgJira: ZeddSettings['cgJira']) => Promise<any>
+    checkChromePath: () => Promise<any>
   }) => {
-    const [chromeVersion, setChromeVersion] = useState({} as { error?: any; value?: string })
-    const [installedDriverVersion, setInstalledDriverVersion] = useState(
-      {} as { error?: any; value?: string },
-    )
-    const [latestDriverVersion, setLatestDriverVersion] = useState(
-      {} as { error?: any; value?: string },
+    const [chromeStatus, setChromeStatus] = useState(
+      {} as { error?: any; ok?: true; checking?: true },
     )
     const [cgJiraStatus, setCgJiraStatus] = useState(
       {} as { error?: any; ok?: true; checking?: true },
@@ -64,25 +67,18 @@ export const SettingsDialog = observer(
 
     const theme = useTheme()
 
-    const updateVersions = () => {
-      setChromeVersion({})
-      setInstalledDriverVersion({})
-      setLatestDriverVersion({})
+    const updateChromeStatus = useCallback(() => {
+      setChromeStatus({ checking: true })
+      checkChromePath()
+        .then(() => setChromeStatus({ ok: true }))
+        .catch((error) => setChromeStatus({ error }))
+    }, [setChromeStatus, checkChromePath])
 
-      getChromeVersion()
-        .then((value) => {
-          setChromeVersion({ value })
-          getLatestChromeDriverVersion(value)
-            .then((value) => setLatestDriverVersion({ value }))
-            .catch((error) => setLatestDriverVersion({ error }))
-        })
-        .catch((error) => setChromeVersion({ error }))
-      getCurrentChromeDriverVersion()
-        .then((value) => setInstalledDriverVersion({ value }))
-        .catch((error) => setInstalledDriverVersion({ error }))
-    }
+    const updateChromeStatusDebounced = useCallback(debounce(updateChromeStatus, 1000), [
+      updateChromeStatus,
+    ])
 
-    useEffect(updateVersions, [])
+    useEffect(updateChromeStatus, [])
 
     const checkCgJiraDebounced = useCallback(
       debounce(() => {
@@ -93,12 +89,9 @@ export const SettingsDialog = observer(
             .then(() => setCgJiraStatus({ ok: true }))
             .catch((error) => setCgJiraStatus({ error }))
         }
-      }, 2000),
+      }, 1000),
       [checkCgJira],
     )
-
-    const canInstall =
-      latestDriverVersion.value && latestDriverVersion.value !== installedDriverVersion.value
 
     const projects = uniq([...clarityState.projectNames, ...settings.excludeProjects])
     projects.sort()
@@ -287,76 +280,54 @@ export const SettingsDialog = observer(
             </Grid>
 
             <Grid item xs={4}>
-              <FormLabel>Current Chrome Version</FormLabel>
-              <div style={{ fontSize: 'small' }}>Must be on the PATH.</div>
+              <FormLabel>Chrome Path</FormLabel>
             </Grid>
             <Grid item xs={8} style={{ minHeight: '4em' }}>
-              {chromeVersion.error ? (
-                <span style={{ color: theme.palette.error.main }}>
-                  {'' + chromeVersion.error}{' '}
-                  <a href='https://www.google.com/chrome/' onClick={inExternal}>
-                    Download Google Chrome
-                  </a>
-                </span>
-              ) : chromeVersion.value ? (
-                chromeVersion.value
+              <TextField
+                placeholder='http://example.com/niku/nu'
+                style={{ width: '100%' }}
+                value={settings.chromePath}
+                onChange={(e) => {
+                  settings.chromePath = e.target.value
+                  updateChromeStatusDebounced()
+                }}
+                InputProps={{
+                  endAdornment: (
+                    <InputAdornment position='end'>
+                      <IconButton
+                        aria-label='toggle password visibility'
+                        size='small'
+                        onClick={async () => {
+                          const result = await dialog.showOpenDialog({
+                            defaultPath: settings.chromePath,
+                            filters: [{ name: 'Executable', extensions: ['exe'] }],
+                            properties: ['openFile'],
+                          })
+                          if (result.filePaths[0]) {
+                            settings.chromePath = result.filePaths[0]
+                            updateChromeStatus()
+                          }
+                        }}
+                        edge='end'
+                      >
+                        <PickFileIcon />
+                      </IconButton>
+                    </InputAdornment>
+                  ),
+                }}
+              />
+              {chromeStatus.error ? (
+                <span style={{ color: theme.palette.error.main }}>{'' + chromeStatus.error}</span>
+              ) : chromeStatus.ok ? (
+                <span style={{ color: theme.palette.success.main }}>OK!</span>
               ) : (
                 <CircularProgress size='0.8em' />
               )}
             </Grid>
-
-            <Grid item xs={4}>
-              <FormLabel>Installed Chromedriver Version</FormLabel>
-            </Grid>
-            <Grid item xs={8} style={{ minHeight: '4em' }}>
-              <span>
-                {installedDriverVersion.error ? (
-                  <span style={{ color: theme.palette.error.main }}>
-                    {'' + installedDriverVersion.error}
-                  </span>
-                ) : installedDriverVersion.value ? (
-                  installedDriverVersion.value
-                ) : (
-                  <CircularProgress size='small' />
-                )}
-              </span>
-            </Grid>
-
-            <Grid item xs={4}>
-              <FormLabel>Latest Chromedriver Version</FormLabel>
-            </Grid>
-            <Grid item xs={8} style={{ minHeight: '4em' }}>
-              <span>
-                {latestDriverVersion.error ? (
-                  <span style={{ color: theme.palette.error.main }}>
-                    Could not GET latest chromedriver version. {'' + latestDriverVersion.error}
-                  </span>
-                ) : latestDriverVersion.value ? (
-                  <>
-                    <div>{latestDriverVersion.value}</div>
-                    <div>
-                      {canInstall && (
-                        <>The latest driver version does not match the installed one.</>
-                      )}
-                    </div>
-                  </>
-                ) : (
-                  <CircularProgress size='small' />
-                )}
-              </span>
-            </Grid>
           </Grid>
         </DialogContent>
         <DialogActions>
-          <Button onClick={() => updateVersions()}>Recheck Chrome Versions</Button>
-          <Button
-            disabled={!canInstall}
-            onClick={() => installChromeDriver(latestDriverVersion.value!).then(updateVersions)}
-            variant='contained'
-            color='primary'
-          >
-            Install Chromedriver
-          </Button>
+          <Button onClick={() => updateChromeStatus()}>Recheck Chrome</Button>
           <Button onClick={(_) => done()} color='primary'>
             Done
           </Button>

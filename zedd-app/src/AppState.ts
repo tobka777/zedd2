@@ -704,6 +704,9 @@ export class AppState {
     }
     return undefined
   }
+  public dialogOpen() {
+    return this.settingsDialogOpen || this.renameTaskDialogOpen
+  }
 }
 
 function filterDatesFalloff(dates: Date[], now = new Date()) {

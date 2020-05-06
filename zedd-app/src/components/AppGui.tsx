@@ -25,6 +25,7 @@ export interface AppGuiProps {
   getTasksForSearchString: (s: string) => Promise<Task[]>
   menuItems: { label: string; click: () => void }[]
   checkCgJira: (cg: ZeddSettings['cgJira']) => Promise<any>
+  checkChromePath: () => Promise<any>
 }
 
 const useStyles = makeStyles({
@@ -35,7 +36,14 @@ const useStyles = makeStyles({
 })
 
 export const AppGui = observer(
-  ({ state, clarityState, getTasksForSearchString, checkCgJira, menuItems }: AppGuiProps) => {
+  ({
+    state,
+    clarityState,
+    getTasksForSearchString,
+    checkCgJira,
+    menuItems,
+    checkChromePath,
+  }: AppGuiProps) => {
     const prefersDarkMode = useMediaQuery('(prefers-color-scheme: dark)')
 
     const theme = useMemo(
@@ -82,6 +90,7 @@ export const AppGui = observer(
               state.settingsDialogOpen = false
             }}
             checkCgJira={checkCgJira}
+            checkChromePath={checkChromePath}
             settings={state.config}
             clarityState={clarityState}
           />

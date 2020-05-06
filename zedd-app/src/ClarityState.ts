@@ -19,6 +19,11 @@ export interface ClarityTask extends ZeddClarityTask {
 
 export class ClarityState {
   public nikuLink: string
+
+  public chromeExe: string
+
+  public chromedriverExe: string
+
   @observable
   private _currentlyImportingTasks = false
 
@@ -63,7 +68,11 @@ export class ClarityState {
   public async export(clarityExport: ClarityExportFormat, submitTimesheets: boolean) {
     try {
       this._currentlyImportingTasks = true
-      await fillClarity(this.nikuLink, clarityExport, submitTimesheets, false)
+      await fillClarity(this.nikuLink, clarityExport, submitTimesheets, {
+        headless: false,
+        chromeExe: this.chromeExe,
+        chromedriverExe: this.chromedriverExe,
+      })
     } finally {
       this._currentlyImportingTasks = false
     }
@@ -108,9 +117,12 @@ export class ClarityState {
       this._currentlyImportingTasks = true
       const projectInfos = await getProjectInfo(
         this.nikuLink,
+        {
+          downloadDir: path.join(this.clarityDir, 'dl'),
+          chromeExe: this.chromeExe,
+          chromedriverExe: this.chromedriverExe,
+        },
         excludeProject,
-        undefined,
-        path.join(this.clarityDir, 'dl'),
       )
       return projectInfos.flatMap(({ tasks, name: projectName, intId: projectIntId }) =>
         tasks.map((task) =>

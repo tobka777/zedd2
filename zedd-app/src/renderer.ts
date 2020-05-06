@@ -30,6 +30,13 @@ import {
 } from './util'
 import { ZeddSettings } from './ZeddSettings'
 import { createModelSchema, optional, custom, primitive, serialize, SKIP } from 'serializr'
+import {
+  getNonEnvPathChromePath,
+  getChromeVersion,
+  getLatestChromeDriverVersion,
+  getChromeDriverVersion,
+  installChromeDriver,
+} from './chromeDriverMgmt'
 
 const {
   Tray,
@@ -200,6 +207,43 @@ async function setup() {
     )
   }
 
+  const checkChromePath = async () => {
+    if (!state.config.chromePath) {
+      state.config.chromePath = (await getNonEnvPathChromePath()) ?? ''
+      if (!state.config.chromePath) {
+        throw new Error(
+          'Could not find chrome.exe in standard locations! Is it installed?' +
+            ' https://www.google.com/chrome',
+        )
+      }
+    }
+    if (!(await fileExists(state.config.chromePath))) {
+      throw new Error(
+        `Could not find specified path '${state.config.chromePath}'!` +
+          ' Set to empty to try standard locations.',
+      )
+    }
+    if (state.config.chromePath) {
+      console.log('configured chrome path', state.config.chromePath)
+      const chromeVersion = await getChromeVersion(state.config.chromePath)
+      console.log('current chrome version', chromeVersion)
+      const requiredChromeDriverVersion = await getLatestChromeDriverVersion(chromeVersion)
+      const chromeDriverDir = path.join(app.getPath('appData'), 'chromedriver')
+      await mkdirIfNotExists(chromeDriverDir)
+      const chromeDriverPath = path.join(chromeDriverDir, 'chromedriver.exe')
+      if (
+        !(await fileExists(chromeDriverPath)) ||
+        requiredChromeDriverVersion !== (await getChromeDriverVersion(chromeDriverPath))
+      ) {
+        console.log('chromedriver missing or has wrong version')
+        installChromeDriver(requiredChromeDriverVersion, chromeDriverDir, false)
+      }
+      clarityState.chromeExe = state.config.chromePath
+      clarityState.chromedriverExe = chromeDriverPath
+    }
+  }
+  checkChromePath().catch((error) => state.errors.push('' + error))
+
   const boundsContained = (outer: Rectangle, inner: Rectangle, margin = 0) =>
     outer.x - inner.x <= margin &&
     outer.y - inner.y <= margin &&
@@ -341,6 +385,7 @@ async function setup() {
       () =>
         config.keepHovering &&
         !state.hoverMode &&
+        !state.dialogOpen() &&
         (hoverModeTimer = setTimeout(() => (d('uhm'), (state.hoverMode = true)), 15_000)),
     ],
     ['focus', () => hoverModeTimer && clearTimeout(hoverModeTimer)],
@@ -397,6 +442,7 @@ async function setup() {
         React.createElement(AppGui, {
           state,
           checkCgJira,
+          checkChromePath,
           clarityState,
           menuItems: getMenuItems(state),
           getTasksForSearchString: (s) =>

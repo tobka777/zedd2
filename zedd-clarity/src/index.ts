@@ -55,7 +55,12 @@ function checkNikuUrl(urlToCheck: any) {
   }
 }
 
-async function makeContext(headless: boolean, downloadDir?: string) {
+async function makeContext({
+  headless = false,
+  downloadDir,
+  chromeExe,
+  chromedriverExe,
+}: SeleniumOptions) {
   d('making context headless=' + headless)
   const chromeOptions = new chrome.Options().addArguments('--no-sandbox')
   if (downloadDir) {
@@ -64,11 +69,15 @@ async function makeContext(headless: boolean, downloadDir?: string) {
   }
   d(`download.default_directory="${downloadDir}"`)
 
+  if (chromeExe) {
+    chromeOptions.setChromeBinaryPath(chromeExe)
+  }
   if (headless) {
     chromeOptions.headless()
   }
   const driver = new WebDriverBuilder()
     .setChromeOptions(chromeOptions)
+    .setChromeService(new chrome.ServiceBuilder(chromedriverExe))
     .withCapabilities(Capabilities.chrome())
     .build()
 
@@ -101,11 +110,11 @@ type Context = ReturnType<typeof wrapDriver>
 
 export async function getProjectInfo(
   nikuLink: string,
+  seleniumOptions: SeleniumOptions,
   excludeProject?: (projectName: string) => boolean,
-  headless: boolean = false,
-  downloadDir: string = __dirname + '/downloads',
 ): Promise<Project[]> {
-  return withErrorHandling('getProjectInfo', nikuLink, headless, downloadDir, (ctx) =>
+  const downloadDir = seleniumOptions.downloadDir ?? __dirname + '/downloads'
+  return withErrorHandling('getProjectInfo', nikuLink, { ...seleniumOptions, downloadDir }, (ctx) =>
     getProjectInfoInternal(nikuLink, ctx, downloadDir, excludeProject),
   )
 }
@@ -676,26 +685,31 @@ function d(...x: any) {
   console.log('zedd-clarity', ...x)
 }
 
+export interface SeleniumOptions {
+  headless?: boolean
+  downloadDir?: string
+  chromedriverExe?: string
+  chromeExe?: string
+}
+
 export async function fillClarity(
   nikuLink: string,
   data: ClarityExportFormat,
   submitTimesheets: boolean,
-  headless: boolean = false,
-  downloadDir?: string,
+  seleniumOptions: SeleniumOptions,
 ): Promise<void> {
-  return withErrorHandling('fillClarity', nikuLink, headless, downloadDir, (ctx) =>
+  return withErrorHandling('fillClarity', nikuLink, seleniumOptions, (ctx) =>
     exportToClarity(ctx, data, submitTimesheets, nikuLink),
   )
 }
 export async function withErrorHandling<R>(
   name: string,
   nikuLink: string,
-  headless: boolean,
-  downloadDir: string | undefined,
+  seleniumOptions: SeleniumOptions,
   cb: (ctx: Context) => Promise<R>,
 ): Promise<R> {
   checkNikuUrl(nikuLink)
-  const ctx = await makeContext(headless, downloadDir)
+  const ctx = await makeContext(seleniumOptions)
   try {
     return await cb(ctx)
   } catch (err) {
