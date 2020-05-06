@@ -28,6 +28,10 @@ if (!app.requestSingleInstanceLock()) {
   app.quit()
 }
 
+// Keep a global reference of the window object, if you don't, the window will
+// be closed automatically when the JavaScript object is garbage collected.
+let mainWindow: BrowserWindow | undefined
+
 app.on('second-instance', (_event, _commandLine, _workingDirectory) => {
   // Someone tried to run a second instance, we should focus our window.
   if (mainWindow) {
@@ -36,9 +40,6 @@ app.on('second-instance', (_event, _commandLine, _workingDirectory) => {
   }
 })
 
-// Keep a global reference of the window object, if you don't, the window will
-// be closed automatically when the JavaScript object is garbage collected.
-let mainWindow: BrowserWindow | undefined
 let userQuit: boolean = false
 const createWindow = () => {
   if (global.isDev) {

@@ -24,10 +24,11 @@ import { groupBy, uniqBy, sortBy } from 'lodash'
 
 import { validDate, TimeSlice } from '../AppState'
 import { ClarityState } from '../ClarityState'
-import { ceil, splitIntervalIntoCalendarDays, sum, omap, isoDayStr } from '../util'
+import { splitIntervalIntoCalendarDays, sum, omap, isoDayStr } from '../util'
 
 const roundToNearest = (x: number, toNearest: number) => Math.round(x / toNearest) * toNearest
 const floorToNearest = (x: number, toNearest: number) => Math.floor(x / toNearest) * toNearest
+const ceilToNearest = (x: number, toNearest: number) => Math.ceil(x / toNearest) * toNearest
 
 /**
  * Rounds a bunch of (wrapped) values up or down so that the sum of the rounded values
@@ -90,8 +91,6 @@ const useStyles = makeStyles((theme) => ({
 
 const formatHours = (h: number) =>
   h ? h.toLocaleString('de-DE', { minimumFractionDigits: 2 }) : '-'
-
-export const ceilToNearest = (x: number, nearest: number) => ceil(x / nearest) * nearest
 
 const placeholderClarityTask = {
   projectName: 'UNDEFINED',

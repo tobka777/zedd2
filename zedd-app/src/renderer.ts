@@ -2,7 +2,6 @@ import { parse as dateParse } from 'date-fns'
 import { ipcRenderer, remote, BrowserWindow, MenuItemConstructorOptions, Rectangle } from 'electron'
 // @ts-ignore
 import { ToastNotification } from 'electron-windows-notifications'
-import { promises as fsp } from 'fs'
 import { autorun, computed } from 'mobx'
 import * as path from 'path'
 import * as React from 'react'
@@ -29,7 +28,6 @@ import {
   floor,
 } from './util'
 import { ZeddSettings } from './ZeddSettings'
-import { createModelSchema, optional, custom, primitive, serialize, SKIP } from 'serializr'
 import {
   getNonEnvPathChromePath,
   getChromeVersion,
@@ -94,7 +92,10 @@ function quit() {
 }
 
 function setupAutoUpdater(state: AppState, config: ZeddSettings) {
-  if (global.isDev) return () => {}
+  if (global.isDev)
+    return () => {
+      /* do nothing */
+    }
 
   autoUpdater.setFeedURL({
     url: `${config.updateServer}/update/${process.platform}/${app.getVersion()}`,
@@ -158,9 +159,6 @@ async function setup() {
     console.error('Could not init JiraClient')
     console.error(e)
   }
-  getTasksFromAssignedJiraIssues(clarityState.tasks)
-    .then((e) => (state.assignedIssueTasks = e.map((t) => state.normalizeTask(t))))
-    .catch((err) => state.errors.push(err.message))
 
   const currentWindowEvents: [string, Function][] = []
   let state: AppState
@@ -206,6 +204,10 @@ async function setup() {
       },
     )
   }
+
+  getTasksFromAssignedJiraIssues(clarityState.tasks)
+    .then((e) => (state.assignedIssueTasks = e.map((t) => state.normalizeTask(t))))
+    .catch((err) => state.errors.push(err.message))
 
   const checkChromePath = async () => {
     if (!state.config.chromePath) {
@@ -264,7 +266,7 @@ async function setup() {
 
   currentWindowEvents.push([
     'close',
-    (e: Electron.Event) => {
+    (_e: Electron.Event) => {
       if (config.keepHovering) {
         state.hoverMode = true
       } else {

@@ -15,7 +15,6 @@ import {
   isSameDay,
   isValid,
   isWithinInterval,
-  lastDayOfISOWeek,
   max as dateMax,
   min as dateMin,
   roundToNearestMinutes,
@@ -24,7 +23,6 @@ import {
   subMinutes,
   isBefore,
 } from 'date-fns'
-import { last } from 'lodash'
 import groupBy from 'lodash/groupBy'
 import { observer, useLocalStore } from 'mobx-react-lite'
 import * as React from 'react'
@@ -133,7 +131,7 @@ const CalendarBase = <T extends Interval>({
         local.virtualSlice = undefined
       }
     },
-    [onSliceAdd],
+    [onSliceAdd, local],
   )
 
   const viewportXYToTime = useCallback(
@@ -152,7 +150,7 @@ const CalendarBase = <T extends Interval>({
       }
       return undefined
     },
-    [showing, startHour],
+    [showing, startHour, timeBlockDivs],
   )
 
   const hoursBlockMouseMove = useCallback(
@@ -184,7 +182,7 @@ const CalendarBase = <T extends Interval>({
         local.virtualSlice = undefined
       }
     },
-    [viewportXYToTime],
+    [slices, viewportXYToTime, getVirtualSlice, local],
   )
 
   const onSplit = useCallback(
@@ -192,7 +190,7 @@ const CalendarBase = <T extends Interval>({
       const splitDate = viewportXYToTime(e.clientX, e.clientY)
       if (splitDate) splitBlock(split, roundToNearestMinutes(splitDate, { nearestTo: 15 }))
     },
-    [splitBlock],
+    [splitBlock, viewportXYToTime],
   )
 
   const dragOngoing = useCallback(
@@ -209,14 +207,14 @@ const CalendarBase = <T extends Interval>({
         e.preventDefault()
       }
     },
-    [viewportXYToTime],
+    [viewportXYToTime, local, onSliceStartChange, onSliceEndChange],
   )
   const dragStop = useCallback(() => {
     local.currentlyDragging.length = 0
     local.fixedShowInterval = undefined
     window.removeEventListener('mouseup', dragStop)
     window.removeEventListener('mousemove', dragOngoing)
-  }, [dragOngoing])
+  }, [dragOngoing, local])
   useEffect(() => {
     window.addEventListener('mousemove', dragOngoing)
     return () => window.removeEventListener('mousemove', dragOngoing)
@@ -241,12 +239,12 @@ const CalendarBase = <T extends Interval>({
 
       e.preventDefault()
     },
-    [dragOngoing, dragStop, startHour],
+    [dragOngoing, dragStop, startHour, local, showing, slices],
   )
 
   const hoursBlockMouseLeave = useCallback(
     (_: React.MouseEvent) => (local.virtualSlice = undefined),
-    [],
+    [local],
   )
 
   const endHour = 24
@@ -270,11 +268,11 @@ const CalendarBase = <T extends Interval>({
       {/* Header with year / week */}
       {Object.keys(daysByCalendarWeeks).map((startOfISOWeekStr) => {
         const firstDay = +startOfISOWeekStr
-        const _includesStartOfWeek = isSameDay(daysByCalendarWeeks[startOfISOWeekStr][0], firstDay)
-        const _includesEndOfWeek = isSameDay(
-          last(daysByCalendarWeeks[startOfISOWeekStr])!,
-          lastDayOfISOWeek(firstDay),
-        )
+        // const _includesStartOfWeek = isSameDay(daysByCalendarWeeks[startOfISOWeekStr][0], firstDay)
+        // const _includesEndOfWeek = isSameDay(
+        //   last(daysByCalendarWeeks[startOfISOWeekStr])!,
+        //   lastDayOfISOWeek(firstDay),
+        // )
         return (
           <div
             key={'header-week-' + startOfISOWeekStr}

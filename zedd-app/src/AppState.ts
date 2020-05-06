@@ -2,7 +2,6 @@ import * as assert from 'assert'
 import {
   addMinutes,
   areIntervalsOverlapping,
-  compareAsc,
   compareDesc,
   differenceInDays,
   differenceInHours,
@@ -27,8 +26,8 @@ import {
 } from 'date-fns'
 import { remote } from 'electron'
 import { promises as fsp } from 'fs'
-import { sum, uniq } from 'lodash'
-import { computed, observable, transaction, intercept, trace } from 'mobx'
+import { sum } from 'lodash'
+import { computed, observable, transaction, intercept } from 'mobx'
 import type { IObservableArray } from 'mobx'
 import { createTransformer } from 'mobx-utils'
 import * as path from 'path'
@@ -39,7 +38,6 @@ import {
   identifier,
   list,
   object,
-  raw,
   reference,
   serializable,
   serialize,
@@ -59,12 +57,34 @@ import {
   uniqCustom,
   FILE_DATE_FORMAT,
   readFilesWithDate,
-  isoDayStr,
 } from './util'
 import { ZeddSettings } from './ZeddSettings'
 import { ObservableGroupMap } from './ObservableGroupMap'
 
 export const MIN_GAP_TIME_MIN = 5
+
+function filterDatesFalloff(dates: Date[], now = new Date()) {
+  dates.sort(compareDesc)
+  for (let i = 1; i < dates.length; i++) {
+    const prev = dates[i - 1]
+    const current = dates[i]
+    let keep
+    if (differenceInHours(now, current) < 1) {
+      // keep everything
+      keep = true
+    } else if (differenceInDays(now, current) < 1) {
+      // keep one per hour
+      keep = prev.getHours() !== current.getHours()
+    } else {
+      // keep one per day
+      keep = +startOfDay(prev) !== +startOfDay(current)
+    }
+    if (!keep) {
+      dates.splice(i, 1)
+      i--
+    }
+  }
+}
 
 export class Task {
   @serializable(identifier())
@@ -706,28 +726,5 @@ export class AppState {
   }
   public dialogOpen() {
     return this.settingsDialogOpen || this.renameTaskDialogOpen
-  }
-}
-
-function filterDatesFalloff(dates: Date[], now = new Date()) {
-  dates.sort(compareDesc)
-  for (let i = 1; i < dates.length; i++) {
-    const prev = dates[i - 1]
-    const current = dates[i]
-    let keep
-    if (differenceInHours(now, current) < 1) {
-      // keep everything
-      keep = true
-    } else if (differenceInDays(now, current) < 1) {
-      // keep one per hour
-      keep = prev.getHours() !== current.getHours()
-    } else {
-      // keep one per day
-      keep = +startOfDay(prev) !== +startOfDay(current)
-    }
-    if (!keep) {
-      dates.splice(i, 1)
-      i--
-    }
   }
 }

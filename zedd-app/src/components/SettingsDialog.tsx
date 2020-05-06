@@ -22,24 +22,17 @@ import { MoreHoriz as PickFileIcon } from '@material-ui/icons'
 import { observer } from 'mobx-react-lite'
 import { uniq, debounce } from 'lodash'
 
-import {
-  getChromeDriverVersion,
-  getLatestChromeDriverVersion,
-  getChromeVersion,
-  installChromeDriver,
-} from '../chromeDriverMgmt'
 import { ClarityTaskSelect } from './ClarityTaskSelect'
 import { ClarityState } from '../ClarityState'
 import { ZeddSettings } from '../ZeddSettings'
 import { toggle } from '../util'
-import { color } from 'chroma.ts'
 
 const {
   shell: { openExternal },
   dialog,
 } = remote
 
-const inExternal = (e: React.MouseEvent<HTMLAnchorElement>) => {
+const _inExternal = (e: React.MouseEvent<HTMLAnchorElement>) => {
   openExternal(e.currentTarget.href)
   e.preventDefault()
 }
@@ -114,6 +107,7 @@ export const SettingsDialog = observer(
             <Grid item xs={8}>
               {['Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa', 'Su'].map((d, di) => (
                 <TextField
+                  key={d}
                   placeholder={d}
                   size='small'
                   style={{ width: '3em' }}
@@ -213,6 +207,7 @@ export const SettingsDialog = observer(
             <Grid item xs={8}>
               {projects.map((x) => (
                 <FormControlLabel
+                  key={x}
                   style={{ display: 'block' }}
                   control={
                     <Checkbox

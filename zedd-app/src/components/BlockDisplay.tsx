@@ -34,7 +34,7 @@ export const BlockDisplay = observer(
         if (e.ctrlKey && onSplit) onSplit(slice, e)
         if (1 === e.button) onContextMenu(e, slice)
       },
-      [slice, onSplit],
+      [slice, onSplit, onContextMenu],
     )
     const startHandleHandler = useCallback((e: React.MouseEvent) => startDrag!(slice, e, 'start'), [
       startDrag,

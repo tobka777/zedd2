@@ -14,7 +14,7 @@ export const ZeddSvgIcon = ({
   stroke?: string
 }) => {
   const TAU = 2 * Math.PI
-  const strokeWidth = res === 24 ? 2 : res === 16 ? 1.2 : Math.round(res * 0.1)
+  const strokeWidth = 24 === res ? 2 : 16 === res ? 1.2 : Math.round(res * 0.1)
   const resHalf = res / 2
   const strokeProps: React.SVGAttributes<{}> = {
     strokeWidth,

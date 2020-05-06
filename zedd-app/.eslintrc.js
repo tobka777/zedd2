@@ -2,6 +2,9 @@ module.exports = {
   root: true,
   parser: '@typescript-eslint/parser',
   plugins: ['@typescript-eslint', 'react-hooks'],
+  settings: {
+    react: { version: "detect" }
+  },
   extends: [
     'eslint:recommended',
     'plugin:@typescript-eslint/eslint-recommended',
@@ -12,12 +15,16 @@ module.exports = {
   rules: {
     'yoda': ['warn', 'always', { "onlyEquality": true }],
     'react-hooks/rules-of-hooks': 'error',
+    'react/no-unescaped-entities': 'off',
     'react-hooks/exhaustive-deps': 'warn',
     '@typescript-eslint/explicit-function-return-type': 'off',
     '@typescript-eslint/no-non-null-assertion': 'off',
+    '@typescript-eslint/no-explicit-any': 'off',
+    '@typescript-eslint/ban-ts-ignore': 'off',
+    'no-extra-semi': 'off',
     '@typescript-eslint/no-inferrable-types': 'off',
     'eqeqeq': 'error',
-    '@typescript-eslint/no-unused-vars': ['warn', { 'varsIgnorePattern': '^_' }],
+    '@typescript-eslint/no-unused-vars': ['off'],
     'no-constant-condition': ['warn', { checkLoops: false }]
   },
 }

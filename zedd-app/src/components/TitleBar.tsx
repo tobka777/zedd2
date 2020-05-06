@@ -4,14 +4,12 @@ import {
   PlayArrow as PlayArrowIcon,
   Stop as StopIcon,
   Menu as MenuIcon,
-  OpenWith as ExpandIcon,
   Remove as ToHoverIcon,
 } from '@material-ui/icons'
 import { remote, BrowserWindow, ipcRenderer } from 'electron'
 import { observer, useLocalStore } from 'mobx-react-lite'
 import * as React from 'react'
 import { useEffect, useState } from 'react'
-import { round } from 'lodash'
 
 import { AppState, Task } from '../AppState'
 import { TaskSelect } from './TaskSelect'
@@ -25,12 +23,6 @@ interface TitleBarProps {
   getTasksForSearchString: (s: string) => Promise<Task[]>
   menuItems: { label: string; click: () => void }[]
 }
-
-const useStyles = makeStyles({
-  input: {
-    color: 'inherit',
-  },
-})
 
 const toggleWindowMaximized = (bw: BrowserWindow) =>
   bw.isMaximized() ? bw.unmaximize() : bw.maximize()

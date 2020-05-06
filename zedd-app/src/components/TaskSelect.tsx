@@ -67,8 +67,6 @@ function cancellingPrevious<T, F extends (...args: any[]) => Promise<T>>(
   }) as any
 }
 
-const useDebouncedEffect = () => {}
-
 const useStyles = makeStyles((theme) => ({
   listbox: { maxHeight: 'calc(max(300px, 80vh))' },
   inputRoot: { color: 'inherit' },

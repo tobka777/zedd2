@@ -6,7 +6,6 @@ import * as request from 'request'
 import { Task } from './AppState'
 import { ClarityTask, ClarityState } from './ClarityState'
 import { ZeddSettings } from './ZeddSettings'
-import { config } from 'process'
 import { isEqual } from 'lodash'
 
 // Initialize
@@ -14,6 +13,9 @@ const jar = request.jar()
 let jiraConfig: ZeddSettings['cgJira']
 let jira: JiraClient
 let saveSettings: () => void
+
+let lastJiraCall: Date | undefined = undefined
+let clarityState: ClarityState
 
 export function initJiraClient(
   jc: ZeddSettings['cgJira'],
@@ -37,9 +39,6 @@ export function initJiraClient(
   })
 }
 
-let lastJiraCall: Date | undefined = undefined
-let clarityState: ClarityState
-
 const externalJiraField = 'customfield_10216'
 const clarityTaskField = 'customfield_10301'
 
@@ -48,18 +47,6 @@ const jiraConnectorErrorToMessage = (x: any) => {
   const { body, request } = JSON.parse(x)
   throw new Error(request.method + ' ' + request.uri.href + ' returned ' + body)
 }
-
-const updateJiraProjectKeys = () =>
-  callWithJsessionCookie(async () => {
-    const projects = await jira.project.getAllProjects()
-    console.warn(projects)
-    const keys = projects.map((p: { key: string }) => p.key)
-    if (!isEqual(keys, jiraConfig.keys)) {
-      console.log('retrieved project keys: ', keys)
-      jiraConfig.keys = keys
-      saveSettings()
-    }
-  })
 
 export const checkCgJira = (config: ZeddSettings['cgJira']) => {
   return new Promise((resolve, reject) =>
@@ -106,34 +93,17 @@ const callWithJsessionCookie = async <T>(cb: () => Promise<T>) => {
   return cb()
 }
 
-export const getTasksFromAssignedJiraIssues = (clarityTasks: ClarityTask[]): Promise<Task[]> =>
+const updateJiraProjectKeys = () =>
   callWithJsessionCookie(async () => {
-    const result = await jira.search
-      .search({
-        jql: jiraConfig.currentIssuesJql,
-      })
-      .catch(jiraConnectorErrorToMessage)
-    console.log(result)
-
-    await updateJiraProjectKeys()
-
-    return Promise.all(result.issues.map((i) => issueInfoToTask(clarityTasks, i)))
+    const projects = await jira.project.getAllProjects()
+    console.warn(projects)
+    const keys = projects.map((p: { key: string }) => p.key)
+    if (!isEqual(keys, jiraConfig.keys)) {
+      console.log('retrieved project keys: ', keys)
+      jiraConfig.keys = keys
+      saveSettings()
+    }
   })
-
-export const getTasksForSearchString = async (s: string): Promise<Task[]> =>
-  callWithJsessionCookie(async () => {
-    const sClean = s.trim().replace('"', '\\\\"')
-    const orKeyMatch = sClean.match(/^[a-z]{1,6}-\d+$/i) ? ` OR key = "${sClean}"` : ''
-    const jql = `(text ~ "${sClean}*"${orKeyMatch}) AND resolution = Unresolved ORDER BY updated DESC`
-    console.log('searching ' + jql)
-    const result = await jira.search
-      .search({
-        jql,
-      })
-      .catch(jiraConnectorErrorToMessage)
-    return Promise.all(result.issues.map((i) => issueInfoToTask(clarityState.tasks, i)))
-  })
-
 const issueInfoToTask = async (clarityTasks: ClarityTask[], i: any): Promise<Task> => {
   if (i.fields.parent) {
     const result = await callWithJsessionCookie(() =>
@@ -180,6 +150,34 @@ const issueInfoToTask = async (clarityTasks: ClarityTask[], i: any): Promise<Tas
     clarityTaskId,
   )
 }
+
+export const getTasksFromAssignedJiraIssues = (clarityTasks: ClarityTask[]): Promise<Task[]> =>
+  callWithJsessionCookie(async () => {
+    const result = await jira.search
+      .search({
+        jql: jiraConfig.currentIssuesJql,
+      })
+      .catch(jiraConnectorErrorToMessage)
+    console.log(result)
+
+    await updateJiraProjectKeys()
+
+    return Promise.all(result.issues.map((i) => issueInfoToTask(clarityTasks, i)))
+  })
+
+export const getTasksForSearchString = async (s: string): Promise<Task[]> =>
+  callWithJsessionCookie(async () => {
+    const sClean = s.trim().replace('"', '\\\\"')
+    const orKeyMatch = sClean.match(/^[a-z]{1,6}-\d+$/i) ? ` OR key = "${sClean}"` : ''
+    const jql = `(text ~ "${sClean}*"${orKeyMatch}) AND resolution = Unresolved ORDER BY updated DESC`
+    console.log('searching ' + jql)
+    const result = await jira.search
+      .search({
+        jql,
+      })
+      .catch(jiraConnectorErrorToMessage)
+    return Promise.all(result.issues.map((i) => issueInfoToTask(clarityState.tasks, i)))
+  })
 
 /** Extracts keys matching projects in connected jira and returns issue links from them. */
 export function getLinksFromString(str: string): [string, string][] {

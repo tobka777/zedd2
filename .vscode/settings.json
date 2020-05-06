@@ -10,5 +10,9 @@
     "TS_NODE_COMPILER_OPTIONS": "{\"module\":\"commonjs\"}"
   },
   "eslint.nodePath": "zedd-app/node_modules",
-  "eslint.alwaysShowStatus": true
+  "eslint.alwaysShowStatus": true,
+  "eslint.workingDirectories": [
+    "./zedd-app",
+    "./zedd-clarity"
+  ]
 }
