@@ -105,15 +105,17 @@ export function splitIntervalIntoCalendarDays(interval: Interval): Interval[] {
 }
 export const sum = (nums: number[]) => nums.reduce((a, b) => a + b, 0)
 
-export const formatMinutesHHmm = (mins: number) => {
-  return ((mins / 60) | 0) + ':' + ('' + (mins % 60)).padStart(2, '0')
+export const formatHoursHHmm = (hours: number) => {
+  return (hours | 0) + ':' + ('' + (((hours % 1) * 60) | 0)).padStart(2, '0')
 }
-export const formatMinutes = (mins: number) => {
-  if (0 === mins) return '-'
-  return (mins / (60 * 8)).toLocaleString('de-DE', {
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 2,
-  })
+export const formatHoursBT = (hours: number) => {
+  if (0 === hours) return '-'
+  return (
+    (hours / 8).toLocaleString('de-DE', {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
+    }) + '\xa0BT'
+  ) // \xa0 = NBSP
 }
 
 export const isoWeekInterval = (d: Date | number) => ({

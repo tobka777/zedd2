@@ -9,7 +9,6 @@ import * as React from 'react'
 
 import { useCallback, useState, useRef, useEffect, RefObject } from 'react'
 import { Task } from '../AppState'
-import { formatMinutes } from '../util'
 
 const { getCurrentWindow } = remote
 
@@ -22,7 +21,7 @@ export type TaskSelectProps = {
   handleError: (err: Error) => void
   textFieldStyle?: React.CSSProperties
   hoverMode?: boolean
-  getMinutesForTask: (t: Task) => number
+  getHoursForTask: (t: Task) => string
 } & Omit<TextFieldProps, 'value' | 'onChange' | 'variant'>
 
 type CancellablePromise<T> = Promise<T> & { cancelled: boolean; cancel(): void }
@@ -132,7 +131,7 @@ export const TaskSelect = observer(
     getTasksForSearchString,
     value,
     handleError,
-    getMinutesForTask,
+    getHoursForTask,
     hoverMode = false,
     ...textFieldProps
   }: TaskSelectProps) => {
@@ -198,7 +197,7 @@ export const TaskSelect = observer(
         )}
         renderOption={(t: Task) => (
           <>
-            <span className={classes.renderOptionBT}>{formatMinutes(getMinutesForTask(t))} BT</span>
+            <span className={classes.renderOptionBT}>{getHoursForTask(t)}</span>
             <span>{t.name}</span>
           </>
         )}

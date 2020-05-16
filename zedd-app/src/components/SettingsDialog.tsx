@@ -13,6 +13,7 @@ import {
   Tooltip,
   Button,
   IconButton,
+  Switch,
 } from '@material-ui/core'
 import { useTheme } from '@material-ui/core/styles'
 import * as React from 'react'
@@ -153,6 +154,7 @@ export const SettingsDialog = observer(
                 inputProps={{ min: 1, max: 60, step: 1 }}
               />
             </Grid>
+
             <Grid item xs={4}>
               <FormLabel>Keep Always On Top</FormLabel>
               <div style={{ fontSize: 'small' }}>
@@ -165,6 +167,19 @@ export const SettingsDialog = observer(
                 onChange={(_, checked) => (settings.keepHovering = !!checked)}
               />
             </Grid>
+
+            <Grid item xs={4}>
+              <FormLabel>Time Format</FormLabel>
+            </Grid>
+            <Grid item xs={8} component={'label'}>
+              BT
+              <Switch
+                checked={'hours' === settings.timeFormat}
+                onChange={(_, checked) => (settings.timeFormat = checked ? 'hours' : 'bt')}
+              />
+              Hours:Minutes
+            </Grid>
+
             <Grid item xs={4}>
               <FormLabel>Clarity URL</FormLabel>
             </Grid>

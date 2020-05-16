@@ -99,4 +99,8 @@ export class ZeddSettings {
   @observable
   @serializable
   public chromePath: string = ''
+
+  @observable
+  @serializable
+  public timeFormat: 'hours' | 'bt' = 'hours'
 }

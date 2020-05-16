@@ -14,7 +14,6 @@ import { useEffect, useState } from 'react'
 import { AppState, Task } from '../AppState'
 import { TaskSelect } from './TaskSelect'
 import { ZeddSvgIcon } from './ZeddSvgIcon'
-import { formatMinutes } from '../util'
 
 const { getCurrentWindow, app, autoUpdater } = remote
 
@@ -130,7 +129,7 @@ export const TitleBar = observer(({ state, getTasksForSearchString, menuItems }:
       </Button>
       {/* {state.lastAction} */}
       <div style={{ fontSize: 'large', margin: theme.spacing(0, 1) }}>
-        {formatMinutes(state.getTaskMinutes(state.currentTask))}&nbsp;BT
+        {state.formatHours(state.getTaskHours(state.currentTask))}
       </div>
       <TaskSelect
         tasks={state.tasks}
@@ -142,7 +141,7 @@ export const TitleBar = observer(({ state, getTasksForSearchString, menuItems }:
         // inputProps={{ classes: classes.input }}
         handleError={(err) => state.errors.push(err.message)}
         hoverMode={state.hoverMode}
-        getMinutesForTask={(t) => state.getTaskMinutes(t)}
+        getHoursForTask={(t) => state.formatHours(state.getTaskHours(t))}
       />
       {state.hoverMode && (
         <Button

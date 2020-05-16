@@ -57,6 +57,8 @@ import {
   uniqCustom,
   FILE_DATE_FORMAT,
   readFilesWithDate,
+  formatHoursBT,
+  formatHoursHHmm,
 } from './util'
 import { ZeddSettings } from './ZeddSettings'
 import { ObservableGroupMap } from './ObservableGroupMap'
@@ -464,18 +466,20 @@ export class AppState {
     this.timingInProgess = !this.timingInProgess
   }
 
-  public getDayWorkedMinutes(day: Date): number {
-    return sum(
-      this.slices
-        .filter((s) => isSameDay(s.start, day))
-        .map((s) => differenceInMinutes(s.end, s.start)),
+  public getDayWorkedHours(day: Date): number {
+    return (
+      sum(
+        this.slices
+          .filter((s) => isSameDay(s.start, day))
+          .map((s) => differenceInMinutes(s.end, s.start)),
+      ) / 60
     )
   }
 
   public getDayProgress(day: Date): number {
-    const dayMinutes = this.getDayWorkedMinutes(day)
-    const dayShouldWorkMinutes = (this.config.workmask[getISODay(day) - 1] || 0) * 60
-    return 0 === dayShouldWorkMinutes ? 1 : dayMinutes / dayShouldWorkMinutes
+    const dayHours = this.getDayWorkedHours(day)
+    const dayShouldWorkHours = this.config.workmask[getISODay(day) - 1] || 0
+    return 0 === dayShouldWorkHours ? 1 : dayHours / dayShouldWorkHours
   }
 
   public getUndefinedTask(): Task {
@@ -493,9 +497,9 @@ export class AppState {
     return uniqCustom([...this.getMostRecentTasks(7), ...this.assignedIssueTasks], Task.same)
   }
 
-  public getTaskMinutes = createTransformer(
+  public getTaskHours = createTransformer(
     (task: Task) =>
-      sum(this.slicesByTask.get(task)?.map((s) => differenceInMinutes(s.end, s.start))),
+      (sum(this.slicesByTask.get(task)?.map((s) => differenceInMinutes(s.end, s.start))) ?? 0) / 60,
     { debugNameGenerator: (t) => `getTaskMinutes${t?.name}` },
   )
 
@@ -731,4 +735,7 @@ export class AppState {
   public calcTargetHours(interval: Interval) {
     return sum(eachDayOfInterval(interval).map((day) => this.config.workmask[getDay(day) - 1]))
   }
+
+  public formatHours = (hours: number): string =>
+    'bt' === this.config.timeFormat ? formatHoursBT(hours) : formatHoursHHmm(hours)
 }

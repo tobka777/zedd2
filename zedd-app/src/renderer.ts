@@ -20,13 +20,7 @@ import {
   getLinksFromString,
 } from './plJiraConnector'
 import toastTemplate from './toast-template.xml'
-import {
-  fileExists,
-  formatMinutes as formatMinutesBT,
-  formatMinutesHHmm,
-  mkdirIfNotExists,
-  floor,
-} from './util'
+import { fileExists, formatHoursBT, formatHoursHHmm, mkdirIfNotExists, floor } from './util'
 import { ZeddSettings } from './ZeddSettings'
 import {
   getNonEnvPathChromePath,
@@ -367,14 +361,13 @@ async function setup() {
     currentWindow.setIcon(currentIconImage.get())
   })
   const cleanupTrayTooltipAutorun = autorun(() => {
-    const workedTime = formatMinutesHHmm(state.getDayWorkedMinutes(new Date()))
+    const workedTime = formatHoursHHmm(state.getDayWorkedHours(new Date()))
     const timingInfo =
       state.timingInProgess && state.currentTask
         ? '▶️ Currently Timing: ' +
           state.currentTask.name +
           ' ' +
-          formatMinutesBT(state.getTaskMinutes(state.currentTask)) +
-          'BT'
+          formatHoursBT(state.getTaskHours(state.currentTask))
         : '■ Not Timing'
     tray.setToolTip(workedTime + ' ' + timingInfo)
     document.title = workedTime + ' ' + timingInfo

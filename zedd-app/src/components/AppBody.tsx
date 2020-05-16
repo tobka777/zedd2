@@ -57,9 +57,8 @@ export interface AppBodyProps {
 
 export const AppBody = observer(
   ({ state, clarityState, getTasksForSearchString, display }: AppBodyProps) => {
-    const [anchorPosition, setAnchorPosition] = useState(undefined as undefined | PopoverPosition)
+    const [_anchorPosition, setAnchorPosition] = useState(undefined as undefined | PopoverPosition)
 
-    const theme = useTheme()
     const classes = useStyles()
 
     // const onBlockClick = useCallback((e: React.MouseEvent, slice: TimeSlice) => {

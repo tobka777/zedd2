@@ -80,7 +80,7 @@ export const TaskEditor = observer(
             style={{ flex: '1 1 auto', width: '100%' }}
             getTasksForSearchString={getTasksForSearchString}
             handleError={(err) => state.errors.push(err.message)}
-            getMinutesForTask={(t) => state.getTaskMinutes(t)}
+            getHoursForTask={(t) => state.formatHours(state.getTaskHours(t))}
           />
         </Grid>
         <Grid item xs={2} lg={1}>
