@@ -725,6 +725,10 @@ export class AppState {
     return undefined
   }
   public dialogOpen() {
-    return this.settingsDialogOpen || this.renameTaskDialogOpen
+    return this.settingsDialogOpen || this.renameTaskDialogOpen || this.changingSliceTask
+  }
+
+  public calcTargetHours(interval: Interval) {
+    return sum(eachDayOfInterval(interval).map((day) => this.config.workmask[getDay(day) - 1]))
   }
 }

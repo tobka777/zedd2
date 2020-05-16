@@ -223,7 +223,10 @@ export const SettingsDialog = observer(
 
             <Grid item xs={4}>
               <FormLabel>PL JIRA</FormLabel>
-              <div style={{ fontSize: 'small' }}>Leave blank if not relevant.</div>
+              <div style={{ fontSize: 'small' }}>
+                Leave blank if not relevant. If necessary, add required root certificates to the
+                windows root certificate store.
+              </div>
             </Grid>
             <Grid item xs={8}>
               <TextField

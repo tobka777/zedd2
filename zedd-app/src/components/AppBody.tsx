@@ -319,6 +319,7 @@ export const AppBody = observer(
             submitTimesheets={state.submitTimesheets}
             onChangeSubmitTimesheets={(x) => (state.submitTimesheets = x)}
             errorHandler={(e) => state.errors.push(e.message)}
+            showingTargetHours={state.calcTargetHours(state.showing)}
           />
         </ErrorBoundary>
       </div>

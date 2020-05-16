@@ -65,6 +65,7 @@ export function smartRound<T>(arr: T[], f: (t: T) => number, toNearest: number):
 
 export interface ClarityViewProps {
   showing: Interval
+  showingTargetHours: number
   slices: TimeSlice[]
   clarityState: ClarityState
   submitTimesheets: boolean
@@ -183,7 +184,14 @@ function transform({ slices, showing, clarityState }: ClarityViewProps): Clarity
 }
 
 export const ClarityView = observer((props: ClarityViewProps) => {
-  const { showing, submitTimesheets, onChangeSubmitTimesheets, errorHandler, clarityState } = props
+  const {
+    showing,
+    submitTimesheets,
+    onChangeSubmitTimesheets,
+    errorHandler,
+    clarityState,
+    showingTargetHours,
+  } = props
   const days = eachDayOfInterval(showing)
   const clarityExport = transform(props)
   const allWorkEntries = Object.values(clarityExport).flatMap((x) => x)
@@ -195,6 +203,9 @@ export const ClarityView = observer((props: ClarityViewProps) => {
   )
   const theme = useTheme()
   const classes = useStyles(props)
+
+  const showingTotal = sum(allWorkEntries.map((we) => we.hours))
+  const showingDiffHours = showingTotal - showingTargetHours
 
   return (
     <Card>
@@ -261,7 +272,15 @@ export const ClarityView = observer((props: ClarityViewProps) => {
                 {formatHours(sum(clarityExport[isoDayStr(d)]?.map((we) => we.hours) ?? []))}
               </td>
             ))}
-            <td className='numberCell'>{formatHours(sum(allWorkEntries.map((we) => we.hours)))}</td>
+            <td
+              className='numberCell'
+              title={` - ${formatHours(showingTargetHours)} (target) = ${
+                showingDiffHours < 0 ? '' : '+'
+              }${formatHours(showingDiffHours)}`}
+              style={{ textDecoration: 'underline dotted' }}
+            >
+              {formatHours(showingTotal)}
+            </td>
           </tr>
         </tfoot>
       </CardContent>
