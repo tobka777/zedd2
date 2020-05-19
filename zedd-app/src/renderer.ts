@@ -81,8 +81,7 @@ function showNotification(
 }
 
 function quit() {
-  ipcRenderer.send('user-will-quit')
-  app.quit()
+  ipcRenderer.send('quit')
 }
 
 function setupAutoUpdater(state: AppState, config: ZeddSettings) {

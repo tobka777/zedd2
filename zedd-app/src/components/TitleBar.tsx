@@ -108,8 +108,7 @@ export const TitleBar = observer(({ state, getTasksForSearchString, menuItems }:
           // disabled={!state.updateAvailable}
           onClick={() => {
             if (state.updateAvailable) {
-              ipcRenderer.send('user-will-quit')
-              autoUpdater.quitAndInstall()
+              ipcRenderer.send('quit')
             } else {
               autoUpdater.checkForUpdates()
             }
