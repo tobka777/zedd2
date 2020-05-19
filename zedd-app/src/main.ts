@@ -2,15 +2,6 @@ import { app, ipcMain, BrowserWindow } from 'electron'
 import { homedir } from 'os'
 import * as path from 'path'
 
-declare global {
-  namespace NodeJS {
-    interface Global {
-      isDev: boolean
-      appUserModelId: string
-    }
-  }
-}
-
 global.isDev = process.argv.includes('--dev')
 
 global.appUserModelId = global.isDev ? process.execPath : 'com.squirrel.zedd.zedd-app'
