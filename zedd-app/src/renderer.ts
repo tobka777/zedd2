@@ -246,6 +246,14 @@ async function setup() {
     inner.x + inner.width - (outer.x + outer.width) <= margin &&
     inner.y + inner.height - (outer.y + outer.height) <= margin
 
+  const setBoundsSafe = (bw: BrowserWindow, bounds: Rectangle) => {
+    if (!boundsContained(electronScreen.getDisplayMatching(bounds).bounds, bounds)) {
+      bw.setBounds({ x: 20, y: 20, width: 800, height: 600 })
+    } else {
+      bw.setBounds(bounds)
+    }
+  }
+
   console.log(electronScreen.getPrimaryDisplay().bounds, state.bounds)
 
   const saveInterval = setInterval(
@@ -273,7 +281,7 @@ async function setup() {
 
   const hoverModeOff = () => (state.hoverMode = false)
   const restoreUnmaximizedBoundsIfNotHoverMode = () =>
-    !state.hoverMode && currentWindow.setBounds(state.bounds.normal)
+    !state.hoverMode && setBoundsSafe(currentWindow, state.bounds.normal)
 
   const saveWindowBounds = ({ sender }: { sender: BrowserWindow }) => {
     if (state && !state.hoverMode) {
@@ -407,13 +415,13 @@ async function setup() {
     // state.hoverMode && !currentWindow.isVisible && currentWindow.show()
     if (state.hoverMode) {
       currentWindow.isMaximized && currentWindow.unmaximize()
-      currentWindow.setBounds({
+      setBoundsSafe(currentWindow, {
         ...state.bounds.hover,
         height: 32,
         width: Math.min(800, state.bounds.hover.width),
       })
     } else {
-      currentWindow.setBounds(state.bounds.normal)
+      setBoundsSafe(currentWindow, state.bounds.normal)
       if (state.bounds.maximized) {
         currentWindow.maximize()
       }
