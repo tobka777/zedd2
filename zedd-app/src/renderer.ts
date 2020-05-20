@@ -1,4 +1,3 @@
-import { parse as dateParse } from 'date-fns'
 import { ipcRenderer, remote, BrowserWindow, MenuItemConstructorOptions, Rectangle } from 'electron'
 // @ts-ignore
 import { ToastNotification } from 'electron-windows-notifications'
@@ -8,7 +7,7 @@ import * as React from 'react'
 import * as ReactDOM from 'react-dom'
 import 'win-ca' // use windows root certificates
 
-import { dateFormatString, format, AppState, TimeSlice } from './AppState'
+import { format, AppState, TimeSlice, formatInterval } from './AppState'
 import { ClarityState } from './ClarityState'
 import { AppGui } from './components/AppGui'
 import './index.css'
@@ -29,7 +28,6 @@ import {
   getChromeDriverVersion,
   installChromeDriver,
 } from './chromeDriverMgmt'
-import { sortBy } from 'lodash'
 import { suggestedTaskMenuItems } from './menuUtil'
 
 const {
@@ -174,26 +172,25 @@ async function setup() {
     showNotification(
       'You were away ' + format(when.start) + ' - ' + format(when.end),
       'Close to discard or choose what to assign.',
-      [
-        state.currentTask.name.substring(0),
-        format(when.start) + ' - ' + format(when.end) + ' ' + state.currentTask.name,
-      ],
-      ['Other...', 'other'],
+      [state.currentTask.name.substring(0), formatInterval(when) + ' ' + state.currentTask.name],
+      ['Other...', formatInterval(when) + ' ' + '$$$OTHER$$$'],
       (_, wargs) => {
-        if ('other' === wargs.arguments) {
-        } else {
-          const [, startString, endString, taskName] = wargs.arguments.match(
-            /(.{16}) - (.{16}) (.*)/,
-          )!
-
-          const now = new Date()
-          state.addSlice(
-            new TimeSlice(
-              dateParse(startString, dateFormatString, now),
-              dateParse(endString, dateFormatString, now),
-              state.getTaskForName(taskName),
-            ),
-          )
+        const [start, end, taskName] = TimeSlice.parse(wargs.arguments)
+        const newSlice = new TimeSlice(
+          start,
+          end,
+          '$$$OTHER$$$' === taskName ? state.getUndefinedTask() : state.getTaskForName(taskName),
+        )
+        state.addSlice(newSlice)
+        if ('$$$OTHER$$$' === taskName) {
+          if (!currentWindow.isVisible()) {
+            currentWindow.show()
+          }
+          if (state.hoverMode) {
+            state.hoverMode = false
+          }
+          currentWindow.focus()
+          state.changingSliceTask = newSlice
         }
       },
     )
