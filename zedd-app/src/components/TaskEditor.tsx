@@ -28,6 +28,7 @@ interface TaskEditorProps {
   getTasksForSearchString: (s: string) => Promise<Task[]>
   onTaskSelectChange: (t: Task) => void
   style?: React.CSSProperties
+  taskSelectRef?: (r: HTMLInputElement) => void
 }
 
 export const TaskEditor = observer(
@@ -38,6 +39,7 @@ export const TaskEditor = observer(
     value,
     getTasksForSearchString,
     style,
+    taskSelectRef,
   }: TaskEditorProps) => {
     console.log('value', value)
     const importClarityTasks = useCallback(
@@ -74,6 +76,7 @@ export const TaskEditor = observer(
                   )} - ${formatDate(state.focused.end, 'HH:mm')}`
                 : 'Currently timing'
             }
+            inputRef={taskSelectRef}
             value={value}
             onChange={(_, t) => onTaskSelectChange(state.getTaskForName(t))}
             fullWidth

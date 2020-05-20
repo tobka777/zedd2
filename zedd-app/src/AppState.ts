@@ -315,7 +315,6 @@ export class AppState {
     custom(
       (s, _, state) => state.slices.indexOf(s),
       (i, context) => {
-        console.log('deser' + i)
         return context.target.slices[i]
       },
     ),
@@ -440,7 +439,6 @@ export class AppState {
 
   @serializable(object({ factory: () => ({}), props: { start: date(), end: date() } }))
   public set showing(newShowing: Interval) {
-    // console.log('public set showing ', newShowing)
     this._showing = newShowing
     this._startDate = formatDate(newShowing.start, 'yyyy-MM-dd')
     this._endDate = formatDate(newShowing.end, 'yyyy-MM-dd')
@@ -559,7 +557,6 @@ export class AppState {
 
   public removeSlice(s: TimeSlice) {
     const index = this.slices.indexOf(s)
-    console.log('removing slice', s, index, this.slices.length)
     if (index === this.slices.length - 1) {
       this.slices.length--
     } else {
@@ -567,7 +564,6 @@ export class AppState {
         this.slices[index] = this.slices.pop()!
       })
     }
-    console.log(this.slices.length)
   }
 
   public startInterval() {
@@ -708,7 +704,6 @@ export class AppState {
     try {
       const start = parseISO(this.startDate)
       const end = parseISO(this.endDate)
-      console.log('updateSHowingFromStartEnd', this.startDate, end)
       if (start <= end) this.showing = { start, end }
     } catch (e) {
       console.error(e)

@@ -26,6 +26,8 @@ export interface AppGuiProps {
   menuItems: { label: string; click: () => void }[]
   checkCgJira: (cg: ZeddSettings['cgJira']) => Promise<any>
   checkChromePath: () => Promise<any>
+  showContextMenu: () => void
+  taskSelectRef?: (r: HTMLInputElement) => void
 }
 
 const useStyles = makeStyles({
@@ -43,6 +45,8 @@ export const AppGui = observer(
     checkCgJira,
     menuItems,
     checkChromePath,
+    showContextMenu,
+    taskSelectRef,
   }: AppGuiProps) => {
     const prefersDarkMode = useMediaQuery('(prefers-color-scheme: dark)')
 
@@ -82,6 +86,7 @@ export const AppGui = observer(
           state={state}
           getTasksForSearchString={getTasksForSearchString}
           menuItems={menuItems}
+          showContextMenu={showContextMenu}
         />
         {state.settingsDialogOpen && (
           <SettingsDialog
@@ -126,6 +131,7 @@ export const AppGui = observer(
             clarityState={clarityState}
             getTasksForSearchString={getTasksForSearchString}
             display={!state.hoverMode}
+            taskSelectRef={taskSelectRef}
           />
         </ErrorBoundary>
       </MuiThemeProvider>

@@ -1,32 +1,31 @@
-import { Button, AppBar, Menu as MuiMenu, MenuItem, Badge } from '@material-ui/core'
-import { makeStyles, useTheme } from '@material-ui/core/styles'
+import { AppBar, Badge, Button, Menu as MuiMenu, MenuItem } from '@material-ui/core'
+import { useTheme } from '@material-ui/core/styles'
 import {
-  PlayArrow as PlayArrowIcon,
-  Stop as StopIcon,
   Menu as MenuIcon,
+  PlayArrow as PlayArrowIcon,
   Remove as ToHoverIcon,
+  Stop as StopIcon,
 } from '@material-ui/icons'
-import { remote, BrowserWindow, ipcRenderer } from 'electron'
+import { BrowserWindow, ipcRenderer, remote } from 'electron'
 import { observer, useLocalStore } from 'mobx-react-lite'
 import * as React from 'react'
 import { useEffect, useState } from 'react'
 
-import { AppState, Task } from '../AppState'
-import { TaskSelect } from './TaskSelect'
+import { AppState } from '../AppState'
 import { ZeddSvgIcon } from './ZeddSvgIcon'
 
 const { getCurrentWindow, app, autoUpdater } = remote
 
 interface TitleBarProps {
   state: AppState
-  getTasksForSearchString: (s: string) => Promise<Task[]>
   menuItems: { label: string; click: () => void }[]
+  showContextMenu: () => void
 }
 
 const toggleWindowMaximized = (bw: BrowserWindow) =>
   bw.isMaximized() ? bw.unmaximize() : bw.maximize()
 
-export const TitleBar = observer(({ state, getTasksForSearchString, menuItems }: TitleBarProps) => {
+export const TitleBar = observer(({ state, menuItems, showContextMenu }: TitleBarProps) => {
   const [anchorEl, setAnchorEl] = useState<HTMLElement | null>(null)
 
   const theme = useTheme()
@@ -59,6 +58,7 @@ export const TitleBar = observer(({ state, getTasksForSearchString, menuItems }:
       // 37px seems to be the min. window height
       style={{ display: 'flex', flexDirection: 'row', height: 37, alignItems: 'center' }}
       position='static'
+      onContextMenu={showContextMenu}
     >
       <div
         style={{
@@ -130,18 +130,17 @@ export const TitleBar = observer(({ state, getTasksForSearchString, menuItems }:
       <div style={{ fontSize: 'large', margin: theme.spacing(0, 1) }}>
         {state.formatHours(state.getTaskHours(state.currentTask))}
       </div>
-      <TaskSelect
-        tasks={state.tasks}
-        value={state.currentTask}
-        onChange={(_, t) => (state.currentTask = state.getTaskForName(t))}
-        fullWidth
-        style={{ flex: '1 1 auto', width: '100%', flexGrow: 1, margin: 4 }}
-        getTasksForSearchString={getTasksForSearchString}
-        // inputProps={{ classes: classes.input }}
-        handleError={(err) => state.errors.push(err.message)}
-        hoverMode={state.hoverMode}
-        getHoursForTask={(t) => state.formatHours(state.getTaskHours(t))}
-      />
+      <div
+        style={{
+          fontSize: 'large',
+          flexGrow: 1,
+          overflow: 'hidden',
+          textOverflow: 'ellipsis',
+          whiteSpace: 'nowrap',
+        }}
+      >
+        {state.currentTask.name}
+      </div>
       {state.hoverMode && (
         <Button
           onClick={() => (state.hoverMode = false)}

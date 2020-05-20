@@ -29,6 +29,7 @@ import { TaskEditor } from './TaskEditor'
 import { sortBy } from 'lodash'
 import { remote, MenuItemConstructorOptions } from 'electron'
 import { ArrowBack, ArrowForward, Delete as DeleteIcon } from '@material-ui/icons'
+import { suggestedTaskMenuItems } from '../menuUtil'
 
 const { Menu, shell } = remote
 
@@ -53,10 +54,11 @@ export interface AppBodyProps {
   clarityState: ClarityState
   getTasksForSearchString: (s: string) => Promise<Task[]>
   display: boolean
+  taskSelectRef?: (r: HTMLInputElement) => void
 }
 
 export const AppBody = observer(
-  ({ state, clarityState, getTasksForSearchString, display }: AppBodyProps) => {
+  ({ state, clarityState, getTasksForSearchString, display, taskSelectRef }: AppBodyProps) => {
     const [_anchorPosition, setAnchorPosition] = useState(undefined as undefined | PopoverPosition)
 
     const classes = useStyles()
@@ -76,14 +78,7 @@ export const AppBody = observer(
     const onBlockClick = useCallback(
       (_: React.MouseEvent, slice: TimeSlice) => {
         Menu.buildFromTemplate([
-          ...sortBy(state.getSuggestedTasks(), (t) => t.name).map(
-            (t): MenuItemConstructorOptions => ({
-              type: 'checkbox',
-              label: t.name,
-              checked: slice.task === t,
-              click: (x) => (slice.task = state.getTaskForName(x.label)),
-            }),
-          ),
+          ...suggestedTaskMenuItems(state, clarityState, slice.task),
           {
             type: 'normal',
             label: 'Other...',
@@ -180,6 +175,7 @@ export const AppBody = observer(
             onTaskSelectChange={(t) => (state.currentTask = t)}
             value={state.currentTask}
             getTasksForSearchString={getTasksForSearchString}
+            taskSelectRef={taskSelectRef}
           />
         </div>
         {/* <Button

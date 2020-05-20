@@ -67,18 +67,6 @@ function cancellingPrevious<T, F extends (...args: any[]) => Promise<T>>(
 }
 
 const useStyles = makeStyles((theme) => ({
-  listbox: { maxHeight: 'calc(max(300px, 80vh))' },
-  inputRoot: { color: 'inherit' },
-  inputInput: { color: 'inherit' },
-  endAdornment: { color: 'inherit', '& *': { color: 'inherit' } },
-  underline: {
-    '&&&:before': {
-      borderBottom: 'none',
-    },
-    '&&:after': {
-      borderBottom: 'none',
-    },
-  },
   renderOptionBT: {
     textAlign: 'right',
     width: '90px',
@@ -87,40 +75,6 @@ const useStyles = makeStyles((theme) => ({
     color: theme.palette.text.secondary,
   },
 }))
-const CustomPopper = (props: PopperProps) => {
-  const ref: RefObject<PopperJs> = useRef<PopperJs>(null)
-  useEffect(() => {
-    console.log(ref.current)
-    setTimeout(() => console.log(ref.current), 2000)
-  })
-  return (
-    <Popper
-      {...props}
-      style={{ ...props.style, width: 'auto', marginLeft: -1, marginRight: 5 }}
-      placement='bottom'
-      modifiers={{
-        flip: {
-          enabled: false,
-        },
-        preventOverflow: {
-          enabled: false,
-          boundariesElement: 'scrollParent',
-        },
-      }}
-      popperOptions={{
-        onCreate: ({ popper }: PopperJs) => {
-          console.log(popper)
-          getCurrentWindow().setBounds({ height: popper.bottom | 0 })
-        },
-        onUpdate: ({ popper }) => {
-          console.log(popper)
-          getCurrentWindow().setBounds({ height: popper.bottom | 0 })
-        },
-      }}
-      ref={ref}
-    />
-  )
-}
 
 export const TaskSelect = observer(
   ({
@@ -174,9 +128,6 @@ export const TaskSelect = observer(
         getOptionLabel={(t: Task | string) =>
           'string' === typeof t ? t : 'UNDEFINED' === t.name ? '' : t.name
         }
-        classes={{ listbox: classes.listbox, endAdornment: classes.endAdornment }}
-        PopperComponent={hoverMode ? CustomPopper : undefined}
-        onClose={() => hoverMode && getCurrentWindow().setBounds({ height: 32 })}
         renderInput={(params) => (
           <TextField
             {...params}
@@ -184,14 +135,7 @@ export const TaskSelect = observer(
             style={textFieldStyle}
             onChange={onTextFieldChange}
             placeholder='Nothing. Nichts. Nada. Absolument rien.'
-            InputProps={{
-              ...params.InputProps,
-              classes: {
-                root: classes.inputRoot,
-                input: classes.inputInput,
-                underline: classes.underline,
-              },
-            }}
+            InputProps={params.InputProps}
             margin='dense'
           />
         )}

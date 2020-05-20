@@ -29,6 +29,8 @@ import {
   getChromeDriverVersion,
   installChromeDriver,
 } from './chromeDriverMgmt'
+import { sortBy } from 'lodash'
+import { suggestedTaskMenuItems } from './menuUtil'
 
 const {
   Tray,
@@ -104,7 +106,6 @@ function setupAutoUpdater(state: AppState, config: ZeddSettings) {
       (state.updateAvailable = releaseName),
   )
   autoUpdater.on('error', (error: Error) => state.errors.push(error.message))
-  autoUpdater.on('before-quit-for-update', () => ipcRenderer.send('user-will-quit'))
   return () => {
     clearInterval(checkForUpdatesInterval)
     autoUpdater.removeAllListeners()
@@ -177,7 +178,7 @@ async function setup() {
         state.currentTask.name.substring(0),
         format(when.start) + ' - ' + format(when.end) + ' ' + state.currentTask.name,
       ],
-      ['Other', 'other'],
+      ['Other...', 'other'],
       (_, wargs) => {
         if ('other' === wargs.arguments) {
         } else {
@@ -257,6 +258,8 @@ async function setup() {
     1000,
   )
 
+  let taskSelectRef: HTMLInputElement | undefined = undefined
+
   currentWindowEvents.push([
     'close',
     (_e: Electron.Event) => {
@@ -314,9 +317,11 @@ async function setup() {
     state.links = getLinksFromString(state.currentTask.name)
   })
 
+  let currentMenu: Electron.Menu
+
   const cleanupTrayMenuAutorun = autorun(() => {
     tray.setContextMenu(
-      Menu.buildFromTemplate([
+      (currentMenu = Menu.buildFromTemplate([
         // Quit first, so it is the furthest from the mouse
         {
           label: 'Quit',
@@ -326,14 +331,22 @@ async function setup() {
 
         { type: 'separator' },
 
-        ...state.getSuggestedTasks().map(
-          (t): MenuItemConstructorOptions => ({
-            label: t.name,
-            type: 'checkbox',
-            checked: state.currentTask === t,
-            click: (x) => (state.currentTask = state.getTaskForName(x.label)),
-          }),
-        ),
+        ...suggestedTaskMenuItems(state, clarityState, state.currentTask),
+
+        {
+          label: 'Other...',
+          click: () => {
+            if (!currentWindow.isVisible()) {
+              currentWindow.show()
+            }
+            if (state.hoverMode) {
+              state.hoverMode = false
+            }
+            currentWindow.focus()
+            console.log(taskSelectRef)
+            taskSelectRef && taskSelectRef.focus()
+          },
+        },
 
         ...(0 === state.links.length ? [] : [{ type: 'separator' } as MenuItemConstructorOptions]),
 
@@ -352,7 +365,7 @@ async function setup() {
           type: 'normal',
           click: () => state.toggleTimingInProgress(),
         },
-      ]),
+      ])),
     )
   })
   const cleanupIconAutorun = autorun(() => {
@@ -434,6 +447,8 @@ async function setup() {
     renderDOM: () => {
       ReactDOM.render(
         React.createElement(AppGui, {
+          showContextMenu: () => currentMenu.popup(),
+          taskSelectRef: (r) => (taskSelectRef = r),
           state,
           checkCgJira,
           checkChromePath,
