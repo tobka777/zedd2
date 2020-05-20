@@ -30,11 +30,14 @@ export function initJiraClient(
     host: url.host,
     protocol: url.protocol,
     port: url.port ? +url.port : undefined,
+    // eslint-disable-next-line @typescript-eslint/camelcase
     path_prefix: url.pathname,
+    // eslint-disable-next-line @typescript-eslint/camelcase
     basic_auth: {
       username: jc.username,
       password: Buffer.from(jc.password, 'base64').toString('utf8'),
     },
+    // eslint-disable-next-line @typescript-eslint/camelcase
     cookie_jar: jar,
   })
 }

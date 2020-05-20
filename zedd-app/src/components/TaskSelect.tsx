@@ -1,16 +1,12 @@
-import { TextField, TextFieldProps, Popper, PopperProps } from '@material-ui/core'
+import { TextField, TextFieldProps } from '@material-ui/core'
 import { makeStyles } from '@material-ui/core/styles'
 import { Autocomplete } from '@material-ui/lab'
-import PopperJs from 'popper.js'
-import { debounce } from 'lodash'
 import { observer } from 'mobx-react-lite'
-import { remote } from 'electron'
 import * as React from 'react'
 
-import { useCallback, useState, useRef, useEffect, RefObject } from 'react'
+import { useCallback, useState } from 'react'
 import { Task } from '../AppState'
-
-const { getCurrentWindow } = remote
+import { useDebouncedCallback } from '../util'
 
 export type TaskSelectProps = {
   tasks: Task[]
@@ -95,16 +91,17 @@ export const TaskSelect = observer(
 
     const classes = useStyles()
 
-    const getTasksForSearchStringDebounced = useCallback(
-      debounce((searchString: string) => {
+    const getTasksForSearchStringDebounced = useDebouncedCallback(
+      (searchString: string) => {
         if (searchString.length > 2) {
           const requestId = ++currentRequest.id
           getTasksForSearchString(searchString)
             .then((ts) => requestId === currentRequest.id && setOptions(ts))
             .catch(handleError)
         }
-      }, 1000),
-      [getTasksForSearchString],
+      },
+      [getTasksForSearchString, currentRequest, handleError],
+      1000,
     )
 
     const onTextFieldChange = useCallback(

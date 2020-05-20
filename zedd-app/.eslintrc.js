@@ -3,7 +3,7 @@ module.exports = {
   parser: '@typescript-eslint/parser',
   plugins: ['@typescript-eslint', 'react-hooks'],
   settings: {
-    react: { version: "detect" }
+    react: { version: 'detect' }
   },
   extends: [
     'eslint:recommended',
@@ -13,14 +13,17 @@ module.exports = {
     'prettier/@typescript-eslint',
   ],
   rules: {
-    'yoda': ['warn', 'always', { "onlyEquality": true }],
+    'yoda': ['warn', 'always', { 'onlyEquality': true }],
     'react-hooks/rules-of-hooks': 'error',
     'react/no-unescaped-entities': 'off',
-    'react-hooks/exhaustive-deps': 'warn',
+    'react-hooks/exhaustive-deps': ['warn', { additionalHooks: '^useDebouncedCallback$' }],
     '@typescript-eslint/explicit-function-return-type': 'off',
     '@typescript-eslint/no-non-null-assertion': 'off',
     '@typescript-eslint/no-explicit-any': 'off',
     '@typescript-eslint/ban-ts-ignore': 'off',
+    'prefer-const': ['error', {
+      'destructuring': 'all',
+    }],
     'no-extra-semi': 'off',
     '@typescript-eslint/no-inferrable-types': 'off',
     'eqeqeq': 'error',

@@ -1,5 +1,5 @@
-import { Button, ButtonGroup, TextField, PopoverPosition, Paper, Tooltip } from '@material-ui/core'
-import { useTheme, makeStyles } from '@material-ui/core/styles'
+import { Button, ButtonGroup, TextField, Paper, Tooltip } from '@material-ui/core'
+import { makeStyles } from '@material-ui/core/styles'
 import {
   addMinutes,
   addMonths,
@@ -14,20 +14,19 @@ import {
   isSameDay,
   endOfMonth,
 } from 'date-fns'
+import { remote } from 'electron'
 import { observer } from 'mobx-react-lite'
 import * as React from 'react'
-import { useCallback, useState } from 'react'
+import { useCallback } from 'react'
 
 import { ErrorBoundary } from './ErrorBoundary'
 import { AppState, Task, TimeSlice } from '../AppState'
 import { ClarityState } from '../ClarityState'
 import { businessWeekInterval, isoWeekInterval, monthInterval, omap, startOfNextDay } from '../util'
 import { BlockDisplay } from './BlockDisplay'
-import { Calendar, SliceDragStartHandler, SliceSplitHandler } from './Calendar'
+import { Calendar } from './Calendar'
 import { ClarityView } from './ClarityView'
 import { TaskEditor } from './TaskEditor'
-import { sortBy } from 'lodash'
-import { remote, MenuItemConstructorOptions } from 'electron'
 import { ArrowBack, ArrowForward, Delete as DeleteIcon } from '@material-ui/icons'
 import { suggestedTaskMenuItems } from '../menuUtil'
 
@@ -59,22 +58,8 @@ export interface AppBodyProps {
 
 export const AppBody = observer(
   ({ state, clarityState, getTasksForSearchString, display, taskSelectRef }: AppBodyProps) => {
-    const [_anchorPosition, setAnchorPosition] = useState(undefined as undefined | PopoverPosition)
-
     const classes = useStyles()
 
-    // const onBlockClick = useCallback((e: React.MouseEvent, slice: TimeSlice) => {
-    //   console.log('onContextMenu')
-    //   if (2 === e.button)
-    //     setAnchorPosition(
-    //       ilog({
-    //         top: e.clientY,
-    //         left: e.clientX,
-    //       }),
-    //     )
-    // }, [])
-
-    const onMenuClose = useCallback(() => setAnchorPosition(undefined), [setAnchorPosition])
     const onBlockClick = useCallback(
       (_: React.MouseEvent, slice: TimeSlice) => {
         Menu.buildFromTemplate([
@@ -115,7 +100,7 @@ export const AppBody = observer(
           },
         ]).popup()
       },
-      [state],
+      [clarityState, state],
     )
 
     const arrowClick = useCallback(
@@ -138,36 +123,6 @@ export const AppBody = observer(
 
     return (
       <div className={classes.contentRoot} style={{ display: display ? 'block' : 'none' }}>
-        {/* <Menu
-          anchorPosition={anchorPosition}
-          open={!!anchorPosition}
-          onClose={onMenuClose}
-          disablePortal
-          anchorReference='anchorPosition'
-        >
-          {sortBy(state.getSuggestedTasks(), t => t.name).map(
-            t => (
-              <MenuItem
-                dense
-                style={{
-                  backgroundColor: t
-                    .getColor()
-                    .set('hsl.s', 0.9)
-                    .set('hsl.l', 'dark' === theme.palette.type ? 0.2 : 0.8)
-                    .css(),
-                }}
-                onClick={x => (slice.task = state.getTaskForName(x.label))}
-              >
-                {t.name}
-              </MenuItem>
-            ),
-            //   type: 'checkbox',
-            //   label: t.name,
-            //   checked: slice.task === t,
-            //   ,
-            // }),
-          )}
-        </Menu> */}
         <div>
           <TaskEditor
             state={state}
@@ -178,14 +133,6 @@ export const AppBody = observer(
             taskSelectRef={taskSelectRef}
           />
         </div>
-        {/* <Button
-            variant='contained'
-            color={state.timingInProgess ? 'primary' : 'secondary'}
-            onClick={() => (state.timingInProgess = !state.timingInProgess)}
-            style={{ fontSize: '300%', lineHeight: '33.3%', minWidth: '2em' }}
-          >
-            {state.timingInProgess ? '■' : '▶️'}
-          </Button> */}
         <div>
           <div className={classes.controlBar}>
             <TextField

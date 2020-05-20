@@ -82,12 +82,7 @@ export const AppGui = observer(
             </Alert>
           </Snackbar>
         )}
-        <TitleBar
-          state={state}
-          getTasksForSearchString={getTasksForSearchString}
-          menuItems={menuItems}
-          showContextMenu={showContextMenu}
-        />
+        <TitleBar state={state} menuItems={menuItems} showContextMenu={showContextMenu} />
         {state.settingsDialogOpen && (
           <SettingsDialog
             done={() => {

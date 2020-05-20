@@ -19,10 +19,23 @@ import {
 import { promises as fsp, PathLike } from 'fs'
 import * as fs from 'fs'
 import { promisify } from 'util'
+import { DependencyList, useCallback } from 'react'
+import { debounce } from 'lodash'
 
 export const FILE_DATE_FORMAT = "yyyyMMdd'T'HHmm"
 
 export const fileExists = promisify(fs.exists)
+
+export const readFilesWithDate = async (
+  dir: PathLike,
+  regex: RegExp,
+): Promise<[string, Date][]> => {
+  const files = await fsp.readdir(dir)
+  return files
+    .filter((f) => regex.test(f))
+    .map((f) => [f, parseDate(regex.exec(f)![1], FILE_DATE_FORMAT, new Date())] as [string, Date])
+    .sort(([_bFile, aDate], [_aFile, bDate]) => compareDesc(aDate, bDate))
+}
 
 /**
  *
@@ -37,16 +50,6 @@ export const getLatestFileInDir = async (dir: PathLike, regex: RegExp): Promise<
     )
   }
   return filesWithDate[0]
-}
-export const readFilesWithDate = async (
-  dir: PathLike,
-  regex: RegExp,
-): Promise<[string, Date][]> => {
-  const files = await fsp.readdir(dir)
-  return files
-    .filter((f) => regex.test(f))
-    .map((f) => [f, parseDate(regex.exec(f)![1], FILE_DATE_FORMAT, new Date())] as [string, Date])
-    .sort(([_bFile, aDate], [_aFile, bDate]) => compareDesc(aDate, bDate))
 }
 
 /**
@@ -188,3 +191,12 @@ export const stringHashColor = (str: string) => {
 }
 
 export const isoDayStr = (day: number | Date) => formatDate(day, 'yyyy-MM-dd')
+
+export function useDebouncedCallback<T extends (...args: any[]) => any>(
+  callback: T,
+  deps: DependencyList,
+  waitMs: number,
+): T {
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  return useCallback(debounce(callback, waitMs), deps)
+}

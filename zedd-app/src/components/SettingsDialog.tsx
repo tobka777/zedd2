@@ -17,26 +17,26 @@ import {
 } from '@material-ui/core'
 import { useTheme } from '@material-ui/core/styles'
 import * as React from 'react'
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect } from 'react'
 import { remote } from 'electron'
 import { MoreHoriz as PickFileIcon } from '@material-ui/icons'
 import { observer } from 'mobx-react-lite'
-import { uniq, debounce } from 'lodash'
+import { uniq } from 'lodash'
 
 import { ClarityTaskSelect } from './ClarityTaskSelect'
 import { ClarityState } from '../ClarityState'
 import { ZeddSettings } from '../ZeddSettings'
-import { toggle } from '../util'
+import { toggle, useDebouncedCallback } from '../util'
 
 const {
-  shell: { openExternal },
+  // shell: { openExternal },
   dialog,
 } = remote
 
-const _inExternal = (e: React.MouseEvent<HTMLAnchorElement>) => {
-  openExternal(e.currentTarget.href)
-  e.preventDefault()
-}
+// const _inExternal = (e: React.MouseEvent<HTMLAnchorElement>) => {
+//   openExternal(e.currentTarget.href)
+//   e.preventDefault()
+// }
 
 export const SettingsDialog = observer(
   ({
@@ -61,21 +61,21 @@ export const SettingsDialog = observer(
 
     const theme = useTheme()
 
-    const updateChromeStatus = useCallback(() => {
-      setChromeStatus({ checking: true })
-      checkChromePath()
-        .then(() => setChromeStatus({ ok: true }))
-        .catch((error) => setChromeStatus({ error }))
-    }, [setChromeStatus, checkChromePath])
+    const updateChromeStatusDebounced = useDebouncedCallback(
+      () => {
+        setChromeStatus({ checking: true })
+        checkChromePath()
+          .then(() => setChromeStatus({ ok: true }))
+          .catch((error) => setChromeStatus({ error }))
+      },
+      [checkChromePath],
+      1000,
+    )
 
-    const updateChromeStatusDebounced = useCallback(debounce(updateChromeStatus, 1000), [
-      updateChromeStatus,
-    ])
+    useEffect(updateChromeStatusDebounced, [updateChromeStatusDebounced])
 
-    useEffect(updateChromeStatus, [])
-
-    const checkCgJiraDebounced = useCallback(
-      debounce(() => {
+    const checkCgJiraDebounced = useDebouncedCallback(
+      () => {
         const cgJira = settings.cgJira
         if (cgJira.url && settings.cgJira.username && settings.cgJira.password) {
           setCgJiraStatus({ checking: true })
@@ -83,8 +83,9 @@ export const SettingsDialog = observer(
             .then(() => setCgJiraStatus({ ok: true }))
             .catch((error) => setCgJiraStatus({ error }))
         }
-      }, 1000),
-      [checkCgJira],
+      },
+      [checkCgJira, settings],
+      1000,
     )
 
     const projects = uniq([...clarityState.projectNames, ...settings.excludeProjects])
@@ -318,7 +319,7 @@ export const SettingsDialog = observer(
                           })
                           if (result.filePaths[0]) {
                             settings.chromePath = result.filePaths[0]
-                            updateChromeStatus()
+                            updateChromeStatusDebounced()
                           }
                         }}
                         edge='end'
@@ -340,7 +341,7 @@ export const SettingsDialog = observer(
           </Grid>
         </DialogContent>
         <DialogActions>
-          <Button onClick={() => updateChromeStatus()}>Recheck Chrome</Button>
+          <Button onClick={() => updateChromeStatusDebounced()}>Recheck Chrome</Button>
           <Button onClick={(_) => done()} color='primary'>
             Done
           </Button>
