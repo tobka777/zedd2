@@ -29,7 +29,7 @@ import { promises as fsp } from 'fs'
 import { sum } from 'lodash'
 import { computed, observable, transaction, intercept } from 'mobx'
 import type { IObservableArray } from 'mobx'
-import { createTransformer } from 'mobx-utils'
+import { createTransformer, ObservableGroupMap } from 'mobx-utils'
 import * as path from 'path'
 import {
   custom,
@@ -61,7 +61,6 @@ import {
   formatHoursHHmm,
 } from './util'
 import { ZeddSettings } from './ZeddSettings'
-import { ObservableGroupMap } from './ObservableGroupMap'
 
 export const MIN_GAP_TIME_MIN = 5
 
