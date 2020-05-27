@@ -63,7 +63,7 @@ export const AppBody = observer(
     const onBlockClick = useCallback(
       (_: React.MouseEvent, slice: TimeSlice) => {
         Menu.buildFromTemplate([
-          ...suggestedTaskMenuItems(state, clarityState, slice.task),
+          ...suggestedTaskMenuItems(state, clarityState, slice.task, (task) => (slice.task = task)),
           {
             type: 'normal',
             label: 'Other...',

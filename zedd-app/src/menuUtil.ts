@@ -7,6 +7,7 @@ export const suggestedTaskMenuItems = (
   state: AppState,
   clarityState: ClarityState,
   checked: Task,
+  onClick: (t: Task) => void,
 ) => {
   return sortBy(state.getSuggestedTasks(), (t) => t.name).map(
     (t): MenuItemConstructorOptions => ({
@@ -19,7 +20,7 @@ export const suggestedTaskMenuItems = (
         ),
       type: 'checkbox',
       checked: checked === t,
-      click: (x) => (state.currentTask = state.getTaskForName(x.label)),
+      click: (x) => onClick(state.getTaskForName(x.label)),
     }),
   )
 }

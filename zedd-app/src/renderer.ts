@@ -336,7 +336,12 @@ async function setup() {
 
         { type: 'separator' },
 
-        ...suggestedTaskMenuItems(state, clarityState, state.currentTask),
+        ...suggestedTaskMenuItems(
+          state,
+          clarityState,
+          state.currentTask,
+          (task) => (state.currentTask = task),
+        ),
 
         {
           label: 'Other...',

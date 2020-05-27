@@ -26,6 +26,9 @@
     "experimentalDecorators": true,
     "emitDecoratorMetadata": true
   },
+  "include": [
+    "src/**/*.ts"
+  ],
   "formatCodeOptions": {
     "indentSize": 2,
     "tabSize": 2
