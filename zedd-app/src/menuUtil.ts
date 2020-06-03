@@ -1,15 +1,15 @@
-import { sortBy } from 'lodash'
 import { MenuItemConstructorOptions } from 'electron'
 import { AppState, Task } from './AppState'
 import { ClarityState } from './ClarityState'
+import { orderBy } from 'natural-orderby'
 
 export const suggestedTaskMenuItems = (
   state: AppState,
   clarityState: ClarityState,
   checked: Task,
   onClick: (t: Task) => void,
-) => {
-  return sortBy(state.getSuggestedTasks(), (t) => t.name).map(
+): MenuItemConstructorOptions[] => {
+  return orderBy(state.getSuggestedTasks(), (t) => t.name).map(
     (t): MenuItemConstructorOptions => ({
       label: t.name,
       sublabel:

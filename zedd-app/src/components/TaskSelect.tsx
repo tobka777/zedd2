@@ -86,7 +86,7 @@ export const TaskSelect = observer(
     ...textFieldProps
   }: TaskSelectProps) => {
     const [options, setOptions] = useState([] as Task[])
-
+    const [searching, setSearching] = useState(false)
     const [currentRequest] = useState({ id: 0 })
 
     const classes = useStyles()
@@ -94,14 +94,16 @@ export const TaskSelect = observer(
     const getTasksForSearchStringDebounced = useDebouncedCallback(
       (searchString: string) => {
         if (searchString.length > 2) {
+          setSearching(true)
           const requestId = ++currentRequest.id
           getTasksForSearchString(searchString)
             .then((ts) => requestId === currentRequest.id && setOptions(ts))
             .catch(handleError)
+            .finally(() => requestId === currentRequest.id && setSearching(false))
         }
       },
       [getTasksForSearchString, currentRequest, handleError],
-      1000,
+      500,
     )
 
     const onTextFieldChange = useCallback(
@@ -122,6 +124,8 @@ export const TaskSelect = observer(
         forcePopupIcon
         autoSelect
         selectOnFocus
+        loading={searching}
+        loadingText='Searching for Tasks in JIRA'
         getOptionLabel={(t: Task | string) =>
           'string' === typeof t ? t : 'UNDEFINED' === t.name ? '' : t.name
         }
