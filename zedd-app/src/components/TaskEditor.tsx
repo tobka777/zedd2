@@ -9,7 +9,7 @@ import {
   ClickAwayListener,
   Popper,
 } from '@material-ui/core'
-import { Edit as EditIcon, GetApp as ImportIcon } from '@material-ui/icons'
+import { Edit as EditIcon, GetApp as ImportIcon, SentimentSatisfiedAlt } from '@material-ui/icons'
 import { format as formatDate, formatDistance } from 'date-fns'
 import { observer } from 'mobx-react-lite'
 import * as React from 'react'
@@ -63,6 +63,13 @@ export const TaskEditor = observer(
     const [popperOpen, setPopperOpen] = useState(false)
     const anchorRef = useRef(null)
 
+    let guessClarityIntId: number | undefined = undefined
+    if (value.clarityTaskIntId === undefined) {
+      const keys = value.name.match(/[A-Z]+-\d+/g) ?? []
+      guessClarityIntId = clarityState.tasks.find((ct) => keys.some((key) => ct.name.includes(key)))
+        ?.intId
+    }
+
     return (
       <Grid container style={{ ...style, alignItems: 'center' }} spacing={2}>
         <Grid item xs={10} lg={11}>
@@ -96,7 +103,7 @@ export const TaskEditor = observer(
             Rename
           </Button>
         </Grid>
-        <Grid item xs={10} lg={11}>
+        <Grid item xs={8} lg={10}>
           <ClarityTaskSelect
             value={value.clarityTaskIntId}
             disabled={value === state.getUndefinedTask()}
@@ -106,6 +113,16 @@ export const TaskEditor = observer(
             onChange={(newIntId) => (value.clarityTaskIntId = newIntId)}
             clarityState={clarityState}
           />
+        </Grid>
+        <Grid item xs={2} lg={1}>
+          <Button
+            disabled={undefined === guessClarityIntId}
+            onClick={(_) => (value.clarityTaskIntId = guessClarityIntId)}
+            style={{ width: '100%' }}
+            endIcon={<SentimentSatisfiedAlt />}
+          >
+            Guess
+          </Button>
         </Grid>
         <Grid item xs={2} lg={1}>
           <Tooltip
