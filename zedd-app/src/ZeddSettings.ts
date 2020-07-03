@@ -86,7 +86,14 @@ export class ZeddSettings {
     currentIssuesJql: 'assignee = currentUser() AND resolution = Unresolved ORDER BY updated DESC',
 
     // updated automatically by the app
-    keys: [],
+    keys: [] as string[],
+  }
+
+  @observable
+  @serializable(raw())
+  public jira2 = {
+    // Everything *before* 'secure/Dashboard.jspa'.
+    url: '',
   }
 
   @observable

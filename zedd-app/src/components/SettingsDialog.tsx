@@ -294,6 +294,28 @@ export const SettingsDialog = observer(
             </Grid>
 
             <Grid item xs={4}>
+              <FormLabel>JIRA 2</FormLabel>
+              <div style={{ fontSize: 'small' }}>
+                If task names contain JIRA keys which are not from projects in the above JIRA, this
+                URL will be used to generate links instead.
+              </div>
+            </Grid>
+            <Grid item xs={8}>
+              <TextField
+                label='URL'
+                placeholder='http://...'
+                style={{ width: '100%' }}
+                InputProps={{
+                  endAdornment: (
+                    <InputAdornment position='end'>secure/Dashboard.jspa</InputAdornment>
+                  ),
+                }}
+                value={settings.jira2.url}
+                onChange={(e) => (settings.jira2.url = e.target.value.trim())}
+              />
+            </Grid>
+
+            <Grid item xs={4}>
               <FormLabel>Chrome Path</FormLabel>
             </Grid>
             <Grid item xs={8} style={{ minHeight: '4em' }}>

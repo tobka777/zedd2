@@ -28,6 +28,7 @@ export interface AppGuiProps {
   checkChromePath: () => Promise<any>
   showContextMenu: () => void
   taskSelectRef?: (r: HTMLInputElement) => void
+  getLinksFromString: (s: string) => [string, string][]
 }
 
 const useStyles = makeStyles({
@@ -47,6 +48,7 @@ export const AppGui = observer(
     checkChromePath,
     showContextMenu,
     taskSelectRef,
+    getLinksFromString,
   }: AppGuiProps) => {
     const prefersDarkMode = useMediaQuery('(prefers-color-scheme: dark)')
 
@@ -127,6 +129,7 @@ export const AppGui = observer(
             getTasksForSearchString={getTasksForSearchString}
             display={!state.hoverMode}
             taskSelectRef={taskSelectRef}
+            getLinksFromString={getLinksFromString}
           />
         </ErrorBoundary>
       </MuiThemeProvider>

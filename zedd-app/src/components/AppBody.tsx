@@ -14,7 +14,7 @@ import {
   isSameDay,
   endOfMonth,
 } from 'date-fns'
-import { remote } from 'electron'
+import { remote, MenuItemConstructorOptions } from 'electron'
 import { observer } from 'mobx-react-lite'
 import * as React from 'react'
 import { useCallback } from 'react'
@@ -52,12 +52,20 @@ export interface AppBodyProps {
   state: AppState
   clarityState: ClarityState
   getTasksForSearchString: (s: string) => Promise<Task[]>
+  getLinksFromString: (s: string) => [string, string][]
   display: boolean
   taskSelectRef?: (r: HTMLInputElement) => void
 }
 
 export const AppBody = observer(
-  ({ state, clarityState, getTasksForSearchString, display, taskSelectRef }: AppBodyProps) => {
+  ({
+    state,
+    clarityState,
+    getTasksForSearchString,
+    display,
+    taskSelectRef,
+    getLinksFromString,
+  }: AppBodyProps) => {
     const classes = useStyles()
 
     const onBlockClick = useCallback(
@@ -69,6 +77,16 @@ export const AppBody = observer(
             label: 'Other...',
             click: (_) => (state.changingSliceTask = slice),
           },
+
+          { type: 'separator' },
+
+          ...getLinksFromString(slice.task.name).map(
+            ([key, link]): MenuItemConstructorOptions => ({
+              type: 'normal',
+              label: 'Open in Browser: ' + key,
+              click: () => shell.openExternal(link),
+            }),
+          ),
 
           { type: 'separator' },
 

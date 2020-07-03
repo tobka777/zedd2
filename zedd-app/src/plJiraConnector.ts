@@ -16,15 +16,18 @@ let saveSettings: () => void
 
 let lastJiraCall: Date | undefined = undefined
 let clarityState: ClarityState
+let jira2url: string = ''
 
 export function initJiraClient(
   jc: ZeddSettings['cgJira'],
   newClarityState: ClarityState,
-  newSaveSettings: () => {},
-) {
+  newSaveSettings: () => void,
+  newJira2url: string,
+): void {
   clarityState = newClarityState
   jiraConfig = jc
   saveSettings = newSaveSettings
+  jira2url = newJira2url
   const url = new URL(jc.url)
   jira = new JiraClient({
     host: url.host,
@@ -51,7 +54,7 @@ const jiraConnectorErrorToMessage = (x: any) => {
   throw new Error(request.method + ' ' + request.uri.href + ' returned ' + body)
 }
 
-export const checkCgJira = (config: ZeddSettings['cgJira']) => {
+export const checkCgJira = (config: ZeddSettings['cgJira']): Promise<any> => {
   return new Promise((resolve, reject) =>
     request(
       {
@@ -184,9 +187,15 @@ export const getTasksForSearchString = async (s: string): Promise<Task[]> =>
 
 /** Extracts keys matching projects in connected jira and returns issue links from them. */
 export function getLinksFromString(str: string): [string, string][] {
-  const projectKeysRegex = jiraConfig.keys?.length
-    ? new RegExp(`(?:${jiraConfig.keys.join('|')})-\\d+`, 'g')
-    : /[A-Z]+-\d+/g
-  const keys = str.match(projectKeysRegex) ?? []
-  return keys.map((k) => [k, jiraConfig.url + '/browse/' + k])
+  const keys = str.match(/\b[A-Z]+-\d+\b/g) ?? []
+  return keys
+    .map((k): [string, string] => [
+      k,
+      !jiraConfig.keys?.length || jiraConfig.keys.includes(k)
+        ? jiraConfig.url + 'browse/' + k
+        : jira2url
+        ? jira2url + 'browse/' + k
+        : '',
+    ])
+    .filter(([, link]) => link)
 }

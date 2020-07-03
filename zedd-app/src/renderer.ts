@@ -149,7 +149,7 @@ async function setup() {
   }
 
   try {
-    initJiraClient(config.cgJira, clarityState, () => config.saveToFile())
+    initJiraClient(config.cgJira, clarityState, () => config.saveToFile(), config.jira2.url)
   } catch (e) {
     console.error('Could not init JiraClient')
     console.error(e)
@@ -471,6 +471,7 @@ async function setup() {
             getTasksForSearchString(s).then((ts) =>
               ts.filter((t) => !state.tasks.some((t2) => t2.name === t.name)),
             ),
+          getLinksFromString,
         }),
         document.getElementById('react-root'),
       )
