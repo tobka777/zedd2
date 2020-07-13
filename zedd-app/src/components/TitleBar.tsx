@@ -21,11 +21,12 @@ interface TitleBarProps {
   menuItems: { label: string; click: () => void }[]
   showContextMenu: () => void
 }
-
 const toggleWindowMaximized = (bw: BrowserWindow) =>
   bw.isMaximized() ? bw.unmaximize() : bw.maximize()
 
 export const TitleBar = observer(({ state, menuItems, showContextMenu }: TitleBarProps) => {
+  const vertical = state.hoverMode && 'vertical' === state.config.keepHovering
+
   const [anchorEl, setAnchorEl] = useState<HTMLElement | null>(null)
 
   const theme = useTheme()
@@ -56,7 +57,18 @@ export const TitleBar = observer(({ state, menuItems, showContextMenu }: TitleBa
   return (
     <AppBar
       // 37px seems to be the min. window height
-      style={{ display: 'flex', flexDirection: 'row', height: 37, alignItems: 'center' }}
+      style={{
+        display: 'flex',
+        flexDirection: vertical ? 'column' : 'row',
+        height: vertical ? '100%' : 37,
+        width: vertical ? 43 : '100%',
+        alignItems: 'center',
+        backgroundColor: state.currentTask
+          .getColor()
+          .set('hsl.s', 0.9)
+          .set('hsl.l', 'dark' === theme.palette.type ? 0.2 : 0.8)
+          .css(),
+      }}
       position='static'
       onContextMenu={showContextMenu}
     >
@@ -104,30 +116,42 @@ export const TitleBar = observer(({ state, menuItems, showContextMenu }: TitleBa
             {label}
           </MenuItem>
         ))}
-        <MenuItem
-          // disabled={!state.updateAvailable}
-          onClick={() => {
-            if (state.updateAvailable) {
-              ipcRenderer.send('quit')
-            } else {
-              autoUpdater.checkForUpdates()
-            }
-            setAnchorEl(null)
-          }}
-        >
-          {state.updateAvailable
-            ? `Update ${app.getVersion()} → ${state.updateAvailable}`
-            : app.getVersion()}
+        <MenuItem onClick={() => (state.whatsNewDialogOpen = true)}>
+          {app.getVersion() + (global.isDev ? ' (dev)' : '')}
         </MenuItem>
+        {state.updateAvailable && (
+          <MenuItem
+            onClick={() => {
+              if (state.updateAvailable) {
+                ipcRenderer.send('quit')
+              } else {
+                autoUpdater.checkForUpdates()
+              }
+              setAnchorEl(null)
+            }}
+          >
+            {`Update ${app.getVersion()} → ${state.updateAvailable}`}
+          </MenuItem>
+        )}
       </MuiMenu>
       <Button
-        style={{ width: '1em', color: 'inherit' }}
+        style={{
+          width: !vertical ? '64px' : '37px',
+          height: vertical ? '64px' : '37px',
+          color: 'inherit',
+        }}
         onClick={() => state.toggleTimingInProgress()}
       >
         {state.timingInProgess ? <StopIcon /> : <PlayArrowIcon />}
       </Button>
       {/* {state.lastAction} */}
-      <div style={{ fontSize: 'large', margin: theme.spacing(0, 1) }}>
+      <div
+        style={{
+          fontSize: vertical ? 'initial' : 'large',
+          margin: vertical ? theme.spacing(1, 0) : theme.spacing(0, 1),
+          // writingMode: vertical ? 'vertical-rl' : 'horizontal-tb',
+        }}
+      >
         {state.formatHours(state.getTaskHours(state.currentTask))}
       </div>
       <div
@@ -137,6 +161,7 @@ export const TitleBar = observer(({ state, menuItems, showContextMenu }: TitleBa
           overflow: 'hidden',
           textOverflow: 'ellipsis',
           whiteSpace: 'nowrap',
+          writingMode: vertical ? 'vertical-rl' : 'horizontal-tb',
         }}
       >
         {state.currentTask.name}

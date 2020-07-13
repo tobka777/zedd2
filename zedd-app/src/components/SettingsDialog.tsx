@@ -14,6 +14,8 @@ import {
   Button,
   IconButton,
   Switch,
+  RadioGroup,
+  Radio,
 } from '@material-ui/core'
 import { useTheme } from '@material-ui/core/styles'
 import * as React from 'react'
@@ -163,10 +165,22 @@ export const SettingsDialog = observer(
               </div>
             </Grid>
             <Grid item xs={8} component={'label'}>
-              <Checkbox
+              <RadioGroup
+                row
+                value={'' + settings.keepHovering}
+                onChange={(event) => {
+                  const v = event.target.value
+                  settings.keepHovering = { false: false, true: true, vertical: 'vertical' }[v]
+                }}
+              >
+                <FormControlLabel value='false' control={<Radio />} label='No' />
+                <FormControlLabel value='true' control={<Radio />} label='Horizontal' />
+                <FormControlLabel value='vertical' control={<Radio />} label='Vertical' />
+              </RadioGroup>
+              {/* <Checkbox
                 checked={settings.keepHovering}
                 onChange={(_, checked) => (settings.keepHovering = !!checked)}
-              />
+              /> */}
             </Grid>
 
             <Grid item xs={4}>

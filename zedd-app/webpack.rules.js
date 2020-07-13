@@ -1,6 +1,6 @@
 module.exports = [
   {
-    test: /\.(txt|xml)$/i,
+    test: /\.(txt|xml|md)$/i,
     use: 'raw-loader',
   },
   // Add support for native node modules

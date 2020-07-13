@@ -89,10 +89,11 @@
   },
   "dependencies": {
     "electron-windows-notifications": "^3.0.6",
-    "win-ca": "^3.2.1",
-    "selenium-webdriver": "^4.0.0-alpha.7"
+    "selenium-webdriver": "^4.0.0-alpha.7",
+    "win-ca": "^3.2.1"
   },
   "devDependencies": {
+    "react-markdown": "^4.3.1",
     "@babel/core": "^7.10.4",
     "@babel/preset-env": "^7.10.4",
     "@babel/preset-typescript": "^7.10.4",

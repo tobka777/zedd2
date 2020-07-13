@@ -1,5 +1,5 @@
 import { ipcRenderer, remote, BrowserWindow, MenuItemConstructorOptions, Rectangle } from 'electron'
-// @ts-ignore
+// @ts-expect-error
 import { ToastNotification } from 'electron-windows-notifications'
 import { autorun, computed } from 'mobx'
 import * as path from 'path'
@@ -155,7 +155,7 @@ async function setup() {
     console.error(e)
   }
 
-  const currentWindowEvents: [string, Function][] = []
+  const currentWindowEvents: [string, (...args: any[]) => void][] = []
   let state: AppState
   try {
     state = await AppState.loadFromDir(path.join(saveDir, 'data'))
@@ -198,6 +198,9 @@ async function setup() {
       },
     )
   }
+
+  state.whatsNewDialogOpen = app.getVersion() !== state.whatsNewDialogLastOpenedForVersion
+  state.whatsNewDialogLastOpenedForVersion = app.getVersion()
 
   getTasksFromAssignedJiraIssues(clarityState.tasks)
     .then((e) => (state.assignedIssueTasks = e.map((t) => state.normalizeTask(t))))
@@ -420,10 +423,11 @@ async function setup() {
     // state.hoverMode && !currentWindow.isVisible && currentWindow.show()
     if (state.hoverMode) {
       currentWindow.isMaximized && currentWindow.unmaximize()
+      const vertical = 'vertical' === state.config.keepHovering
       setBoundsSafe(currentWindow, {
         ...state.bounds.hover,
-        height: 32,
-        width: Math.min(800, state.bounds.hover.width),
+        height: vertical ? Math.max(400, state.bounds.hover.height) : 32,
+        width: vertical ? 32 : Math.max(400, state.bounds.hover.width),
       })
     } else {
       setBoundsSafe(currentWindow, state.bounds.normal)

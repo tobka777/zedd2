@@ -1,4 +1,12 @@
-import { CssBaseline, Snackbar } from '@material-ui/core'
+import {
+  CssBaseline,
+  Snackbar,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+  Button,
+} from '@material-ui/core'
 import { createMuiTheme, MuiThemeProvider, makeStyles } from '@material-ui/core/styles'
 import useMediaQuery from '@material-ui/core/useMediaQuery'
 import { Alert } from '@material-ui/lab'
@@ -6,6 +14,7 @@ import { remote } from 'electron'
 import { observer } from 'mobx-react-lite'
 import * as React from 'react'
 import { useMemo } from 'react'
+import ReactMarkdown from 'react-markdown'
 
 import { ErrorBoundary } from './ErrorBoundary'
 import { AppState, Task } from '../AppState'
@@ -16,8 +25,9 @@ import { SettingsDialog } from './SettingsDialog'
 import { ZeddSettings } from '../ZeddSettings'
 import { TitleBar } from './TitleBar'
 import { AppBody } from './AppBody'
+import changelog from '../../../CHANGELOG.md'
 
-const { systemPreferences } = remote
+const { systemPreferences, autoUpdater } = remote
 
 export interface AppGuiProps {
   state: AppState
@@ -83,6 +93,17 @@ export const AppGui = observer(
               {state.errors.length && state.errors[0]}
             </Alert>
           </Snackbar>
+        )}
+        {state.whatsNewDialogOpen && !state.hoverMode && (
+          <Dialog open={true} onClose={() => (state.whatsNewDialogOpen = false)}>
+            <DialogTitle>What's New</DialogTitle>
+            <DialogContent>
+              <ReactMarkdown source={changelog} />
+            </DialogContent>
+            <DialogActions>
+              <Button onClick={() => autoUpdater.checkForUpdates()}>Check for updates</Button>
+            </DialogActions>
+          </Dialog>
         )}
         <TitleBar state={state} menuItems={menuItems} showContextMenu={showContextMenu} />
         {state.settingsDialogOpen && (

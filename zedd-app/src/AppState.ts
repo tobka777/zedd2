@@ -255,6 +255,12 @@ export class AppState {
   public settingsDialogOpen: boolean = false
 
   @observable
+  public whatsNewDialogOpen: boolean = true
+
+  @observable
+  public whatsNewDialogLastOpenedForVersion: string = ''
+
+  @observable
   public errors: string[] = []
 
   @observable
@@ -723,7 +729,12 @@ export class AppState {
     return undefined
   }
   public dialogOpen() {
-    return this.settingsDialogOpen || this.renameTaskDialogOpen || this.changingSliceTask
+    return (
+      this.settingsDialogOpen ||
+      this.renameTaskDialogOpen ||
+      this.changingSliceTask ||
+      this.whatsNewDialogOpen
+    )
   }
 
   public calcTargetHours(interval: Interval) {

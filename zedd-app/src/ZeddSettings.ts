@@ -98,7 +98,7 @@ export class ZeddSettings {
 
   @observable
   @serializable
-  public keepHovering = true
+  public keepHovering: boolean | 'vertical' = true
 
   @serializable
   public updateServer = 'https://hazel-peach.now.sh'

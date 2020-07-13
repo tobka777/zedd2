@@ -3,11 +3,13 @@ declare module '*.xml' {
   export default string
 }
 
-declare global {
-  namespace NodeJS {
-    interface Global {
-      isDev: boolean
-      appUserModelId: string
-    }
+declare module '*.md' {
+  export default string
+}
+
+declare namespace NodeJS {
+  interface Global {
+    isDev: boolean
+    appUserModelId: string
   }
 }
