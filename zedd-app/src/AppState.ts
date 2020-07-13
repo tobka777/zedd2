@@ -258,6 +258,7 @@ export class AppState {
   public whatsNewDialogOpen: boolean = true
 
   @observable
+  @serializable
   public whatsNewDialogLastOpenedForVersion: string = ''
 
   @observable
