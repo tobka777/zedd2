@@ -102,6 +102,9 @@ export const AppGui = observer(
             </DialogContent>
             <DialogActions>
               <Button onClick={() => autoUpdater.checkForUpdates()}>Check for updates</Button>
+              <Button onClick={() => (state.whatsNewDialogOpen = false)} color='primary'>
+                Got it!
+              </Button>
             </DialogActions>
           </Dialog>
         )}
