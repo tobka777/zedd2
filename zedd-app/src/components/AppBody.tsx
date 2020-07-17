@@ -1,5 +1,5 @@
 import { Button, ButtonGroup, TextField, Paper, Tooltip } from '@material-ui/core'
-import { makeStyles } from '@material-ui/core/styles'
+import { makeStyles, useTheme } from '@material-ui/core/styles'
 import {
   addMinutes,
   addMonths,
@@ -67,6 +67,8 @@ export const AppBody = observer(
     getLinksFromString,
   }: AppBodyProps) => {
     const classes = useStyles()
+
+    const theme = useTheme()
 
     const onBlockClick = useCallback(
       (_: React.MouseEvent, slice: TimeSlice) => {
@@ -230,47 +232,53 @@ export const AppBody = observer(
             ))}
           </div>
         </div>
-        <Paper>
-          <Calendar
-            showing={state.showing}
-            slices={state.showingSlices}
-            startHour={state.config.startHour}
-            onSliceEndChange={(slice, newEnd) => {
-              newEnd = dateMax([newEnd, addMinutes(slice.start, 1)])
-              newEnd = dateMin([newEnd, startOfNextDay(slice.start)])
-              const nextSlice = state.getNextSlice(slice)
-              if (nextSlice) newEnd = dateMin([newEnd, nextSlice.start])
-              slice.end = newEnd
-            }}
-            onSliceStartChange={(slice, newStart) => {
-              newStart = dateMin([newStart, addMinutes(slice.end, -1)])
-              newStart = dateMax([newStart, startOfDay(slice.start)])
-              const prevSlice = state.getPreviousSlice(slice)
-              if (prevSlice) newStart = dateMax([newStart, prevSlice.end])
-              slice.start = newStart
-            }}
-            onSliceAdd={(s) => state.addSlice(s)}
-            splitBlock={(slice, splitAt) => {
-              if (slice.start < splitAt && splitAt < slice.end) {
-                const newSlice = new TimeSlice(slice.start, slice.end, slice.task)
-                slice.end = splitAt
-                newSlice.start = splitAt
-                state.addSlice(newSlice)
-              }
-            }}
-            getVirtualSlice={(start, end) => new TimeSlice(start, end, state.getUndefinedTask())}
-            deleteSlice={(b) => state.removeSlice(b)}
-            renderSlice={(attributes) => {
-              return (
-                <BlockDisplay
-                  {...attributes}
-                  clarityState={clarityState}
-                  onContextMenu={onBlockClick}
-                />
-              )
-            }}
-          />
-        </Paper>
+        {differenceInDays(state.showing.end, state.showing.start) > 31 ? (
+          <div style={{ textAlign: 'center', color: theme.palette.text.disabled }}>
+            The calendar is not shown for intervals larger than 31 days.
+          </div>
+        ) : (
+          <Paper>
+            <Calendar
+              showing={state.showing}
+              slices={state.showingSlices}
+              startHour={state.config.startHour}
+              onSliceEndChange={(slice, newEnd) => {
+                newEnd = dateMax([newEnd, addMinutes(slice.start, 1)])
+                newEnd = dateMin([newEnd, startOfNextDay(slice.start)])
+                const nextSlice = state.getNextSlice(slice)
+                if (nextSlice) newEnd = dateMin([newEnd, nextSlice.start])
+                slice.end = newEnd
+              }}
+              onSliceStartChange={(slice, newStart) => {
+                newStart = dateMin([newStart, addMinutes(slice.end, -1)])
+                newStart = dateMax([newStart, startOfDay(slice.start)])
+                const prevSlice = state.getPreviousSlice(slice)
+                if (prevSlice) newStart = dateMax([newStart, prevSlice.end])
+                slice.start = newStart
+              }}
+              onSliceAdd={(s) => state.addSlice(s)}
+              splitBlock={(slice, splitAt) => {
+                if (slice.start < splitAt && splitAt < slice.end) {
+                  const newSlice = new TimeSlice(slice.start, slice.end, slice.task)
+                  slice.end = splitAt
+                  newSlice.start = splitAt
+                  state.addSlice(newSlice)
+                }
+              }}
+              getVirtualSlice={(start, end) => new TimeSlice(start, end, state.getUndefinedTask())}
+              deleteSlice={(b) => state.removeSlice(b)}
+              renderSlice={(attributes) => {
+                return (
+                  <BlockDisplay
+                    {...attributes}
+                    clarityState={clarityState}
+                    onContextMenu={onBlockClick}
+                  />
+                )
+              }}
+            />
+          </Paper>
+        )}
         <ErrorBoundary>
           <ClarityView
             showing={state.showing}

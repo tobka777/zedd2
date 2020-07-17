@@ -38,7 +38,7 @@ const createWindow = () => {
       path.join(
         homedir(),
         // react-devtools
-        'AppData/Local/Google/Chrome/User Data/Default/Extensions/fmkadmapgofadopljbjfkapdkoienihi/4.7.0_0',
+        'AppData/Local/Google/Chrome/User Data/Default/Extensions/fmkadmapgofadopljbjfkapdkoienihi/4.8.2_0',
       ),
     )
   }

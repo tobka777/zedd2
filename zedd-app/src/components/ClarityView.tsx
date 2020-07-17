@@ -7,6 +7,10 @@ import {
   format as formatDate,
   max as dateMax,
   min as dateMin,
+  getISOWeek,
+  differenceInDays,
+  eachMonthOfInterval,
+  lastDayOfMonth,
 } from 'date-fns'
 import { observer } from 'mobx-react-lite'
 import * as React from 'react'
@@ -25,6 +29,12 @@ import { groupBy, uniqBy, sortBy } from 'lodash'
 import { validDate, TimeSlice } from '../AppState'
 import { ClarityState } from '../ClarityState'
 import { splitIntervalIntoCalendarDays, sum, omap, isoDayStr } from '../util'
+import {
+  eachWeekOfInterval,
+  lastDayOfISOWeek,
+  eachYearOfInterval,
+  lastDayOfYear,
+} from 'date-fns/esm'
 
 const roundToNearest = (x: number, toNearest: number) => Math.round(x / toNearest) * toNearest
 const floorToNearest = (x: number, toNearest: number) => Math.floor(x / toNearest) * toNearest
@@ -192,7 +202,47 @@ export const ClarityView = observer((props: ClarityViewProps) => {
     clarityState,
     showingTargetHours,
   } = props
+  const noOfDays = differenceInDays(showing.end, showing.start)
+  const groupBy = noOfDays > 366 ? 'year' : noOfDays > 64 ? 'month' : noOfDays > 21 ? 'week' : 'day'
   const days = eachDayOfInterval(showing)
+  const weeks =
+    days.length > 21 &&
+    eachWeekOfInterval(showing, { weekStartsOn: 1 }).map((weekStart) => ({
+      start: dateMax([weekStart, showing.start]),
+      end: dateMin([lastDayOfISOWeek(weekStart), showing.end]),
+    }))
+  const untrimmedIntervals =
+    'year' === groupBy
+      ? eachYearOfInterval(showing).map((start) => ({
+          start: start,
+          end: lastDayOfYear(start),
+        }))
+      : 'month' === groupBy
+      ? eachMonthOfInterval(showing).map((start) => ({
+          start: start,
+          end: lastDayOfMonth(start),
+        }))
+      : 'week' === groupBy
+      ? eachWeekOfInterval(showing, { weekStartsOn: 1 }).map((start) => ({
+          start: start,
+          end: lastDayOfISOWeek(start),
+        }))
+      : eachDayOfInterval(showing).map((start) => ({
+          start: start,
+          end: start,
+        }))
+  const intervals = untrimmedIntervals.map((i) => ({
+    start: dateMax([i.start, showing.start]),
+    end: dateMin([i.end, showing.end]),
+  }))
+  const headerFormat: string =
+    'year' === groupBy
+      ? 'y'
+      : 'month' === groupBy
+      ? 'LLL y'
+      : 'week' === groupBy
+      ? "'Wk' RRRR / I"
+      : 'EEEEEE, dd.MM'
   const clarityExport = transform(props)
   const allWorkEntries = Object.values(clarityExport).flatMap((x) => x)
   const tasksToShow = sortBy(
@@ -217,9 +267,9 @@ export const ClarityView = observer((props: ClarityViewProps) => {
         <thead>
           <tr>
             <th className='textHeader'>Project / Task</th>
-            {days.map((d) => (
-              <th key={isoDayStr(d)} className='numberHeader'>
-                {formatDate(d, 'EEEEEE, dd.MM')}
+            {intervals.map((w) => (
+              <th key={isoDayStr(w.start)} className='numberHeader'>
+                {formatDate(w.start, headerFormat)}
               </th>
             ))}
             <th className='numberCell'>Total</th>
@@ -236,19 +286,21 @@ export const ClarityView = observer((props: ClarityViewProps) => {
                 {' / '}
                 <span style={{ whiteSpace: 'nowrap' }}>{taskToShow.taskName}</span>
               </td>
-              {days.map((d) => {
-                const workEntry = clarityExport[isoDayStr(d)]?.find(
-                  (we) => we.taskIntId === taskToShow.taskIntId,
-                )
+              {intervals.map((w) => {
+                const workEntries = eachDayOfInterval(w)
+                  .flatMap((d) => clarityExport[isoDayStr(d)] ?? [])
+                  ?.filter((we) => we.taskIntId === taskToShow.taskIntId)
                 return (
                   <td
-                    key={taskToShow.taskIntId + '-' + isoDayStr(d)}
-                    title={workEntry?.comment}
-                    style={{ cursor: workEntry?.comment ? 'help' : 'default' }}
+                    key={taskToShow.taskIntId + '-' + isoDayStr(w.start)}
+                    title={workEntries.map((we) => we.comment).join('\n')}
+                    style={{ cursor: workEntries.some((we) => we.comment) ? 'help' : 'default' }}
                     className='numberCell'
                   >
-                    {workEntry?.comment && <span style={{ fontSize: 'xx-small' }}>m/K </span>}
-                    {formatHours(workEntry?.hours ?? 0)}
+                    {workEntries.some((we) => we.comment) && (
+                      <span style={{ fontSize: 'xx-small' }}>m/K </span>
+                    )}
+                    {formatHours(sum(workEntries.map((we) => we.hours)))}
                   </td>
                 )
               })}
@@ -267,9 +319,15 @@ export const ClarityView = observer((props: ClarityViewProps) => {
         <tfoot>
           <tr>
             <td></td>
-            {days.map((d) => (
-              <td key={'total-' + isoDayStr(d)} className='numberCell'>
-                {formatHours(sum(clarityExport[isoDayStr(d)]?.map((we) => we.hours) ?? []))}
+            {intervals.map((w) => (
+              <td key={'total-' + isoDayStr(w.start)} className='numberCell'>
+                {formatHours(
+                  sum(
+                    eachDayOfInterval(w).map((d) =>
+                      sum(clarityExport[isoDayStr(d)]?.map((we) => we.hours) ?? []),
+                    ),
+                  ),
+                )}
               </td>
             ))}
             <td

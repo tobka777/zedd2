@@ -1,3 +1,8 @@
+## [2.6.0]
+
+- Calendar is hidden if the selected interval is larger than 21 days.
+- The "clarity view" groups columns by day/week/month/year, depending on the selected interval. Selecting large intervals is useful to see how much has been booked to a particular account.
+
 ## [2.5.0] - 2020-07-12
 
 - "Hover mode" now has a vertical option. See settings to enable.
