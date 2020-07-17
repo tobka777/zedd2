@@ -66,8 +66,10 @@ export const TaskEditor = observer(
     let guessClarityIntId: number | undefined = undefined
     if (value.clarityTaskIntId === undefined) {
       const keys = value.name.match(/[A-Z]+-\d+/g) ?? []
-      guessClarityIntId = clarityState.tasks.find((ct) => keys.some((key) => ct.name.includes(key)))
-        ?.intId
+      const keyRegexes = keys.map((key) => new RegExp(key + '(?!\\d)'))
+      guessClarityIntId = clarityState.tasks.find((ct) =>
+        keyRegexes.some((regex) => ct.name.match(regex)),
+      )?.intId
     }
 
     return (
