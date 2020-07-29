@@ -35,11 +35,11 @@ export class ClarityState {
 
   public constructor(public clarityDir: string) {}
 
-  public get currentlyImportingTasks() {
+  public get currentlyImportingTasks(): boolean {
     return this._currentlyImportingTasks
   }
 
-  get tasks() {
+  get tasks(): ClarityTask[] {
     return this._tasks
   }
 
@@ -57,15 +57,19 @@ export class ClarityState {
     return projectNames
   }
 
-  public get tasksLastUpdated() {
+  public get tasksLastUpdated(): Date | undefined {
     return this._tasksLastUpdated
   }
 
-  public async init() {
+  public async init(): Promise<void> {
     await mkdirIfNotExists(this.clarityDir)
   }
 
-  public async export(clarityExport: ClarityExportFormat, submitTimesheets: boolean) {
+  public async export(
+    clarityExport: ClarityExportFormat,
+    submitTimesheets: boolean,
+  ): Promise<void> {
+    console.log('exporting timesheets', clarityExport)
     try {
       this._currentlyImportingTasks = true
       await fillClarity(this.nikuLink, clarityExport, submitTimesheets, {
@@ -95,15 +99,15 @@ export class ClarityState {
     return this._tasks
   }
 
-  public async loadStateFromFile() {
+  public async loadStateFromFile(): Promise<void> {
     ;[this._tasksLastUpdated, this._tasks] = await this.loadClarityTasksFromFile()
   }
 
-  public resolveTask(intId: number | undefined) {
+  public resolveTask(intId: number | undefined): undefined | ZeddClarityTask {
     return intId === undefined ? undefined : this.intIdTaskMap.get(intId)
   }
 
-  public isValidTaskIntId(intId: number | undefined) {
+  public isValidTaskIntId(intId: number | undefined): boolean {
     return this.resolveTask(intId) !== undefined
   }
 

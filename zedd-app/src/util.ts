@@ -84,7 +84,7 @@ export const { abs, floor, ceil, round, imul, min } = Math
 export async function mkdirIfNotExists(
   dir: PathLike,
   options?: number | string | fs.MakeDirectoryOptions | null,
-) {
+): Promise<boolean> {
   const dirExists = await fileExists(dir)
   if (!dirExists) {
     await fsp.mkdir(dir, options)
@@ -92,9 +92,9 @@ export async function mkdirIfNotExists(
   return !dirExists
 }
 
-export const startOfNextMinute = (d: Date | number) => startOfMinute(addMinutes(d, 1))
+export const startOfNextMinute = (d: Date | number): Date => startOfMinute(addMinutes(d, 1))
 
-export const startOfNextDay = (d: Date | number) => startOfDay(addDays(d, 1))
+export const startOfNextDay = (d: Date | number): Date => startOfDay(addDays(d, 1))
 
 export function splitIntervalIntoCalendarDays(interval: Interval): Interval[] {
   const result = []
@@ -106,12 +106,12 @@ export function splitIntervalIntoCalendarDays(interval: Interval): Interval[] {
   result.push({ start, end })
   return result
 }
-export const sum = (nums: number[]) => nums.reduce((a, b) => a + b, 0)
+export const sum = (nums: number[]): number => nums.reduce((a, b) => a + b, 0)
 
-export const formatHoursHHmm = (hours: number) => {
+export const formatHoursHHmm = (hours: number): string => {
   return (hours | 0) + ':' + ('' + (((hours % 1) * 60) | 0)).padStart(2, '0')
 }
-export const formatHoursBT = (hours: number) => {
+export const formatHoursBT = (hours: number): string => {
   if (0 === hours) return '-'
   return (
     (hours / 8).toLocaleString('de-DE', {
@@ -121,12 +121,12 @@ export const formatHoursBT = (hours: number) => {
   ) // \xa0 = NBSP
 }
 
-export const isoWeekInterval = (d: Date | number) => ({
+export const isoWeekInterval = (d: Date | number): Interval => ({
   start: startOfISOWeek(d),
   end: lastDayOfISOWeek(d),
 })
 
-export const toggle = (arr: any[], value: any) => {
+export const toggle = (arr: any[], value: any): void => {
   const idx = arr.indexOf(value)
   if (idx !== -1) {
     arr.splice(idx, 1)
@@ -135,12 +135,15 @@ export const toggle = (arr: any[], value: any) => {
   }
 }
 
-export const intRange = (startIncl: number, endExcl: number) =>
+export const intRange = (startIncl: number, endExcl: number): number[] =>
   Array(endExcl - startIncl)
     .fill(undefined)
     .map((_, i) => startIncl + i)
 
-export const monthInterval = (d: Date | number) => ({ start: startOfMonth(d), end: endOfMonth(d) })
+export const monthInterval = (d: Date | number): Interval => ({
+  start: startOfMonth(d),
+  end: endOfMonth(d),
+})
 
 /**
  * Given an array `input`, returns a new array such that for all pairs (s, t) of the
@@ -156,41 +159,41 @@ export const uniqCustom = <T>(input: T[], equals: (s: T, t: T) => boolean): T[] 
   return result
 }
 
-export const businessWeekInterval = (d: Date | number) => ({
+export const businessWeekInterval = (d: Date | number): Interval => ({
   start: startOfISOWeek(d),
   end: addDays(lastDayOfISOWeek(d), -2),
 })
 
-export const getDayInterval = (date: Date) => {
+export const getDayInterval = (date: Date): Interval => {
   const start = startOfDay(date)
   return { start, end: addDays(start, 1) }
 }
 
-export const isBeforeOrEqual = (d: Date, d2: Date) => isBefore(d, d2) || isEqual(d, d2)
+export const isBeforeOrEqual = (d: Date, d2: Date): boolean => isBefore(d, d2) || isEqual(d, d2)
 
-export const ilog = <T>(x: T, ...more: any[]) => (console.log(x, ...more), x)
+export const ilog = <T>(x: T, ...more: any[]): T => (console.log(x, ...more), x)
 
-export const roundDownToQuarterHour = (date: Date) => {
+export const roundDownToQuarterHour = (date: Date): Date => {
   return roundToNearestMinutes(addSeconds(date, -7.5 * 60), { nearestTo: 15 })
 }
 
-export function omap<K extends string, T, M>(x: { [P in K]: T }, f: (t: T) => M) {
+export function omap<K extends string, T, M>(x: { [P in K]: T }, f: (t: T) => M): { [P in K]: M } {
   const result: { [P in K]: M } = {} as any
   for (const k of Object.keys(x)) result[k as K] = f(x[k as K])
   return result
 }
 
-export const stringHash = (str: string) => {
+export const stringHash = (str: string): number => {
   let h: number = 0
   for (let i = 0; i < str.length; i++) h = (imul(31, h) + str.charCodeAt(i)) | 0
   return h
 }
 
-export const stringHashColor = (str: string) => {
+export const stringHashColor = (str: string): chroma.Color => {
   return chroma.num(stringHash(str) & 0xffffff)
 }
 
-export const isoDayStr = (day: number | Date) => formatDate(day, 'yyyy-MM-dd')
+export const isoDayStr = (day: number | Date): string => formatDate(day, 'yyyy-MM-dd')
 
 export function useDebouncedCallback<T extends (...args: any[]) => any>(
   callback: T,

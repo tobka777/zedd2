@@ -114,9 +114,13 @@ function transform({ slices, showing, clarityState }: ClarityViewProps): Clarity
   // not just the begining
   const showInterval = { start: showing.start, end: addDays(showing.end, 1) }
 
-  // in the first step, create a ClarityExportFormat with and entry for each
+  // in the first step, create a ClarityExportFormat with an entry for each
   // task/comment combination
   const dayMap: ClarityExportFormat = {}
+  // init dayMap so that days without slices are also included
+  for (const day of eachDayOfInterval(showing)) {
+    dayMap[isoDayStr(day)] = []
+  }
   for (const slice of slices) {
     validDate(slice.start)
     validDate(slice.end)
@@ -141,7 +145,7 @@ function transform({ slices, showing, clarityState }: ClarityViewProps): Clarity
       end: bEndFixed,
     })) {
       const dayKey = isoDayStr(daySlice.start)
-      const dayHourss = dayMap[dayKey] || (dayMap[dayKey] = [])
+      const dayHourss = dayMap[dayKey]
       let dayHours = dayHourss.find(
         (d) =>
           d.taskIntId === slice.task.clarityTaskIntId &&
@@ -204,13 +208,6 @@ export const ClarityView = observer((props: ClarityViewProps) => {
   } = props
   const noOfDays = differenceInDays(showing.end, showing.start)
   const groupBy = noOfDays > 366 ? 'year' : noOfDays > 64 ? 'month' : noOfDays > 21 ? 'week' : 'day'
-  const days = eachDayOfInterval(showing)
-  const weeks =
-    days.length > 21 &&
-    eachWeekOfInterval(showing, { weekStartsOn: 1 }).map((weekStart) => ({
-      start: dateMax([weekStart, showing.start]),
-      end: dateMin([lastDayOfISOWeek(weekStart), showing.end]),
-    }))
   const untrimmedIntervals =
     'year' === groupBy
       ? eachYearOfInterval(showing).map((start) => ({

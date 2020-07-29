@@ -1,3 +1,7 @@
+## [2.6.1]
+
+- Days with no slices are correctly emptied in clarity when eporting.
+
 ## [2.6.0] - 2020-07-17
 
 - Calendar is hidden if the selected interval is larger than 31 days.
