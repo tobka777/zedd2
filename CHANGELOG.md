@@ -1,7 +1,8 @@
 ## [2.6.1]
 
-- Days with no slices are correctly emptied in clarity when eporting.
+- Days with no slices are correctly emptied in clarity when exporting.
 - Minor bugfixes and performance improvements.
+- Made notifications non-interactive because the required node native module was more hassle than it was worth.
 
 ## [2.6.0] - 2020-07-17
 

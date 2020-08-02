@@ -88,7 +88,6 @@
     }
   },
   "dependencies": {
-    "electron-windows-notifications": "^3.0.6",
     "selenium-webdriver": "^4.0.0-alpha.7",
     "win-ca": "^3.2.1"
   },

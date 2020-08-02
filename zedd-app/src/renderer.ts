@@ -1,6 +1,5 @@
 import { ipcRenderer, remote, BrowserWindow, MenuItemConstructorOptions, Rectangle } from 'electron'
 // @ts-expect-error
-import { ToastNotification } from 'electron-windows-notifications'
 import { autorun, computed } from 'mobx'
 import * as path from 'path'
 import * as React from 'react'
@@ -21,7 +20,6 @@ import {
   checkCgJira,
   getLinksFromString,
 } from './plJiraConnector'
-import toastTemplate from './toast-template.xml'
 import { fileExists, formatHoursBT, formatHoursHHmm, mkdirIfNotExists, floor } from './util'
 import { ZeddSettings } from './ZeddSettings'
 import {
@@ -68,19 +66,11 @@ const d = (...x: any[]) => console.log('renderer.ts', ...x)
 
 // serialize(new Todo()) // {}
 
-function showNotification(
-  title: string,
-  text: string,
-  [button1Text, button1Args]: [string, string],
-  [button2Text, button2Args]: [string, string],
-  cb: (notification: any, args: { arguments: string }) => void,
-) {
-  const notification = new ToastNotification({
-    template: toastTemplate,
-    strings: [title, text, button1Text, button1Args, button2Text, button2Args],
+function showNotification(title: string, text: string, cb: () => void) {
+  const notification = new Notification(title, {
+    body: text,
   })
-  notification.on('activated', cb)
-  notification.show()
+  notification.onclick = cb
 }
 
 function quit() {
@@ -173,22 +163,20 @@ async function setup() {
   }
   state.startInterval()
   state.config = config
+  let lastAwaySlice: string | undefined
   state.idleSliceNotificationCallback = (when) => {
+    lastAwaySlice = formatInterval(when) + ' ' + '$$$OTHER$$$'
     console.log('You were away ' + format(when.start) + ' - ' + format(when.end))
     showNotification(
       'You were away ' + format(when.start) + ' - ' + format(when.end),
-      'Close to discard or choose what to assign.',
-      [state.currentTask.name.substring(0), formatInterval(when) + ' ' + state.currentTask.name],
-      ['Other...', formatInterval(when) + ' ' + '$$$OTHER$$$'],
-      (_, wargs) => {
-        const [start, end, taskName] = TimeSlice.parse(wargs.arguments)
-        const newSlice = new TimeSlice(
-          start,
-          end,
-          '$$$OTHER$$$' === taskName ? state.getUndefinedTask() : state.getTaskForName(taskName),
-        )
-        state.addSlice(newSlice)
-        if ('$$$OTHER$$$' === taskName) {
+      'Close to discard or click to assign a task.',
+      () => {
+        if (lastAwaySlice) {
+          const [start, end, _taskName] = TimeSlice.parse(lastAwaySlice!)
+          lastAwaySlice = undefined
+          const newSlice = new TimeSlice(start, end, state.getUndefinedTask())
+          state.addSlice(newSlice)
+
           if (!currentWindow.isVisible()) {
             currentWindow.show()
           }
@@ -199,6 +187,29 @@ async function setup() {
           state.changingSliceTask = newSlice
         }
       },
+      // code for interactive notification. Disabled because it only works with a native module
+      // which isn't worth the hassle.
+      //   [state.currentTask.name.substring(0), formatInterval(when) + ' ' + state.currentTask.name],
+      //   ['Other...', formatInterval(when) + ' ' + '$$$OTHER$$$'],
+      //   (_, wargs) => {
+      //     const [start, end, taskName] = TimeSlice.parse(wargs.arguments)
+      //     const newSlice = new TimeSlice(
+      //       start,
+      //       end,
+      //       '$$$OTHER$$$' === taskName ? state.getUndefinedTask() : state.getTaskForName(taskName),
+      //     )
+      //     state.addSlice(newSlice)
+      //     if ('$$$OTHER$$$' === taskName) {
+      //       if (!currentWindow.isVisible()) {
+      //         currentWindow.show()
+      //       }
+      //       if (state.hoverMode) {
+      //         state.hoverMode = false
+      //       }
+      //       currentWindow.focus()
+      //       state.changingSliceTask = newSlice
+      //     }
+      //   },
     )
   }
 
