@@ -286,7 +286,7 @@ export const AppBody = observer(
             clarityState={clarityState}
             submitTimesheets={state.submitTimesheets}
             onChangeSubmitTimesheets={(x) => (state.submitTimesheets = x)}
-            errorHandler={(e) => state.errors.push(e.message)}
+            errorHandler={(error) => state.messages.push({ msg: error.message, severity: 'error' })}
             showingTargetHours={state.calcTargetHours(state.showing)}
           />
         </ErrorBoundary>

@@ -7,6 +7,7 @@ import {
   getProjectInfo,
   ClarityExportFormat,
   Task as ZeddClarityTask,
+  Project as ZeddClarityProject,
 } from 'zedd-clarity'
 import './index.css'
 
@@ -14,7 +15,7 @@ import { getLatestFileInDir, mkdirIfNotExists, FILE_DATE_FORMAT } from './util'
 
 export interface ClarityTask extends ZeddClarityTask {
   projectName: string
-  projectIntId: string
+  projectIntId: number
 }
 
 export class ClarityState {
@@ -85,16 +86,31 @@ export class ClarityState {
   public async importAndSaveClarityTasks(
     excludedProjects: string[],
     toImport: string[] | 'ALL' = 'ALL',
+    infoNotify?: (info: string) => void,
   ): Promise<ClarityTask[]> {
     const importProject = (projectName: string) =>
       'ALL' === toImport || toImport.includes(projectName)
-    const importedTasks = await this.importClarityTasks(
+    await this.importClarityTasks(
       (projectName) => excludedProjects.includes(projectName) || !importProject(projectName),
+      (project) => {
+        infoNotify &&
+          infoNotify(
+            'Imported ' + project.tasks.length + ' tasks from project ' + project.name + '.',
+          )
+        const tasksToKeep = this._tasks.filter(
+          ({ projectName }) =>
+            !excludedProjects.includes(projectName) && projectName !== project.name,
+        )
+        this._tasks = [
+          ...tasksToKeep,
+          ...project.tasks.map((t) => ({
+            ...t,
+            projectName: project.name,
+            projectIntId: project.intId,
+          })),
+        ]
+      },
     )
-    const oldTasksNotExcludedAndNotImported = this._tasks.filter(
-      ({ projectName }) => !excludedProjects.includes(projectName) && !importProject(projectName),
-    )
-    this._tasks = [...oldTasksNotExcludedAndNotImported, ...importedTasks]
     await this.saveClarityTasksToFile(this._tasks)
     return this._tasks
   }
@@ -113,6 +129,7 @@ export class ClarityState {
 
   private async importClarityTasks(
     excludeProject: (projectName: string) => boolean,
+    notifyProject?: (p: ZeddClarityProject) => void,
   ): Promise<ClarityTask[]> {
     if (this._currentlyImportingTasks) {
       throw new Error('Already importing')
@@ -127,6 +144,7 @@ export class ClarityState {
           chromedriverExe: this.chromedriverExe,
         },
         excludeProject,
+        notifyProject,
       )
       return projectInfos.flatMap(({ tasks, name: projectName, intId: projectIntId }) =>
         tasks.map((task) =>

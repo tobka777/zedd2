@@ -1,6 +1,7 @@
 ## [2.6.1]
 
 - Days with no slices are correctly emptied in clarity when eporting.
+- Minor bugfixes and performance improvements.
 
 ## [2.6.0] - 2020-07-17
 

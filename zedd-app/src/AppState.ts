@@ -31,6 +31,7 @@ import { computed, observable, transaction, intercept } from 'mobx'
 import type { IObservableArray } from 'mobx'
 import { createTransformer, ObservableGroupMap } from 'mobx-utils'
 import * as path from 'path'
+import * as chroma from 'chroma.ts'
 import {
   custom,
   date,
@@ -48,7 +49,6 @@ import {
 import feiertage from './feiertage.json'
 import {
   abs,
-  getDayInterval,
   isoWeekInterval,
   mkdirIfNotExists,
   startOfNextMinute,
@@ -120,22 +120,22 @@ export class Task {
     this.clarityTaskComment = clarityTaskComment || ''
   }
 
-  public static same(a: Task, b: Task) {
+  public static same(a: Task, b: Task): boolean {
     return (a.key && b.key && a.key === b.key) || a.name === b.name
   }
 
-  public getColor() {
+  public getColor(): chroma.Color {
     return stringHashColor(this.name)
   }
 }
 
-export const validDate = <T extends Date | number>(d: T) => {
+export const validDate = <T extends Date | number>(d: T): T => {
   if (!isValid(d)) throw new Error('date invalid: ' + d)
   return d
 }
 export const dateFormatString = 'yyyy-MM-dd HH:mm'
-export const format = (date: Date | number) => formatDate(date, dateFormatString)
-export const formatInterval = (s: Interval) => format(s.start) + ' - ' + format(s.end)
+export const format = (date: Date | number): string => formatDate(date, dateFormatString)
+export const formatInterval = (s: Interval): string => format(s.start) + ' - ' + format(s.end)
 
 export class TimeSlice {
   static parse(slice: string): [Date, Date, string] {
@@ -174,7 +174,7 @@ export class TimeSlice {
   @observable
   public task: Task
 
-  public setInterval(start = this._start, end = this._end) {
+  public setInterval(start = this._start, end = this._end): void {
     if (differenceInMinutes(end, start) <= 0) {
       throw new Error(`start (${start}) must be at least one minute before end (${end})`)
     }
@@ -190,7 +190,7 @@ export class TimeSlice {
     return formatInterval(this) + ' ' + this.task.name
   }
 }
-export const timeSliceStr = (ts: TimeSlice | undefined) => {
+export const timeSliceStr = (ts: TimeSlice | undefined): string | undefined => {
   if (!ts) return undefined
   return formatInterval(ts) + ' ' + ts.task.name
 }
@@ -249,7 +249,7 @@ export class AppState {
   )
 
   @observable
-  public renameTaskDialogOpen: boolean = false
+  public renamingTask: undefined | Task = undefined
 
   @observable
   public settingsDialogOpen: boolean = false
@@ -262,7 +262,7 @@ export class AppState {
   public whatsNewDialogLastOpenedForVersion: string = ''
 
   @observable
-  public errors: string[] = []
+  public messages: { msg: string; severity: 'error' | 'warning' | 'info' }[] = []
 
   @observable
   @serializable
@@ -317,16 +317,6 @@ export class AppState {
 
   private _interval: NodeJS.Timeout
 
-  @serializable(
-    custom(
-      (s, _, state) => state.slices.indexOf(s),
-      (i, context) => {
-        return context.target.slices[i]
-      },
-    ),
-  )
-  private lastTimedSlice: undefined | TimeSlice = undefined
-
   @serializable(date())
   private lastUserAction: Date = new Date()
 
@@ -355,7 +345,7 @@ export class AppState {
     })
   }
 
-  public static async saveToDir(instance: AppState, dir: string) {
+  public static async saveToDir(instance: AppState, dir: string): Promise<void> {
     // const allTasks = instance.slices.map(s => s.task)
     // if (instance.currentTask) allTasks.push(instance.currentTask)
     // instance.tasks = uniq(allTasks)
@@ -407,7 +397,7 @@ export class AppState {
   }
 
   @computed
-  get tasksInfos() {
+  get tasksInfos(): { task: Task; lastEnd: Date }[] {
     const UNDEFINED_TASK = this.getUndefinedTask()
     const tasksInfos = this.slices.reduceRight((result, slice) => {
       if (slice.task !== UNDEFINED_TASK) {
@@ -424,14 +414,31 @@ export class AppState {
     return tasksInfos
   }
 
-  public get startDate() {
+  @serializable(
+    custom(
+      (s, _, state) => state.slices.indexOf(s),
+      (i, context) => {
+        if (-1 === i) {
+          return undefined
+        } else {
+          if (context.target.slices.length <= i) {
+            throw new Error('?!' + i)
+          }
+          return context.target.slices[i]
+        }
+      },
+    ),
+  )
+  private lastTimedSlice: undefined | TimeSlice = undefined
+
+  public get startDate(): string {
     return this._startDate
   }
   public set startDate(iso: string) {
     this._startDate = iso
     this.updateShowingFromStartEnd()
   }
-  public get endDate() {
+  public get endDate(): string {
     return this._endDate
   }
   public set endDate(iso: string) {
@@ -439,7 +446,7 @@ export class AppState {
     this.updateShowingFromStartEnd()
   }
 
-  public get showing() {
+  public get showing(): Interval {
     return this._showing
   }
 
@@ -466,16 +473,16 @@ export class AppState {
   }
 
   /** METHODS */
-  public toggleTimingInProgress() {
+  public toggleTimingInProgress(): void {
     this.timingInProgess = !this.timingInProgess
   }
 
   public getDayWorkedHours(day: Date): number {
     return (
       sum(
-        this.slices
-          .filter((s) => isSameDay(s.start, day))
-          .map((s) => differenceInMinutes(s.end, s.start)),
+        this.slicesByDay
+          .get(startOfDay(day).getTime())
+          ?.map((s) => differenceInMinutes(s.end, s.start)) ?? [],
       ) / 60
     )
   }
@@ -497,7 +504,7 @@ export class AppState {
     return this.tasksInfos.slice(0, n).map((i) => i.task)
   }
 
-  public getSuggestedTasks() {
+  public getSuggestedTasks(): Task[] {
     return uniqCustom([...this.getMostRecentTasks(7), ...this.assignedIssueTasks], Task.same)
   }
 
@@ -507,7 +514,7 @@ export class AppState {
     { debugNameGenerator: (t) => `getTaskMinutes${t?.name}` },
   )
 
-  public fillErsatz(when: Interval) {
+  public fillErsatz(when: Interval): void {
     for (const day of eachDayOfInterval(when)) {
       this.addSliceIfDayEmpty(
         this.makeFullDaySlice(day, this.getTaskForName(this.config.ersatzTask)),
@@ -515,7 +522,7 @@ export class AppState {
     }
   }
 
-  public clearErsatz(when: Interval) {
+  public clearErsatz(when: Interval): void {
     const fixedWhen = { start: startOfDay(when.start), end: endOfDay(when.end) }
     const ersatzTask = this.getTaskForName(this.config.ersatzTask)
     const slicesToRemove = this.slices.filter(
@@ -524,7 +531,7 @@ export class AppState {
     transaction(() => slicesToRemove.forEach((r) => this.slices.remove(r)))
   }
 
-  public getPreviousSlice(slice: TimeSlice) {
+  public getPreviousSlice(slice: TimeSlice): TimeSlice | undefined {
     return this.slices.reduce((result, s) => {
       if (!isBefore(s.start, slice.start)) return result
       if (!result || isAfter(s.start, result.start)) return s
@@ -532,7 +539,7 @@ export class AppState {
     }, undefined as TimeSlice | undefined)
   }
 
-  public getNextSlice(slice: TimeSlice) {
+  public getNextSlice(slice: TimeSlice): TimeSlice | undefined {
     return this.slices.reduce((result, s) => {
       if (!isAfter(s.start, slice.start)) return result
       if (!result || isBefore(s.start, result.start)) return s
@@ -540,7 +547,7 @@ export class AppState {
     }, undefined as TimeSlice | undefined)
   }
 
-  public getTaskForName(name: Task | string | undefined) {
+  public getTaskForName(name: Task | string | undefined): Task {
     const taskName = ('string' === typeof name ? name : name?.name)?.trim()?.replace(/\s+/, ' ')
     if (!taskName) {
       return this.getUndefinedTask()
@@ -553,7 +560,7 @@ export class AppState {
     )
   }
 
-  public addSlice(s: TimeSlice) {
+  public addSlice(s: TimeSlice): TimeSlice {
     validDate(s.start)
     validDate(s.end)
 
@@ -561,7 +568,7 @@ export class AppState {
     return s
   }
 
-  public removeSlice(s: TimeSlice) {
+  public removeSlice(s: TimeSlice): void {
     const index = this.slices.indexOf(s)
     if (index === this.slices.length - 1) {
       this.slices.length--
@@ -572,10 +579,10 @@ export class AppState {
     }
   }
 
-  public startInterval() {
+  public startInterval(): void {
     this._interval = setInterval(this.trackTime, 5_000)
   }
-  public cleanup() {
+  public cleanup(): void {
     if (this._interval) clearInterval(this._interval)
   }
 
@@ -593,7 +600,7 @@ export class AppState {
     now = new Date(),
     secondsSinceLastUserInput = remote?.powerMonitor?.getSystemIdleTime() ?? 0,
     minIdleTimeInMin = Math.max(this?.config?.minIdleTimeMin ?? 15, 1),
-  ) => {
+  ): void => {
     const prevLastUserAction = this.lastUserAction
     this.lastUserAction = subSeconds(now, secondsSinceLastUserInput)
     if (!this.timingInProgess || this.getUndefinedTask() === this.currentTask) {
@@ -677,13 +684,13 @@ export class AppState {
     }
   }
 
-  public isDayEmpty(timeInDay: Date) {
-    return !this.slices.some((s) => areIntervalsOverlapping(getDayInterval(timeInDay), s))
+  public isDayEmpty(timeInDay: Date): boolean {
+    return !this.slicesByDay.get(startOfDay(timeInDay).getTime())?.length
   }
 
-  public addSliceIfDayEmpty(newSlice: TimeSlice | undefined) {
+  public addSliceIfDayEmpty(newSlice: TimeSlice | undefined): boolean {
     if (!newSlice) {
-      return
+      return false
     }
     assert(isSameDay(newSlice.start, newSlice.end))
     const dayIsEmpty = this.isDayEmpty(newSlice.start)
@@ -693,7 +700,7 @@ export class AppState {
     return dayIsEmpty
   }
 
-  public importHolidays() {
+  public importHolidays(): void {
     for (const holidayDateStr of Object.keys(feiertage)) {
       const date = new Date(holidayDateStr)
       const slice = this.makeFullDaySlice(date, this.getTaskForName('URLAUB'))
@@ -701,7 +708,7 @@ export class AppState {
     }
   }
 
-  public toJsonString() {
+  public toJsonString(): string {
     const stateJsonObject = serialize(AppState, this)
     return JSON.stringify(stateJsonObject, undefined, '  ')
   }
@@ -729,16 +736,17 @@ export class AppState {
     }
     return undefined
   }
-  public dialogOpen() {
-    return (
+
+  public dialogOpen(): boolean {
+    return !!(
       this.settingsDialogOpen ||
-      this.renameTaskDialogOpen ||
+      this.renamingTask ||
       this.changingSliceTask ||
       this.whatsNewDialogOpen
     )
   }
 
-  public calcTargetHours(interval: Interval) {
+  public calcTargetHours(interval: Interval): number {
     return sum(eachDayOfInterval(interval).map((day) => this.config.workmask[getDay(day) - 1]))
   }
 

@@ -48,14 +48,17 @@ export const TaskEditor = observer(
           .importAndSaveClarityTasks(
             state.config.excludeProjects,
             'ALL' === which ? 'ALL' : [which],
+            (info) => state.messages.push({ msg: info, severity: 'info' }),
           )
           .catch((e) =>
-            state.errors.push(
-              e.message +
+            state.messages.push({
+              msg:
+                e.message +
                 (e instanceof NikuUrlInvalidError
                   ? 'Check zeddConfig.nikuLink and reload config.'
                   : ''),
-            ),
+              severity: 'error',
+            }),
           ),
       [clarityState, state],
     )
@@ -91,14 +94,14 @@ export const TaskEditor = observer(
             fullWidth
             style={{ flex: '1 1 auto', width: '100%' }}
             getTasksForSearchString={getTasksForSearchString}
-            handleError={(err) => state.errors.push(err.message)}
+            handleError={(error) => state.messages.push({ msg: error.message, severity: 'error' })}
             getHoursForTask={(t) => state.formatHours(state.getTaskHours(t))}
           />
         </Grid>
         <Grid item xs={2} lg={1}>
           <Button
             disabled={!value || value === state.getUndefinedTask()}
-            onClick={(_) => (state.renameTaskDialogOpen = true)}
+            onClick={(_) => (state.renamingTask = value)}
             style={{ width: '100%' }}
             endIcon={<EditIcon />}
           >

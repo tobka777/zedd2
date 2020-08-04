@@ -106,7 +106,9 @@ function setupAutoUpdater(state: AppState, config: ZeddSettings) {
     (_event, _releaseNotes, releaseName, _releaseDate, _updateURL) =>
       (state.updateAvailable = releaseName),
   )
-  autoUpdater.on('error', (error: Error) => state.errors.push(error.message))
+  autoUpdater.on('error', (error: Error) =>
+    state.messages.push({ msg: error.message, severity: 'error' }),
+  )
   return () => {
     clearInterval(checkForUpdatesInterval)
     autoUpdater.removeAllListeners()
@@ -123,6 +125,7 @@ const getMenuItems = (state: AppState) => [
   { label: 'Github', click: () => shell.openExternal('https://github.com/NaridaL/zedd2') },
   { label: 'Open Dev', click: () => getCurrentWindow().webContents.openDevTools() },
   { label: 'Reload Config', click: () => getCurrentWindow().reload() },
+  { label: 'MAGIC', click: () => state.messages.push({ msg: 'Test', severity: 'info' }) },
   { label: 'Quit', click: () => quit() },
 ]
 
@@ -204,7 +207,7 @@ async function setup() {
 
   getTasksFromAssignedJiraIssues(clarityState.tasks)
     .then((e) => (state.assignedIssueTasks = e.map((t) => state.normalizeTask(t))))
-    .catch((err) => state.errors.push(err.message))
+    .catch((error) => state.messages.push({ msg: error.message, severity: 'error' }))
 
   const checkChromePath = async () => {
     if (!state.config.chromePath) {
@@ -241,7 +244,7 @@ async function setup() {
       clarityState.chromedriverExe = chromeDriverPath
     }
   }
-  checkChromePath().catch((error) => state.errors.push('' + error))
+  checkChromePath().catch((error) => state.messages.push({ msg: error.message, severity: 'error' }))
 
   const boundsContained = (outer: Rectangle, inner: Rectangle, margin = 0) =>
     outer.x - inner.x <= margin &&

@@ -85,12 +85,15 @@ export const AppGui = observer(
         <CssBaseline />
         {!state.hoverMode && (
           <Snackbar
-            open={state.errors.length !== 0}
-            autoHideDuration={10000}
-            onClose={() => state.errors.shift()}
+            open={state.messages.length !== 0}
+            autoHideDuration={5000}
+            onClose={() => state.messages.shift()}
           >
-            <Alert onClose={() => state.errors.shift()} severity='error'>
-              {state.errors.length && state.errors[0]}
+            <Alert
+              onClose={() => state.messages.shift()}
+              severity={(state.messages.length && state.messages[0].severity) || 'error'}
+            >
+              {state.messages.length && state.messages[0].msg}
             </Alert>
           </Snackbar>
         )}
@@ -121,14 +124,12 @@ export const AppGui = observer(
             clarityState={clarityState}
           />
         )}
-        {currentFocusedTask && state.renameTaskDialogOpen ? (
+        {state.renamingTask ? (
           <RenameTaskDialog
-            task={currentFocusedTask}
+            task={state.renamingTask}
             key={'dialog-rename-task-' + currentFocusedTask.name}
-            done={(newName) => {
-              state.renameTaskDialogOpen = false
-              if (newName && currentFocusedTask) currentFocusedTask.name = newName
-            }}
+            state={state}
+            onClose={() => (state.renamingTask = undefined)}
           />
         ) : (
           state.changingSliceTask && (

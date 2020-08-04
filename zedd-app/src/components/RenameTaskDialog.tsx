@@ -2,31 +2,32 @@ import { Dialog, DialogActions, DialogContent, DialogTitle } from '@material-ui/
 import Button from '@material-ui/core/Button'
 import TextField from '@material-ui/core/TextField'
 import * as React from 'react'
-import { useState } from 'react'
+import { ReactElement, useState } from 'react'
 
-import { Task } from '../AppState'
+import { AppState, Task } from '../AppState'
 
 export const RenameTaskDialog = ({
   task,
-  done,
+  onClose,
+  state,
 }: {
   task: Task
-  done: (newName: string) => void
-}) => {
+  state: AppState
+  onClose: () => void
+}): ReactElement => {
   const [newName, setNewName] = useState(task.name)
 
+  const matchingTask = state.tasks.find((t) => t.name === newName)
+  const showWarning = !!newName && matchingTask !== undefined && matchingTask !== task
+
   return (
-    <Dialog
-      open={true}
-      onClose={(_) => done(name)}
-      aria-labelledby='form-dialog-title'
-      maxWidth='lg'
-    >
+    <Dialog open={true} onClose={onClose} aria-labelledby='form-dialog-title' maxWidth='lg'>
       <DialogTitle id='form-dialog-title'>Rename Task {task.name}</DialogTitle>
       <form>
         <DialogContent>
           <TextField
             autoFocus
+            error={showWarning}
             margin='dense'
             id='name'
             label='New name for Task'
@@ -34,13 +35,23 @@ export const RenameTaskDialog = ({
             value={newName}
             onChange={(e) => setNewName(e.target.value)}
             fullWidth
+            helperText={!showWarning ? '' : 'A task with this name already exists.'}
           />
+          {showWarning}
         </DialogContent>
         <DialogActions>
-          <Button onClick={(_) => done(name)} color='primary'>
+          <Button color='primary' onClick={onClose}>
             Cancel
           </Button>
-          <Button type='submit' onClick={(_) => done(newName)} color='primary'>
+          <Button
+            type='submit'
+            disabled={showWarning}
+            onClick={(_) => {
+              task.name = newName
+              onClose()
+            }}
+            color='primary'
+          >
             Change
           </Button>
         </DialogActions>

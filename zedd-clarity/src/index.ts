@@ -112,10 +112,11 @@ export async function getProjectInfo(
   nikuLink: string,
   seleniumOptions: SeleniumOptions,
   excludeProject?: (projectName: string) => boolean,
+  notifyProject?: (p: Project) => void,
 ): Promise<Project[]> {
   const downloadDir = seleniumOptions.downloadDir ?? __dirname + '/downloads'
   return withErrorHandling('getProjectInfo', nikuLink, { ...seleniumOptions, downloadDir }, (ctx) =>
-    getProjectInfoInternal(nikuLink, ctx, downloadDir, excludeProject),
+    getProjectInfoInternal(nikuLink, ctx, downloadDir, excludeProject, notifyProject),
   )
 }
 const pageLoad = async ([$, $$, driver]: Context) => {
@@ -280,6 +281,7 @@ async function getProjectInfoInternal(
   ctx: Context,
   downloadDir: string,
   excludeProject: (projectName: string) => boolean = () => false,
+  notifyProject?: (p: Project) => void,
 ) {
   const [$, $$, driver] = ctx
 
@@ -288,6 +290,7 @@ async function getProjectInfoInternal(
   const tasks: Task[] = []
   for (const project of projects) {
     project.tasks = await getProjectTasks(nikuLink, ctx, project, 'yes', downloadDir)
+    notifyProject && notifyProject(project)
   }
 
   return projects
