@@ -1,4 +1,4 @@
-## [2.6.1]
+## [2.7.0] - 2020-08-04
 
 - Days with no slices are correctly emptied in clarity when exporting.
 - Minor bugfixes and performance improvements.
