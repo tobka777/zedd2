@@ -6,6 +6,7 @@ global.isDev = process.argv.includes('--dev')
 
 global.appUserModelId = global.isDev ? process.execPath : 'com.squirrel.zedd.zedd-app'
 app.setAppUserModelId(global.appUserModelId)
+app.commandLine.appendSwitch('disable-features', 'OutOfBlinkCors')
 app.allowRendererProcessReuse = false
 
 process.env.ELECTRON_DISABLE_SECURITY_WARNINGS = '1'
@@ -51,6 +52,7 @@ const createWindow = () => {
     webPreferences: {
       nodeIntegration: true,
       webSecurity: false,
+      enableRemoteModule: true,
     },
   })
 
