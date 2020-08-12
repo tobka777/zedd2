@@ -96,9 +96,7 @@ function setupAutoUpdater(state: AppState, config: ZeddSettings) {
     (_event, _releaseNotes, releaseName, _releaseDate, _updateURL) =>
       (state.updateAvailable = releaseName),
   )
-  autoUpdater.on('error', (error: Error) =>
-    state.messages.push({ msg: error.message, severity: 'error' }),
-  )
+  autoUpdater.on('error', (error: Error) => state.addMessage(error.message))
   return () => {
     clearInterval(checkForUpdatesInterval)
     autoUpdater.removeAllListeners()
@@ -115,7 +113,7 @@ const getMenuItems = (state: AppState) => [
   { label: 'Github', click: () => shell.openExternal('https://github.com/NaridaL/zedd2') },
   { label: 'Open Dev', click: () => getCurrentWindow().webContents.openDevTools() },
   { label: 'Reload Config', click: () => getCurrentWindow().reload() },
-  { label: 'MAGIC', click: () => state.messages.push({ msg: 'Test', severity: 'info' }) },
+  { label: 'MAGIC', click: () => state.addMessage('Test', 'info', 500) },
   { label: 'Quit', click: () => quit() },
 ]
 
@@ -218,7 +216,7 @@ async function setup() {
 
   getTasksFromAssignedJiraIssues(clarityState.tasks)
     .then((e) => (state.assignedIssueTasks = e.map((t) => state.normalizeTask(t))))
-    .catch((error) => state.messages.push({ msg: error.message, severity: 'error' }))
+    .catch((error) => state.addMessage(error.message))
 
   const checkChromePath = async () => {
     if (!state.config.chromePath) {
@@ -255,7 +253,7 @@ async function setup() {
       clarityState.chromedriverExe = chromeDriverPath
     }
   }
-  checkChromePath().catch((error) => state.messages.push({ msg: error.message, severity: 'error' }))
+  checkChromePath().catch((error) => state.addMessage(error.message))
 
   const boundsContained = (outer: Rectangle, inner: Rectangle, margin = 0) =>
     outer.x - inner.x <= margin &&
@@ -436,14 +434,22 @@ async function setup() {
     // console.log('showing:', state.hoverMode, !currentWindow.isVisible)
     // state.hoverMode && !currentWindow.isVisible && currentWindow.show()
     if (state.hoverMode) {
-      currentWindow.isMaximized && currentWindow.unmaximize()
       const vertical = 'vertical' === state.config.keepHovering
+      if (vertical) {
+        currentWindow.setMinimumSize(43, 64)
+        currentWindow.setMaximumSize(43, 0)
+      } else {
+        currentWindow.setMinimumSize(64, 37)
+        currentWindow.setMaximumSize(0, 37)
+      }
+      currentWindow.isMaximized && currentWindow.unmaximize()
       setBoundsSafe(currentWindow, {
         ...state.bounds.hover,
-        height: vertical ? Math.max(400, state.bounds.hover.height) : 32,
-        width: vertical ? 32 : Math.max(400, state.bounds.hover.width),
+        height: vertical ? Math.max(150, state.bounds.hover.height) : 37,
+        width: vertical ? 43 : Math.max(200, state.bounds.hover.width),
       })
     } else {
+      currentWindow.setMaximumSize(10000, 10000)
       setBoundsSafe(currentWindow, state.bounds.normal)
       if (state.bounds.maximized) {
         currentWindow.maximize()

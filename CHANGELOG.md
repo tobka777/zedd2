@@ -1,3 +1,8 @@
+## [2.7.1]
+
+- Notifications now disappear properly when multiple are triggered subsequently.
+- Constrained window bounds properly in minimized mode.
+
 ## [2.7.0] - 2020-08-04
 
 - Days with no slices are correctly emptied in clarity when exporting.

@@ -203,3 +203,8 @@ export function useDebouncedCallback<T extends (...args: any[]) => any>(
   // eslint-disable-next-line react-hooks/exhaustive-deps
   return useCallback(debounce(callback, waitMs), deps)
 }
+
+let nextUniqueId = 0
+export function getUniqueId(): number {
+  return nextUniqueId++
+}

@@ -48,17 +48,15 @@ export const TaskEditor = observer(
           .importAndSaveClarityTasks(
             state.config.excludeProjects,
             'ALL' === which ? 'ALL' : [which],
-            (info) => state.messages.push({ msg: info, severity: 'info' }),
+            (info) => state.addMessage(info, 'info', 2000),
           )
           .catch((e) =>
-            state.messages.push({
-              msg:
-                e.message +
+            state.addMessage(
+              e.message +
                 (e instanceof NikuUrlInvalidError
                   ? 'Check zeddConfig.nikuLink and reload config.'
                   : ''),
-              severity: 'error',
-            }),
+            ),
           ),
       [clarityState, state],
     )
@@ -94,7 +92,7 @@ export const TaskEditor = observer(
             fullWidth
             style={{ flex: '1 1 auto', width: '100%' }}
             getTasksForSearchString={getTasksForSearchString}
-            handleError={(error) => state.messages.push({ msg: error.message, severity: 'error' })}
+            handleError={(error) => state.addMessage(error.message)}
             getHoursForTask={(t) => state.formatHours(state.getTaskHours(t))}
           />
         </Grid>

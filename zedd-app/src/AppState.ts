@@ -59,6 +59,7 @@ import {
   readFilesWithDate,
   formatHoursBT,
   formatHoursHHmm,
+  getUniqueId,
 } from './util'
 import { ZeddSettings } from './ZeddSettings'
 
@@ -262,7 +263,20 @@ export class AppState {
   public whatsNewDialogLastOpenedForVersion: string = ''
 
   @observable
-  public messages: { msg: string; severity: 'error' | 'warning' | 'info' }[] = []
+  public messages: {
+    msg: string
+    severity: 'error' | 'warning' | 'info'
+    timeout: number
+    id: number
+  }[] = []
+
+  public addMessage(
+    msg: string,
+    severity: 'error' | 'warning' | 'info' = 'error',
+    timeout = 10000,
+  ): void {
+    this.messages.push({ msg, severity, timeout, id: getUniqueId() })
+  }
 
   @observable
   @serializable

@@ -35,13 +35,13 @@ app.on('second-instance', (_event, _commandLine, _workingDirectory) => {
 let userQuit: boolean = false
 const createWindow = () => {
   if (global.isDev) {
-    BrowserWindow.addDevToolsExtension(
-      path.join(
-        homedir(),
-        // react-devtools
-        'AppData/Local/Google/Chrome/User Data/Default/Extensions/fmkadmapgofadopljbjfkapdkoienihi/4.8.2_0',
-      ),
-    )
+    // BrowserWindow.addDevToolsExtension(
+    //   path.join(
+    //     homedir(),
+    //     // react-devtools
+    //     'AppData/Local/Google/Chrome/User Data/Default/Extensions/fmkadmapgofadopljbjfkapdkoienihi/4.8.2_0',
+    //   ),
+    // )
   }
 
   // Create the browser window.

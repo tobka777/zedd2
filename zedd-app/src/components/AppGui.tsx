@@ -80,21 +80,19 @@ export const AppGui = observer(
 
     useStyles()
 
+    const message = !state.hoverMode && state.messages.length ? state.messages[0] : undefined
+
     return (
       <MuiThemeProvider theme={theme}>
         <CssBaseline />
-        {!state.hoverMode && (
+        {message && (
           <Snackbar
-            open={state.messages.length !== 0}
-            autoHideDuration={5000}
+            open={true}
+            autoHideDuration={message.timeout}
             onClose={() => state.messages.shift()}
+            key={message.id}
           >
-            <Alert
-              onClose={() => state.messages.shift()}
-              severity={(state.messages.length && state.messages[0].severity) || 'error'}
-            >
-              {state.messages.length && state.messages[0].msg}
-            </Alert>
+            <Alert severity={message.severity}>{message.msg}</Alert>
           </Snackbar>
         )}
         {state.whatsNewDialogOpen && !state.hoverMode && (
