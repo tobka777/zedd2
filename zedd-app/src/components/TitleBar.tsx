@@ -1,4 +1,4 @@
-import { AppBar, Badge, Button, Menu as MuiMenu, MenuItem } from '@material-ui/core'
+import { AppBar, Badge, Button, Menu as MuiMenu, MenuItem, Tooltip } from '@material-ui/core'
 import { useTheme } from '@material-ui/core/styles'
 import {
   Menu as MenuIcon,
@@ -12,6 +12,7 @@ import * as React from 'react'
 import { useEffect, useState } from 'react'
 
 import { AppState } from '../AppState'
+import { formatHoursHHmm } from '../util'
 import { ZeddSvgIcon } from './ZeddSvgIcon'
 
 const { getCurrentWindow, app, autoUpdater } = remote
@@ -134,16 +135,18 @@ export const TitleBar = observer(({ state, menuItems, showContextMenu }: TitleBa
           </MenuItem>
         )}
       </MuiMenu>
-      <Button
-        style={{
-          width: !vertical ? '64px' : '37px',
-          height: vertical ? '64px' : '37px',
-          color: 'inherit',
-        }}
-        onClick={() => state.toggleTimingInProgress()}
-      >
-        {state.timingInProgess ? <StopIcon /> : <PlayArrowIcon />}
-      </Button>
+      <Tooltip title={formatHoursHHmm(state.getDayWorkedHours(new Date()))}>
+        <Button
+          style={{
+            width: !vertical ? '64px' : '37px',
+            height: vertical ? '64px' : '37px',
+            color: 'inherit',
+          }}
+          onClick={() => state.toggleTimingInProgress()}
+        >
+          {state.timingInProgess ? <StopIcon /> : <PlayArrowIcon />}
+        </Button>
+      </Tooltip>
       {/* {state.lastAction} */}
       <div
         style={{
