@@ -1,4 +1,9 @@
-## [2.7.1]
+## [2.7.2]
+
+- Clarity tasks import: fixed bug when number of projects was so high that there were multiple pages.
+- Clarity tasks import: fixed bug when a project was favorited.
+
+## [2.7.1] - 2020-08-12
 
 - Notifications now disappear properly when multiple are triggered subsequently.
 - Constrained window bounds properly in minimized mode.

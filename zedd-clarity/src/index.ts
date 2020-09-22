@@ -156,29 +156,59 @@ async function forceGetSSO(ctx: Context, url: string) {
     await pageLoad(ctx)
   } while (url != (await driver.getCurrentUrl()))
 }
-async function getProjects(ctx: Context, nikuLink: string): Promise<Project[]> {
+async function getProjects(
+  ctx: Context,
+  nikuLink: string,
+  downloadDir: string,
+): Promise<Project[]> {
   const [$, $$, driver] = ctx
   d('getting projects')
   await forceGetSSO(ctx, nikuLink + '#action:mainnav.work&classCode=project')
   await driver.wait(until.elementLocated({ css: '.ppm_workspace_title' }))
   await pageLoad(ctx)
 
-  d('locating project links')
-  const as = await $$('a[href^="#action:projmgr.projectDefaultTab"]')
-  d(`located ${as.length} project links`)
+  const projects: Project[] = []
 
-  return Promise.all(
-    as.map(
-      async (a) =>
-        ({
-          name: await a.getText(),
-          intId: +(await a.getAttribute('href')).replace(
-            new RegExp('^' + escapeRegExp(nikuLink) + '#action:projmgr\\.projectDefaultTab&id='),
-            '',
-          ),
-        } as Project),
-    ),
+  d(' emptying download dir')
+  for (const file of await fsp.readdir(downloadDir)) {
+    await fsp.unlink(path.join(downloadDir, file))
+  }
+  d(' clicking on CSV export')
+  // read "javascript:" link from the dom and run it manually
+  // clicking "options" gear can result in ElementClickInterceptedException, who knows why
+  const action = await $('[alt="In CSV exportieren"]').getAttribute('href')
+  d('  running csv export action ' + action)
+  await driver.executeScript(action.replace(/^javascript:/, ''))
+  d('  waiting for new file in downloadDir')
+  let files
+  do {
+    await sleep(1000)
+    files = await fsp.readdir(downloadDir)
+  } while (files.length == 0)
+  const csvPath = path.join(downloadDir, files[0])
+  const ilog = (x: any) => (console.log(x), x)
+  await new Promise((resolve, reject) =>
+    fs
+      .createReadStream(csvPath)
+      .pipe(
+        csv.parse({
+          headers: true,
+        }),
+      )
+      .on('data', (row: { [header: string]: string }) => {
+        console.log(row)
+        const [_, intIdStr, name] = /id=(\d+).*"(.*)"\)/.exec(row['Projekt'])!
+        projects.push({
+          name: name,
+          intId: +intIdStr,
+          tasks: [],
+        })
+      })
+      .on('error', reject)
+      .on('end', resolve),
   )
+
+  return projects
 }
 
 async function getProjectTasks(
@@ -224,36 +254,39 @@ async function getProjectTasks(
   } while (files.length == 0)
   const csvPath = path.join(downloadDir, files[0])
   const ilog = (x: any) => (console.log(x), x)
-  const magic = fs
-    .createReadStream(csvPath)
-    .pipe(
-      csv.parse({
-        headers: (headersFromCsv: csv.ParserHeaderArray) => {
-          if (headersFromCsv.filter((h) => h === 'Aufgabe').length === 2) {
-            const indexFirstAufgabe = headersFromCsv.indexOf('Aufgabe')
-            headersFromCsv[indexFirstAufgabe] = 'AufgabeJaNein'
-          }
-          return headersFromCsv
-        },
-      }),
-    )
-    .on('data', (row: { [header: string]: string }) => {
-      if (row['AufgabeJaNein'] === 'Nein') return
-      if (row['Für Zeiteintrag geöffnet'] === 'Nein') return
-      const [_, intIdStr, name] = /id=(\d+).*"(.*)"\)/.exec(row['Aufgabe'])!
-      tasks.push({
-        sortNo: +row['PSP-Sortierung'],
-        name: name,
-        strId: row['ID'],
-        intId: +intIdStr,
-        projectName: pName,
-        start: parseDate(row['Anfang'], 'dd.MM.yy', new Date()),
-        end: parseDate(row['Ende'], 'dd.MM.yy', new Date()),
-        openForTimeEntry: row['Für Zeiteintrag geöffnet'] == 'Ja',
+
+  await new Promise((resolve, reject) =>
+    fs
+      .createReadStream(csvPath)
+      .pipe(
+        csv.parse({
+          headers: (headersFromCsv: csv.ParserHeaderArray) => {
+            if (headersFromCsv.filter((h) => h === 'Aufgabe').length === 2) {
+              const indexFirstAufgabe = headersFromCsv.indexOf('Aufgabe')
+              headersFromCsv[indexFirstAufgabe] = 'AufgabeJaNein'
+            }
+            return headersFromCsv
+          },
+        }),
+      )
+      .on('data', (row: { [header: string]: string }) => {
+        if (row['AufgabeJaNein'] === 'Nein') return
+        if (row['Für Zeiteintrag geöffnet'] === 'Nein') return
+        const [_, intIdStr, name] = /id=(\d+).*"(.*)"\)/.exec(row['Aufgabe'])!
+        tasks.push({
+          sortNo: +row['PSP-Sortierung'],
+          name: name,
+          strId: row['ID'],
+          intId: +intIdStr,
+          projectName: pName,
+          start: parseDate(row['Anfang'], 'dd.MM.yy', new Date()),
+          end: parseDate(row['Ende'], 'dd.MM.yy', new Date()),
+          openForTimeEntry: row['Für Zeiteintrag geöffnet'] == 'Ja',
+        })
       })
-    })
-    .on('error', console.error)
-  await new Promise((resolve) => magic.on('end', resolve))
+      .on('error', reject)
+      .on('end', resolve),
+  )
   await fsp.unlink(csvPath)
   d(`  found ${tasks.length} tasks`)
   return tasks
@@ -285,7 +318,9 @@ async function getProjectInfoInternal(
 ) {
   const [$, $$, driver] = ctx
 
-  const projects = (await getProjects(ctx, nikuLink)).filter((p) => !excludeProject(p.name))
+  const projects = (await getProjects(ctx, nikuLink, downloadDir)).filter(
+    (p) => !excludeProject(p.name),
+  )
 
   const tasks: Task[] = []
   for (const project of projects) {
