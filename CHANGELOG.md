@@ -1,4 +1,4 @@
-## [2.7.2]
+## [2.7.2] - 2020-09-22
 
 - Clarity tasks import: fixed bug when number of projects was so high that there were multiple pages.
 - Clarity tasks import: fixed bug when a project was favorited.
