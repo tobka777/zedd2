@@ -13,6 +13,7 @@ import {
   startOfMonth,
   isSameDay,
   endOfMonth,
+  isEqual,
 } from 'date-fns'
 import { remote, MenuItemConstructorOptions } from 'electron'
 import { observer } from 'mobx-react-lite'
@@ -250,11 +251,13 @@ export const AppBody = observer(
                 slice.end = newEnd
               }}
               onSliceStartChange={(slice, newStart) => {
+                const ns2 = newStart
                 newStart = dateMin([newStart, addMinutes(slice.end, -1)])
                 newStart = dateMax([newStart, startOfDay(slice.start)])
                 const prevSlice = state.getPreviousSlice(slice)
                 if (prevSlice) newStart = dateMax([newStart, prevSlice.end])
                 slice.start = newStart
+                if (!isEqual(ns2, newStart)) console.warn('...')
               }}
               onSliceAdd={(s) => state.addSlice(s)}
               splitBlock={(slice, splitAt) => {

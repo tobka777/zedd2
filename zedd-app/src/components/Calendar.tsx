@@ -17,18 +17,22 @@ import {
   isWithinInterval,
   max as dateMax,
   min as dateMin,
+  isEqual as dateEqual,
   roundToNearestMinutes,
   set as dateSet,
   startOfISOWeek,
   subMinutes,
   isBefore,
+  startOfDay,
 } from 'date-fns'
+import { orderBy, sortBy } from 'lodash'
 import groupBy from 'lodash/groupBy'
+import { transaction } from 'mobx'
 import { observer, useLocalStore } from 'mobx-react-lite'
 import * as React from 'react'
 import { useCallback, useEffect, useRef, ReactElement } from 'react'
 
-import { intRange, isoDayStr, min } from '../util'
+import { ilog, intRange, isoDayStr, min } from '../util'
 
 export type SliceDragStartHandler<T extends Interval> = (
   b: T,
@@ -195,14 +199,22 @@ const CalendarBase = <T extends Interval>({
 
   const dragOngoing = useCallback(
     (e: MouseEvent) => {
-      local.currentlyDragging.forEach(({ block, startEnd }) => {
-        const newDate = viewportXYToTime(e.clientX, e.clientY)
-        if (newDate && isValid(newDate))
-          ('start' === startEnd ? onSliceStartChange : onSliceEndChange)(
-            block,
-            roundToNearestMinutes(newDate, { nearestTo: e.ctrlKey ? 5 : 15 }),
+      const newDate = viewportXYToTime(e.clientX, e.clientY)
+      if (newDate && isValid(newDate) && local.currentlyDragging.length) {
+        const newDateRounded = roundToNearestMinutes(newDate, { nearestTo: e.ctrlKey ? 5 : 15 })
+        const refDate = local.currentlyDragging[0].block[local.currentlyDragging[0].startEnd]
+        // sort currentlyDragging so that they don't overlap each other as we change start/end
+        // individually, which isn't allowed
+        const sorted = orderBy(local.currentlyDragging, [
+          (cd) => cd.block.start,
+          isBefore(newDate, refDate) ? 'asc' : 'desc',
+        ])
+        transaction(() => {
+          sorted.forEach(({ block, startEnd }) =>
+            ('start' === startEnd ? onSliceStartChange : onSliceEndChange)(block, newDateRounded),
           )
-      })
+        })
+      }
       if (local.currentlyDragging.length !== 0) {
         e.preventDefault()
       }
@@ -228,7 +240,7 @@ const CalendarBase = <T extends Interval>({
       }
       if ('start+prev' === pos) {
         local.currentlyDragging.push({ block, startEnd: 'start' })
-        const prevBlock = slices.find((s) => s.end === block.start)!
+        const prevBlock = slices.find((s) => dateEqual(s.end, block.start))
         if (prevBlock) local.currentlyDragging.push({ block: prevBlock, startEnd: 'end' })
       }
 

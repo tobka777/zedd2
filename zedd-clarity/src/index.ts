@@ -33,7 +33,6 @@ import {
 } from 'date-fns'
 import { de } from 'date-fns/locale'
 import uniq from 'lodash/uniq'
-import { join } from 'path'
 
 export class NikuUrlInvalidError extends Error {
   constructor(url: string) {
