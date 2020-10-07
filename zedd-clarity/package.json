@@ -6,7 +6,8 @@
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "build": "tsc",
-    "watch": "tsc --watch"
+    "watch": "tsc --watch",
+    "prettier": "prettier --write src/**/*.{ts,tsx,js,d.ts,json}"
   },
   "types": "out/index.d.ts",
   "keywords": [],
@@ -37,5 +38,7 @@
     "ts-node": "^8.10.2",
     "typescript": "^3.9.7"
   },
-  "devDependencies": {}
+  "devDependencies": {
+    "prettier": "^2.1.2"
+  }
 }

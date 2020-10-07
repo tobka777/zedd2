@@ -33,6 +33,7 @@ import {
 } from 'date-fns'
 import { de } from 'date-fns/locale'
 import uniq from 'lodash/uniq'
+import { join } from 'path'
 
 export class NikuUrlInvalidError extends Error {
   constructor(url: string) {
@@ -472,7 +473,7 @@ async function exportToClarity(
     for (const what of relevant) {
       const dayStr = format(what.day, 'EEEEEE', { locale: de }).toUpperCase()
       const comment = (what.work.find((s) => s.taskIntId == rowInfo.taskIntId) || {}).comment || ''
-      targetComments[dayStr] = comment
+      targetComments[dayStr] = comment.replace('\r', '').replace('\n', ' ')
     }
 
     d(targetComments, rowInfo)
@@ -495,13 +496,22 @@ async function exportToClarity(
       }),
     )
 
-    // delete wrong comments
-    const [delComments, keepComments] = partition(comments, (c) => {
-      const x = Object.keys(targetComments).find((dayString) =>
-        new RegExp('^\\[' + dayString + '\\]', 'i').test(c.content),
-      )
-      return x && (!targetComments[x] || x + ': ' + targetComments[x] != c.content)
-    })
+    // delete all comments with a [XX] marker
+    const [delComments, keepComments] = partition(comments, (c) => /\[.{2}\]/.test(c.content))
+
+    // we want to keep all comments for non-relevant days, so we copy those to targetComments
+    const joinedCommentContents = delComments
+      .map((c) => c.content.replace('\n', ' ').trim())
+      .join(' ')
+    for (const commentFromClarity of joinedCommentContents.split(/(?=\[.{2}\])/).filter((x) => x)) {
+      d(commentFromClarity)
+      const [_, day, comment] = commentFromClarity.match(/\[(.{2})\](.*)/)!
+      if (targetComments[day.toUpperCase()] === undefined) {
+        // use old comment
+        targetComments[day.toUpperCase()] = comment.trim()
+      }
+    }
+
     if (delComments.length != 0) {
       await Promise.all(
         delComments.map((c) => {
@@ -523,24 +533,23 @@ async function exportToClarity(
       await pageLoad(ctx)
     }
 
-    // add missing comments
-    for (const dayString of Object.keys(targetComments)) {
-      if (targetComments[dayString]) {
-        const comment = '[' + dayString + '] ' + targetComments[dayString]
-        if (!keepComments.some((c) => c.content == comment)) {
-          const noteInput = await $('#portlet-timeadmin\\.notesBrowser textarea[name=note]')
-          await noteInput.sendKeys(comment)
-          const catInput = await $('#portlet-timeadmin\\.notesBrowser input[name=category]')
-          await catInput.sendKeys('BOT')
-          d('  adding comment ' + comment)
-          await $(
-            `#portlet-timeadmin\\.notesBrowser button[onclick*="'timeadmin.addNote'"]`,
-          ).click()
+    async function addComment(content: string) {
+      const noteInput = await $('#portlet-timeadmin\\.notesBrowser textarea[name=note]')
+      await noteInput.sendKeys(content)
+      const catInput = await $('#portlet-timeadmin\\.notesBrowser input[name=category]')
+      await catInput.sendKeys('BOT')
+      d('  adding comment ' + content)
+      await $(`#portlet-timeadmin\\.notesBrowser button[onclick*="'timeadmin.addNote'"]`).click()
 
-          await pageLoad(ctx)
-        }
-      }
+      await pageLoad(ctx)
     }
+
+    // we add all comments as a single clarity-comment, divided by newlines
+    const clarityCommentToAdd = Object.keys(targetComments)
+      .filter((dayString) => targetComments[dayString])
+      .map((dayString) => '[' + dayString + '] ' + targetComments[dayString])
+      .join('\n')
+    await addComment(clarityCommentToAdd)
 
     await $('#portlet-timeadmin\\.notesBrowser button[onclick="closeWindow();"]').click()
   }

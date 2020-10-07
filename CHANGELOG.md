@@ -1,7 +1,8 @@
-## [2.7.2] - 2020-09-22
+## [2.7.2] - 2020-10-07
 
 - Clarity tasks import: fixed bug when number of projects was so high that there were multiple pages.
 - Clarity tasks import: fixed bug when a project was favorited.
+- Comments for multiple days on the same clarity account are now written as a single comment, separated by newlines.
 
 ## [2.7.1] - 2020-08-12
 
