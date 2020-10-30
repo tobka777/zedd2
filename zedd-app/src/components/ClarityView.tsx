@@ -24,7 +24,7 @@ import {
   CardActions,
 } from '@material-ui/core'
 import { Send as SendIcon } from '@material-ui/icons'
-import { groupBy, uniqBy, sortBy } from 'lodash'
+import { groupBy, uniqBy, sortBy, remove } from 'lodash'
 
 import { validDate, TimeSlice } from '../AppState'
 import { ClarityState } from '../ClarityState'
@@ -177,6 +177,8 @@ function transform({ slices, showing, clarityState }: ClarityViewProps): Clarity
     for (const [roundedHours, dayHours] of smartRounded) {
       dayHours.hours = roundedHours
     }
+    // After rounding, a WorkEntry might have 0 hours. Remove those:
+    remove(dayHourss, (we) => we.hours === 0)
   }
   // group entries with same task (but different comment)
   for (const dayStr of Object.keys(dayMap)) {

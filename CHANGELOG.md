@@ -1,3 +1,7 @@
+## [2.7.3] - 2020-11-02
+
+- Tasks which have been rounded to zero time will no longer show up clarity view (and will no longer result in empty comments being exported to clarity).
+
 ## [2.7.2] - 2020-10-07
 
 - Clarity tasks import: fixed bug when number of projects was so high that there were multiple pages.
