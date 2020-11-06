@@ -1,14 +1,4 @@
-import {
-  Button,
-  Grid,
-  Paper,
-  TextField,
-  Tooltip,
-  MenuItem,
-  MenuList,
-  ClickAwayListener,
-  Popper,
-} from '@material-ui/core'
+import { Button, Grid, TextField, Tooltip, MenuItem, Menu } from '@material-ui/core'
 import { Edit as EditIcon, GetApp as ImportIcon, SentimentSatisfiedAlt } from '@material-ui/icons'
 import { format as formatDate, formatDistance } from 'date-fns'
 import { observer } from 'mobx-react-lite'
@@ -145,39 +135,33 @@ export const TaskEditor = observer(
               Import
             </Button>
           </Tooltip>
-          <Popper
+          <Menu
             open={popperOpen}
             anchorEl={anchorRef.current}
-            role={undefined}
-            transition
             style={{ zIndex: 1400 }}
+            id='split-button-menu'
+            onClose={() => setPopperOpen(false)}
           >
-            <Paper>
-              <ClickAwayListener onClickAway={() => setPopperOpen(false)}>
-                <MenuList id='split-button-menu'>
-                  <MenuItem
-                    onClick={() => {
-                      setPopperOpen(false)
-                      importClarityTasks('ALL')
-                    }}
-                  >
-                    ALL
-                  </MenuItem>
-                  {clarityState.projectNames.map((pn) => (
-                    <MenuItem
-                      key={pn}
-                      onClick={() => {
-                        setPopperOpen(false)
-                        importClarityTasks(pn)
-                      }}
-                    >
-                      {pn}
-                    </MenuItem>
-                  ))}
-                </MenuList>
-              </ClickAwayListener>
-            </Paper>
-          </Popper>
+            <MenuItem
+              onClick={() => {
+                setPopperOpen(false)
+                importClarityTasks('ALL')
+              }}
+            >
+              ALL
+            </MenuItem>
+            {clarityState.projectNames.map((pn) => (
+              <MenuItem
+                key={pn}
+                onClick={() => {
+                  setPopperOpen(false)
+                  importClarityTasks(pn)
+                }}
+              >
+                {pn}
+              </MenuItem>
+            ))}
+          </Menu>
         </Grid>
 
         <Grid item xs={10} lg={11}>

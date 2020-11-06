@@ -1,3 +1,7 @@
+## [2.7.4] - 2020-11-06
+
+- Fixed import menu not opening.
+
 ## [2.7.3] - 2020-11-02
 
 - Tasks which have been rounded to zero time will no longer show up clarity view (and will no longer result in empty comments being exported to clarity).
