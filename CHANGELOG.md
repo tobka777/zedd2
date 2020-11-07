@@ -1,3 +1,7 @@
+##
+
+- Trim nikuLink in settings dialog automatically.
+
 ## [2.7.4] - 2020-11-06
 
 - Fixed import menu not opening.

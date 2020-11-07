@@ -61,6 +61,8 @@ export const SettingsDialog = observer(
       {} as { error?: any; ok?: true; checking?: true },
     )
 
+    const [textFieldNikuLink, setTextFieldNikuLink] = useState(settings.nikuLink)
+
     const theme = useTheme()
 
     const updateChromeStatusDebounced = useDebouncedCallback(
@@ -202,8 +204,11 @@ export const SettingsDialog = observer(
               <TextField
                 placeholder='http://example.com/niku/nu'
                 style={{ width: '100%' }}
-                value={settings.nikuLink}
-                onChange={(e) => (settings.nikuLink = e.target.value)}
+                value={textFieldNikuLink}
+                onChange={(e) => {
+                  setTextFieldNikuLink(e.target.value)
+                  settings.nikuLink = e.target.value.trim()
+                }}
               />
             </Grid>
 
