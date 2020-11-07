@@ -1,4 +1,4 @@
-##
+## [2.x.x] - 2020-
 
 - Trim nikuLink in settings dialog automatically.
 

@@ -1,14 +1,10 @@
 import { app, ipcMain, BrowserWindow } from 'electron'
-import { homedir } from 'os'
-import * as path from 'path'
 
 global.isDev = process.argv.includes('--dev')
 
 global.appUserModelId = global.isDev ? process.execPath : 'com.squirrel.zedd.zedd-app'
 app.setAppUserModelId(global.appUserModelId)
 app.commandLine.appendSwitch('disable-features', 'OutOfBlinkCors')
-app.allowRendererProcessReuse = false
-
 process.env.ELECTRON_DISABLE_SECURITY_WARNINGS = '1'
 
 // Handle creating/removing shortcuts on Windows when installing/uninstalling.
