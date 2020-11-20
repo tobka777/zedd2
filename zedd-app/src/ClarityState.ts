@@ -25,6 +25,14 @@ export class ClarityState {
 
   public chromedriverExe: string
 
+  /**
+   * The name of the "clarity resource" you are filling out
+   * timesheets for, i.e. yourself. this is only required
+   * if you have the right ins clarity to fill timesheets for
+   * others.
+   */
+  public resourceName: string | undefined
+
   @observable
   private _currentlyImportingTasks = false
 
@@ -73,7 +81,7 @@ export class ClarityState {
     console.log('exporting timesheets', clarityExport)
     try {
       this._currentlyImportingTasks = true
-      await fillClarity(this.nikuLink, clarityExport, submitTimesheets, {
+      await fillClarity(this.nikuLink, clarityExport, submitTimesheets, this.resourceName, {
         headless: false,
         chromeExe: this.chromeExe,
         chromedriverExe: this.chromedriverExe,

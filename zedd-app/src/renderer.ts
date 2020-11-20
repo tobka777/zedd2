@@ -129,6 +129,7 @@ async function setup() {
   d('clarityDir=' + clarityDir)
   clarityState.init()
   clarityState.nikuLink = config.nikuLink
+  clarityState.resourceName = config.clarityResourceName
 
   // await sleep(5000);
   // importAndSaveClarityTasks();

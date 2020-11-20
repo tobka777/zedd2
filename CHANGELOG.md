@@ -1,6 +1,7 @@
-## [2.x.x] - 2020-
+## [2.8.0] - 2020-
 
 - Trim nikuLink in settings dialog automatically.
+- Added "Resource Name" option. You can ignore this.
 
 ## [2.7.4] - 2020-11-06
 

@@ -257,6 +257,17 @@ export const SettingsDialog = observer(
             </Grid>
 
             <Grid item xs={4}>
+              <FormLabel>Clarity Ressource Name</FormLabel>
+              <div style={{ fontSize: 'small' }}>Leave this empty.</div>
+            </Grid>
+            <Grid item xs={8}>
+              <TextField
+                value={settings.clarityResourceName}
+                onChange={(e) => (settings.clarityResourceName = e.target.value)}
+              />
+            </Grid>
+
+            <Grid item xs={4}>
               <FormLabel>PL JIRA</FormLabel>
               <div style={{ fontSize: 'small' }}>
                 Leave blank if not relevant. If necessary, add required root certificates to the

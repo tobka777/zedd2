@@ -408,6 +408,7 @@ async function exportToClarity(
   ctx: Context,
   whatt: ClarityExportFormat,
   submitTimesheets: boolean,
+  resourceName: string | undefined,
   nikuLink: string,
 ): Promise<void> {
   const [$, $$, driver] = ctx
@@ -620,6 +621,13 @@ async function exportToClarity(
     d(`${what.length} days left to submit`)
     await forceGetSSO(ctx, nikuLink + '#action:timeadmin.timesheetBrowserReturn')
 
+    // you can get rights to enter data for other people
+    // in which case you need to enter the "resource name", i.e. yourself in the
+    // corresponding field, so your timesheets are shown
+    if (resourceName) {
+      await $('input[name=ff_res_name]').sendKeys(Key.chord(Key.CONTROL, 'a'), resourceName)
+    }
+
     const minDate = dateMin(what.map((w) => w.day))
     d(`minDate is ${formatDayYYYY(minDate)}`)
     await $('input[name=ff_date_type][value=userdefined]').click()
@@ -742,10 +750,11 @@ export async function fillClarity(
   nikuLink: string,
   data: ClarityExportFormat,
   submitTimesheets: boolean,
+  resourceName: string | undefined,
   seleniumOptions: SeleniumOptions,
 ): Promise<void> {
   return withErrorHandling('fillClarity', nikuLink, seleniumOptions, (ctx) =>
-    exportToClarity(ctx, data, submitTimesheets, nikuLink),
+    exportToClarity(ctx, data, submitTimesheets, resourceName, nikuLink),
   )
 }
 export async function withErrorHandling<R>(

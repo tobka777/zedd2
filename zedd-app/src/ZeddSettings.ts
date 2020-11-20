@@ -110,4 +110,8 @@ export class ZeddSettings {
   @observable
   @serializable
   public timeFormat: 'hours' | 'bt' = 'hours'
+
+  @observable
+  @serializable
+  public clarityResourceName: string = ''
 }
