@@ -3,6 +3,7 @@
 - Trim nikuLink in settings dialog automatically.
 - Added "Resource Name" option. You can ignore this.
 - Don't output hours in clarity comments.
+- Added check that next/prev slice is on same day for eat slice function.
 
 ## [2.7.4] - 2020-11-06
 

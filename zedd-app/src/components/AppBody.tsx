@@ -104,7 +104,7 @@ export const AppBody = observer(
             label: 'Eat Previous Slice',
             click: (_) => {
               const previousSlice = state.getPreviousSlice(slice)
-              if (!previousSlice) return
+              if (!previousSlice || !isSameDay(previousSlice.start, slice.start)) return
               state.removeSlice(previousSlice)
               slice.start = previousSlice.start
             },
@@ -114,7 +114,7 @@ export const AppBody = observer(
             label: 'Eat Next Slice',
             click: (_) => {
               const nextSlice = state.getNextSlice(slice)
-              if (!nextSlice) return
+              if (!nextSlice || !isSameDay(nextSlice.start, slice.start)) return
               state.removeSlice(nextSlice)
               slice.end = nextSlice.end
             },
