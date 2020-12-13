@@ -2,6 +2,7 @@
 
 - Trim nikuLink in settings dialog automatically.
 - Added "Resource Name" option. You can ignore this.
+- Don't output hours in clarity comments.
 
 ## [2.7.4] - 2020-11-06
 

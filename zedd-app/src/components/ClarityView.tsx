@@ -40,6 +40,8 @@ const roundToNearest = (x: number, toNearest: number) => Math.round(x / toNeares
 const floorToNearest = (x: number, toNearest: number) => Math.floor(x / toNearest) * toNearest
 const ceilToNearest = (x: number, toNearest: number) => Math.ceil(x / toNearest) * toNearest
 
+const outputCommentHours = false
+
 /**
  * Rounds a bunch of (wrapped) values up or down so that the sum of the rounded values
  * is equal to the rounded sum of the unrounded values.
@@ -191,7 +193,7 @@ function transform({ slices, showing, clarityState }: ClarityViewProps): Clarity
         comment:
           workEntries
             .filter((we) => we.comment)
-            .map((we) => formatHours(we.hours) + ': ' + we.comment)
+            .map((we) => (outputCommentHours ? formatHours(we.hours) + ': ' : '') + we.comment)
             .join(', ') || undefined,
       }),
     )
