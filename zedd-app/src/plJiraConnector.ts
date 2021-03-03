@@ -30,13 +30,13 @@ export function initJiraClient(
   jira2url = newJira2url
   const url = new URL(jc.url)
   jira = new JiraClient({
-      host: url.toString(),
-      authentication: {
-          basic: {
-              username: jc.username,
-              password: jc.password,
-          }
+    host: url.toString(),
+    authentication: {
+      basic: {
+        username: jc.username,
+        password: jc.password,
       }
+    }
   });
 }
 
