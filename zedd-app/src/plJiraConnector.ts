@@ -31,13 +31,17 @@ export function initJiraClient(
   const url = new URL(jc.url)
   jira = new JiraClient({
     host: url.toString(),
+    telemetry: false,
+    headers: {
+      'User-Agent': 'zedd-app',
+    },
     authentication: {
       basic: {
         username: jc.username,
-        password: jc.password,
-      }
-    }
-  });
+        password: Buffer.from(jc.password, 'base64').toString('utf8'),
+      },
+    },
+  })
 }
 
 const externalJiraField = 'customfield_10216'
@@ -96,7 +100,7 @@ const callWithJsessionCookie = async <T>(cb: () => Promise<T>) => {
 
 const updateJiraProjectKeys = () =>
   callWithJsessionCookie(async () => {
-    const projects = await jira.projects.getAllProjects<{ key: string; }[]>()
+    const projects = await jira.projects.getAllProjects<{ key: string }[]>()
     console.warn(projects)
     const keys = projects.map((p) => p.key)
     if (!isEqual(keys, jiraConfig.keys)) {
