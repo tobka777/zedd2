@@ -32,9 +32,6 @@ export function initJiraClient(
   jira = new JiraClient({
     host: url.toString(),
     telemetry: false,
-    headers: {
-      'User-Agent': 'zedd-app',
-    },
     authentication: {
       basic: {
         username: jc.username,

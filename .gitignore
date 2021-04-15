@@ -89,4 +89,5 @@ typings/
 out/
 
 .vs
+.idea
 zedd-app/icons
