@@ -59,6 +59,7 @@ export const TitleBar = observer(({ state, menuItems, showContextMenu }: TitleBa
     <AppBar
       // 37px seems to be the min. window height
       style={{
+        ['WebkitAppRegion' as any]: 'drag',
         display: 'flex',
         flexDirection: vertical ? 'column' : 'row',
         height: vertical ? '100%' : 37,
@@ -75,7 +76,6 @@ export const TitleBar = observer(({ state, menuItems, showContextMenu }: TitleBa
     >
       <div
         style={{
-          ['WebkitAppRegion' as any]: 'drag',
           margin: 8,
           height: 32,
           display: 'flex',
@@ -90,13 +90,16 @@ export const TitleBar = observer(({ state, menuItems, showContextMenu }: TitleBa
         />
       </div>
       {!state.hoverMode && (
-        <Button onClick={handleClick} style={{ color: 'inherit' }}>
+        <Button onClick={handleClick} style={{ color: 'inherit', ['WebkitAppRegion' as any]: 'no-drag' }}>
           <Badge variant='dot' color='secondary' invisible={!state.updateAvailable}>
             <MenuIcon />
           </Badge>
         </Button>
       )}
       <MuiMenu
+        style={{
+          ['WebkitAppRegion' as any]: 'no-drag',
+        }}
         transitionDuration={0}
         id='simple-menu'
         anchorEl={anchorEl}
@@ -138,6 +141,7 @@ export const TitleBar = observer(({ state, menuItems, showContextMenu }: TitleBa
       <Tooltip title={formatHoursHHmm(state.getDayWorkedHours(new Date()))}>
         <Button
           style={{
+            ['WebkitAppRegion' as any]: 'no-drag',
             width: !vertical ? '64px' : '37px',
             height: vertical ? '64px' : '37px',
             color: 'inherit',
@@ -172,7 +176,7 @@ export const TitleBar = observer(({ state, menuItems, showContextMenu }: TitleBa
       {state.hoverMode && (
         <Button
           onClick={() => (state.hoverMode = false)}
-          style={{ color: 'inherit', borderRadius: 0 }}
+          style={{ color: 'inherit', borderRadius: 0, ['WebkitAppRegion' as any]: 'no-drag' }}
         >
           {local.maximized ? '🗖' : '🗗︎'}
           {/* <ExpandIcon /> */}
@@ -181,7 +185,7 @@ export const TitleBar = observer(({ state, menuItems, showContextMenu }: TitleBa
       {!state.hoverMode && (
         <Button
           onClick={() => toggleWindowMaximized(getCurrentWindow())}
-          style={{ color: 'inherit', borderRadius: 0 }}
+          style={{ color: 'inherit', borderRadius: 0, ['WebkitAppRegion' as any]: 'no-drag' }}
         >
           {local.maximized ? '🗗︎' : '🗖'}
         </Button>
@@ -189,7 +193,7 @@ export const TitleBar = observer(({ state, menuItems, showContextMenu }: TitleBa
       {!state.hoverMode && !state.config.keepHovering && (
         <Button
           onClick={() => getCurrentWindow().close()}
-          style={{ color: 'inherit', borderRadius: 0 }}
+          style={{ color: 'inherit', borderRadius: 0, ['WebkitAppRegion' as any]: 'no-drag' }}
         >
           🗙︎
         </Button>
@@ -197,7 +201,7 @@ export const TitleBar = observer(({ state, menuItems, showContextMenu }: TitleBa
       {!state.hoverMode && state.config.keepHovering && (
         <Button
           onClick={() => (state.hoverMode = true)}
-          style={{ color: 'inherit', borderRadius: 0 }}
+          style={{ color: 'inherit', borderRadius: 0, ['WebkitAppRegion' as any]: 'no-drag' }}
         >
           <ToHoverIcon />
         </Button>
