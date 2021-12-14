@@ -225,14 +225,14 @@ async function setup() {
       if (!state.config.chromePath) {
         throw new Error(
           'Could not find chrome.exe in standard locations! Is it installed?' +
-            ' https://www.google.com/chrome',
+          ' https://www.google.com/chrome',
         )
       }
     }
     if (!(await fileExists(state.config.chromePath))) {
       throw new Error(
         `Could not find specified path '${state.config.chromePath}'!` +
-          ' Set to empty to try standard locations.',
+        ' Set to empty to try standard locations.',
       )
     }
     if (state.config.chromePath) {
@@ -406,9 +406,9 @@ async function setup() {
     const timingInfo =
       state.timingInProgess && state.currentTask
         ? '▶️ Currently Timing: ' +
-          state.currentTask.name +
-          ' ' +
-          formatHoursBT(state.getTaskHours(state.currentTask))
+        state.currentTask.name +
+        ' ' +
+        formatHoursBT(state.getTaskHours(state.currentTask))
         : '■ Not Timing'
     tray.setToolTip(workedTime + ' ' + timingInfo)
     document.title = workedTime + ' ' + timingInfo
@@ -422,10 +422,17 @@ async function setup() {
         config.keepHovering &&
         !state.hoverMode &&
         !state.dialogOpen() &&
+        !clarityState.currentlyImportingTasks &&
         (hoverModeTimer = setTimeout(() => (d('uhm'), (state.hoverMode = true)), 15_000)),
     ],
     ['focus', () => hoverModeTimer && clearTimeout(hoverModeTimer)],
   )
+
+  autorun(() => {
+    if (clarityState.currentlyImportingTasks === false) {
+      (hoverModeTimer = setTimeout(() => (d('uhm'), (state.hoverMode = true)), 15_000))
+    }
+  });
 
   const cleanupHoverModeAutorun = autorun(() => {
     currentWindow.setSkipTaskbar(state.hoverMode)
@@ -508,7 +515,7 @@ let cleanup: () => void
 let renderDOM: () => void
 
 setup().then((r) => {
-  ;({ cleanup, renderDOM } = r)
+  ; ({ cleanup, renderDOM } = r)
   renderDOM()
 })
 
