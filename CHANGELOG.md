@@ -1,3 +1,5 @@
+- Fixed: Errors connecting to the update server should be logged only to the dev console
+
 ## [2.8.0] - 2020-12-13
 
 - Trim nikuLink in settings dialog automatically.
