@@ -127,10 +127,12 @@ async function setup() {
     : new ZeddSettings(userConfigFile)
 
   d('clarityDir=' + clarityDir)
-  clarityState.init()
-  clarityState.nikuLink = config.nikuLink
-  clarityState.resourceName = config.clarityResourceName
-
+  autorun(() => {
+    clarityState.init()
+    clarityState.nikuLink = config.nikuLink
+    clarityState.resourceName = config.clarityResourceName
+  })
+  
   // await sleep(5000);
   // importAndSaveClarityTasks();
   try {
@@ -429,7 +431,7 @@ async function setup() {
   )
 
   autorun(() => {
-    if (clarityState.currentlyImportingTasks === false) {
+    if (clarityState.currentlyImportingTasks === true) {
       (hoverModeTimer = setTimeout(() => (d('uhm'), (state.hoverMode = true)), 15_000))
     }
   });
