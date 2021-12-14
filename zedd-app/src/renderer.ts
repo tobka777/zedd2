@@ -96,7 +96,7 @@ function setupAutoUpdater(state: AppState, config: ZeddSettings) {
     (_event, _releaseNotes, releaseName, _releaseDate, _updateURL) =>
       (state.updateAvailable = releaseName),
   )
-  autoUpdater.on('error', (error: Error) => state.addMessage(error.message))
+  autoUpdater.on('error', (error: Error) => console.log(error.message))
   return () => {
     clearInterval(checkForUpdatesInterval)
     autoUpdater.removeAllListeners()
