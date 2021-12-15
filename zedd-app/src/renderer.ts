@@ -430,11 +430,14 @@ async function setup() {
     ['focus', () => hoverModeTimer && clearTimeout(hoverModeTimer)],
   )
 
-  autorun(() => {
-    if (clarityState.currentlyImportingTasks === true) {
-      (hoverModeTimer = setTimeout(() => (d('uhm'), (state.hoverMode = true)), 15_000))
-    }
-  });
+  autorun(
+    () => {
+      if (clarityState.currentlyImportingTasks === true) {
+        state.hoverMode = true
+      }
+    },
+    { delay: 15_000 }
+  )
 
   const cleanupHoverModeAutorun = autorun(() => {
     currentWindow.setSkipTaskbar(state.hoverMode)
