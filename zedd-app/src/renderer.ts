@@ -127,8 +127,8 @@ async function setup() {
     : new ZeddSettings(userConfigFile)
 
   d('clarityDir=' + clarityDir)
+  clarityState.init()
   autorun(() => {
-    clarityState.init()
     clarityState.nikuLink = config.nikuLink
     clarityState.resourceName = config.clarityResourceName
   })
