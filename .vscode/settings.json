@@ -1,8 +1,6 @@
 {
   "editor.formatOnSave": true,
-  "mocha.requires": [
-    "ts-node/register"
-  ],
+  "mocha.requires": ["ts-node/register"],
   "mocha.files.glob": "src/**/*.test.ts",
   "mocha.subdirectory": "zedd-app",
   "mocha.env": {
@@ -11,8 +9,6 @@
   },
   "eslint.nodePath": "zedd-app/node_modules",
   "eslint.alwaysShowStatus": true,
-  "eslint.workingDirectories": [
-    "./zedd-app",
-    "./zedd-clarity"
-  ]
+  "eslint.workingDirectories": ["./zedd-app", "./zedd-clarity"],
+  "editor.defaultFormatter": "esbenp.prettier-vscode"
 }
