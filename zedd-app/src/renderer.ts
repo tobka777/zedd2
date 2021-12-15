@@ -128,8 +128,10 @@ async function setup() {
 
   d('clarityDir=' + clarityDir)
   clarityState.init()
-  clarityState.nikuLink = config.nikuLink
-  clarityState.resourceName = config.clarityResourceName
+  autorun(() => {
+    clarityState.nikuLink = config.nikuLink
+    clarityState.resourceName = config.clarityResourceName
+  })
 
   // await sleep(5000);
   // importAndSaveClarityTasks();
@@ -414,17 +416,24 @@ async function setup() {
     document.title = workedTime + ' ' + timingInfo
   })
 
-  let hoverModeTimer: NodeJS.Timeout | undefined
   currentWindowEvents.push(
-    [
-      'blur',
-      () =>
+    ['blur', () => (state.windowFocused = false)],
+    ['focus', () => (state.windowFocused = true)],
+  )
+
+  autorun(
+    () => {
+      if (
         config.keepHovering &&
         !state.hoverMode &&
         !state.dialogOpen() &&
-        (hoverModeTimer = setTimeout(() => (d('uhm'), (state.hoverMode = true)), 15_000)),
-    ],
-    ['focus', () => hoverModeTimer && clearTimeout(hoverModeTimer)],
+        !clarityState.currentlyImportingTasks &&
+        !state.windowFocused
+      ) {
+        state.hoverMode = true
+      }
+    },
+    { delay: 15_000 },
   )
 
   const cleanupHoverModeAutorun = autorun(() => {
@@ -467,7 +476,7 @@ async function setup() {
   window.addEventListener('beforeunload', cleanup)
 
   return {
-    cleanup: cleanup = () => {
+    cleanup: (cleanup = () => {
       console.log('setup().cleanup')
       clearInterval(saveInterval)
       clearInterval(lastActionInterval)
@@ -481,7 +490,7 @@ async function setup() {
       cleanupHoverModeAutorun()
       currentWindowEvents.forEach(([x, y]) => currentWindow.removeListener(x as any, y))
       window.removeEventListener('beforeunload', cleanup)
-    },
+    }),
     renderDOM: () => {
       ReactDOM.render(
         React.createElement(AppGui, {
