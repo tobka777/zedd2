@@ -1,6 +1,5 @@
 import { Button, ButtonGroup, TextField, Paper, Tooltip } from '@material-ui/core'
 import { makeStyles, useTheme } from '@material-ui/core/styles'
-import { DateRangePicker } from 'react-date-range'
 import {
   addMinutes,
   addMonths,
