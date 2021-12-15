@@ -90,7 +90,10 @@ export const TitleBar = observer(({ state, menuItems, showContextMenu }: TitleBa
         />
       </div>
       {!state.hoverMode && (
-        <Button onClick={handleClick} style={{ color: 'inherit', ['WebkitAppRegion' as any]: 'no-drag' }}>
+        <Button
+          onClick={handleClick}
+          style={{ color: 'inherit', ['WebkitAppRegion' as any]: 'no-drag' }}
+        >
           <Badge variant='dot' color='secondary' invisible={!state.updateAvailable}>
             <MenuIcon />
           </Badge>

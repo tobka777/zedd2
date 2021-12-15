@@ -417,22 +417,19 @@ async function setup() {
   })
 
   currentWindowEvents.push(
-    [
-      'blur',
-      () =>
-        state.windowFocused = false 
-    ],
-    ['focus', () => state.windowFocused = true],
+    ['blur', () => (state.windowFocused = false)],
+    ['focus', () => (state.windowFocused = true)],
   )
 
   autorun(
     () => {
-      if(
-      config.keepHovering &&
-      !state.hoverMode &&
-      !state.dialogOpen() &&
-      !clarityState.currentlyImportingTasks &&
-      !state.windowFocused) {
+      if (
+        config.keepHovering &&
+        !state.hoverMode &&
+        !state.dialogOpen() &&
+        !clarityState.currentlyImportingTasks &&
+        !state.windowFocused
+      ) {
         state.hoverMode = true
       }
     },
