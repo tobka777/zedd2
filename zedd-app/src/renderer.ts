@@ -132,7 +132,7 @@ async function setup() {
     clarityState.nikuLink = config.nikuLink
     clarityState.resourceName = config.clarityResourceName
   })
-  
+
   // await sleep(5000);
   // importAndSaveClarityTasks();
   try {
@@ -227,14 +227,14 @@ async function setup() {
       if (!state.config.chromePath) {
         throw new Error(
           'Could not find chrome.exe in standard locations! Is it installed?' +
-           ' https://www.google.com/chrome',
+            ' https://www.google.com/chrome',
         )
       }
     }
     if (!(await fileExists(state.config.chromePath))) {
       throw new Error(
         `Could not find specified path '${state.config.chromePath}'!` +
-         ' Set to empty to try standard locations.',
+          ' Set to empty to try standard locations.',
       )
     }
     if (state.config.chromePath) {
@@ -408,35 +408,35 @@ async function setup() {
     const timingInfo =
       state.timingInProgess && state.currentTask
         ? '▶️ Currently Timing: ' +
-         state.currentTask.name +
-         ' ' +
-         formatHoursBT(state.getTaskHours(state.currentTask))
+          state.currentTask.name +
+          ' ' +
+          formatHoursBT(state.getTaskHours(state.currentTask))
         : '■ Not Timing'
     tray.setToolTip(workedTime + ' ' + timingInfo)
     document.title = workedTime + ' ' + timingInfo
   })
 
-  let hoverModeTimer: NodeJS.Timeout | undefined
   currentWindowEvents.push(
     [
       'blur',
       () =>
-        config.keepHovering &&
-        !state.hoverMode &&
-        !state.dialogOpen() &&
-        !clarityState.currentlyImportingTasks &&
-        (hoverModeTimer = setTimeout(() => (d('uhm'), (state.hoverMode = true)), 15_000)),
+        state.windowFocused = false 
     ],
-    ['focus', () => hoverModeTimer && clearTimeout(hoverModeTimer)],
+    ['focus', () => state.windowFocused = true],
   )
 
   autorun(
     () => {
-      if (clarityState.currentlyImportingTasks === true) {
+      if(
+      config.keepHovering &&
+      !state.hoverMode &&
+      !state.dialogOpen() &&
+      !clarityState.currentlyImportingTasks &&
+      !state.windowFocused) {
         state.hoverMode = true
       }
     },
-    { delay: 15_000 }
+    { delay: 15_000 },
   )
 
   const cleanupHoverModeAutorun = autorun(() => {
@@ -479,7 +479,7 @@ async function setup() {
   window.addEventListener('beforeunload', cleanup)
 
   return {
-    cleanup: cleanup = () => {
+    cleanup: (cleanup = () => {
       console.log('setup().cleanup')
       clearInterval(saveInterval)
       clearInterval(lastActionInterval)
@@ -493,7 +493,7 @@ async function setup() {
       cleanupHoverModeAutorun()
       currentWindowEvents.forEach(([x, y]) => currentWindow.removeListener(x as any, y))
       window.removeEventListener('beforeunload', cleanup)
-    },
+    }),
     renderDOM: () => {
       ReactDOM.render(
         React.createElement(AppGui, {
