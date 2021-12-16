@@ -2,6 +2,7 @@
 - Fixed: Dragging the taskbar does not work (拖动任务栏不工作 #6)
 - Fixed: App shouldn't auto-minimize while selenium task is running #9 
 - Fixed: Changing nikuLink in settings requires application to be reloaded/restarted #12
+- Feature: Date-Range-Picker instead of 2x Date-Picker #14
 
 ## [2.8.0] - 2020-12-13
 
