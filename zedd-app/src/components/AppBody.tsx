@@ -1,5 +1,7 @@
-import { Button, ButtonGroup, TextField, Paper, Tooltip } from '@material-ui/core'
+import { Button, ButtonGroup, Paper, Tooltip } from '@material-ui/core'
 import { makeStyles, useTheme } from '@material-ui/core/styles'
+import Popover from '@material-ui/core/Popover'
+import { DateRange } from 'react-date-range'
 import {
   addMinutes,
   addMonths,
@@ -14,6 +16,7 @@ import {
   isSameDay,
   endOfMonth,
   isEqual,
+  format as formatDate,
 } from 'date-fns'
 import { remote, MenuItemConstructorOptions } from 'electron'
 import { observer } from 'mobx-react-lite'
@@ -30,6 +33,9 @@ import { ClarityView } from './ClarityView'
 import { TaskEditor } from './TaskEditor'
 import { ArrowBack, ArrowForward, Delete as DeleteIcon } from '@material-ui/icons'
 import { suggestedTaskMenuItems } from '../menuUtil'
+
+import 'react-date-range/dist/styles.css' // main style file
+import 'react-date-range/dist/theme/default.css' // theme css file
 
 const { Menu, shell } = remote
 
@@ -48,6 +54,88 @@ const useStyles = makeStyles((theme) => ({
     '& input[type="date"]::-webkit-clear-button': { display: 'none' },
   },
 }))
+
+export function DateRangePicker(state: AppState) {
+  const [anchorEl, setAnchorEl] = React.useState(null)
+
+  const handleClick = (event: any) => {
+    setAnchorEl(event.currentTarget)
+  }
+
+  const handleClose = () => {
+    setAnchorEl(null)
+  }
+
+  const open = Boolean(anchorEl)
+  const id = open ? 'simple-popover' : undefined
+
+  const Picker = () => (
+    <DateRange
+      months={2}
+      editableDateInputs={true}
+      onChange={(item) => {
+        state.showing = { start: item.selection.startDate!, end: item.selection.endDate! }
+      }}
+      moveRangeOnFirstSelection={true}
+      ranges={[
+        {
+          startDate: state.showing.start as Date,
+          endDate: state.showing.end as Date,
+          key: 'selection',
+        },
+      ]}
+    />
+  )
+  const Closed = () => (
+    <div
+      className='MuiFormControl-root MuiTextField-root'
+      style={{ width: '100%', minWidth: '20rem' }}
+    >
+      <label
+        className='MuiFormLabel-root MuiInputLabel-root MuiInputLabel-formControl MuiInputLabel-animated MuiInputLabel-shrink MuiFormLabel-filled'
+        data-shrink='true'
+      >
+        Start 🡢 End
+      </label>
+      <div className='MuiInputBase-root MuiInput-root MuiInput-underline MuiInputBase-formControl MuiInput-formControl'>
+        <input
+          aria-invalid='false'
+          readOnly
+          type='text'
+          className='MuiInputBase-input MuiInput-input'
+          value={
+            formatDate(state.showing.start as Date, 'E, do MMMM') +
+            ' 🡢 ' +
+            formatDate(state.showing.end as Date, 'E, do MMMM')
+          }
+        />
+      </div>
+    </div>
+  )
+  return (
+    <div>
+      <div aria-describedby={id} onClick={handleClick}>
+        <Closed />
+      </div>
+      <Popover
+        id={id}
+        open={open}
+        anchorEl={anchorEl}
+        onClose={handleClose}
+        anchorOrigin={{
+          vertical: 'top',
+          horizontal: 'left',
+        }}
+        transformOrigin={{
+          vertical: 'top',
+          horizontal: 'left',
+        }}
+      >
+        <Picker />
+      </Popover>
+    </div>
+  )
+}
 
 export interface AppBodyProps {
   state: AppState
@@ -156,18 +244,7 @@ export const AppBody = observer(
         </div>
         <div>
           <div className={classes.controlBar}>
-            <TextField
-              label='Start'
-              type='date'
-              value={state.startDate}
-              onChange={(e) => (state.startDate = e.target.value)}
-            />
-            <TextField
-              label='End'
-              type='date'
-              value={state.endDate}
-              onChange={(e) => (state.endDate = e.target.value)}
-            />
+            {DateRangePicker(state)}
             <ButtonGroup variant='contained'>
               <Button size='large' onClick={arrowClick} data-dir='-1'>
                 <ArrowBack />
