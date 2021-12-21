@@ -48,6 +48,10 @@ export const BlockDisplay = observer(
       startDrag,
       slice,
     ])
+    const completeHandleHandler = useCallback(
+      (e: React.MouseEvent) => startDrag!(slice, e, 'complete'),
+      [startDrag, slice],
+    )
 
     const clarityTask = clarityState.resolveTask(slice.task.clarityTaskIntId)
 
@@ -114,6 +118,7 @@ export const BlockDisplay = observer(
             <div className='block-handle bottom-right' onMouseDown={endHandleHandler}></div>
             <div className='block-handle top-left' onMouseDown={startHandleHandler}></div>
             <div className='block-handle top-center' onMouseDown={startPrevHandleHandler}></div>
+            <div className='block-handle inside' onMouseDown={completeHandleHandler}></div>
           </>
         )}
       </div>

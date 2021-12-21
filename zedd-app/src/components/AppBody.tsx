@@ -14,11 +14,12 @@ import {
   isSameDay,
   endOfMonth,
   isEqual,
+  subMinutes as sub,
 } from 'date-fns'
 import { remote, MenuItemConstructorOptions } from 'electron'
 import { observer } from 'mobx-react-lite'
 import * as React from 'react'
-import { useCallback } from 'react'
+import { useCallback, useState } from 'react'
 
 import { ErrorBoundary } from './ErrorBoundary'
 import { AppState, Task, TimeSlice } from '../AppState'
@@ -30,6 +31,7 @@ import { ClarityView } from './ClarityView'
 import { TaskEditor } from './TaskEditor'
 import { ArrowBack, ArrowForward, Delete as DeleteIcon } from '@material-ui/icons'
 import { suggestedTaskMenuItems } from '../menuUtil'
+import differenceInMinutes from 'date-fns/esm/fp/differenceInMinutes/index.js'
 
 const { Menu, shell } = remote
 
@@ -258,6 +260,41 @@ export const AppBody = observer(
                 if (prevSlice) newStart = dateMax([newStart, prevSlice.end])
                 slice.start = newStart
                 if (!isEqual(ns2, newStart)) console.warn('...')
+              }}
+              onSliceStartEndChange={(slice, newStart, newEnd, oldStart, oldEnd) => {
+                const prevSlice = state.getPreviousSlice(slice)
+                const nextSlice = state.getNextSlice(slice)
+                const sliceSize = differenceInMinutes(slice.start, slice.end)
+                let distance = 0
+
+                if (prevSlice && nextSlice) {
+                  distance = differenceInMinutes(prevSlice.end as Date, nextSlice.start as Date)
+                }
+
+                slice.setInterval(newStart, newEnd)
+
+                window.onmouseup = () => {
+                  if (!nextSlice || !prevSlice) {
+                    distance = sliceSize
+                  }
+
+                  if (distance < sliceSize) {
+                    slice.setInterval(oldStart, oldEnd)
+                    return
+                  }
+
+                  if (prevSlice && prevSlice.end > slice.start) {
+                    const newEnd = addMinutes(prevSlice.end as Date, sliceSize)
+                    slice.setInterval(prevSlice.end, newEnd)
+                    return
+                  }
+
+                  if (nextSlice && slice.end > nextSlice.start) {
+                    const newStart = sub(nextSlice.start as Date, sliceSize)
+                    slice.setInterval(newStart, nextSlice.start)
+                    return
+                  }
+                }
               }}
               onSliceAdd={(s) => state.addSlice(s)}
               splitBlock={(slice, splitAt) => {
