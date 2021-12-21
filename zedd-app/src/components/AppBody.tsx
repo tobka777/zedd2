@@ -269,15 +269,13 @@ export const AppBody = observer(
 
                 if (prevSlice && nextSlice) {
                   distance = differenceInMinutes(prevSlice.end as Date, nextSlice.start as Date)
+                } else {
+                  distance = sliceSize
                 }
 
                 slice.setInterval(newStart, newEnd)
 
                 window.onmouseup = () => {
-                  if (!nextSlice || !prevSlice) {
-                    distance = sliceSize
-                  }
-
                   if (distance < sliceSize) {
                     slice.setInterval(oldStart, oldEnd)
                     return
