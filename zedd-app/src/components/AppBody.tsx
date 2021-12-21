@@ -21,7 +21,7 @@ import {
 import { remote, MenuItemConstructorOptions } from 'electron'
 import { observer } from 'mobx-react-lite'
 import * as React from 'react'
-import { useCallback } from 'react'
+import { useCallback, useState } from 'react'
 
 import { ErrorBoundary } from './ErrorBoundary'
 import { AppState, Task, TimeSlice } from '../AppState'
@@ -55,8 +55,8 @@ const useStyles = makeStyles((theme) => ({
   },
 }))
 
-export function DateRangePicker(state: AppState) {
-  const [anchorEl, setAnchorEl] = React.useState(null)
+export const DateRangePicker = ({ value, onChange }: { value: Interval; onChange: Function }) => {
+  const [anchorEl, setAnchorEl] = useState(null)
 
   const handleClick = (event: any) => {
     setAnchorEl(event.currentTarget)
@@ -69,53 +69,33 @@ export function DateRangePicker(state: AppState) {
   const open = Boolean(anchorEl)
   const id = open ? 'simple-popover' : undefined
 
-  const Picker = () => (
-    <DateRange
-      months={2}
-      editableDateInputs={true}
-      onChange={(item) => {
-        state.showing = { start: item.selection.startDate!, end: item.selection.endDate! }
-      }}
-      moveRangeOnFirstSelection={true}
-      ranges={[
-        {
-          startDate: state.showing.start as Date,
-          endDate: state.showing.end as Date,
-          key: 'selection',
-        },
-      ]}
-    />
-  )
-  const Closed = () => (
-    <div
-      className='MuiFormControl-root MuiTextField-root'
-      style={{ width: '100%', minWidth: '20rem' }}
-    >
-      <label
-        className='MuiFormLabel-root MuiInputLabel-root MuiInputLabel-formControl MuiInputLabel-animated MuiInputLabel-shrink MuiFormLabel-filled'
-        data-shrink='true'
-      >
-        Start 🡢 End
-      </label>
-      <div className='MuiInputBase-root MuiInput-root MuiInput-underline MuiInputBase-formControl MuiInput-formControl'>
-        <input
-          aria-invalid='false'
-          readOnly
-          type='text'
-          className='MuiInputBase-input MuiInput-input'
-          value={
-            formatDate(state.showing.start as Date, 'E, do MMMM') +
-            ' 🡢 ' +
-            formatDate(state.showing.end as Date, 'E, do MMMM')
-          }
-        />
-      </div>
-    </div>
-  )
   return (
     <div>
       <div aria-describedby={id} onClick={handleClick}>
-        <Closed />
+        <div
+          className='MuiFormControl-root MuiTextField-root'
+          style={{ width: '100%', minWidth: '20rem' }}
+        >
+          <label
+            className='MuiFormLabel-root MuiInputLabel-root MuiInputLabel-formControl MuiInputLabel-animated MuiInputLabel-shrink MuiFormLabel-filled'
+            data-shrink='true'
+          >
+            Start 🡢 End
+          </label>
+          <div className='MuiInputBase-root MuiInput-root MuiInput-underline MuiInputBase-formControl MuiInput-formControl'>
+            <input
+              aria-invalid='false'
+              readOnly
+              type='text'
+              className='MuiInputBase-input MuiInput-input'
+              value={
+                formatDate(value.start as Date, 'E, do MMMM') +
+                ' 🡢 ' +
+                formatDate(value.end as Date, 'E, do MMMM')
+              }
+            />
+          </div>
+        </div>
       </div>
       <Popover
         id={id}
@@ -131,7 +111,19 @@ export function DateRangePicker(state: AppState) {
           horizontal: 'left',
         }}
       >
-        <Picker />
+        <DateRange
+          months={2}
+          editableDateInputs={true}
+          onChange={(item: any) => onChange(item)}
+          moveRangeOnFirstSelection={true}
+          ranges={[
+            {
+              startDate: value.start as Date,
+              endDate: value.end as Date,
+              key: 'selection',
+            },
+          ]}
+        />
       </Popover>
     </div>
   )
@@ -244,7 +236,15 @@ export const AppBody = observer(
         </div>
         <div>
           <div className={classes.controlBar}>
-            {DateRangePicker(state)}
+            <DateRangePicker
+              value={state.showing}
+              onChange={(newValue: any) =>
+                (state.showing = {
+                  start: newValue.selection.startDate,
+                  end: newValue.selection.endDate,
+                })
+              }
+            />
             <ButtonGroup variant='contained'>
               <Button size='large' onClick={arrowClick} data-dir='-1'>
                 <ArrowBack />
