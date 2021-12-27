@@ -49,6 +49,7 @@ export interface CalendarProps<T extends Interval> {
   selectedSlice?: T
   onSliceStartChange: (slice: T, newStart: Date) => void
   onSliceEndChange: (slice: T, newEnd: Date) => void
+  onSliceStartAndEndChange: (slice: T, newDate: Date, secondSlice: T) => void
   splitBlock: (slice: T, splitAt: Date) => void
   onSliceAdd: (slice: T) => void
   renderSlice: (
@@ -105,6 +106,7 @@ const CalendarBase = <T extends Interval>({
   slices,
   onSliceStartChange,
   onSliceEndChange,
+  onSliceStartAndEndChange,
   onSliceAdd,
   startHour: minStartHour,
   deleteSlice,
@@ -113,7 +115,11 @@ const CalendarBase = <T extends Interval>({
 }: CalendarProps<T>) => {
   const local = useLocalStore(() => ({
     showTime: new Date(),
-    currentlyDragging: [] as { block: T; startEnd: 'start' | 'end' }[],
+    currentlyDragging: [] as {
+      block: T
+      startEnd: 'start' | 'end' | 'start+end'
+      secondBlock?: T
+    }[],
     fixedShowInterval: undefined as { start: number; end: number } | undefined,
     virtualSlice: undefined as T | undefined,
   }))
@@ -210,9 +216,15 @@ const CalendarBase = <T extends Interval>({
           isBefore(newDate, refDate) ? 'asc' : 'desc',
         ])
         transaction(() => {
-          sorted.forEach(({ block, startEnd }) =>
-            ('start' === startEnd ? onSliceStartChange : onSliceEndChange)(block, newDateRounded),
-          )
+          sorted.forEach(({ block, startEnd, secondBlock }) => {
+            if (startEnd === 'start') {
+              onSliceStartChange(block, newDateRounded)
+            } else if (startEnd === 'end') {
+              onSliceEndChange(block, newDateRounded)
+            } else if (startEnd === 'start+end') {
+              onSliceStartAndEndChange(block, newDateRounded, secondBlock!)
+            }
+          })
         })
       }
       if (local.currentlyDragging.length !== 0) {
@@ -239,9 +251,16 @@ const CalendarBase = <T extends Interval>({
         local.currentlyDragging.push({ block, startEnd: pos })
       }
       if ('start+prev' === pos) {
-        local.currentlyDragging.push({ block, startEnd: 'start' })
         const prevBlock = slices.find((s) => dateEqual(s.end, block.start))
-        if (prevBlock) local.currentlyDragging.push({ block: prevBlock, startEnd: 'end' })
+        if (prevBlock) {
+          local.currentlyDragging.push({
+            block: block,
+            startEnd: 'start+end',
+            secondBlock: prevBlock,
+          })
+        } else {
+          local.currentlyDragging.push({ block, startEnd: 'start' })
+        }
       }
 
       local.fixedShowInterval = { start: startHour, end: getHours(showing.end) }

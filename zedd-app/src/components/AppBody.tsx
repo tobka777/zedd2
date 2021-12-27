@@ -30,6 +30,8 @@ import { ClarityView } from './ClarityView'
 import { TaskEditor } from './TaskEditor'
 import { ArrowBack, ArrowForward, Delete as DeleteIcon } from '@material-ui/icons'
 import { suggestedTaskMenuItems } from '../menuUtil'
+import { difference } from 'lodash'
+import differenceInMinutes from 'date-fns/differenceInMinutes'
 
 const { Menu, shell } = remote
 
@@ -258,6 +260,16 @@ export const AppBody = observer(
                 if (prevSlice) newStart = dateMax([newStart, prevSlice.end])
                 slice.start = newStart
                 if (!isEqual(ns2, newStart)) console.warn('...')
+              }}
+              onSliceStartAndEndChange={(slice, newDate, prevSlice) => {
+                let newTime = newDate
+                if (differenceInMinutes(newDate, prevSlice.start) <= 0) {
+                  newTime = addMinutes(prevSlice.start, 1)
+                } else if (differenceInMinutes(slice.end, newDate) <= 0) {
+                  newTime = addMinutes(slice.end, -1)
+                }
+                prevSlice.setInterval(prevSlice.start, newTime)
+                slice.setInterval(newTime, slice.end)
               }}
               onSliceAdd={(s) => state.addSlice(s)}
               splitBlock={(slice, splitAt) => {
