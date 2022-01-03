@@ -100,6 +100,9 @@ const useStyles = makeStyles((theme) => ({
       borderColor: theme.palette.divider,
       padding: theme.spacing(0.5, 2),
     },
+    '& tbody tr:hover, tfoot tr:hover': {
+      backgroundColor: theme.palette.grey[200],
+    },
   },
 }))
 
@@ -259,13 +262,6 @@ export const ClarityView = observer((props: ClarityViewProps) => {
   const showingTotal = sum(allWorkEntries.map((we) => we.hours))
   const showingDiffHours = showingTotal - showingTargetHours
 
-  const handleMouseEnter = (e: any) => {
-    e.target.parentElement.style.background = 'rgba(0, 0, 0, 0.1)'
-  }
-
-  const handleMouseLeave = (e: any) => {
-    e.target.parentElement.style.background = ''
-  }
   return (
     <Card>
       <CardContent
@@ -289,8 +285,6 @@ export const ClarityView = observer((props: ClarityViewProps) => {
             <tr
               key={taskToShow.taskIntId}
               style={-1 !== taskToShow.taskIntId ? {} : { color: theme.palette.error.main }}
-              onMouseEnter={handleMouseEnter}
-              onMouseLeave={handleMouseLeave}
             >
               <td>
                 <span style={{ whiteSpace: 'nowrap' }}>{taskToShow.projectName}</span>
