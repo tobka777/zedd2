@@ -1,6 +1,5 @@
-import { Button, ButtonGroup, Paper, Tooltip } from '@material-ui/core'
+import { Button, ButtonGroup, Paper, TextField, Tooltip, Popover } from '@material-ui/core'
 import { makeStyles, useTheme } from '@material-ui/core/styles'
-import Popover from '@material-ui/core/Popover'
 import { DateRange } from 'react-date-range'
 import {
   addMinutes,
@@ -17,6 +16,7 @@ import {
   endOfMonth,
   isEqual,
   format as formatDate,
+  toDate,
 } from 'date-fns'
 import { remote, MenuItemConstructorOptions } from 'electron'
 import { observer } from 'mobx-react-lite'
@@ -55,48 +55,41 @@ const useStyles = makeStyles((theme) => ({
   },
 }))
 
-export const DateRangePicker = ({ value, onChange }: { value: Interval; onChange: Function }) => {
-  const [anchorEl, setAnchorEl] = useState(null)
+export const DateRangePicker = ({
+  value,
+  onChange,
+}: {
+  value: Interval
+  onChange: (newValue: Interval) => void
+}) => {
+  const [anchorEl, setAnchorEl] = useState(null as null | Element)
 
-  const handleClick = (event: any) => {
-    setAnchorEl(event.currentTarget)
-  }
+  const handleClick = useCallback(
+    (event: React.MouseEvent) => {
+      setAnchorEl(event.currentTarget)
+    },
+    [setAnchorEl],
+  )
 
-  const handleClose = () => {
+  const handleClose = useCallback(() => {
     setAnchorEl(null)
-  }
+  }, [setAnchorEl])
 
   const open = Boolean(anchorEl)
   const id = open ? 'simple-popover' : undefined
 
   return (
     <div>
-      <div aria-describedby={id} onClick={handleClick}>
-        <div
-          className='MuiFormControl-root MuiTextField-root'
-          style={{ width: '100%', minWidth: '20rem' }}
-        >
-          <label
-            className='MuiFormLabel-root MuiInputLabel-root MuiInputLabel-formControl MuiInputLabel-animated MuiInputLabel-shrink MuiFormLabel-filled'
-            data-shrink='true'
-          >
-            Start 🡢 End
-          </label>
-          <div className='MuiInputBase-root MuiInput-root MuiInput-underline MuiInputBase-formControl MuiInput-formControl'>
-            <input
-              aria-invalid='false'
-              readOnly
-              type='text'
-              className='MuiInputBase-input MuiInput-input'
-              value={
-                formatDate(value.start as Date, 'E, do MMMM') +
-                ' 🡢 ' +
-                formatDate(value.end as Date, 'E, do MMMM')
-              }
-            />
-          </div>
-        </div>
-      </div>
+      <TextField
+        aria-describedby={id}
+        onClick={handleClick}
+        label='Start 🡢 End'
+        InputProps={{
+          readOnly: true,
+        }}
+        style={{ width: '100%', minWidth: '20rem' }}
+        value={formatDate(value.start, 'E, do MMMM') + ' 🡢 ' + formatDate(value.end, 'E, do MMMM')}
+      />
       <Popover
         id={id}
         open={open}
@@ -114,12 +107,17 @@ export const DateRangePicker = ({ value, onChange }: { value: Interval; onChange
         <DateRange
           months={2}
           editableDateInputs={true}
-          onChange={(item: any) => onChange(item)}
+          onChange={(item) =>
+            onChange({
+              start: item.selection.startDate!,
+              end: item.selection.endDate!,
+            })
+          }
           moveRangeOnFirstSelection={true}
           ranges={[
             {
-              startDate: value.start as Date,
-              endDate: value.end as Date,
+              startDate: toDate(value.start),
+              endDate: toDate(value.end),
               key: 'selection',
             },
           ]}
@@ -238,12 +236,7 @@ export const AppBody = observer(
           <div className={classes.controlBar}>
             <DateRangePicker
               value={state.showing}
-              onChange={(newValue: any) =>
-                (state.showing = {
-                  start: newValue.selection.startDate,
-                  end: newValue.selection.endDate,
-                })
-              }
+              onChange={(newValue) => (state.showing = newValue)}
             />
             <ButtonGroup variant='contained'>
               <Button size='large' onClick={arrowClick} data-dir='-1'>
