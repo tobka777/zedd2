@@ -25,6 +25,7 @@ export const BlockDisplay = observer(
     onContextMenu,
     clarityState,
     style,
+    className,
     ...attributes
   }: BlockProps) => {
     // console.log('rendering BlockDisplay')
@@ -61,7 +62,7 @@ export const BlockDisplay = observer(
       <div
         {...attributes}
         key={slice?.task?.name ?? 'UNDEFINED'}
-        className='block'
+        className={'block ' + className}
         style={{
           ...style,
           padding: '2px',

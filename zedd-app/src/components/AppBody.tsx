@@ -261,38 +261,47 @@ export const AppBody = observer(
                 slice.start = newStart
                 if (!isEqual(ns2, newStart)) console.warn('...')
               }}
-              onSliceStartEndChange={(slice, newStart, newEnd, oldStart, oldEnd) => {
-                const prevSlice = state.getPreviousSlice(slice)
-                const nextSlice = state.getNextSlice(slice)
-                const sliceSize = differenceInMinutes(slice.start, slice.end)
+              correctSlicePosition={(pos, currentSlice) => {
+                const prevSlice = state.getPreviousSlice(pos)
+                const nextSlice = state.getNextSlice(pos)
+                const maxSliceSize = differenceInMinutes(pos.start, pos.end)
+
                 let distance = 0
+                let { start, end } = pos
 
-                if (prevSlice && nextSlice) {
-                  distance = differenceInMinutes(prevSlice.end as Date, nextSlice.start as Date)
+                if (
+                  prevSlice &&
+                  nextSlice &&
+                  prevSlice !== currentSlice &&
+                  nextSlice !== currentSlice
+                ) {
+                  distance = differenceInMinutes(prevSlice.end, nextSlice.start)
                 } else {
-                  distance = sliceSize
+                  distance = maxSliceSize
                 }
 
-                slice.setInterval(newStart, newEnd)
-
-                window.onmouseup = () => {
-                  if (distance < sliceSize) {
-                    slice.setInterval(oldStart, oldEnd)
-                    return
-                  }
-
-                  if (prevSlice && prevSlice.end > slice.start) {
-                    const newEnd = addMinutes(prevSlice.end as Date, sliceSize)
-                    slice.setInterval(prevSlice.end, newEnd)
-                    return
-                  }
-
-                  if (nextSlice && slice.end > nextSlice.start) {
-                    const newStart = sub(nextSlice.start as Date, sliceSize)
-                    slice.setInterval(newStart, nextSlice.start)
-                    return
-                  }
+                if (distance < maxSliceSize) {
+                  return undefined
                 }
+
+                if (prevSlice && prevSlice.end > pos.start && prevSlice !== currentSlice) {
+                  const newEnd = addMinutes(prevSlice.end, maxSliceSize)
+                  start = prevSlice.end
+                  end = newEnd
+                  return { interval: { start, end }, correct: false }
+                }
+
+                if (nextSlice && pos.end > nextSlice.start && nextSlice !== currentSlice) {
+                  const newStart = sub(nextSlice.start, maxSliceSize)
+                  start = newStart
+                  end = nextSlice.start
+                  return { interval: { start, end }, correct: false }
+                }
+
+                return { interval: { start, end }, correct: true }
+              }}
+              onSliceStartEndChange={(slice, newPos) => {
+                slice.setInterval(newPos.start as Date, newPos.end as Date)
               }}
               onSliceAdd={(s) => state.addSlice(s)}
               splitBlock={(slice, splitAt) => {

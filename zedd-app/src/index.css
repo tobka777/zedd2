@@ -57,3 +57,7 @@ div:focus {
 div:hover > .block-handle {
   border-style: solid;
 }
+
+.no-drop * {
+  cursor: no-drop !important;
+}
