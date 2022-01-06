@@ -1,6 +1,5 @@
-import { Button, ButtonGroup, Paper, TextField, Tooltip, Popover } from '@material-ui/core'
+import { Button, ButtonGroup, Paper, Tooltip } from '@material-ui/core'
 import { makeStyles, useTheme } from '@material-ui/core/styles'
-import { DateRange } from 'react-date-range'
 import {
   addMinutes,
   addMonths,
@@ -15,13 +14,11 @@ import {
   isSameDay,
   endOfMonth,
   isEqual,
-  format as formatDate,
-  toDate,
 } from 'date-fns'
 import { remote, MenuItemConstructorOptions } from 'electron'
 import { observer } from 'mobx-react-lite'
 import * as React from 'react'
-import { useCallback, useState } from 'react'
+import { useCallback } from 'react'
 
 import { ErrorBoundary } from './ErrorBoundary'
 import { AppState, Task, TimeSlice } from '../AppState'
@@ -33,9 +30,7 @@ import { ClarityView } from './ClarityView'
 import { TaskEditor } from './TaskEditor'
 import { ArrowBack, ArrowForward, Delete as DeleteIcon } from '@material-ui/icons'
 import { suggestedTaskMenuItems } from '../menuUtil'
-
-import 'react-date-range/dist/styles.css' // main style file
-import 'react-date-range/dist/theme/default.css' // theme css file
+import { DateRangePicker } from './DateRangePicker'
 
 const { Menu, shell } = remote
 
@@ -54,78 +49,6 @@ const useStyles = makeStyles((theme) => ({
     '& input[type="date"]::-webkit-clear-button': { display: 'none' },
   },
 }))
-
-export const DateRangePicker = ({
-  value,
-  onChange,
-}: {
-  value: Interval
-  onChange: (newValue: Interval) => void
-}) => {
-  const [anchorEl, setAnchorEl] = useState(null as null | Element)
-
-  const handleClick = useCallback(
-    (event: React.MouseEvent) => {
-      setAnchorEl(event.currentTarget)
-    },
-    [setAnchorEl],
-  )
-
-  const handleClose = useCallback(() => {
-    setAnchorEl(null)
-  }, [setAnchorEl])
-
-  const open = Boolean(anchorEl)
-  const id = open ? 'simple-popover' : undefined
-
-  return (
-    <div>
-      <TextField
-        aria-describedby={id}
-        onClick={handleClick}
-        label='Start 🡢 End'
-        InputProps={{
-          readOnly: true,
-        }}
-        style={{ width: '100%', minWidth: '20rem' }}
-        value={formatDate(value.start, 'E, do MMMM') + ' 🡢 ' + formatDate(value.end, 'E, do MMMM')}
-      />
-      <Popover
-        id={id}
-        open={open}
-        anchorEl={anchorEl}
-        onClose={handleClose}
-        anchorOrigin={{
-          vertical: 'top',
-          horizontal: 'left',
-        }}
-        transformOrigin={{
-          vertical: 'top',
-          horizontal: 'left',
-        }}
-      >
-        <DateRange
-          months={2}
-          editableDateInputs={true}
-          onChange={(item) =>
-            onChange({
-              start: item.selection.startDate!,
-              end: item.selection.endDate!,
-            })
-          }
-          moveRangeOnFirstSelection={true}
-          ranges={[
-            {
-              startDate: toDate(value.start),
-              endDate: toDate(value.end),
-              key: 'selection',
-            },
-          ]}
-        />
-      </Popover>
-    </div>
-  )
-}
 
 export interface AppBodyProps {
   state: AppState
