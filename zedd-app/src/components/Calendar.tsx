@@ -139,8 +139,6 @@ const CalendarBase = <T extends Interval>({
     fixedShowInterval: undefined as { start: number; end: number } | undefined,
     virtualSlice: undefined as T | undefined,
     offsetDragDate: 0,
-    dragSliceStart: new Date(),
-    dragSliceEnd: new Date(),
     currentPositionValid: true,
     correctSlicePosition: undefined as { interval: Interval; correct: boolean } | undefined,
   }))
@@ -270,11 +268,6 @@ const CalendarBase = <T extends Interval>({
     } else {
       if (local.correctSlicePosition) {
         onSliceStartEndChange(local.currentDraggingSlice!, local.correctSlicePosition.interval!)
-      } else {
-        onSliceStartEndChange(local.currentDraggingSlice!, {
-          start: local.dragSliceStart,
-          end: local.dragSliceEnd,
-        })
       }
     }
 
@@ -316,8 +309,6 @@ const CalendarBase = <T extends Interval>({
 
       const newDate = viewportXYToTime(e.clientX, e.clientY)
       local.offsetDragDate = differenceInMinutes(newDate as Date, clickedSlice.start)
-      local.dragSliceStart = clickedSlice.start as Date
-      local.dragSliceEnd = clickedSlice.end as Date
       local.currentDragPosition = clickedSlice
       local.currentDraggingSlice = clickedSlice
 
