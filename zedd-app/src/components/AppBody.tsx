@@ -1,4 +1,4 @@
-import { Button, ButtonGroup, TextField, Paper, Tooltip } from '@material-ui/core'
+import { Button, ButtonGroup, Paper, Tooltip } from '@material-ui/core'
 import { makeStyles, useTheme } from '@material-ui/core/styles'
 import {
   addMinutes,
@@ -30,6 +30,7 @@ import { ClarityView } from './ClarityView'
 import { TaskEditor } from './TaskEditor'
 import { ArrowBack, ArrowForward, Delete as DeleteIcon } from '@material-ui/icons'
 import { suggestedTaskMenuItems } from '../menuUtil'
+import { DateRangePicker } from './DateRangePicker'
 
 const { Menu, shell } = remote
 
@@ -156,17 +157,9 @@ export const AppBody = observer(
         </div>
         <div>
           <div className={classes.controlBar}>
-            <TextField
-              label='Start'
-              type='date'
-              value={state.startDate}
-              onChange={(e) => (state.startDate = e.target.value)}
-            />
-            <TextField
-              label='End'
-              type='date'
-              value={state.endDate}
-              onChange={(e) => (state.endDate = e.target.value)}
+            <DateRangePicker
+              value={state.showing}
+              onChange={(newValue) => (state.showing = newValue)}
             />
             <ButtonGroup variant='contained'>
               <Button size='large' onClick={arrowClick} data-dir='-1'>
