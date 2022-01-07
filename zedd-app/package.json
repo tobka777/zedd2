@@ -90,6 +90,7 @@
   },
   "dependencies": {
     "@types/react-date-range": "^1.4.2",
+    "node-abi": "^3.5.0",
     "react-date-range": "^1.4.0",
     "selenium-webdriver": "^4.0.0-alpha.8",
     "tar": "^6.1.11",
@@ -135,7 +136,7 @@
     "cross-env": "^7.0.3",
     "css-loader": "^5.0.1",
     "date-fns": "^2.16.1",
-    "electron": "^10.2.0",
+    "electron": "^11.5.0",
     "electron-squirrel-startup": "^1.0.0",
     "eslint": "^7.15.0",
     "eslint-config-prettier": "^7.0.0",
