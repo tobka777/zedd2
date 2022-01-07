@@ -4,6 +4,7 @@
 - Fixed: Changing nikuLink in settings requires application to be reloaded/restarted #12
 - Feature: Date-Range-Picker instead of 2x Date-Picker #14
 - Fixed: Clarity-table: hightlighter hover row #17
+- Feature: Make timeslices draggable between days in calendar #15
 
 ## [2.8.0] - 2020-12-13
 

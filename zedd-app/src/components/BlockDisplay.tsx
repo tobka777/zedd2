@@ -25,6 +25,7 @@ export const BlockDisplay = observer(
     onContextMenu,
     clarityState,
     style,
+    className,
     ...attributes
   }: BlockProps) => {
     // console.log('rendering BlockDisplay')
@@ -48,6 +49,10 @@ export const BlockDisplay = observer(
       startDrag,
       slice,
     ])
+    const completeHandleHandler = useCallback(
+      (e: React.MouseEvent) => startDrag!(slice, e, 'complete'),
+      [startDrag, slice],
+    )
 
     const clarityTask = clarityState.resolveTask(slice.task.clarityTaskIntId)
 
@@ -57,7 +62,7 @@ export const BlockDisplay = observer(
       <div
         {...attributes}
         key={slice?.task?.name ?? 'UNDEFINED'}
-        className='block'
+        className={'block ' + className}
         style={{
           ...style,
           padding: '2px',
@@ -114,6 +119,7 @@ export const BlockDisplay = observer(
             <div className='block-handle bottom-right' onMouseDown={endHandleHandler}></div>
             <div className='block-handle top-left' onMouseDown={startHandleHandler}></div>
             <div className='block-handle top-center' onMouseDown={startPrevHandleHandler}></div>
+            <div className='block-handle inside' onMouseDown={completeHandleHandler}></div>
           </>
         )}
       </div>

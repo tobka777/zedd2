@@ -26,8 +26,8 @@ import {
 } from 'date-fns'
 import { remote } from 'electron'
 import { promises as fsp } from 'fs'
-import { sum } from 'lodash'
-import { computed, observable, transaction, intercept } from 'mobx'
+import { forEach, sum } from 'lodash'
+import { computed, observable, transaction, intercept, action } from 'mobx'
 import type { IObservableArray } from 'mobx'
 import { createTransformer, ObservableGroupMap } from 'mobx-utils'
 import * as path from 'path'
@@ -175,6 +175,7 @@ export class TimeSlice {
   @observable
   public task: Task
 
+  @action
   public setInterval(start = this._start, end = this._end): void {
     if (differenceInMinutes(end, start) <= 0) {
       throw new Error(`start (${start}) must be at least one minute before end (${end})`)
@@ -545,7 +546,7 @@ export class AppState {
     transaction(() => slicesToRemove.forEach((r) => this.slices.remove(r)))
   }
 
-  public getPreviousSlice(slice: TimeSlice): TimeSlice | undefined {
+  public getPreviousSlice(slice: Interval): TimeSlice | undefined {
     return this.slices.reduce((result, s) => {
       if (!isBefore(s.start, slice.start)) return result
       if (!result || isAfter(s.start, result.start)) return s
@@ -553,7 +554,7 @@ export class AppState {
     }, undefined as TimeSlice | undefined)
   }
 
-  public getNextSlice(slice: TimeSlice): TimeSlice | undefined {
+  public getNextSlice(slice: Interval): TimeSlice | undefined {
     return this.slices.reduce((result, s) => {
       if (!isAfter(s.start, slice.start)) return result
       if (!result || isBefore(s.start, result.start)) return s
