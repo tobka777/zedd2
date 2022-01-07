@@ -35,6 +35,7 @@ import {
   eachYearOfInterval,
   lastDayOfYear,
 } from 'date-fns/esm'
+import { style } from '@angular/animations'
 
 const roundToNearest = (x: number, toNearest: number) => Math.round(x / toNearest) * toNearest
 const floorToNearest = (x: number, toNearest: number) => Math.floor(x / toNearest) * toNearest
@@ -98,6 +99,9 @@ const useStyles = makeStyles((theme) => ({
       borderTop: '1px solid',
       borderColor: theme.palette.divider,
       padding: theme.spacing(0.5, 2),
+    },
+    '& tbody tr:hover, tfoot tr:hover': {
+      backgroundColor: theme.palette.grey[200],
     },
   },
 }))

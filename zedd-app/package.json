@@ -89,6 +89,8 @@
     }
   },
   "dependencies": {
+    "@types/react-date-range": "^1.4.2",
+    "react-date-range": "^1.4.0",
     "selenium-webdriver": "^4.0.0-alpha.8",
     "win-ca": "^3.4.5"
   },
