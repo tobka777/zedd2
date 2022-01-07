@@ -49,13 +49,13 @@ export interface CalendarProps<T extends Interval> {
   startHour: number
   slices: T[]
   selectedSlice?: T
-  onSliceStartChange: (slice: T, newStart: Date) => void
-  onSliceEndChange: (slice: T, newEnd: Date) => void
-  correctSlicePosition: (
-    pos: Readonly<Interval>,
-    actualSlice: Readonly<T>,
-  ) => { interval: Interval; correct: boolean } | undefined
-  onSliceStartEndChange: (slice: T, newPos: Interval) => void
+  correctSlicePositionStart: (currentSlice: Readonly<T>, newStart: Date) => Interval
+  correctSlicePositionEnd: (currentSlice: Readonly<T>, newEnd: Date) => Interval
+  correctSlicePositionComplete: (
+    currentSlice: Readonly<T>,
+    newPosition: Readonly<Interval>,
+  ) => Interval | undefined
+  onSliceChange: (slice: T, newPos: Interval) => void
   splitBlock: (slice: T, splitAt: Date) => void
   onSliceAdd: (slice: T) => void
   renderSlice: (
@@ -103,8 +103,7 @@ const RenderSliceWrapper = observer(
         position: 'absolute',
         top: '' + minutesToScreen(topMinutes),
         height: '' + minutesToScreen(heightMinutes),
-        border: warning ? '1px solid red' : '',
-        cursor: warning ? 'no-drop' : 'move',
+        cursor: warning ? 'no-drop' : '',
       },
       className: warning ? 'no-drop' : '',
       startDrag,
@@ -117,10 +116,10 @@ const CalendarBase = <T extends Interval>({
   renderSlice,
   showing,
   slices,
-  onSliceStartChange,
-  onSliceEndChange,
-  correctSlicePosition,
-  onSliceStartEndChange,
+  correctSlicePositionStart,
+  correctSlicePositionEnd,
+  correctSlicePositionComplete,
+  onSliceChange,
   onSliceAdd,
   startHour: minStartHour,
   deleteSlice,
@@ -131,16 +130,13 @@ const CalendarBase = <T extends Interval>({
     showTime: new Date(),
     currentlyDragging: [] as {
       block: T
-      startEnd: 'start' | 'end' | 'start+end'
+      startEnd: 'start' | 'end' | 'complete'
+      currentDragPosition: Interval | undefined
+      offsetDragDate: Number
     }[],
-    currentDragPosition: undefined as Interval | undefined,
-    currentDraggingSlice: undefined as T | undefined,
-    completeDrag: false,
     fixedShowInterval: undefined as { start: number; end: number } | undefined,
     virtualSlice: undefined as T | undefined,
-    offsetDragDate: 0,
     currentPositionValid: true,
-    correctSlicePosition: undefined as { interval: Interval; correct: boolean } | undefined,
   }))
   const timeBlockDivs: HTMLDivElement[] = useRef([]).current
   timeBlockDivs.length = 0
@@ -235,24 +231,31 @@ const CalendarBase = <T extends Interval>({
           isBefore(newDate, refDate) ? 'asc' : 'desc',
         ])
         transaction(() => {
-          sorted.forEach(({ block, startEnd }) => {
+          sorted.forEach((cd) => {
+            let newPos
+            let { startEnd, block } = cd
             if (startEnd === 'start') {
-              onSliceStartChange(block, newDateRounded)
+              cd.currentDragPosition = { start: newDateRounded, end: block.end }
+              newPos = correctSlicePositionStart(block, newDateRounded)
             } else if (startEnd === 'end') {
-              onSliceEndChange(block, newDateRounded)
-            } else if (startEnd === 'start+end') {
+              cd.currentDragPosition = { start: block.start, end: newDateRounded }
+              newPos = correctSlicePositionEnd(block, newDateRounded)
+            } else if (startEnd === 'complete') {
               const blockSize = differenceInMinutes(block.end, block.start)
-              const newStart = subMinutes(newDate, local.offsetDragDate)
+              const newStart = subMinutes(newDate, cd.offsetDragDate as number)
               const newStartRounded = roundToNearestMinutes(newStart, {
                 nearestTo: 5,
               })
               const newEnd = addMinutes(newStartRounded, blockSize)
-              local.currentDragPosition = { start: newStartRounded, end: newEnd }
-              const newPos = correctSlicePosition(local.currentDragPosition!, block)
-              local.correctSlicePosition = newPos
-              local.currentPositionValid =
-                local.correctSlicePosition! && local.correctSlicePosition.correct === true
+              cd.currentDragPosition = { start: newStartRounded, end: newEnd }
+              newPos = correctSlicePositionComplete(block, cd.currentDragPosition!)
             }
+
+            if (newPos) {
+              cd.currentDragPosition = newPos
+            }
+
+            local.currentPositionValid = newPos !== undefined
           })
         })
       }
@@ -260,20 +263,20 @@ const CalendarBase = <T extends Interval>({
         e.preventDefault()
       }
     },
-    [viewportXYToTime, local, onSliceStartChange, onSliceEndChange],
+    [viewportXYToTime, local],
   )
   const dragStop = useCallback(() => {
-    if (local.currentPositionValid) {
-      onSliceStartEndChange(local.currentDraggingSlice!, local.currentDragPosition!)
-    } else {
-      if (local.correctSlicePosition) {
-        onSliceStartEndChange(local.currentDraggingSlice!, local.correctSlicePosition.interval!)
-      }
-    }
+    transaction(() => {
+      local.currentlyDragging.forEach((cd) => {
+        if (local.currentPositionValid) {
+          onSliceChange(cd.block!, cd.currentDragPosition!)
+        }
 
-    local.currentDraggingSlice = undefined
-    local.currentDragPosition = undefined
-    local.currentPositionValid = true
+        //local.currentPositionValid = true
+        cd.offsetDragDate = 0
+      })
+    })
+
     local.currentlyDragging.length = 0
     local.fixedShowInterval = undefined
 
@@ -288,29 +291,43 @@ const CalendarBase = <T extends Interval>({
   const dragStart: SliceDragStartHandler<T> = useCallback(
     (clickedSlice, e, pos) => {
       console.log('dragStart', pos)
+      const newDate = viewportXYToTime(e.clientX, e.clientY)
+      let offsetDrag = differenceInMinutes(newDate as Date, clickedSlice.start)
       if ('end' === pos || 'start' === pos) {
-        local.currentlyDragging.push({ block: clickedSlice, startEnd: pos })
+        local.currentlyDragging.push({
+          block: clickedSlice,
+          startEnd: pos,
+          currentDragPosition: clickedSlice,
+          offsetDragDate: 0,
+        })
       }
       if ('start+prev' === pos) {
-        local.currentlyDragging.push({ block: clickedSlice, startEnd: 'start' })
+        local.currentlyDragging.push({
+          block: clickedSlice,
+          startEnd: 'start',
+          currentDragPosition: clickedSlice,
+          offsetDragDate: 0,
+        })
+        console.log(local.currentlyDragging)
         const prevBlock = slices.find((s) => dateEqual(s.end, clickedSlice.start))
-        if (prevBlock)
+        if (prevBlock) {
           local.currentlyDragging.push({
             block: prevBlock,
             startEnd: 'end',
+            currentDragPosition: prevBlock,
+            offsetDragDate: 0,
           })
+        }
+        console.log(local.currentlyDragging)
       }
       if ('complete' === pos) {
         local.currentlyDragging.push({
           block: clickedSlice,
-          startEnd: 'start+end',
+          startEnd: 'complete',
+          currentDragPosition: clickedSlice,
+          offsetDragDate: offsetDrag,
         })
       }
-
-      const newDate = viewportXYToTime(e.clientX, e.clientY)
-      local.offsetDragDate = differenceInMinutes(newDate as Date, clickedSlice.start)
-      local.currentDragPosition = clickedSlice
-      local.currentDraggingSlice = clickedSlice
 
       local.fixedShowInterval = { start: startHour, end: getHours(showing.end) }
 
@@ -424,7 +441,11 @@ const CalendarBase = <T extends Interval>({
             {slices
               .filter((s) =>
                 isSameDay(
-                  local.currentDraggingSlice === s ? local.currentDragPosition!.start : s.start,
+                  local.currentlyDragging.findIndex((slice) => slice.block === s) !== -1
+                    ? local.currentlyDragging[
+                        local.currentlyDragging.findIndex((slice) => slice.block === s)
+                      ].currentDragPosition!.start
+                    : s.start,
                   d,
                 ),
               )
@@ -453,16 +474,16 @@ const CalendarBase = <T extends Interval>({
                       const minutes = e.shiftKey ? 60 : e.ctrlKey ? 5 : 15
                       const dir = 'EARLIER' === earlierLater ? -1 : 1
                       if ('START' === startEnd) {
-                        onSliceStartChange(s, addMinutes(s.start, dir * minutes))
+                        correctSlicePositionStart(s, addMinutes(s.start, dir * minutes))
                         const bPrev = slices.find((_, bbi) => slices[bbi + 1] === s)
                         if (e.altKey && bPrev) {
-                          onSliceEndChange(bPrev, addMinutes(bPrev.end, dir * minutes))
+                          correctSlicePositionEnd(bPrev, addMinutes(bPrev.end, dir * minutes))
                         }
                       } else {
-                        onSliceEndChange(s, addMinutes(s.end, dir * minutes))
+                        correctSlicePositionEnd(s, addMinutes(s.end, dir * minutes))
                         const bNext = slices.find((_, bbi) => slices[bbi - 1] === s)
                         if (e.altKey && bNext) {
-                          onSliceStartChange(bNext, addMinutes(bNext.start, dir * minutes))
+                          correctSlicePositionStart(bNext, addMinutes(bNext.start, dir * minutes))
                         }
                       }
                       e.preventDefault()
@@ -480,9 +501,16 @@ const CalendarBase = <T extends Interval>({
                     blockDayStart={blockDayStart}
                     renderSlice={renderSlice}
                     overridePosition={
-                      local.currentDraggingSlice === s ? local.currentDragPosition : undefined
+                      local.currentlyDragging.findIndex((slice) => slice.block === s) !== -1
+                        ? local.currentlyDragging[
+                            local.currentlyDragging.findIndex((slice) => slice.block === s)
+                          ].currentDragPosition
+                        : undefined
                     }
-                    warning={!local.currentPositionValid && local.currentDraggingSlice === s}
+                    warning={
+                      !local.currentPositionValid &&
+                      local.currentlyDragging.findIndex((slice) => slice.block === s) !== -1
+                    }
                   />
                 )
               })}

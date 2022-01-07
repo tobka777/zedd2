@@ -245,29 +245,41 @@ export const AppBody = observer(
               showing={state.showing}
               slices={state.showingSlices}
               startHour={state.config.startHour}
-              onSliceEndChange={(slice, newEnd) => {
-                newEnd = dateMax([newEnd, addMinutes(slice.start, 1)])
-                newEnd = dateMin([newEnd, startOfNextDay(slice.start)])
-                const nextSlice = state.getNextSlice(slice)
-                if (nextSlice) newEnd = dateMin([newEnd, nextSlice.start])
-                slice.end = newEnd
+              correctSlicePositionEnd={(currentSlice, newEnd) => {
+                newEnd = dateMax([newEnd, addMinutes(currentSlice.start, 1)])
+                newEnd = dateMin([newEnd, startOfNextDay(currentSlice.start)])
+                const nextSlice = state.getNextSlice(currentSlice)
+                if (nextSlice) {
+                  if (nextSlice.start === currentSlice.end) {
+                    newEnd = newEnd >= nextSlice.end ? addMinutes(nextSlice.end, -1) : newEnd
+                  } else {
+                    newEnd = newEnd > nextSlice.start ? nextSlice.start : newEnd
+                  }
+                }
+                return { start: currentSlice.start!, end: newEnd! }
               }}
-              onSliceStartChange={(slice, newStart) => {
-                const ns2 = newStart
-                newStart = dateMin([newStart, addMinutes(slice.end, -1)])
-                newStart = dateMax([newStart, startOfDay(slice.start)])
-                const prevSlice = state.getPreviousSlice(slice)
-                if (prevSlice) newStart = dateMax([newStart, prevSlice.end])
-                slice.start = newStart
-                if (!isEqual(ns2, newStart)) console.warn('...')
+              correctSlicePositionStart={(currentSlice, newStart) => {
+                newStart = dateMin([newStart, addMinutes(currentSlice.end, -1)])
+                newStart = dateMax([newStart, startOfDay(currentSlice.start)])
+                const prevSlice = state.getPreviousSlice(currentSlice)
+                if (prevSlice)
+                  if (currentSlice.start === prevSlice.end) {
+                    newStart =
+                      newStart <= prevSlice.start ? addMinutes(prevSlice.start, 1) : newStart
+                  } else {
+                    newStart = newStart < prevSlice.end ? prevSlice.end : newStart
+                  }
+                return { start: newStart!, end: currentSlice.end! }
               }}
-              correctSlicePosition={(pos, currentSlice) => {
-                const prevSlice = state.getPreviousSlice(pos)
-                const nextSlice = state.getNextSlice(pos)
-                const maxSliceSize = differenceInMinutes(pos.start, pos.end)
+              correctSlicePositionComplete={(currentSlice, newPosition) => {
+                const prevSlice = state.getPreviousSlice(newPosition)
+                const nextSlice = state.getNextSlice(newPosition)
+                const maxSliceSize = differenceInMinutes(newPosition.start, newPosition.end)
+                const startNextDay = startOfNextDay(newPosition.start)
+                const startDay = startOfDay(newPosition.end)
 
                 let distance = 0
-                let { start, end } = pos
+                let { start, end } = newPosition
 
                 if (
                   prevSlice &&
@@ -280,27 +292,47 @@ export const AppBody = observer(
                   distance = maxSliceSize
                 }
 
-                if (distance < maxSliceSize) {
+                if (
+                  distance < maxSliceSize ||
+                  (prevSlice &&
+                    differenceInMinutes(prevSlice.end, startNextDay) < maxSliceSize &&
+                    prevSlice !== currentSlice) ||
+                  (nextSlice &&
+                    differenceInMinutes(startDay, nextSlice.start) < maxSliceSize &&
+                    nextSlice !== currentSlice)
+                ) {
                   return undefined
                 }
 
-                if (prevSlice && prevSlice.end > pos.start && prevSlice !== currentSlice) {
+                if (newPosition.end > startNextDay) {
+                  start = sub(startNextDay, maxSliceSize)
+                  end = startNextDay
+                  return { start, end }
+                }
+
+                if (newPosition.start < startDay) {
+                  start = startDay
+                  end = addMinutes(startDay, maxSliceSize)
+                  return { start, end }
+                }
+
+                if (prevSlice && prevSlice.end > newPosition.start && prevSlice !== currentSlice) {
                   const newEnd = addMinutes(prevSlice.end, maxSliceSize)
                   start = prevSlice.end
                   end = newEnd
-                  return { interval: { start, end }, correct: false }
+                  return { start, end }
                 }
 
-                if (nextSlice && pos.end > nextSlice.start && nextSlice !== currentSlice) {
+                if (nextSlice && newPosition.end > nextSlice.start && nextSlice !== currentSlice) {
                   const newStart = sub(nextSlice.start, maxSliceSize)
                   start = newStart
                   end = nextSlice.start
-                  return { interval: { start, end }, correct: false }
+                  return { start, end }
                 }
 
-                return { interval: { start, end }, correct: true }
+                return { start, end }
               }}
-              onSliceStartEndChange={(slice, newPos) => {
+              onSliceChange={(slice, newPos) => {
                 slice.setInterval(newPos.start as Date, newPos.end as Date)
               }}
               onSliceAdd={(s) => state.addSlice(s)}
