@@ -27,7 +27,7 @@ import {
 import { remote } from 'electron'
 import { promises as fsp } from 'fs'
 import { forEach, sum } from 'lodash'
-import { computed, observable, transaction, intercept, action } from 'mobx'
+import { computed, observable, transaction, intercept, action, makeObservable } from 'mobx'
 import type { IObservableArray } from 'mobx'
 import { createTransformer, ObservableGroupMap } from 'mobx-utils'
 import * as path from 'path'
@@ -115,6 +115,7 @@ export class Task {
     key?: string,
     clarityTaskComment?: string,
   ) {
+    makeObservable(this)
     this.name = name
     this.clarityTaskIntId = clarityTaskIntId
     this.key = key
@@ -185,6 +186,7 @@ export class TimeSlice {
   }
 
   constructor(start: Date, end: Date, task: Task) {
+    makeObservable(this)
     this.setInterval(start, end)
     this.task = task
   }
@@ -349,6 +351,7 @@ export class AppState {
   public links: [string, string][] = []
 
   constructor() {
+    makeObservable(this)
     this.showing = isoWeekInterval(Date.now())
     intercept(this, 'slices', (change) => {
       if ('update' === change.type) {

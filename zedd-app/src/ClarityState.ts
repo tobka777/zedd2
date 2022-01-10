@@ -1,6 +1,6 @@
 import { format as formatDate, parseISO } from 'date-fns'
 import { promises as fsp } from 'fs'
-import { computed, observable } from 'mobx'
+import { computed, observable, makeObservable } from 'mobx'
 import * as path from 'path'
 import {
   fillClarity,
@@ -42,7 +42,9 @@ export class ClarityState {
   @observable
   private _tasksLastUpdated: Date | undefined
 
-  public constructor(public clarityDir: string) {}
+  public constructor(public clarityDir: string) {
+    makeObservable(this)
+  }
 
   public get currentlyImportingTasks(): boolean {
     return this._currentlyImportingTasks
@@ -162,7 +164,7 @@ export class ClarityState {
               projectName,
               projectIntId,
             },
-            (task as unknown) as ClarityTask,
+            task as unknown as ClarityTask,
           ),
         ),
       )
