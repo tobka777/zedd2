@@ -92,7 +92,7 @@
     "@types/react-date-range": "^1.4.2",
     "node-abi": "^3.5.0",
     "react-date-range": "^1.4.0",
-    "selenium-webdriver": "^4.0.0-alpha.8",
+    "selenium-webdriver": "^4.1.0",
     "tar": "^6.1.11",
     "win-ca": "^3.4.5",
     "ws": "^8.4.0"
@@ -158,7 +158,7 @@
     "react-dom": "^17.0.1",
     "react-hotkeys": "^2.0.0",
     "react-markdown": "^5.0.3",
-    "serializr": "^2.0.3",
+    "serializr": "^2.0.5",
     "sinon": "^12.0.1",
     "sleep-promise": "^9.1.0",
     "style-loader": "^2.0.0",
