@@ -7,7 +7,7 @@ import {
   DialogActions,
   Button,
 } from '@material-ui/core'
-import { createMuiTheme, MuiThemeProvider, makeStyles } from '@material-ui/core/styles'
+import { createTheme, MuiThemeProvider, makeStyles } from '@material-ui/core/styles'
 import useMediaQuery from '@material-ui/core/useMediaQuery'
 import { Alert } from '@material-ui/lab'
 import { remote } from 'electron'
@@ -64,7 +64,7 @@ export const AppGui = observer(
 
     const theme = useMemo(
       () =>
-        createMuiTheme({
+        createTheme({
           spacing: 8,
           palette: {
             primary: { main: '#' + systemPreferences.getAccentColor().substr(0, 6) },
