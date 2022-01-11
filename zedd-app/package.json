@@ -96,12 +96,9 @@
     "@mui/material": "^5.2.8",
     "@mui/styles": "^5.2.3",
     "@types/react-date-range": "^1.4.2",
-    "node-abi": "^3.5.0",
     "react-date-range": "^1.4.0",
     "selenium-webdriver": "^4.1.0",
-    "tar": "^6.1.11",
-    "win-ca": "^3.4.5",
-    "ws": "^8.4.0"
+    "win-ca": "^3.4.5"
   },
   "devDependencies": {
     "@babel/core": "^7.16.7",

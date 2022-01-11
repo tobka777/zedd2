@@ -1,6 +1,6 @@
 import { Button, ButtonGroup, Paper, Tooltip } from '@mui/material'
-import { useTheme } from '@mui/material/styles';
-import makeStyles from '@mui/styles/makeStyles';
+import { useTheme, Theme } from '@mui/material/styles'
+import makeStyles from '@mui/styles/makeStyles'
 import {
   addMinutes,
   addMonths,
@@ -36,6 +36,10 @@ import { DateRangePicker } from './DateRangePicker'
 import differenceInMinutes from 'date-fns/esm/fp/differenceInMinutes/index.js'
 
 const { Menu, shell } = remote
+
+declare module '@mui/styles/defaultTheme' {
+  interface DefaultTheme extends Theme {}
+}
 
 const useStyles = makeStyles((theme) => ({
   contentRoot: {
