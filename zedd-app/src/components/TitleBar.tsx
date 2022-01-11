@@ -107,7 +107,6 @@ export const TitleBar = observer(({ state, menuItems, showContextMenu }: TitleBa
         id='simple-menu'
         anchorEl={anchorEl}
         keepMounted
-        getContentAnchorEl={null}
         open={!!anchorEl}
         onClose={handleClose}
         anchorOrigin={{ vertical: 'bottom', horizontal: 'left' }}
