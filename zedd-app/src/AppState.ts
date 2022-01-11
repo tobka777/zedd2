@@ -390,7 +390,7 @@ export class AppState {
       console.log('loadFromDir: loading AppState from', file)
       const json = await fsp.readFile(path.join(dir, file), 'utf8')
       return this.loadFromJsonString(json)
-    })
+    });
   }
 
   /**

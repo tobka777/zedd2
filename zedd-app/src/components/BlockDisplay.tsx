@@ -3,7 +3,7 @@ import { observer } from 'mobx-react-lite'
 import * as React from 'react'
 import { useCallback } from 'react'
 
-import { useTheme } from '@material-ui/core/styles'
+import { useTheme } from '@mui/material/styles'
 import { TimeSlice } from '../AppState'
 import { ClarityState } from '../ClarityState'
 import { SliceDragStartHandler, SliceSplitHandler } from './Calendar'
@@ -74,7 +74,7 @@ export const BlockDisplay = observer(
               ? slice.task
                   .getColor()
                   .set('hsl.s', 0.9)
-                  .set('hsl.l', 'dark' === theme.palette.type ? 0.2 : 0.8)
+                  .set('hsl.l', 'dark' === theme.palette.mode ? 0.2 : 0.8)
                   .css()
               : '#eeeeee',
           right: 0,

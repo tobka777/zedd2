@@ -16,12 +16,12 @@ import {
   Switch,
   RadioGroup,
   Radio,
-} from '@material-ui/core'
-import { useTheme } from '@material-ui/core/styles'
+} from '@mui/material'
+import { useTheme } from '@mui/material/styles'
 import * as React from 'react'
 import { useState, useEffect } from 'react'
 import { remote } from 'electron'
-import { MoreHoriz as PickFileIcon } from '@material-ui/icons'
+import { MoreHoriz as PickFileIcon } from '@mui/icons-material'
 import { observer } from 'mobx-react-lite'
 import { uniq } from 'lodash'
 

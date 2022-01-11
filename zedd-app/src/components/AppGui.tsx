@@ -6,10 +6,12 @@ import {
   DialogContent,
   DialogActions,
   Button,
-} from '@material-ui/core'
-import { createTheme, MuiThemeProvider, makeStyles } from '@material-ui/core/styles'
-import useMediaQuery from '@material-ui/core/useMediaQuery'
-import { Alert } from '@material-ui/lab'
+  adaptV4Theme,
+} from '@mui/material';
+import { createTheme, ThemeProvider, Theme, StyledEngineProvider } from '@mui/material/styles';
+import makeStyles from '@mui/styles/makeStyles';
+import useMediaQuery from '@mui/material/useMediaQuery'
+import { Alert } from '@mui/material';
 import { remote } from 'electron'
 import { observer } from 'mobx-react-lite'
 import * as React from 'react'
@@ -64,14 +66,14 @@ export const AppGui = observer(
 
     const theme = useMemo(
       () =>
-        createTheme({
+        createTheme(adaptV4Theme({
           spacing: 8,
           palette: {
             primary: { main: '#' + systemPreferences.getAccentColor().substr(0, 6) },
             // type: true ? 'dark' : 'light',
             type: prefersDarkMode ? 'dark' : 'light',
           },
-        }),
+        })),
       [prefersDarkMode],
     )
 
@@ -83,79 +85,81 @@ export const AppGui = observer(
     const message = !state.hoverMode && state.messages.length ? state.messages[0] : undefined
 
     return (
-      <MuiThemeProvider theme={theme}>
-        <CssBaseline />
-        {message && (
-          <Snackbar
-            open={true}
-            autoHideDuration={message.timeout}
-            onClose={() => state.messages.shift()}
-            key={message.id}
-          >
-            <Alert severity={message.severity}>{message.msg}</Alert>
-          </Snackbar>
-        )}
-        {state.whatsNewDialogOpen && !state.hoverMode && (
-          <Dialog open={true} onClose={() => (state.whatsNewDialogOpen = false)}>
-            <DialogTitle>What's New</DialogTitle>
-            <DialogContent>
-              <ReactMarkdown source={changelog} />
-            </DialogContent>
-            <DialogActions>
-              <Button onClick={() => autoUpdater.checkForUpdates()}>Check for updates</Button>
-              <Button onClick={() => (state.whatsNewDialogOpen = false)} color='primary'>
-                Got it!
-              </Button>
-            </DialogActions>
-          </Dialog>
-        )}
-        <TitleBar state={state} menuItems={menuItems} showContextMenu={showContextMenu} />
-        {state.settingsDialogOpen && (
-          <SettingsDialog
-            done={() => {
-              config.saveToFile()
-              state.settingsDialogOpen = false
-            }}
-            checkCgJira={checkCgJira}
-            checkChromePath={checkChromePath}
-            settings={state.config}
-            clarityState={clarityState}
-          />
-        )}
-        {state.renamingTask ? (
-          <RenameTaskDialog
-            task={state.renamingTask}
-            key={'dialog-rename-task-' + currentFocusedTask.name}
-            state={state}
-            onClose={() => (state.renamingTask = undefined)}
-          />
-        ) : (
-          state.changingSliceTask && (
-            <ChangeSliceTaskDialog
-              clarityState={clarityState}
-              slice={state.changingSliceTask}
-              getTasksForSearchString={getTasksForSearchString}
-              done={(newTask) => {
-                if ('string' === typeof newTask) newTask = state.getTaskForName(newTask)
-                console.log('ChangeSLiceTaskDialog', 'state.changingSliceTask!.task = newTask')
-                state.changingSliceTask!.task = newTask
-                state.changingSliceTask = undefined
+      <StyledEngineProvider injectFirst>
+        <ThemeProvider theme={theme}>
+          <CssBaseline />
+          {message && (
+            <Snackbar
+              open={true}
+              autoHideDuration={message.timeout}
+              onClose={() => state.messages.shift()}
+              key={message.id}
+            >
+              <Alert severity={message.severity}>{message.msg}</Alert>
+            </Snackbar>
+          )}
+          {state.whatsNewDialogOpen && !state.hoverMode && (
+            <Dialog open={true} onClose={() => (state.whatsNewDialogOpen = false)}>
+              <DialogTitle>What's New</DialogTitle>
+              <DialogContent>
+                <ReactMarkdown source={changelog} />
+              </DialogContent>
+              <DialogActions>
+                <Button onClick={() => autoUpdater.checkForUpdates()}>Check for updates</Button>
+                <Button onClick={() => (state.whatsNewDialogOpen = false)} color='primary'>
+                  Got it!
+                </Button>
+              </DialogActions>
+            </Dialog>
+          )}
+          <TitleBar state={state} menuItems={menuItems} showContextMenu={showContextMenu} />
+          {state.settingsDialogOpen && (
+            <SettingsDialog
+              done={() => {
+                config.saveToFile()
+                state.settingsDialogOpen = false
               }}
-              state={state}
+              checkCgJira={checkCgJira}
+              checkChromePath={checkChromePath}
+              settings={state.config}
+              clarityState={clarityState}
             />
-          )
-        )}
-        <ErrorBoundary>
-          <AppBody
-            state={state}
-            clarityState={clarityState}
-            getTasksForSearchString={getTasksForSearchString}
-            display={!state.hoverMode}
-            taskSelectRef={taskSelectRef}
-            getLinksFromString={getLinksFromString}
-          />
-        </ErrorBoundary>
-      </MuiThemeProvider>
-    )
+          )}
+          {state.renamingTask ? (
+            <RenameTaskDialog
+              task={state.renamingTask}
+              key={'dialog-rename-task-' + currentFocusedTask.name}
+              state={state}
+              onClose={() => (state.renamingTask = undefined)}
+            />
+          ) : (
+            state.changingSliceTask && (
+              <ChangeSliceTaskDialog
+                clarityState={clarityState}
+                slice={state.changingSliceTask}
+                getTasksForSearchString={getTasksForSearchString}
+                done={(newTask) => {
+                  if ('string' === typeof newTask) newTask = state.getTaskForName(newTask)
+                  console.log('ChangeSLiceTaskDialog', 'state.changingSliceTask!.task = newTask')
+                  state.changingSliceTask!.task = newTask
+                  state.changingSliceTask = undefined
+                }}
+                state={state}
+              />
+            )
+          )}
+          <ErrorBoundary>
+            <AppBody
+              state={state}
+              clarityState={clarityState}
+              getTasksForSearchString={getTasksForSearchString}
+              display={!state.hoverMode}
+              taskSelectRef={taskSelectRef}
+              getLinksFromString={getLinksFromString}
+            />
+          </ErrorBoundary>
+        </ThemeProvider>
+      </StyledEngineProvider>
+    );
   },
 )

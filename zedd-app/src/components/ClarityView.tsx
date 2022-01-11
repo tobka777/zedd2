@@ -1,4 +1,5 @@
-import { useTheme, makeStyles } from '@material-ui/core/styles'
+import { useTheme } from '@mui/material/styles';
+import makeStyles from '@mui/styles/makeStyles';
 import {
   addDays,
   areIntervalsOverlapping,
@@ -22,8 +23,8 @@ import {
   Card,
   CardContent,
   CardActions,
-} from '@material-ui/core'
-import { Send as SendIcon } from '@material-ui/icons'
+} from '@mui/material'
+import { Send as SendIcon } from '@mui/icons-material'
 import { groupBy, uniqBy, sortBy, remove } from 'lodash'
 
 import { validDate, TimeSlice } from '../AppState'

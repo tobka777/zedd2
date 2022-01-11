@@ -1,9 +1,9 @@
 import { observer } from 'mobx-react-lite'
 import * as React from 'react'
 
-import { TextField } from '@material-ui/core'
-import { StandardTextFieldProps } from '@material-ui/core/TextField'
-import { Autocomplete } from '@material-ui/lab'
+import { TextField } from '@mui/material'
+import { StandardTextFieldProps } from '@mui/material/TextField'
+import { Autocomplete } from '@mui/material';
 
 import { ClarityState, ClarityTask } from '../ClarityState'
 
@@ -67,6 +67,6 @@ export const ClarityTaskSelect = observer(
         )}
         getOptionLabel={(x: ClarityTask) => (x ? x.projectName + ' / ' + x.name : '')}
       />
-    )
+    );
   },
 )

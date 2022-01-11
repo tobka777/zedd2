@@ -1,5 +1,5 @@
-import { Dialog, DialogActions, DialogContent, DialogTitle } from '@material-ui/core'
-import Button from '@material-ui/core/Button'
+import { Dialog, DialogActions, DialogContent, DialogTitle } from '@mui/material'
+import Button from '@mui/material/Button'
 import { format as formatDate } from 'date-fns'
 import * as React from 'react'
 import { useState } from 'react'

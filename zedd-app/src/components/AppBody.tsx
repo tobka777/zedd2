@@ -1,5 +1,6 @@
-import { Button, ButtonGroup, Paper, Tooltip } from '@material-ui/core'
-import { makeStyles, useTheme } from '@material-ui/core/styles'
+import { Button, ButtonGroup, Paper, Tooltip } from '@mui/material'
+import { useTheme } from '@mui/material/styles';
+import makeStyles from '@mui/styles/makeStyles';
 import {
   addMinutes,
   addMonths,
@@ -29,7 +30,7 @@ import { BlockDisplay } from './BlockDisplay'
 import { Calendar } from './Calendar'
 import { ClarityView } from './ClarityView'
 import { TaskEditor } from './TaskEditor'
-import { ArrowBack, ArrowForward, Delete as DeleteIcon } from '@material-ui/icons'
+import { ArrowBack, ArrowForward, Delete as DeleteIcon } from '@mui/icons-material'
 import { suggestedTaskMenuItems } from '../menuUtil'
 import { DateRangePicker } from './DateRangePicker'
 import differenceInMinutes from 'date-fns/esm/fp/differenceInMinutes/index.js'
