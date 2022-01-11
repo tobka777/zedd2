@@ -1,10 +1,11 @@
-import { observable } from 'mobx'
+import { observable, makeObservable } from 'mobx'
 import { serializable, raw, list, primitive, deserialize, serialize } from 'serializr'
 import { promises as fsp } from 'fs'
 
 export class ZeddSettings {
   constructor(fromFile?: string) {
     this.fromFile = fromFile!
+    makeObservable(this)
   }
 
   public static async readFromFile(file: string): Promise<ZeddSettings> {

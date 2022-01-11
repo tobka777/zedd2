@@ -1,6 +1,6 @@
 import { ipcRenderer, remote, BrowserWindow, MenuItemConstructorOptions, Rectangle } from 'electron'
 // @ts-expect-error
-import { autorun, computed } from 'mobx'
+import { autorun, computed, configure as configureMobx } from 'mobx'
 import * as path from 'path'
 import * as React from 'react'
 import * as ReactDOM from 'react-dom'
@@ -30,6 +30,8 @@ import {
   installChromeDriver,
 } from './chromeDriverMgmt'
 import { suggestedTaskMenuItems } from './menuUtil'
+
+configureMobx({ enforceActions: 'never' })
 
 const {
   Tray,
