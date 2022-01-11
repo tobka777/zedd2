@@ -7,11 +7,11 @@ import {
   DialogActions,
   Button,
   adaptV4Theme,
-} from '@mui/material';
-import { createTheme, ThemeProvider, Theme, StyledEngineProvider } from '@mui/material/styles';
-import makeStyles from '@mui/styles/makeStyles';
+} from '@mui/material'
+import { createTheme, ThemeProvider, Theme, StyledEngineProvider } from '@mui/material/styles'
+import makeStyles from '@mui/styles/makeStyles'
 import useMediaQuery from '@mui/material/useMediaQuery'
-import { Alert } from '@mui/material';
+import { Alert } from '@mui/material'
 import { remote } from 'electron'
 import { observer } from 'mobx-react-lite'
 import * as React from 'react'
@@ -66,14 +66,16 @@ export const AppGui = observer(
 
     const theme = useMemo(
       () =>
-        createTheme(adaptV4Theme({
-          spacing: 8,
-          palette: {
-            primary: { main: '#' + systemPreferences.getAccentColor().substr(0, 6) },
-            // type: true ? 'dark' : 'light',
-            type: prefersDarkMode ? 'dark' : 'light',
-          },
-        })),
+        createTheme(
+          adaptV4Theme({
+            spacing: 8,
+            palette: {
+              primary: { main: '#' + systemPreferences.getAccentColor().substr(0, 6) },
+              // type: true ? 'dark' : 'light',
+              mode: prefersDarkMode ? 'dark' : 'light',
+            },
+          }),
+        ),
       [prefersDarkMode],
     )
 
@@ -160,6 +162,6 @@ export const AppGui = observer(
           </ErrorBoundary>
         </ThemeProvider>
       </StyledEngineProvider>
-    );
+    )
   },
 )

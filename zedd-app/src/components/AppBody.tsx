@@ -37,7 +37,7 @@ import differenceInMinutes from 'date-fns/esm/fp/differenceInMinutes/index.js'
 
 const { Menu, shell } = remote
 
-declare module '@mui/styles/defaultTheme' {
+declare module '@mui/styles/DefaultTheme' {
   interface DefaultTheme extends Theme {}
 }
 
