@@ -1,6 +1,7 @@
 import { TextField, TextFieldProps } from '@mui/material'
-import makeStyles from '@mui/styles/makeStyles';
-import { Autocomplete } from '@mui/material';
+import { Theme } from '@mui/material/styles'
+import makeStyles from '@mui/styles/makeStyles'
+import { Autocomplete } from '@mui/material'
 import { observer } from 'mobx-react-lite'
 import * as React from 'react'
 
@@ -60,6 +61,10 @@ function cancellingPrevious<T, F extends (...args: any[]) => Promise<T>>(
     lastPromise && lastPromise.cancel()
     return (lastPromise = cancellable(x(...args)))
   }) as any
+}
+
+declare module '@mui/styles/defaultTheme' {
+  interface DefaultTheme extends Theme {}
 }
 
 const useStyles = makeStyles((theme) => ({
@@ -140,7 +145,7 @@ export const TaskSelect = observer(
             margin='dense'
           />
         )}
-        renderOption={(t: Task) => (
+        renderOption={(_props, t: Task) => (
           <>
             <span className={classes.renderOptionBT}>{getHoursForTask(t)}</span>
             <span>{t.name}</span>

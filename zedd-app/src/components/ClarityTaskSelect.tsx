@@ -3,7 +3,7 @@ import * as React from 'react'
 
 import { TextField } from '@mui/material'
 import { StandardTextFieldProps } from '@mui/material/TextField'
-import { Autocomplete } from '@mui/material';
+import { Autocomplete } from '@mui/material'
 
 import { ClarityState, ClarityTask } from '../ClarityState'
 
@@ -24,7 +24,7 @@ export const ClarityTaskSelect = observer(
   }: ClarityTaskSelectProps) => {
     const maxEntries = 20
 
-    const resolvedVal = (value && clarityState.resolveTask(value)) ?? ''
+    const resolvedVal = (value !== undefined && clarityState.resolveTask(value)) || undefined
     console.log('value ' + value + ' res ', resolvedVal)
 
     return (
@@ -58,7 +58,7 @@ export const ClarityTaskSelect = observer(
           onChange(clarityTask?.intId)
         }
         value={resolvedVal}
-        renderOption={(option: ClarityTask, _state) => (
+        renderOption={(_props, option: ClarityTask, _state) => (
           <>
             <div style={{ width: '30%' }}>{option.projectName}</div>
             <div style={{ width: '30%' }}>{option.name}</div>

@@ -206,6 +206,9 @@ export class AppState {
   /** FIELDS */
 
   @observable
+  public windowFocused: boolean = false
+
+  @observable
   @serializable
   public timingInProgess: boolean = true
 

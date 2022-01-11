@@ -62,7 +62,7 @@ export const installChromeDriver = async (
       const sourcePath = join(unzipDir.path, 'chromedriver.exe')
       const targetPath = join(targetDir!, 'chromedriver.exe')
       if (adminPrompt) {
-        await promisify(sudo.exec)(
+        await promisify<string, { name: string }, Buffer>(sudo.exec)(
           `move /Y ${JSON.stringify(sourcePath)} ${JSON.stringify(targetPath)}`,
           { name: 'Copy Chromedriver' },
         )

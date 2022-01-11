@@ -172,7 +172,9 @@ export const SettingsDialog = observer(
                 value={'' + settings.keepHovering}
                 onChange={(event) => {
                   const v = event.target.value
-                  settings.keepHovering = { false: false, true: true, vertical: 'vertical' }[v]
+                  settings.keepHovering = (
+                    { false: false, true: true, vertical: 'vertical' } as const
+                  )[v]!
                 }}
               >
                 <FormControlLabel value='false' control={<Radio />} label='No' />

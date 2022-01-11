@@ -1,5 +1,5 @@
-import { useTheme } from '@mui/material/styles';
-import makeStyles from '@mui/styles/makeStyles';
+import { useTheme, Theme } from '@mui/material/styles'
+import makeStyles from '@mui/styles/makeStyles'
 import {
   addDays,
   areIntervalsOverlapping,
@@ -16,14 +16,7 @@ import {
 import { observer } from 'mobx-react-lite'
 import * as React from 'react'
 import { ClarityExportFormat } from 'zedd-clarity'
-import {
-  Button,
-  Checkbox,
-  FormControlLabel,
-  Card,
-  CardContent,
-  CardActions,
-} from '@mui/material'
+import { Button, Checkbox, FormControlLabel, Card, CardContent, CardActions } from '@mui/material'
 import { Send as SendIcon } from '@mui/icons-material'
 import { groupBy, uniqBy, sortBy, remove } from 'lodash'
 
@@ -85,6 +78,10 @@ export interface ClarityViewProps {
   submitTimesheets: boolean
   onChangeSubmitTimesheets: (x: boolean) => void
   errorHandler: (e: Error) => void
+}
+
+declare module '@mui/styles/defaultTheme' {
+  interface DefaultTheme extends Theme {}
 }
 
 const useStyles = makeStyles((theme) => ({
