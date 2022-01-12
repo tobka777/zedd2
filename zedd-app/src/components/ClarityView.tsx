@@ -1,4 +1,4 @@
-import { useTheme, Theme } from '@mui/material/styles'
+import { useTheme } from '@mui/material/styles'
 import makeStyles from '@mui/styles/makeStyles'
 import {
   addDays,
@@ -78,10 +78,6 @@ export interface ClarityViewProps {
   submitTimesheets: boolean
   onChangeSubmitTimesheets: (x: boolean) => void
   errorHandler: (e: Error) => void
-}
-
-declare module '@mui/styles/defaultTheme' {
-  interface DefaultTheme extends Theme {}
 }
 
 const useStyles = makeStyles((theme) => ({

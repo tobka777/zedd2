@@ -1,5 +1,4 @@
 import { TextField, TextFieldProps } from '@mui/material'
-import { Theme } from '@mui/material/styles'
 import makeStyles from '@mui/styles/makeStyles'
 import { Autocomplete } from '@mui/material'
 import { observer } from 'mobx-react-lite'
@@ -61,10 +60,6 @@ function cancellingPrevious<T, F extends (...args: any[]) => Promise<T>>(
     lastPromise && lastPromise.cancel()
     return (lastPromise = cancellable(x(...args)))
   }) as any
-}
-
-declare module '@mui/styles/defaultTheme' {
-  interface DefaultTheme extends Theme {}
 }
 
 const useStyles = makeStyles((theme) => ({

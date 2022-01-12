@@ -7,7 +7,7 @@ import {
   DialogActions,
   Button,
 } from '@mui/material'
-import { createTheme, ThemeProvider, StyledEngineProvider } from '@mui/material/styles'
+import { createTheme, ThemeProvider, StyledEngineProvider, Theme } from '@mui/material/styles'
 import makeStyles from '@mui/styles/makeStyles'
 import useMediaQuery from '@mui/material/useMediaQuery'
 import { Alert } from '@mui/material'
@@ -41,6 +41,10 @@ export interface AppGuiProps {
   showContextMenu: () => void
   taskSelectRef?: (r: HTMLInputElement) => void
   getLinksFromString: (s: string) => [string, string][]
+}
+
+declare module '@mui/styles/DefaultTheme' {
+  interface DefaultTheme extends Theme {}
 }
 
 const useStyles = makeStyles({
