@@ -6,11 +6,11 @@ import {
   DialogContent,
   DialogActions,
   Button,
+  Alert,
 } from '@mui/material'
 import { createTheme, ThemeProvider, StyledEngineProvider, Theme } from '@mui/material/styles'
 import makeStyles from '@mui/styles/makeStyles'
 import useMediaQuery from '@mui/material/useMediaQuery'
-import { Alert } from '@mui/material'
 import { remote } from 'electron'
 import { observer } from 'mobx-react-lite'
 import * as React from 'react'
@@ -27,9 +27,8 @@ import { ZeddSettings } from '../ZeddSettings'
 import { TitleBar } from './TitleBar'
 import { AppBody } from './AppBody'
 import changelog from '../../../CHANGELOG.md'
-import { grey } from '@mui/material/colors'
 
-const { systemPreferences, autoUpdater } = remote
+const { autoUpdater } = remote
 
 export interface AppGuiProps {
   state: AppState
@@ -48,10 +47,7 @@ declare module '@mui/styles/DefaultTheme' {
 }
 
 const useStyles = makeStyles({
-  '@global #react-root': {
-    // transform: 'rotate(20deg)',
-    // overflow: 'scroll',
-  },
+  '@global #react-root': {},
 })
 
 export const AppGui = observer(

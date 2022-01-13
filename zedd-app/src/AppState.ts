@@ -26,7 +26,7 @@ import {
 } from 'date-fns'
 import { remote } from 'electron'
 import { promises as fsp } from 'fs'
-import { forEach, sum } from 'lodash'
+import { sum } from 'lodash'
 import { computed, observable, transaction, intercept, action, makeObservable } from 'mobx'
 import type { IObservableArray } from 'mobx'
 import { createTransformer, ObservableGroupMap } from 'mobx-utils'

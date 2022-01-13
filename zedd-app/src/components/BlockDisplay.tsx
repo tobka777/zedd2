@@ -28,7 +28,6 @@ export const BlockDisplay = observer(
     className,
     ...attributes
   }: BlockProps) => {
-    // console.log('rendering BlockDisplay')
     const blockClickHandler = useCallback(
       (e: React.MouseEvent) => {
         console.log('Click', e)
@@ -37,18 +36,18 @@ export const BlockDisplay = observer(
       },
       [slice, onSplit, onContextMenu],
     )
-    const startHandleHandler = useCallback((e: React.MouseEvent) => startDrag!(slice, e, 'start'), [
-      startDrag,
-      slice,
-    ])
+    const startHandleHandler = useCallback(
+      (e: React.MouseEvent) => startDrag!(slice, e, 'start'),
+      [startDrag, slice],
+    )
     const startPrevHandleHandler = useCallback(
       (e: React.MouseEvent) => startDrag!(slice, e, 'start+prev'),
       [startDrag, slice],
     )
-    const endHandleHandler = useCallback((e: React.MouseEvent) => startDrag!(slice, e, 'end'), [
-      startDrag,
-      slice,
-    ])
+    const endHandleHandler = useCallback(
+      (e: React.MouseEvent) => startDrag!(slice, e, 'end'),
+      [startDrag, slice],
+    )
     const completeHandleHandler = useCallback(
       (e: React.MouseEvent) => startDrag!(slice, e, 'complete'),
       [startDrag, slice],

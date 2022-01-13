@@ -7,7 +7,7 @@ import {
   Stop as StopIcon,
 } from '@mui/icons-material'
 import { BrowserWindow, ipcRenderer, remote } from 'electron'
-import { observer, useLocalStore } from 'mobx-react-lite'
+import { observer, useLocalObservable } from 'mobx-react-lite'
 import * as React from 'react'
 import { useEffect, useState } from 'react'
 
@@ -32,7 +32,7 @@ export const TitleBar = observer(({ state, menuItems, showContextMenu }: TitleBa
 
   const theme = useTheme()
 
-  const local = useLocalStore(() => ({
+  const local = useLocalObservable(() => ({
     maximized: getCurrentWindow().isMaximized(),
   }))
 

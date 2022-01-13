@@ -1,6 +1,4 @@
-import { state } from '@angular/animations'
 import { useTheme } from '@mui/material/styles'
-import { BorderColor } from '@mui/icons-material'
 import * as chroma from 'chroma.ts'
 import {
   addDays,
@@ -25,16 +23,15 @@ import {
   startOfISOWeek,
   subMinutes,
   isBefore,
-  startOfDay,
 } from 'date-fns'
-import { orderBy, sortBy } from 'lodash'
+import { orderBy } from 'lodash'
 import groupBy from 'lodash/groupBy'
 import { transaction } from 'mobx'
-import { observer, useLocalStore } from 'mobx-react-lite'
+import { observer, useLocalObservable } from 'mobx-react-lite'
 import * as React from 'react'
 import { useCallback, useEffect, useRef, ReactElement } from 'react'
 
-import { ilog, intRange, isoDayStr, min } from '../util'
+import { intRange, isoDayStr, min } from '../util'
 
 export type SliceDragStartHandler<T extends Interval> = (
   b: T,
@@ -126,7 +123,7 @@ const CalendarBase = <T extends Interval>({
   splitBlock,
   getVirtualSlice,
 }: CalendarProps<T>) => {
-  const local = useLocalStore(() => ({
+  const local = useLocalObservable(() => ({
     showTime: new Date(),
     currentlyDragging: [] as {
       block: T
