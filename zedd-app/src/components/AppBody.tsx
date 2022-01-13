@@ -1,5 +1,6 @@
-import { Button, ButtonGroup, Paper, Tooltip } from '@material-ui/core'
-import { makeStyles, useTheme } from '@material-ui/core/styles'
+import { Button, ButtonGroup, Paper, Tooltip } from '@mui/material'
+import { useTheme } from '@mui/material/styles'
+import makeStyles from '@mui/styles/makeStyles'
 import {
   addMinutes,
   addMonths,
@@ -13,13 +14,12 @@ import {
   startOfMonth,
   isSameDay,
   endOfMonth,
-  isEqual,
   subMinutes as sub,
 } from 'date-fns'
 import { remote, MenuItemConstructorOptions } from 'electron'
 import { observer } from 'mobx-react-lite'
 import * as React from 'react'
-import { useCallback, useState } from 'react'
+import { useCallback } from 'react'
 
 import { ErrorBoundary } from './ErrorBoundary'
 import { AppState, Task, TimeSlice } from '../AppState'
@@ -29,7 +29,7 @@ import { BlockDisplay } from './BlockDisplay'
 import { Calendar } from './Calendar'
 import { ClarityView } from './ClarityView'
 import { TaskEditor } from './TaskEditor'
-import { ArrowBack, ArrowForward, Delete as DeleteIcon } from '@material-ui/icons'
+import { ArrowBack, ArrowForward, Delete as DeleteIcon } from '@mui/icons-material'
 import { suggestedTaskMenuItems } from '../menuUtil'
 import { DateRangePicker } from './DateRangePicker'
 import differenceInMinutes from 'date-fns/esm/fp/differenceInMinutes/index.js'
@@ -163,7 +163,7 @@ export const AppBody = observer(
               value={state.showing}
               onChange={(newValue) => (state.showing = newValue)}
             />
-            <ButtonGroup variant='contained'>
+            <ButtonGroup variant='outlined'>
               <Button size='large' onClick={arrowClick} data-dir='-1'>
                 <ArrowBack />
               </Button>
@@ -171,7 +171,7 @@ export const AppBody = observer(
                 <ArrowForward />
               </Button>
             </ButtonGroup>
-            <ButtonGroup variant='contained'>
+            <ButtonGroup variant='outlined'>
               <Button
                 size='large'
                 onClick={(_) => (state.showing = businessWeekInterval(addWeeks(new Date(), -1)))}
@@ -199,12 +199,12 @@ export const AppBody = observer(
             </ButtonGroup>
             <Button
               size='large'
-              variant='contained'
+              variant='outlined'
               onClick={(_) => (state.showing = monthInterval(addMonths(new Date(), 1)))}
             >
               Next Month
             </Button>
-            <ButtonGroup variant='contained'>
+            <ButtonGroup variant='outlined'>
               <Tooltip title='Fill currently shown empty days with ERSATZ task.' arrow>
                 <Button size='large' onClick={(_) => state.fillErsatz(state.showing)}>
                   Ersatz
@@ -219,7 +219,7 @@ export const AppBody = observer(
             {state.links.map(([k, link]) => (
               <Button
                 size='large'
-                variant='contained'
+                variant='outlined'
                 onClick={() => shell.openExternal(link)}
                 key={k}
               >

@@ -1,5 +1,5 @@
-import { Button, Grid, TextField, Tooltip, MenuItem, Menu } from '@material-ui/core'
-import { Edit as EditIcon, GetApp as ImportIcon, SentimentSatisfiedAlt } from '@material-ui/icons'
+import { Button, Grid, TextField, Tooltip, MenuItem, Menu } from '@mui/material'
+import { Edit as EditIcon, GetApp as ImportIcon, SentimentSatisfiedAlt } from '@mui/icons-material'
 import { format as formatDate, formatDistance } from 'date-fns'
 import { observer } from 'mobx-react-lite'
 import * as React from 'react'

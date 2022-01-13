@@ -1,4 +1,5 @@
-import { useTheme, makeStyles } from '@material-ui/core/styles'
+import { useTheme } from '@mui/material/styles'
+import makeStyles from '@mui/styles/makeStyles'
 import {
   addDays,
   areIntervalsOverlapping,
@@ -15,15 +16,8 @@ import {
 import { observer } from 'mobx-react-lite'
 import * as React from 'react'
 import { ClarityExportFormat } from 'zedd-clarity'
-import {
-  Button,
-  Checkbox,
-  FormControlLabel,
-  Card,
-  CardContent,
-  CardActions,
-} from '@material-ui/core'
-import { Send as SendIcon } from '@material-ui/icons'
+import { Button, Checkbox, FormControlLabel, Card, CardContent, CardActions } from '@mui/material'
+import { Send as SendIcon } from '@mui/icons-material'
 import { groupBy, uniqBy, sortBy, remove } from 'lodash'
 
 import { validDate, TimeSlice } from '../AppState'

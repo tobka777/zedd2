@@ -1,6 +1,6 @@
 import * as React from 'react'
 import { Component, ReactNode } from 'react'
-import { TextField } from '@material-ui/core'
+import { TextField } from '@mui/material'
 
 export class ErrorBoundary extends Component<{ children?: ReactNode }> {
   state = { error: undefined as any }

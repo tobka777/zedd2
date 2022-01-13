@@ -16,12 +16,12 @@ import {
   Switch,
   RadioGroup,
   Radio,
-} from '@material-ui/core'
-import { useTheme } from '@material-ui/core/styles'
+} from '@mui/material'
+import { useTheme } from '@mui/material/styles'
 import * as React from 'react'
 import { useState, useEffect } from 'react'
 import { remote } from 'electron'
-import { MoreHoriz as PickFileIcon } from '@material-ui/icons'
+import { MoreHoriz as PickFileIcon } from '@mui/icons-material'
 import { observer } from 'mobx-react-lite'
 import { uniq } from 'lodash'
 
@@ -172,7 +172,9 @@ export const SettingsDialog = observer(
                 value={'' + settings.keepHovering}
                 onChange={(event) => {
                   const v = event.target.value
-                  settings.keepHovering = { false: false, true: true, vertical: 'vertical' }[v]
+                  settings.keepHovering = (
+                    { false: false, true: true, vertical: 'vertical' } as const
+                  )[v]!
                 }}
               >
                 <FormControlLabel value='false' control={<Radio />} label='No' />

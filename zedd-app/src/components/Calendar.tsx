@@ -1,6 +1,4 @@
-import { state } from '@angular/animations'
-import { useTheme } from '@material-ui/core/styles'
-import { BorderColor } from '@material-ui/icons'
+import { useTheme } from '@mui/material/styles'
 import * as chroma from 'chroma.ts'
 import {
   addDays,
@@ -25,16 +23,15 @@ import {
   startOfISOWeek,
   subMinutes,
   isBefore,
-  startOfDay,
 } from 'date-fns'
-import { orderBy, sortBy } from 'lodash'
+import { orderBy } from 'lodash'
 import groupBy from 'lodash/groupBy'
 import { transaction } from 'mobx'
-import { observer, useLocalStore } from 'mobx-react-lite'
+import { observer, useLocalObservable } from 'mobx-react-lite'
 import * as React from 'react'
 import { useCallback, useEffect, useRef, ReactElement } from 'react'
 
-import { ilog, intRange, isoDayStr, min } from '../util'
+import { intRange, isoDayStr, min } from '../util'
 
 export type SliceDragStartHandler<T extends Interval> = (
   b: T,
@@ -126,7 +123,7 @@ const CalendarBase = <T extends Interval>({
   splitBlock,
   getVirtualSlice,
 }: CalendarProps<T>) => {
-  const local = useLocalStore(() => ({
+  const local = useLocalObservable(() => ({
     showTime: new Date(),
     currentlyDragging: [] as {
       block: T
@@ -352,13 +349,13 @@ const CalendarBase = <T extends Interval>({
   const theme = useTheme()
 
   const weekColorScale = chroma
-    .scale((t) => chroma.hsl(t * 360, 0.75, 'dark' === theme.palette.type ? 0.1 : 0.97))
+    .scale((t) => chroma.hsl(t * 360, 0.75, 'dark' === theme.palette.mode ? 0.1 : 0.97))
     .out(undefined)
 
   const weekColors = weekColorScale.colors(7, 'color').map((c) => c.css())
   const weekBorderColors = weekColorScale
     .colors(7, 'color')
-    .map((c) => c.darker('dark' === theme.palette.type ? -1 : 1).css())
+    .map((c) => c.darker('dark' === theme.palette.mode ? -1 : 1).css())
 
   return (
     <div style={{ display: 'flex', flexFlow: 'row wrap' }}>
@@ -375,7 +372,7 @@ const CalendarBase = <T extends Interval>({
             key={'header-week-' + startOfISOWeekStr}
             style={{
               width: percent(daysByCalendarWeeks[startOfISOWeekStr].length / days.length),
-              backgroundColor: 'dark' === theme.palette.type ? '#111111' : '#eeeeee',
+              backgroundColor: 'dark' === theme.palette.mode ? '#111111' : '#eeeeee',
               padding: '2px 8px',
               // borderTopLeftRadius: includesStartOfWeek ? '8px 100%' : '0',
               // borderTopRightRadius: includesEndOfWeek ? '8px 100%' : '0',

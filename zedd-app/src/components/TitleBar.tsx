@@ -1,13 +1,13 @@
-import { AppBar, Badge, Button, Menu as MuiMenu, MenuItem, Tooltip } from '@material-ui/core'
-import { useTheme } from '@material-ui/core/styles'
+import { AppBar, Badge, Button, Menu as MuiMenu, MenuItem, Tooltip } from '@mui/material'
+import { useTheme } from '@mui/material/styles'
 import {
   Menu as MenuIcon,
   PlayArrow as PlayArrowIcon,
   Remove as ToHoverIcon,
   Stop as StopIcon,
-} from '@material-ui/icons'
+} from '@mui/icons-material'
 import { BrowserWindow, ipcRenderer, remote } from 'electron'
-import { observer, useLocalStore } from 'mobx-react-lite'
+import { observer, useLocalObservable } from 'mobx-react-lite'
 import * as React from 'react'
 import { useEffect, useState } from 'react'
 
@@ -32,7 +32,7 @@ export const TitleBar = observer(({ state, menuItems, showContextMenu }: TitleBa
 
   const theme = useTheme()
 
-  const local = useLocalStore(() => ({
+  const local = useLocalObservable(() => ({
     maximized: getCurrentWindow().isMaximized(),
   }))
 
@@ -68,7 +68,7 @@ export const TitleBar = observer(({ state, menuItems, showContextMenu }: TitleBa
         backgroundColor: state.currentTask
           .getColor()
           .set('hsl.s', 0.9)
-          .set('hsl.l', 'dark' === theme.palette.type ? 0.2 : 0.8)
+          .set('hsl.l', 'dark' === theme.palette.mode ? 0.2 : 0.8)
           .css(),
       }}
       position='static'
@@ -107,7 +107,6 @@ export const TitleBar = observer(({ state, menuItems, showContextMenu }: TitleBa
         id='simple-menu'
         anchorEl={anchorEl}
         keepMounted
-        getContentAnchorEl={null}
         open={!!anchorEl}
         onClose={handleClose}
         anchorOrigin={{ vertical: 'bottom', horizontal: 'left' }}

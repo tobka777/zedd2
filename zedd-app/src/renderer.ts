@@ -1,5 +1,4 @@
 import { ipcRenderer, remote, BrowserWindow, MenuItemConstructorOptions, Rectangle } from 'electron'
-// @ts-expect-error
 import { autorun, computed, configure as configureMobx } from 'mobx'
 import * as path from 'path'
 import * as React from 'react'
@@ -454,7 +453,7 @@ async function setup() {
         currentWindow.setMinimumSize(64, 37)
         currentWindow.setMaximumSize(0, 37)
       }
-      currentWindow.isMaximized && currentWindow.unmaximize()
+      currentWindow.isMaximized() && currentWindow.unmaximize()
       setBoundsSafe(currentWindow, {
         ...state.bounds.hover,
         height: vertical ? Math.max(150, state.bounds.hover.height) : 37,

@@ -22,7 +22,7 @@ export const getChromeVersion = async (chromePath: string) => {
   const { stdout } = await promisify(exec)(
     `wmic datafile where name=${JSON.stringify(chromePath)} get Version /value`,
   )
-  return stdout.trim().replace(/^Version=/, '')
+  return stdout.trim().replace(/^Version=/, '');
 }
 
 export const getLatestChromeDriverVersion = async (chromeVersion: string) => {
@@ -62,7 +62,7 @@ export const installChromeDriver = async (
       const sourcePath = join(unzipDir.path, 'chromedriver.exe')
       const targetPath = join(targetDir!, 'chromedriver.exe')
       if (adminPrompt) {
-        await promisify(sudo.exec)(
+        await promisify<string, { name: string }, Buffer>(sudo.exec)(
           `move /Y ${JSON.stringify(sourcePath)} ${JSON.stringify(targetPath)}`,
           { name: 'Copy Chromedriver' },
         )
@@ -78,7 +78,7 @@ export const getChromeDriverVersion = async (chromeDriverPath = 'chromedriver') 
   return stdout
     .trim()
     .replace(/^ChromeDriver\s*/, '')
-    .replace(/\s.*/, '')
+    .replace(/\s.*/, '');
 }
 
 export const getNonEnvPathChromePath = async () => {

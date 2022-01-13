@@ -197,5 +197,5 @@ export function getLinksFromString(str: string): [string, string][] {
         ? jira2url + 'browse/' + k
         : '',
     ])
-    .filter(([, link]) => link)
+    .filter(([, link]) => link);
 }

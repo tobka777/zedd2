@@ -7,9 +7,5 @@ declare module '*.md' {
   export default string
 }
 
-declare namespace NodeJS {
-  interface Global {
-    isDev: boolean
-    appUserModelId: string
-  }
-}
+declare var isDev: boolean
+declare var appUserModelId: string

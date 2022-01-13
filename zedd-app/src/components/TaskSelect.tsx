@@ -1,6 +1,5 @@
-import { TextField, TextFieldProps } from '@material-ui/core'
-import { makeStyles } from '@material-ui/core/styles'
-import { Autocomplete } from '@material-ui/lab'
+import { TextField, TextFieldProps, Autocomplete } from '@mui/material'
+import makeStyles from '@mui/styles/makeStyles'
 import { observer } from 'mobx-react-lite'
 import * as React from 'react'
 
@@ -140,7 +139,7 @@ export const TaskSelect = observer(
             margin='dense'
           />
         )}
-        renderOption={(t: Task) => (
+        renderOption={(_props, t: Task) => (
           <>
             <span className={classes.renderOptionBT}>{getHoursForTask(t)}</span>
             <span>{t.name}</span>
