@@ -1,4 +1,4 @@
-import { app, ipcMain, /* session,*/ BrowserWindow } from 'electron'
+import { app, ipcMain, session, BrowserWindow } from 'electron'
 
 global.isDev = process.argv.includes('--dev')
 
@@ -6,12 +6,6 @@ global.appUserModelId = global.isDev ? process.execPath : 'com.squirrel.zedd.zed
 app.setAppUserModelId(global.appUserModelId)
 app.commandLine.appendSwitch('disable-features', 'OutOfBlinkCors')
 process.env.ELECTRON_DISABLE_SECURITY_WARNINGS = '1'
-/*
-session.defaultSession.webRequest.onBeforeSendHeaders((details, callback) => {
-  details.requestHeaders['User-Agent'] = 'zedd-app';
-  callback({ cancel: false, requestHeaders: details.requestHeaders });
-});
-*/
 
 // Handle creating/removing shortcuts on Windows when installing/uninstalling.
 if (require('electron-squirrel-startup')) {
@@ -92,7 +86,14 @@ ipcMain.on('quit', () => {
 // This method will be called when Electron has finished
 // initialization and is ready to create browser windows.
 // Some APIs can only be used after this event occurs.
-app.on('ready', createWindow)
+app.on('ready', () => {
+  session.defaultSession.webRequest.onBeforeSendHeaders((details, callback) => {
+    details.requestHeaders['User-Agent'] = 'zedd-app'
+    callback({ cancel: false, requestHeaders: details.requestHeaders })
+  })
+
+  createWindow()
+})
 
 // Quit when all windows are closed.
 app.on('window-all-closed', () => {

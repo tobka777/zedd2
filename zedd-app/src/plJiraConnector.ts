@@ -38,6 +38,9 @@ export function initJiraClient(
         password: Buffer.from(jc.password, 'base64').toString('utf8'),
       },
     },
+    baseRequestConfig: {
+      headers: { 'User-Agent': 'zedd-app' },
+    },
   })
 }
 
@@ -193,5 +196,5 @@ export function getLinksFromString(str: string): [string, string][] {
         ? jira2url + 'browse/' + k
         : '',
     ])
-    .filter(([, link]) => link);
+    .filter(([, link]) => link)
 }
