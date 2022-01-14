@@ -38,9 +38,6 @@ export function initJiraClient(
         password: Buffer.from(jc.password, 'base64').toString('utf8'),
       },
     },
-    baseRequestConfig: {
-      headers: { 'User-Agent': 'zedd-app' },
-    },
   })
 }
 
@@ -100,7 +97,7 @@ const callWithJsessionCookie = async <T>(cb: () => Promise<T>) => {
 
 const updateJiraProjectKeys = () =>
   callWithJsessionCookie(async () => {
-    const projects = await jira.projects.getAllProjects<{ key: string }[]>()
+    const projects = await jira.projects.getAllProjects()
     console.warn(projects)
     const keys = projects.map((p) => p.key)
     if (!isEqual(keys, jiraConfig.keys)) {
