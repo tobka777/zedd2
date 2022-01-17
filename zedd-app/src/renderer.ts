@@ -67,6 +67,21 @@ const d = (...x: any[]) => console.log('renderer.ts', ...x)
 
 // serialize(new Todo()) // {}
 
+document.addEventListener('mouseenter', () => {
+  global.isInsideDocument = true
+})
+
+document.addEventListener('mouseleave', (event) => {
+  if (
+    event.clientY <= 0 ||
+    event.clientX <= 0 ||
+    event.clientX >= window.innerWidth ||
+    event.clientY >= window.innerHeight
+  ) {
+    global.isInsideDocument = false
+  }
+})
+
 function showNotification(title: string, text: string, cb: () => void) {
   const notification = new Notification(title, {
     body: text,
@@ -429,7 +444,8 @@ async function setup() {
         !state.hoverMode &&
         !state.dialogOpen() &&
         !clarityState.currentlyImportingTasks &&
-        !state.windowFocused
+        !state.windowFocused &&
+        !global.isInsideDocument
       ) {
         state.hoverMode = true
       }
