@@ -6,15 +6,38 @@ rules.push({
 })
 module.exports = {
   // Put your normal webpack config below here
+  target: 'node',
   resolve: {
     // Add `.ts` and `.tsx` as a resolvable extension.
-    extensions: ['.ts', '.tsx', '.js', '.xml'],
+    extensions: ['.ts', '.tsx', '.js', '.xml', '.jsx', '.css'],
+    fallback: {
+      fs: false,
+      tls: false,
+      net: false,
+      path: false,
+      zlib: false,
+      http: false,
+      https: false,
+      stream: false,
+      crypto: false,
+      util: false,
+      asserts: false,
+      assert: false,
+      os: false,
+      url: false,
+      buffer: false,
+      util: false,
+      querystring: false,
+      constants: false,
+      child_process: false,
+      browser: false,
+    },
   },
   module: {
     rules,
   },
   externals: [
-    function (context, request, callback) {
+    ({ context, request }, callback) => {
       if (
         [
           'bindings',
