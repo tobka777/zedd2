@@ -1,5 +1,5 @@
 import { compareDesc, differenceInMinutes } from 'date-fns'
-import JiraClient from 'jira-connector'
+import { Version2Client as JiraClient } from 'jira.js'
 // @ts-ignore
 import * as request from 'request'
 
@@ -30,18 +30,14 @@ export function initJiraClient(
   jira2url = newJira2url
   const url = new URL(jc.url)
   jira = new JiraClient({
-    host: url.host,
-    protocol: url.protocol,
-    port: url.port ? +url.port : undefined,
-    // eslint-disable-next-line @typescript-eslint/camelcase
-    path_prefix: url.pathname,
-    // eslint-disable-next-line @typescript-eslint/camelcase
-    basic_auth: {
-      username: jc.username,
-      password: Buffer.from(jc.password, 'base64').toString('utf8'),
+    host: url.toString(),
+    telemetry: false,
+    authentication: {
+      basic: {
+        username: jc.username,
+        password: Buffer.from(jc.password, 'base64').toString('utf8'),
+      },
     },
-    // eslint-disable-next-line @typescript-eslint/camelcase
-    cookie_jar: jar,
   })
 }
 
@@ -101,9 +97,9 @@ const callWithJsessionCookie = async <T>(cb: () => Promise<T>) => {
 
 const updateJiraProjectKeys = () =>
   callWithJsessionCookie(async () => {
-    const projects = await jira.project.getAllProjects()
+    const projects = await jira.projects.getAllProjects()
     console.warn(projects)
-    const keys = projects.map((p: { key: string }) => p.key)
+    const keys = projects.map((p) => p.key)
     if (!isEqual(keys, jiraConfig.keys)) {
       console.log('retrieved project keys: ', keys)
       jiraConfig.keys = keys
@@ -113,13 +109,13 @@ const updateJiraProjectKeys = () =>
 const issueInfoToTask = async (clarityTasks: ClarityTask[], i: any): Promise<Task> => {
   if (i.fields.parent) {
     const result = await callWithJsessionCookie(() =>
-      jira.search
-        .search({
+      jira.issueSearch
+        .searchForIssuesUsingJqlPost({
           jql: `key=${i.fields.parent.key}`,
         })
         .catch(jiraConnectorErrorToMessage),
     )
-    return issueInfoToTask(clarityTasks, result.issues[0])
+    return issueInfoToTask(clarityTasks, result.issues?.[0])
   }
 
   const externalKey = i.fields[externalJiraField]
@@ -159,8 +155,8 @@ const issueInfoToTask = async (clarityTasks: ClarityTask[], i: any): Promise<Tas
 
 export const getTasksFromAssignedJiraIssues = (clarityTasks: ClarityTask[]): Promise<Task[]> =>
   callWithJsessionCookie(async () => {
-    const result = await jira.search
-      .search({
+    const result = await jira.issueSearch
+      .searchForIssuesUsingJqlPost({
         jql: jiraConfig.currentIssuesJql,
       })
       .catch(jiraConnectorErrorToMessage)
@@ -168,7 +164,7 @@ export const getTasksFromAssignedJiraIssues = (clarityTasks: ClarityTask[]): Pro
 
     await updateJiraProjectKeys()
 
-    return Promise.all(result.issues.map((i) => issueInfoToTask(clarityTasks, i)))
+    return Promise.all(result.issues?.map((i) => issueInfoToTask(clarityTasks, i)) || [])
   })
 
 export const getTasksForSearchString = async (s: string): Promise<Task[]> =>
@@ -177,12 +173,12 @@ export const getTasksForSearchString = async (s: string): Promise<Task[]> =>
     const orKeyMatch = sClean.match(/^[a-z]{1,6}-\d+$/i) ? ` OR key = "${sClean}"` : ''
     const jql = `(text ~ "${sClean}*"${orKeyMatch}) AND resolution = Unresolved ORDER BY updated DESC`
     console.log('searching ' + jql)
-    const result = await jira.search
-      .search({
+    const result = await jira.issueSearch
+      .searchForIssuesUsingJqlPost({
         jql,
       })
       .catch(jiraConnectorErrorToMessage)
-    return Promise.all(result.issues.map((i) => issueInfoToTask(clarityState.tasks, i)))
+    return Promise.all(result.issues?.map((i) => issueInfoToTask(clarityState.tasks, i)) || [])
   })
 
 /** Extracts keys matching projects in connected jira and returns issue links from them. */
@@ -197,5 +193,5 @@ export function getLinksFromString(str: string): [string, string][] {
         ? jira2url + 'browse/' + k
         : '',
     ])
-    .filter(([, link]) => link);
+    .filter(([, link]) => link)
 }

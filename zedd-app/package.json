@@ -143,7 +143,7 @@
     "eslint-plugin-react": "^7.28.0",
     "eslint-plugin-react-hooks": "^4.3.0",
     "fast-csv": "^4.3.6",
-    "jira-connector": "^3.1.0",
+    "jira.js": "^2.0.6",
     "lodash": "^4.17.21",
     "mobx": "^6.3.12",
     "mobx-react-lite": "^3.2.3",
