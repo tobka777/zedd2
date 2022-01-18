@@ -61,6 +61,7 @@
           "@electron-forge/plugin-webpack",
           {
             "mainConfig": "./webpack.main.config.js",
+            "devContentSecurityPolicy": "connect-src 'self' * 'unsafe-inline' blob: data: gap:",
             "renderer": {
               "config": "./webpack.renderer.config.js",
               "entryPoints": [
@@ -106,7 +107,6 @@
     "@emotion/react": "^11.7.1",
     "@emotion/styled": "^11.6.0",
     "@fiahfy/ico-convert": "^0.0.12",
-    "@marshallofsound/webpack-asset-relocator-loader": "^0.5.0",
     "@mui/icons-material": "^5.2.5",
     "@mui/lab": "^5.0.0-alpha.64",
     "@mui/material": "^5.2.8",
@@ -124,8 +124,8 @@
     "@types/unzipper": "^0.10.5",
     "@types/webpack-env": "^1.16.3",
     "@types/webpack-node-externals": "^2.5.3",
-    "@typescript-eslint/eslint-plugin": "^5.9.1",
-    "@typescript-eslint/parser": "^5.9.1",
+    "@typescript-eslint/eslint-plugin": "^5.10.0",
+    "@typescript-eslint/parser": "^5.10.0",
     "@vercel/webpack-asset-relocator-loader": "^1.7.0",
     "async-which": "^1.0.3",
     "babel-loader": "^8.2.3",
@@ -138,7 +138,7 @@
     "date-fns": "^2.28.0",
     "electron": "^11.5.0",
     "electron-squirrel-startup": "^1.0.0",
-    "eslint": "^8.6.0",
+    "eslint": "^8.7.0",
     "eslint-config-prettier": "^8.3.0",
     "eslint-plugin-react": "^7.28.0",
     "eslint-plugin-react-hooks": "^4.3.0",
