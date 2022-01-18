@@ -15,6 +15,7 @@ import {
   isSameDay,
   endOfMonth,
   subMinutes as sub,
+  differenceInMinutes,
 } from 'date-fns'
 import { remote, MenuItemConstructorOptions } from 'electron'
 import { observer } from 'mobx-react-lite'
@@ -32,7 +33,6 @@ import { TaskEditor } from './TaskEditor'
 import { ArrowBack, ArrowForward, Delete as DeleteIcon } from '@mui/icons-material'
 import { suggestedTaskMenuItems } from '../menuUtil'
 import { DateRangePicker } from './DateRangePicker'
-import differenceInMinutes from 'date-fns/esm/fp/differenceInMinutes/index.js'
 
 const { Menu, shell } = remote
 
