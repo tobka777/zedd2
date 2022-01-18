@@ -67,6 +67,7 @@ const useStyles = makeStyles((theme) => ({
     width: '90px',
     paddingRight: '16px',
     flex: '0 0 auto',
+    display: 'inline-block',
     color: theme.palette.text.secondary,
   },
 }))
@@ -140,10 +141,10 @@ export const TaskSelect = observer(
           />
         )}
         renderOption={(_props, t: Task) => (
-          <>
+          <div key={t.name}>
             <span className={classes.renderOptionBT}>{getHoursForTask(t)}</span>
             <span>{t.name}</span>
-          </>
+          </div>
         )}
       ></Autocomplete>
     )
