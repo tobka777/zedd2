@@ -6,7 +6,8 @@ import {
   Remove as ToHoverIcon,
   Stop as StopIcon,
 } from '@mui/icons-material'
-import { BrowserWindow, ipcRenderer, remote } from 'electron'
+import { BrowserWindow, ipcRenderer } from 'electron'
+import { getCurrentWindow, app, autoUpdater } from '@electron/remote'
 import { observer, useLocalObservable } from 'mobx-react-lite'
 import * as React from 'react'
 import { useEffect, useState } from 'react'
@@ -14,8 +15,6 @@ import { useEffect, useState } from 'react'
 import { AppState } from '../AppState'
 import { formatHoursHHmm } from '../util'
 import { ZeddSvgIcon } from './ZeddSvgIcon'
-
-const { getCurrentWindow, app, autoUpdater } = remote
 
 interface TitleBarProps {
   state: AppState

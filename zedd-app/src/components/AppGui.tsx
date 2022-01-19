@@ -11,7 +11,7 @@ import {
 import { createTheme, ThemeProvider, StyledEngineProvider, Theme } from '@mui/material/styles'
 import makeStyles from '@mui/styles/makeStyles'
 import useMediaQuery from '@mui/material/useMediaQuery'
-import { remote } from 'electron'
+import { autoUpdater } from '@electron/remote'
 import { observer } from 'mobx-react-lite'
 import * as React from 'react'
 import { useMemo } from 'react'
@@ -27,8 +27,6 @@ import { ZeddSettings } from '../ZeddSettings'
 import { TitleBar } from './TitleBar'
 import { AppBody } from './AppBody'
 import changelog from '../../../CHANGELOG.md'
-
-const { autoUpdater } = remote
 
 export interface AppGuiProps {
   state: AppState

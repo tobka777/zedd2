@@ -8,7 +8,6 @@ import {
   format as formatDate,
   max as dateMax,
   min as dateMin,
-  getISOWeek,
   differenceInDays,
   eachMonthOfInterval,
   lastDayOfMonth,
@@ -29,7 +28,6 @@ import {
   eachYearOfInterval,
   lastDayOfYear,
 } from 'date-fns/esm'
-import { style } from '@angular/animations'
 
 const roundToNearest = (x: number, toNearest: number) => Math.round(x / toNearest) * toNearest
 const floorToNearest = (x: number, toNearest: number) => Math.floor(x / toNearest) * toNearest

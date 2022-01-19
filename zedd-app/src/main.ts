@@ -1,4 +1,6 @@
 import { app, ipcMain, session, BrowserWindow } from 'electron'
+import * as remoteMain from '@electron/remote/main'
+remoteMain.initialize()
 
 global.isDev = process.argv.includes('--dev')
 
@@ -48,10 +50,10 @@ const createWindow = () => {
     webPreferences: {
       nodeIntegration: true,
       webSecurity: false,
-      enableRemoteModule: true,
       contextIsolation: false,
     },
   })
+  remoteMain.enable(mainWindow.webContents)
 
   mainWindow.loadURL(MAIN_WINDOW_WEBPACK_ENTRY)
 

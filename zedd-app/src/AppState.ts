@@ -24,7 +24,7 @@ import {
   parse as dateParse,
   subSeconds,
 } from 'date-fns'
-import { remote } from 'electron'
+import * as remote from '@electron/remote'
 import { promises as fsp } from 'fs'
 import { sum } from 'lodash'
 import { computed, observable, transaction, intercept, action, makeObservable } from 'mobx'
