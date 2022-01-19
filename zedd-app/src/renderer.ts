@@ -1,5 +1,14 @@
 import { ipcRenderer, BrowserWindow, MenuItemConstructorOptions, Rectangle } from 'electron'
-import * as remote from '@electron/remote'
+import {
+  Tray,
+  Menu,
+  getCurrentWindow,
+  app,
+  shell,
+  screen as electronScreen,
+  powerMonitor,
+  autoUpdater,
+} from '@electron/remote'
 import { autorun, computed, configure as configureMobx } from 'mobx'
 import * as path from 'path'
 import * as React from 'react'
@@ -30,16 +39,6 @@ import { suggestedTaskMenuItems } from './menuUtil'
 
 configureMobx({ enforceActions: 'never' })
 
-const {
-  Tray,
-  Menu,
-  getCurrentWindow,
-  app,
-  shell,
-  screen: electronScreen,
-  powerMonitor,
-  autoUpdater,
-} = remote
 const currentWindow = getCurrentWindow()
 const saveDir = path.join(app.getPath('home'), 'zedd')
 

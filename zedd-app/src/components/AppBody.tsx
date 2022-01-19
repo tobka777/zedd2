@@ -18,7 +18,7 @@ import {
   differenceInMinutes,
 } from 'date-fns'
 import { MenuItemConstructorOptions } from 'electron'
-import * as remote from '@electron/remote'
+import { Menu, shell } from '@electron/remote'
 import { observer } from 'mobx-react-lite'
 import * as React from 'react'
 import { useCallback } from 'react'
@@ -34,8 +34,6 @@ import { TaskEditor } from './TaskEditor'
 import { ArrowBack, ArrowForward, Delete as DeleteIcon } from '@mui/icons-material'
 import { suggestedTaskMenuItems } from '../menuUtil'
 import { DateRangePicker } from './DateRangePicker'
-
-const { Menu, shell } = remote
 
 const useStyles = makeStyles((theme) => ({
   contentRoot: {
