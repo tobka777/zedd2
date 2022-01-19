@@ -246,6 +246,7 @@ const CalendarBase = <T extends Interval>({
               const newEnd = addMinutes(newStartRounded, blockSize)
               cd.currentDragPosition = { start: newStartRounded, end: newEnd }
               newPos = correctSlicePositionComplete(block, cd.currentDragPosition!)
+              console.log(newPos)
             }
 
             if (newPos) {

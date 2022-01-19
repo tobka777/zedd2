@@ -268,7 +268,7 @@ export const AppBody = observer(
               correctSlicePositionComplete={(currentSlice, newPosition) => {
                 const prevSlice = state.getPreviousSlice(newPosition)
                 const nextSlice = state.getNextSlice(newPosition)
-                const maxSliceSize = differenceInMinutes(newPosition.start, newPosition.end)
+                const maxSliceSize = differenceInMinutes(newPosition.end, newPosition.start)
                 const startNextDay = startOfNextDay(newPosition.start)
                 const startDay = startOfDay(newPosition.end)
 
@@ -281,7 +281,7 @@ export const AppBody = observer(
                   prevSlice !== currentSlice &&
                   nextSlice !== currentSlice
                 ) {
-                  distance = differenceInMinutes(prevSlice.end, nextSlice.start)
+                  distance = differenceInMinutes(nextSlice.start, prevSlice.end)
                 } else {
                   distance = maxSliceSize
                 }
@@ -289,10 +289,10 @@ export const AppBody = observer(
                 if (
                   distance < maxSliceSize ||
                   (prevSlice &&
-                    differenceInMinutes(prevSlice.end, startNextDay) < maxSliceSize &&
+                    differenceInMinutes(startNextDay, prevSlice.end) < maxSliceSize &&
                     prevSlice !== currentSlice) ||
                   (nextSlice &&
-                    differenceInMinutes(startDay, nextSlice.start) < maxSliceSize &&
+                    differenceInMinutes(nextSlice.start, startDay) < maxSliceSize &&
                     nextSlice !== currentSlice)
                 ) {
                   return undefined
