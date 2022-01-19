@@ -105,7 +105,7 @@ export const AppGui = observer(
             <Dialog open={true} onClose={() => (state.whatsNewDialogOpen = false)}>
               <DialogTitle>What's New</DialogTitle>
               <DialogContent>
-                <ReactMarkdown source={changelog} />
+                <ReactMarkdown children={changelog} />
               </DialogContent>
               <DialogActions>
                 <Button onClick={() => autoUpdater.checkForUpdates()}>Check for updates</Button>

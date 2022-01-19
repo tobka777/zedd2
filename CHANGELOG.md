@@ -1,3 +1,5 @@
+## [2.9.0] - 2022-01-19
+
 - Fixed: Errors connecting to the update server should be logged only to the dev console #8
 - Fixed: Dragging the taskbar does not work (拖动任务栏不工作 #6)
 - Fixed: App shouldn't auto-minimize while selenium task is running #9
