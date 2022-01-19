@@ -140,11 +140,11 @@ export const TaskSelect = observer(
             margin='dense'
           />
         )}
-        renderOption={(_props, t: Task) => (
-          <div key={t.name}>
+        renderOption={(props, t: Task) => (
+          <li {...props}>
             <span className={classes.renderOptionBT}>{getHoursForTask(t)}</span>
             <span>{t.name}</span>
-          </div>
+          </li>
         )}
       ></Autocomplete>
     )
