@@ -20,7 +20,7 @@ import {
 import { useTheme } from '@mui/material/styles'
 import * as React from 'react'
 import { useState, useEffect } from 'react'
-import { remote } from 'electron'
+import { dialog } from '@electron/remote'
 import { MoreHoriz as PickFileIcon } from '@mui/icons-material'
 import { observer } from 'mobx-react-lite'
 import { uniq } from 'lodash'
@@ -29,11 +29,6 @@ import { ClarityTaskSelect } from './ClarityTaskSelect'
 import { ClarityState } from '../ClarityState'
 import { ZeddSettings } from '../ZeddSettings'
 import { toggle, useDebouncedCallback } from '../util'
-
-const {
-  // shell: { openExternal },
-  dialog,
-} = remote
 
 // const _inExternal = (e: React.MouseEvent<HTMLAnchorElement>) => {
 //   openExternal(e.currentTarget.href)

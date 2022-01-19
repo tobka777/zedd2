@@ -246,7 +246,6 @@ const CalendarBase = <T extends Interval>({
               const newEnd = addMinutes(newStartRounded, blockSize)
               cd.currentDragPosition = { start: newStartRounded, end: newEnd }
               newPos = correctSlicePositionComplete(block, cd.currentDragPosition!)
-              console.log(newPos)
             }
 
             if (newPos) {
@@ -269,8 +268,6 @@ const CalendarBase = <T extends Interval>({
         if (local.currentPositionValid) {
           onSliceChange(cd.block!, cd.currentDragPosition!)
         }
-
-        //local.currentPositionValid = true
         cd.offsetDragDate = 0
       })
     })
@@ -288,7 +285,6 @@ const CalendarBase = <T extends Interval>({
 
   const dragStart: SliceDragStartHandler<T> = useCallback(
     (clickedSlice, e, pos) => {
-      console.log('dragStart', pos)
       const newDate = viewportXYToTime(e.clientX, e.clientY)
       let offsetDrag = differenceInMinutes(newDate as Date, clickedSlice.start)
       if ('end' === pos || 'start' === pos) {
@@ -306,7 +302,6 @@ const CalendarBase = <T extends Interval>({
           currentDragPosition: clickedSlice,
           offsetDragDate: 0,
         })
-        console.log(local.currentlyDragging)
         const prevBlock = slices.find((s) => dateEqual(s.end, clickedSlice.start))
         if (prevBlock) {
           local.currentlyDragging.push({
@@ -316,7 +311,6 @@ const CalendarBase = <T extends Interval>({
             offsetDragDate: 0,
           })
         }
-        console.log(local.currentlyDragging)
       }
       if ('complete' === pos) {
         local.currentlyDragging.push({

@@ -7,6 +7,7 @@
 - Feature: Date-Range-Picker instead of 2x Date-Picker #14
 - Fixed: Clarity-table: hightlighter hover row #17
 - Feature: Make timeslices draggable between days in calendar #15
+- Update dependecies
 
 ## [2.8.0] - 2020-12-13
 
