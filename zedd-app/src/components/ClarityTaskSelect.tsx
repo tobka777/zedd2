@@ -56,11 +56,11 @@ export const ClarityTaskSelect = observer(
         }
         value={resolvedVal}
         renderOption={(_props, option: ClarityTask, _state) => (
-          <>
+          <div key={option.name}>
             <div style={{ width: '30%' }}>{option.projectName}</div>
             <div style={{ width: '30%' }}>{option.name}</div>
             <div style={{ width: '30%' }}>{option.strId}</div>
-          </>
+          </div>
         )}
         getOptionLabel={(x: ClarityTask) => (x ? x.projectName + ' / ' + x.name : '')}
       />
