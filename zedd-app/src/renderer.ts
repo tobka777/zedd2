@@ -5,9 +5,6 @@ import * as React from 'react'
 import * as ReactDOM from 'react-dom'
 import 'win-ca' // use windows root certificates
 
-// https://github.com/mobxjs/mobx-react-lite/#observer-batching
-import 'mobx-react-lite/batchingForReactDom'
-
 import { format, AppState, TimeSlice, formatInterval } from './AppState'
 import { ClarityState } from './ClarityState'
 import { AppGui } from './components/AppGui'

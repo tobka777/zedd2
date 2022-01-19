@@ -1,4 +1,4 @@
-import { app, ipcMain, BrowserWindow } from 'electron'
+import { app, ipcMain, session, BrowserWindow } from 'electron'
 
 global.isDev = process.argv.includes('--dev')
 
@@ -86,7 +86,14 @@ ipcMain.on('quit', () => {
 // This method will be called when Electron has finished
 // initialization and is ready to create browser windows.
 // Some APIs can only be used after this event occurs.
-app.on('ready', createWindow)
+app.on('ready', () => {
+  session.defaultSession.webRequest.onBeforeSendHeaders((details, callback) => {
+    details.requestHeaders['User-Agent'] = 'zedd-app'
+    callback({ cancel: false, requestHeaders: details.requestHeaders })
+  })
+
+  createWindow()
+})
 
 // Quit when all windows are closed.
 app.on('window-all-closed', () => {
