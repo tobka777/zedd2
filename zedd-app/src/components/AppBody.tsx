@@ -17,7 +17,8 @@ import {
   subMinutes as sub,
   differenceInMinutes,
 } from 'date-fns'
-import { remote, MenuItemConstructorOptions } from 'electron'
+import { MenuItemConstructorOptions } from 'electron'
+import * as remote from '@electron/remote'
 import { observer } from 'mobx-react-lite'
 import * as React from 'react'
 import { useCallback } from 'react'

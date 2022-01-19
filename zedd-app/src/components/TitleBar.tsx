@@ -6,7 +6,8 @@ import {
   Remove as ToHoverIcon,
   Stop as StopIcon,
 } from '@mui/icons-material'
-import { BrowserWindow, ipcRenderer, remote } from 'electron'
+import { BrowserWindow, ipcRenderer } from 'electron'
+import * as remote from '@electron/remote'
 import { observer, useLocalObservable } from 'mobx-react-lite'
 import * as React from 'react'
 import { useEffect, useState } from 'react'

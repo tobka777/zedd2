@@ -1,4 +1,5 @@
-import { ipcRenderer, remote, BrowserWindow, MenuItemConstructorOptions, Rectangle } from 'electron'
+import { ipcRenderer, BrowserWindow, MenuItemConstructorOptions, Rectangle } from 'electron'
+import * as remote from '@electron/remote'
 import { autorun, computed, configure as configureMobx } from 'mobx'
 import * as path from 'path'
 import * as React from 'react'

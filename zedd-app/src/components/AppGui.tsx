@@ -11,7 +11,7 @@ import {
 import { createTheme, ThemeProvider, StyledEngineProvider, Theme } from '@mui/material/styles'
 import makeStyles from '@mui/styles/makeStyles'
 import useMediaQuery from '@mui/material/useMediaQuery'
-import { remote } from 'electron'
+import * as remote from '@electron/remote'
 import { observer } from 'mobx-react-lite'
 import * as React from 'react'
 import { useMemo } from 'react'

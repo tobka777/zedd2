@@ -20,7 +20,7 @@ import {
 import { useTheme } from '@mui/material/styles'
 import * as React from 'react'
 import { useState, useEffect } from 'react'
-import { remote } from 'electron'
+import * as remote from '@electron/remote'
 import { MoreHoriz as PickFileIcon } from '@mui/icons-material'
 import { observer } from 'mobx-react-lite'
 import { uniq } from 'lodash'
