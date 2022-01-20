@@ -5,6 +5,7 @@ import {
   addSeconds,
   compareDesc,
   endOfMonth,
+  endOfYear,
   format as formatDate,
   isBefore,
   isEqual,
@@ -15,6 +16,7 @@ import {
   startOfISOWeek,
   startOfMinute,
   startOfMonth,
+  startOfYear,
 } from 'date-fns'
 import { promises as fsp, PathLike } from 'fs'
 import * as fs from 'fs'
@@ -143,6 +145,11 @@ export const intRange = (startIncl: number, endExcl: number): number[] =>
 export const monthInterval = (d: Date | number): Interval => ({
   start: startOfMonth(d),
   end: endOfMonth(d),
+})
+
+export const yearInterval = (d: Date | number): Interval => ({
+  start: startOfYear(d),
+  end: endOfYear(d),
 })
 
 /**
