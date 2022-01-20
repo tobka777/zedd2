@@ -18,6 +18,7 @@ import {
   differenceInMinutes,
   startOfYear,
   addYears,
+  endOfYear,
 } from 'date-fns'
 import { MenuItemConstructorOptions } from 'electron'
 import { Menu, shell } from '@electron/remote'
@@ -36,7 +37,6 @@ import { TaskEditor } from './TaskEditor'
 import { ArrowBack, ArrowForward, Delete as DeleteIcon } from '@mui/icons-material'
 import { suggestedTaskMenuItems } from '../menuUtil'
 import { DateRangePicker } from './DateRangePicker'
-import { endOfYear } from 'date-fns/esm'
 
 const useStyles = makeStyles((theme) => ({
   contentRoot: {
