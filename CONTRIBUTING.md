@@ -1,6 +1,6 @@
 ## Prerequisistes
 
-1. Node 12+
+1. Node 16+
 
 ```sh
 git clone https://github.com/NaridaL/zedd.git
@@ -20,7 +20,7 @@ npm run start
 
 ## For publishing - Prerequisistes
 
-1. Node 12+
+1. Node 16+
 2. Create a GitubToken at https://github.com/settings/tokens (select all repo permissions)
 3. Customize changelog version
 
