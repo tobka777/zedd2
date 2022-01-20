@@ -29,7 +29,14 @@ import { useCallback } from 'react'
 import { ErrorBoundary } from './ErrorBoundary'
 import { AppState, Task, TimeSlice } from '../AppState'
 import { ClarityState } from '../ClarityState'
-import { businessWeekInterval, isoWeekInterval, monthInterval, omap, startOfNextDay } from '../util'
+import {
+  businessWeekInterval,
+  isoWeekInterval,
+  monthInterval,
+  omap,
+  startOfNextDay,
+  yearInterval,
+} from '../util'
 import { BlockDisplay } from './BlockDisplay'
 import { Calendar } from './Calendar'
 import { ClarityView } from './ClarityView'
@@ -186,7 +193,7 @@ export const AppBody = observer(
                 size='large'
                 onClick={(_) => (state.showing = businessWeekInterval(new Date()))}
               >
-                This Week
+                Week
               </Button>
               <Button
                 size='large'
@@ -207,6 +214,13 @@ export const AppBody = observer(
               onClick={(_) => (state.showing = monthInterval(addMonths(new Date(), 1)))}
             >
               Next Month
+            </Button>
+            <Button
+              size='large'
+              variant='outlined'
+              onClick={(_) => (state.showing = yearInterval(new Date()))}
+            >
+              Year
             </Button>
             <ButtonGroup variant='outlined'>
               <Tooltip title='Fill currently shown empty days with ERSATZ task.' arrow>
