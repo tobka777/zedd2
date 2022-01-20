@@ -1,4 +1,4 @@
-##Prerequisistes
+## Prerequisistes
 
 1. Node 12+
 
@@ -18,8 +18,9 @@ npm run genicons
 npm run start
 ```
 
-#For publishing:
-##Prerequisistes
+# For publishing:
+
+## Prerequisistes
 
 1. Node 12+
 2. Create a GitubToken at https://github.com/settings/tokens
