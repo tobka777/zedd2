@@ -16,6 +16,8 @@ import {
   endOfMonth,
   subMinutes as sub,
   differenceInMinutes,
+  startOfYear,
+  addYears,
 } from 'date-fns'
 import { MenuItemConstructorOptions } from 'electron'
 import { Menu, shell } from '@electron/remote'
@@ -34,6 +36,7 @@ import { TaskEditor } from './TaskEditor'
 import { ArrowBack, ArrowForward, Delete as DeleteIcon } from '@mui/icons-material'
 import { suggestedTaskMenuItems } from '../menuUtil'
 import { DateRangePicker } from './DateRangePicker'
+import { endOfYear } from 'date-fns/esm'
 
 const useStyles = makeStyles((theme) => ({
   contentRoot: {
@@ -136,7 +139,9 @@ export const AppBody = observer(
           // showing mo-fri
           state.showing = omap(state.showing, (d) => addWeeks(d, dir))
         } else if (isSameDay(start, startOfMonth(start)) && isSameDay(end, endOfMonth(start))) {
-          state.showing = omap(state.showing, (d) => addMonths(d, dir))
+          state.showing = { start: addMonths(start, dir), end: endOfMonth(addMonths(start, dir)) }
+        } else if (isSameDay(start, startOfYear(start)) && isSameDay(end, endOfYear(start))) {
+          state.showing = { start: addYears(start, dir), end: endOfYear(addYears(start, dir)) }
         } else {
           state.showing = omap(state.showing, (d) => addDays(d, dir * (diff + 1)))
         }

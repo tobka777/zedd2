@@ -1,3 +1,6 @@
+- Fixed: DateRangePicker starts at monday
+- Fixed: Arrow-Buttons add or sub full months or years, not only the amount of days that were selected
+
 ## [2.9.0] - 2022-01-19
 
 - Fixed: Errors connecting to the update server should be logged only to the dev console #8
