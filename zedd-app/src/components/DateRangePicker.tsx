@@ -65,6 +65,7 @@ export const DateRangePicker = ({
               end: item.selection.endDate!,
             })
           }
+          weekStartsOn={1}
           moveRangeOnFirstSelection={true}
           ranges={[
             {
