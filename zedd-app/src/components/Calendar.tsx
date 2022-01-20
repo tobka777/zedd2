@@ -388,7 +388,7 @@ const CalendarBase = <T extends Interval>({
             textAlign: 'center',
           }}
         >
-          {format(d, 'E, do MMMM')}
+          {format(d, 'E, do MMM')}
         </div>
       ))}
 
