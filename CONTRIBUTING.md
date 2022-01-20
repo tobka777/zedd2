@@ -30,7 +30,8 @@ export GITHUB_TOKEN
 
 cd zedd-app
 
-npm version patch|minor
+# alternatively minor instead of patch
+npm version patch
 
 git push --tags
 
