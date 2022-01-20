@@ -188,7 +188,7 @@ export const AppBody = observer(
                 size='large'
                 onClick={(_) => (state.showing = businessWeekInterval(new Date()))}
               >
-                This Week
+                Week
               </Button>
               <Button
                 size='large'
