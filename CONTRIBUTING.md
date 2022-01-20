@@ -21,7 +21,7 @@ npm run start
 ## For publishing - Prerequisistes
 
 1. Node 12+
-2. Create a GitubToken at https://github.com/settings/tokens
+2. Create a GitubToken at https://github.com/settings/tokens (select all repo permissions)
 3. Customize changelog version
 
 ```sh
