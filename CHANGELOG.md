@@ -1,3 +1,5 @@
+- Feature: Add year button in the GUI that shows the current year
+
 ## [2.9.0] - 2022-01-19
 
 - Fixed: Errors connecting to the update server should be logged only to the dev console #8
