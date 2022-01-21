@@ -1,5 +1,10 @@
 import { Button, Grid, TextField, Tooltip, MenuItem, Menu } from '@mui/material'
-import { Edit as EditIcon, GetApp as ImportIcon, SentimentSatisfiedAlt } from '@mui/icons-material'
+import {
+  Edit as EditIcon,
+  GetApp as ImportIcon,
+  SentimentSatisfiedAlt,
+  ContentCopy as CopyIcon,
+} from '@mui/icons-material'
 import { format as formatDate, formatDistance } from 'date-fns'
 import { observer } from 'mobx-react-lite'
 import * as React from 'react'
@@ -172,6 +177,16 @@ export const TaskEditor = observer(
             onChange={(e) => (value.clarityTaskComment = e.target.value)}
             fullWidth={true}
           />
+        </Grid>
+        <Grid item xs={2} lg={1}>
+          <Button
+            disabled={!value || value === state.getUndefinedTask()}
+            onClick={() => (value.clarityTaskComment = value.name)}
+            style={{ width: '100%' }}
+            endIcon={<CopyIcon />}
+          >
+            Copy Task
+          </Button>
         </Grid>
       </Grid>
     )
