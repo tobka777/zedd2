@@ -175,7 +175,7 @@ export const TaskEditor = observer(
             label='Clarity-Account Comment for This Task'
             disabled={value === state.getUndefinedTask()}
             onChange={(e) => (value.clarityTaskComment = e.target.value)}
-            fullWidth={true}
+            fullWidth
           />
         </Grid>
         <Grid item xs={2} lg={1}>
@@ -183,7 +183,7 @@ export const TaskEditor = observer(
             <Button
               disabled={!value || value === state.getUndefinedTask()}
               onClick={() => (value.clarityTaskComment = value.name)}
-              style={{ width: '100%' }}
+              fullWidth
               endIcon={<CopyIcon />}
             >
               Copy
