@@ -265,7 +265,7 @@ export const ClarityView = observer((props: ClarityViewProps) => {
   const showingTotal = sum(allWorkEntries.map((we) => we.hours))
   const showingDiffHours = showingTotal - calculateTargetHours(showing)
 
-  const getWorkedHourseForMonth = (month: Interval) => {
+  const getWorkedHoursForMonth = (month: Interval) => {
     return sum(
       eachDayOfInterval(month).map((d) =>
         sum(clarityExport[isoDayStr(d)]?.map((we) => we.hours) ?? []),
@@ -355,13 +355,13 @@ export const ClarityView = observer((props: ClarityViewProps) => {
                 title={
                   <Typography sx={{ p: 1 }}>
                     - {calculateTargetHours(w)} (target) ={' '}
-                    {getDifference(getWorkedHourseForMonth(w), calculateTargetHours(w)) < 0 ? (
+                    {getDifference(getWorkedHoursForMonth(w), calculateTargetHours(w)) < 0 ? (
                       <span style={{ color: 'red' }}>
-                        {getDifference(getWorkedHourseForMonth(w), calculateTargetHours(w))}
+                        {getDifference(getWorkedHoursForMonth(w), calculateTargetHours(w))}
                       </span>
                     ) : (
                       <span style={{ color: 'green' }}>
-                        +{getDifference(getWorkedHourseForMonth(w), calculateTargetHours(w))}
+                        +{getDifference(getWorkedHoursForMonth(w), calculateTargetHours(w))}
                       </span>
                     )}
                   </Typography>
