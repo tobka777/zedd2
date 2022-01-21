@@ -111,7 +111,6 @@ const getMenuItems = (state: AppState) => [
   { label: 'Github', click: () => shell.openExternal('https://github.com/NaridaL/zedd2') },
   { label: 'Open Dev', click: () => getCurrentWindow().webContents.openDevTools() },
   { label: 'Reload Config', click: () => getCurrentWindow().reload() },
-  { label: 'MAGIC', click: () => state.addMessage('Test', 'info', 500) },
   { label: 'Quit', click: () => quit() },
 ]
 
