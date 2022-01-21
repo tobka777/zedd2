@@ -1,4 +1,4 @@
-import { useTheme } from '@mui/material/styles'
+import { useTheme, styled } from '@mui/material/styles'
 import makeStyles from '@mui/styles/makeStyles'
 import {
   addDays,
@@ -11,11 +11,22 @@ import {
   differenceInDays,
   eachMonthOfInterval,
   lastDayOfMonth,
+  format,
 } from 'date-fns'
 import { observer } from 'mobx-react-lite'
 import * as React from 'react'
 import { ClarityExportFormat } from 'zedd-clarity'
-import { Button, Checkbox, FormControlLabel, Card, CardContent, CardActions } from '@mui/material'
+import {
+  Button,
+  Checkbox,
+  FormControlLabel,
+  Card,
+  CardContent,
+  CardActions,
+  Tooltip,
+  Typography,
+} from '@mui/material'
+import { TooltipProps, tooltipClasses } from '@mui/material/Tooltip'
 import { Send as SendIcon } from '@mui/icons-material'
 import { groupBy, uniqBy, sortBy, remove } from 'lodash'
 
@@ -70,7 +81,7 @@ export function smartRound<T>(arr: T[], f: (t: T) => number, toNearest: number):
 
 export interface ClarityViewProps {
   showing: Interval
-  showingTargetHours: number
+  calculateTargetHours: (interval: Interval) => number
   slices: TimeSlice[]
   clarityState: ClarityState
   submitTimesheets: boolean
@@ -204,7 +215,7 @@ export const ClarityView = observer((props: ClarityViewProps) => {
     onChangeSubmitTimesheets,
     errorHandler,
     clarityState,
-    showingTargetHours,
+    calculateTargetHours,
   } = props
   const noOfDays = differenceInDays(showing.end, showing.start)
   const groupBy = noOfDays > 366 ? 'year' : noOfDays > 64 ? 'month' : noOfDays > 21 ? 'week' : 'day'
@@ -252,7 +263,29 @@ export const ClarityView = observer((props: ClarityViewProps) => {
   const classes = useStyles(props)
 
   const showingTotal = sum(allWorkEntries.map((we) => we.hours))
-  const showingDiffHours = showingTotal - showingTargetHours
+  const showingDiffHours = showingTotal - calculateTargetHours(showing)
+
+  const getWorkedHourseForMonth = (month: Interval) => {
+    return sum(
+      eachDayOfInterval(month).map((d) =>
+        sum(clarityExport[isoDayStr(d)]?.map((we) => we.hours) ?? []),
+      ),
+    )
+  }
+
+  const getDifference = (valA: number, valB: number) => {
+    return valA - valB
+  }
+
+  const CustomTooltip = styled(({ className, ...props }: TooltipProps) => (
+    <Tooltip {...props} classes={{ popper: className }} />
+  ))(({ theme }) => ({
+    [`& .${tooltipClasses.tooltip}`]: {
+      backgroundColor: 'white',
+      color: theme.palette.grey[900],
+      border: '1px solid ' + theme.palette.grey[400],
+    },
+  }))
 
   return (
     <Card>
@@ -317,25 +350,52 @@ export const ClarityView = observer((props: ClarityViewProps) => {
           <tr>
             <td></td>
             {intervals.map((w) => (
-              <td key={'total-' + isoDayStr(w.start)} className='numberCell'>
-                {formatHours(
-                  sum(
-                    eachDayOfInterval(w).map((d) =>
-                      sum(clarityExport[isoDayStr(d)]?.map((we) => we.hours) ?? []),
+              <CustomTooltip
+                key={format(w.start, 'yyyy-MM-dd')}
+                title={
+                  <Typography sx={{ p: 1 }}>
+                    - {calculateTargetHours(w)} (target) ={' '}
+                    {getDifference(getWorkedHourseForMonth(w), calculateTargetHours(w)) < 0 ? (
+                      <span style={{ color: 'red' }}>
+                        {getDifference(getWorkedHourseForMonth(w), calculateTargetHours(w))}
+                      </span>
+                    ) : (
+                      <span style={{ color: 'green' }}>
+                        +{getDifference(getWorkedHourseForMonth(w), calculateTargetHours(w))}
+                      </span>
+                    )}
+                  </Typography>
+                }
+              >
+                <td key={'total-' + isoDayStr(w.start)} className='numberCell'>
+                  {formatHours(
+                    sum(
+                      eachDayOfInterval(w).map((d) =>
+                        sum(clarityExport[isoDayStr(d)]?.map((we) => we.hours) ?? []),
+                      ),
                     ),
-                  ),
-                )}
-              </td>
+                  )}
+                </td>
+              </CustomTooltip>
             ))}
-            <td
-              className='numberCell'
-              title={` - ${formatHours(showingTargetHours)} (target) = ${
-                showingDiffHours < 0 ? '' : '+'
-              }${formatHours(showingDiffHours)}`}
-              style={{ textDecoration: 'underline dotted' }}
+
+            <CustomTooltip
+              key={format(showing.end, 'yyyy-MM-dd')}
+              title={
+                <Typography sx={{ p: 1 }}>
+                  - {formatHours(calculateTargetHours(showing))} (target) ={' '}
+                  {showingDiffHours < 0 ? (
+                    <span style={{ color: 'red' }}>{formatHours(showingDiffHours)}</span>
+                  ) : (
+                    <span style={{ color: 'green' }}>+{formatHours(showingDiffHours)}</span>
+                  )}
+                </Typography>
+              }
             >
-              {formatHours(showingTotal)}
-            </td>
+              <td className='numberCell' style={{ textDecoration: 'underline dotted' }}>
+                {formatHours(showingTotal)}
+              </td>
+            </CustomTooltip>
           </tr>
         </tfoot>
       </CardContent>
