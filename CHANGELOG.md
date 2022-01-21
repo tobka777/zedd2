@@ -3,6 +3,7 @@
 - Fixed: Formatting in the header of the calendar
 - Feature: Add year button in the GUI that shows the current year
 - Feature: Add copy-task button, to copy the taskname in the taskcomment area
+- Delete: MAGIC from titlebar menu
 
 ## [2.9.0] - 2022-01-19
 
