@@ -179,14 +179,16 @@ export const TaskEditor = observer(
           />
         </Grid>
         <Grid item xs={2} lg={1}>
-          <Button
-            disabled={!value || value === state.getUndefinedTask()}
-            onClick={() => (value.clarityTaskComment = value.name)}
-            style={{ width: '100%' }}
-            endIcon={<CopyIcon />}
-          >
-            Copy Task
-          </Button>
+          <Tooltip title='Copy task name to task comment'>
+            <Button
+              disabled={!value || value === state.getUndefinedTask()}
+              onClick={() => (value.clarityTaskComment = value.name)}
+              style={{ width: '100%' }}
+              endIcon={<CopyIcon />}
+            >
+              Copy
+            </Button>
+          </Tooltip>
         </Grid>
       </Grid>
     )
