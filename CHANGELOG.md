@@ -2,6 +2,7 @@
 - Fixed: Arrow-Buttons add or sub full months or years, not only the amount of days that were selected
 - Fixed: Formatting in the header of the calendar
 - Feature: Add year button in the GUI that shows the current year
+- Feature: Seperate the next month button into three buttons. The new buttons are last, month and next
 
 ## [2.9.0] - 2022-01-19
 
