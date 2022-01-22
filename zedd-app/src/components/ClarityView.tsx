@@ -227,7 +227,7 @@ const DiffHoursTooltip = ({
         },
       }}
       title={
-        <Typography sx={{ p: 1 }}>
+        <Typography>
           - {targetHours} (target) ={' '}
           <Box component='span' sx={{ color: diff < 0 ? 'error.dark' : 'success.light' }}>
             {diff >= 0 ? '+' : ''}
