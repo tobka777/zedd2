@@ -208,13 +208,24 @@ export const AppBody = observer(
                 7
               </Button>
             </ButtonGroup>
-            <Button
-              size='large'
-              variant='outlined'
-              onClick={(_) => (state.showing = monthInterval(addMonths(new Date(), 1)))}
-            >
-              Next Month
-            </Button>
+            <ButtonGroup variant='outlined'>
+              <Button
+                size='large'
+                onClick={(_) => (state.showing = monthInterval(addMonths(new Date(), -1)))}
+              >
+                Last
+              </Button>
+              <Button size='large' onClick={(_) => (state.showing = monthInterval(new Date()))}>
+                Month
+              </Button>
+              <Button
+                size='large'
+                onClick={(_) => (state.showing = monthInterval(addMonths(new Date(), 1)))}
+              >
+                Next
+              </Button>
+            </ButtonGroup>
+
             <Button
               size='large'
               variant='outlined'
