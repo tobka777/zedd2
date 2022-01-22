@@ -1,4 +1,4 @@
-import { useTheme, ThemeProvider, createTheme } from '@mui/material/styles'
+import { useTheme } from '@mui/material/styles'
 import makeStyles from '@mui/styles/makeStyles'
 import {
   addDays,
@@ -11,7 +11,6 @@ import {
   differenceInDays,
   eachMonthOfInterval,
   lastDayOfMonth,
-  format,
 } from 'date-fns'
 import { observer } from 'mobx-react-lite'
 import * as React from 'react'
@@ -39,7 +38,6 @@ import {
   eachYearOfInterval,
   lastDayOfYear,
 } from 'date-fns/esm'
-import {} from '@mui/material/colors'
 import { ReactElement } from 'react-markdown/lib/react-markdown'
 
 const roundToNearest = (x: number, toNearest: number) => Math.round(x / toNearest) * toNearest
@@ -221,36 +219,25 @@ const DiffHoursTooltip = ({
 }) => {
   const diff = workedHours - targetHours
 
-  let theme = createTheme()
-  theme = createTheme(theme, {
-    components: {
-      MuiTooltip: {
-        styleOverrides: {
-          tooltip: {
-            backgroundColor: theme.palette.common.black,
-            color: theme.palette.primary,
-          },
-        },
-      },
-    },
-  })
-
   return (
-    <ThemeProvider theme={theme}>
-      <Tooltip
-        title={
-          <Typography sx={{ p: 1 }}>
-            - {targetHours} (target) ={' '}
-            <Box component='span' sx={{ color: diff < 0 ? 'error.dark' : 'success.light' }}>
-              {diff >= 0 ? '+' : ''}
-              {diff}
-            </Box>
-          </Typography>
-        }
-      >
-        {children}
-      </Tooltip>
-    </ThemeProvider>
+    <Tooltip
+      componentsProps={{
+        tooltip: {
+          sx: { backgroundColor: 'common.black', color: 'primary' },
+        },
+      }}
+      title={
+        <Typography sx={{ p: 1 }}>
+          - {targetHours} (target) ={' '}
+          <Box component='span' sx={{ color: diff < 0 ? 'error.dark' : 'success.light' }}>
+            {diff >= 0 ? '+' : ''}
+            {diff}
+          </Box>
+        </Typography>
+      }
+    >
+      {children}
+    </Tooltip>
   )
 }
 
@@ -387,13 +374,7 @@ export const ClarityView = observer((props: ClarityViewProps) => {
                 key={'total-' + isoDayStr(w.start)}
               >
                 <td className='numberCell' style={{ textDecoration: 'underline dotted' }}>
-                  {formatHours(
-                    sum(
-                      eachDayOfInterval(w).map((d) =>
-                        sum(clarityExport[isoDayStr(d)]?.map((we) => we.hours) ?? []),
-                      ),
-                    ),
-                  )}
+                  {formatHours(getWorkedHours(w))}
                 </td>
               </DiffHoursTooltip>
             ))}
