@@ -243,6 +243,8 @@ export class AppState {
   )
   public slices: IObservableArray<TimeSlice> = observable([])
 
+  public lastInteractedTasks: IObservableArray<Task> = observable([])
+
   private slicesByTask = new ObservableGroupMap(
     this.slices,
     (slice) => slice.task, //
@@ -756,6 +758,10 @@ export class AppState {
       )
     }
     return undefined
+  }
+
+  public notifyTaskInteraction(task: Task): void {
+    this.lastInteractedTasks.push(task)
   }
 
   public dialogOpen(): boolean {

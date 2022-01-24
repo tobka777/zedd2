@@ -1,33 +1,41 @@
+import { Send as SendIcon } from '@mui/icons-material'
+import {
+  Box,
+  Button,
+  Card,
+  CardActions,
+  CardContent,
+  Checkbox,
+  FormControlLabel,
+  Tooltip,
+  Typography,
+} from '@mui/material'
 import { useTheme } from '@mui/material/styles'
 import makeStyles from '@mui/styles/makeStyles'
 import {
   addDays,
   areIntervalsOverlapping,
+  differenceInDays,
   differenceInMinutes,
   eachDayOfInterval,
+  eachMonthOfInterval,
+  eachWeekOfInterval,
+  eachYearOfInterval,
   format as formatDate,
+  lastDayOfISOWeek,
+  lastDayOfMonth,
+  lastDayOfYear,
   max as dateMax,
   min as dateMin,
-  differenceInDays,
-  eachMonthOfInterval,
-  lastDayOfMonth,
 } from 'date-fns'
+import { groupBy, remove, sortBy, uniqBy } from 'lodash'
 import { observer } from 'mobx-react-lite'
 import * as React from 'react'
 import { ClarityExportFormat } from 'zedd-clarity'
-import { Button, Checkbox, FormControlLabel, Card, CardContent, CardActions } from '@mui/material'
-import { Send as SendIcon } from '@mui/icons-material'
-import { groupBy, uniqBy, sortBy, remove } from 'lodash'
 
-import { validDate, TimeSlice } from '../AppState'
+import { TimeSlice, validDate } from '../AppState'
 import { ClarityState } from '../ClarityState'
-import { splitIntervalIntoCalendarDays, sum, omap, isoDayStr } from '../util'
-import {
-  eachWeekOfInterval,
-  lastDayOfISOWeek,
-  eachYearOfInterval,
-  lastDayOfYear,
-} from 'date-fns/esm'
+import { isoDayStr, omap, splitIntervalIntoCalendarDays, sum } from '../util'
 
 const roundToNearest = (x: number, toNearest: number) => Math.round(x / toNearest) * toNearest
 const floorToNearest = (x: number, toNearest: number) => Math.floor(x / toNearest) * toNearest
@@ -70,7 +78,7 @@ export function smartRound<T>(arr: T[], f: (t: T) => number, toNearest: number):
 
 export interface ClarityViewProps {
   showing: Interval
-  showingTargetHours: number
+  calculateTargetHours: (interval: Interval) => number
   slices: TimeSlice[]
   clarityState: ClarityState
   submitTimesheets: boolean
@@ -197,6 +205,39 @@ function transform({ slices, showing, clarityState }: ClarityViewProps): Clarity
   return dayMap
 }
 
+const DiffHoursTooltip = ({
+  targetHours,
+  workedHours,
+  children,
+}: {
+  targetHours: number
+  workedHours: number
+  children: React.ReactElement
+}) => {
+  const diff = workedHours - targetHours
+
+  return (
+    <Tooltip
+      componentsProps={{
+        tooltip: {
+          sx: { backgroundColor: 'common.black', color: 'primary' },
+        },
+      }}
+      title={
+        <Typography>
+          - {targetHours} (target) ={' '}
+          <Box component='span' sx={{ color: diff < 0 ? 'error.dark' : 'success.light' }}>
+            {diff >= 0 ? '+' : ''}
+            {diff}
+          </Box>
+        </Typography>
+      }
+    >
+      {children}
+    </Tooltip>
+  )
+}
+
 export const ClarityView = observer((props: ClarityViewProps) => {
   const {
     showing,
@@ -204,7 +245,7 @@ export const ClarityView = observer((props: ClarityViewProps) => {
     onChangeSubmitTimesheets,
     errorHandler,
     clarityState,
-    showingTargetHours,
+    calculateTargetHours,
   } = props
   const noOfDays = differenceInDays(showing.end, showing.start)
   const groupBy = noOfDays > 366 ? 'year' : noOfDays > 64 ? 'month' : noOfDays > 21 ? 'week' : 'day'
@@ -252,7 +293,14 @@ export const ClarityView = observer((props: ClarityViewProps) => {
   const classes = useStyles(props)
 
   const showingTotal = sum(allWorkEntries.map((we) => we.hours))
-  const showingDiffHours = showingTotal - showingTargetHours
+
+  const getWorkedHours = (interval: Interval) => {
+    return sum(
+      eachDayOfInterval(interval).map((d) =>
+        sum(clarityExport[isoDayStr(d)]?.map((we) => we.hours) ?? []),
+      ),
+    )
+  }
 
   return (
     <Card>
@@ -317,25 +365,24 @@ export const ClarityView = observer((props: ClarityViewProps) => {
           <tr>
             <td></td>
             {intervals.map((w) => (
-              <td key={'total-' + isoDayStr(w.start)} className='numberCell'>
-                {formatHours(
-                  sum(
-                    eachDayOfInterval(w).map((d) =>
-                      sum(clarityExport[isoDayStr(d)]?.map((we) => we.hours) ?? []),
-                    ),
-                  ),
-                )}
-              </td>
+              <DiffHoursTooltip
+                targetHours={calculateTargetHours(w)}
+                workedHours={getWorkedHours(w)}
+                key={'total-' + isoDayStr(w.start)}
+              >
+                <td className='numberCell' style={{ textDecoration: 'underline dotted' }}>
+                  {formatHours(getWorkedHours(w))}
+                </td>
+              </DiffHoursTooltip>
             ))}
-            <td
-              className='numberCell'
-              title={` - ${formatHours(showingTargetHours)} (target) = ${
-                showingDiffHours < 0 ? '' : '+'
-              }${formatHours(showingDiffHours)}`}
-              style={{ textDecoration: 'underline dotted' }}
+            <DiffHoursTooltip
+              targetHours={calculateTargetHours(showing)}
+              workedHours={showingTotal}
             >
-              {formatHours(showingTotal)}
-            </td>
+              <td className='numberCell' style={{ textDecoration: 'underline dotted' }}>
+                {formatHours(showingTotal)}
+              </td>
+            </DiffHoursTooltip>
           </tr>
         </tfoot>
       </CardContent>
