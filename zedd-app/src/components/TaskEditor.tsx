@@ -83,7 +83,10 @@ export const TaskEditor = observer(
             }
             inputRef={taskSelectRef}
             value={value}
-            onChange={(_, t) => onTaskSelectChange(state.getTaskForName(t))}
+            onChange={(_, t) => {
+              onTaskSelectChange(state.getTaskForName(t))
+              state.notifyTaskInteraction(state.getTaskForName(t))
+            }}
             fullWidth
             style={{ flex: '1 1 auto', width: '100%' }}
             getTasksForSearchString={getTasksForSearchString}

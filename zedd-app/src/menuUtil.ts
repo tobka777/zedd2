@@ -9,7 +9,7 @@ export const suggestedTaskMenuItems = (
   checked: Task,
   onClick: (t: Task) => void,
 ): MenuItemConstructorOptions[] => {
-  return orderBy(state.getSuggestedTasks(), (t) => t.name).map(
+  return orderBy(state.getTasksForMenu(), (t) => t.name).map(
     (t): MenuItemConstructorOptions => ({
       label: t.name,
       sublabel:
