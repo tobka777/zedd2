@@ -1,44 +1,41 @@
+import { Send as SendIcon } from '@mui/icons-material'
+import {
+  Box,
+  Button,
+  Card,
+  CardActions,
+  CardContent,
+  Checkbox,
+  FormControlLabel,
+  Tooltip,
+  Typography,
+} from '@mui/material'
 import { useTheme } from '@mui/material/styles'
 import makeStyles from '@mui/styles/makeStyles'
 import {
   addDays,
   areIntervalsOverlapping,
+  differenceInDays,
   differenceInMinutes,
   eachDayOfInterval,
+  eachMonthOfInterval,
+  eachWeekOfInterval,
+  eachYearOfInterval,
   format as formatDate,
+  lastDayOfISOWeek,
+  lastDayOfMonth,
+  lastDayOfYear,
   max as dateMax,
   min as dateMin,
-  differenceInDays,
-  eachMonthOfInterval,
-  lastDayOfMonth,
 } from 'date-fns'
+import { groupBy, remove, sortBy, uniqBy } from 'lodash'
 import { observer } from 'mobx-react-lite'
 import * as React from 'react'
 import { ClarityExportFormat } from 'zedd-clarity'
-import {
-  Button,
-  Checkbox,
-  FormControlLabel,
-  Card,
-  CardContent,
-  CardActions,
-  Tooltip,
-  Typography,
-  Box,
-} from '@mui/material'
-import { Send as SendIcon } from '@mui/icons-material'
-import { groupBy, uniqBy, sortBy, remove } from 'lodash'
 
-import { validDate, TimeSlice } from '../AppState'
+import { TimeSlice, validDate } from '../AppState'
 import { ClarityState } from '../ClarityState'
-import { splitIntervalIntoCalendarDays, sum, omap, isoDayStr } from '../util'
-import {
-  eachWeekOfInterval,
-  lastDayOfISOWeek,
-  eachYearOfInterval,
-  lastDayOfYear,
-} from 'date-fns/esm'
-import { ReactElement } from 'react-markdown/lib/react-markdown'
+import { isoDayStr, omap, splitIntervalIntoCalendarDays, sum } from '../util'
 
 const roundToNearest = (x: number, toNearest: number) => Math.round(x / toNearest) * toNearest
 const floorToNearest = (x: number, toNearest: number) => Math.floor(x / toNearest) * toNearest
@@ -215,7 +212,7 @@ const DiffHoursTooltip = ({
 }: {
   targetHours: number
   workedHours: number
-  children: ReactElement
+  children: React.ReactElement
 }) => {
   const diff = workedHours - targetHours
 
