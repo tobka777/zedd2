@@ -7,6 +7,7 @@
 - Feature: Add copy-task button, to copy the taskname in the taskcomment area
 - Delete: MAGIC from titlebar menu
 - Update: New order for the suggested tasks in the taskslice menu
+- Feature: Change the task of a slice to the lattest used task by ALT + right click on the taskslice
 
 ## [2.9.0] - 2022-01-19
 
