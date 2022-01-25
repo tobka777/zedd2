@@ -243,6 +243,7 @@ export class AppState {
   )
   public slices: IObservableArray<TimeSlice> = observable([])
 
+  @serializable(list(object(Task)))
   public lastInteractedTasks: IObservableArray<Task> = observable([])
 
   private slicesByTask = new ObservableGroupMap(
@@ -762,7 +763,7 @@ export class AppState {
 
   public notifyTaskInteraction(task: Task): void {
     if (this.lastInteractedTasks.indexOf(task) !== -1) {
-      return
+      this.lastInteractedTasks.remove(task)
     }
     if (this.lastInteractedTasks.length === 5) {
       this.lastInteractedTasks.pop()
