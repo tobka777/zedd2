@@ -767,7 +767,6 @@ export class AppState {
         this.lastInteractedTasks.indexOf(task),
         1,
       ) as IObservableArray<Task>
-      console.log(this.lastInteractedTasks)
     }
     if (this.lastInteractedTasks.length === 5) {
       this.lastInteractedTasks.pop()
