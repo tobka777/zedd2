@@ -763,7 +763,11 @@ export class AppState {
 
   public notifyTaskInteraction(task: Task): void {
     if (this.lastInteractedTasks.indexOf(task) !== -1) {
-      this.lastInteractedTasks.remove(task)
+      this.lastInteractedTasks.splice(
+        this.lastInteractedTasks.indexOf(task),
+        1,
+      ) as IObservableArray<Task>
+      console.log(this.lastInteractedTasks)
     }
     if (this.lastInteractedTasks.length === 5) {
       this.lastInteractedTasks.pop()
