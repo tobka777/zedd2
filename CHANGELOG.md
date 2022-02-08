@@ -1,3 +1,5 @@
+## [2.9.1]
+
 - Fixed: DateRangePicker starts at monday
 - Fixed: Arrow-Buttons add or sub full months or years, not only the amount of days that were selected
 - Fixed: Formatting in the header of the calendar
@@ -8,6 +10,7 @@
 - Delete: MAGIC from titlebar menu
 - Update: New order for the suggested tasks in the taskslice menu
 - Feature: Change the task of a slice to the lattest used task by ALT + right click on the taskslice
+- Fixed update server URL
 
 ## [2.9.0] - 2022-01-19
 

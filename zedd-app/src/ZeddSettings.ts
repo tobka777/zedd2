@@ -1,5 +1,5 @@
 import { observable, makeObservable } from 'mobx'
-import { serializable, raw, list, primitive, deserialize, serialize } from 'serializr'
+import { serializable, raw, list, primitive, deserialize, serialize, custom } from 'serializr'
 import { promises as fsp } from 'fs'
 
 export class ZeddSettings {
@@ -101,7 +101,12 @@ export class ZeddSettings {
   @serializable
   public keepHovering: boolean | 'vertical' = true
 
-  @serializable
+  @serializable(
+    custom(
+      (x) => x,
+      (x) => (x === 'https://hazel-peach.now.sh' ? 'https://hazel-peach.vercel.app/' : x),
+    ),
+  )
   public updateServer = 'https://hazel-peach.now.sh'
 
   @observable
