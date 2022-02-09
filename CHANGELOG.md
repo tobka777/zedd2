@@ -1,3 +1,5 @@
+- Feature: Added a filter for searching projects in the clarity view
+
 ## [2.9.1]
 
 - Fixed: DateRangePicker starts at monday
