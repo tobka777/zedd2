@@ -1,4 +1,5 @@
 import { Send as SendIcon } from '@mui/icons-material'
+import { TextField } from '@mui/material'
 import {
   Box,
   Button,
@@ -84,6 +85,8 @@ export interface ClarityViewProps {
   submitTimesheets: boolean
   onChangeSubmitTimesheets: (x: boolean) => void
   errorHandler: (e: Error) => void
+  valueFilterProject: string
+  onChangeProjectFilter: (f: string) => void
 }
 
 const useStyles = makeStyles((theme) => ({
@@ -246,6 +249,8 @@ export const ClarityView = observer((props: ClarityViewProps) => {
     errorHandler,
     clarityState,
     calculateTargetHours,
+    valueFilterProject,
+    onChangeProjectFilter,
   } = props
   const noOfDays = differenceInDays(showing.end, showing.start)
   const groupBy = noOfDays > 366 ? 'year' : noOfDays > 64 ? 'month' : noOfDays > 21 ? 'week' : 'day'
@@ -311,7 +316,14 @@ export const ClarityView = observer((props: ClarityViewProps) => {
       >
         <thead>
           <tr>
-            <th className='textHeader'>Project / Task</th>
+            <th className='textHeader'>
+              <TextField
+                label='Project / Task'
+                value={valueFilterProject}
+                fullWidth
+                onChange={(newFilter) => onChangeProjectFilter(newFilter.target.value)}
+              />
+            </th>
             {intervals.map((w) => (
               <th key={isoDayStr(w.start)} className='numberHeader'>
                 {formatDate(w.start, headerFormat)}
@@ -321,45 +333,49 @@ export const ClarityView = observer((props: ClarityViewProps) => {
           </tr>
         </thead>
         <tbody>
-          {tasksToShow.map((taskToShow) => (
-            <tr
-              key={taskToShow.taskIntId}
-              style={-1 !== taskToShow.taskIntId ? {} : { color: theme.palette.error.main }}
-            >
-              <td>
-                <span style={{ whiteSpace: 'nowrap' }}>{taskToShow.projectName}</span>
-                {' / '}
-                <span style={{ whiteSpace: 'nowrap' }}>{taskToShow.taskName}</span>
-              </td>
-              {intervals.map((w) => {
-                const workEntries = eachDayOfInterval(w)
-                  .flatMap((d) => clarityExport[isoDayStr(d)] ?? [])
-                  ?.filter((we) => we.taskIntId === taskToShow.taskIntId)
-                return (
-                  <td
-                    key={taskToShow.taskIntId + '-' + isoDayStr(w.start)}
-                    title={workEntries.map((we) => we.comment).join('\n')}
-                    style={{ cursor: workEntries.some((we) => we.comment) ? 'help' : 'default' }}
-                    className='numberCell'
-                  >
-                    {workEntries.some((we) => we.comment) && (
-                      <span style={{ fontSize: 'xx-small' }}>m/K </span>
-                    )}
-                    {formatHours(sum(workEntries.map((we) => we.hours)))}
-                  </td>
-                )
-              })}
-              <td className='numberCell'>
-                {formatHours(
-                  sum(
-                    allWorkEntries
-                      .filter((we) => we.taskIntId === taskToShow.taskIntId)
-                      .map((we) => we.hours),
-                  ),
-                )}
-              </td>
-            </tr>
-          ))}
+          {tasksToShow
+            .filter((taskToShow) =>
+              taskToShow.projectName.toLowerCase().includes(valueFilterProject.toLowerCase()),
+            )
+            .map((taskToShow) => (
+              <tr
+                key={taskToShow.taskIntId}
+                style={-1 !== taskToShow.taskIntId ? {} : { color: theme.palette.error.main }}
+              >
+                <td>
+                  <span style={{ whiteSpace: 'nowrap' }}>{taskToShow.projectName}</span>
+                  {' / '}
+                  <span style={{ whiteSpace: 'nowrap' }}>{taskToShow.taskName}</span>
+                </td>
+                {intervals.map((w) => {
+                  const workEntries = eachDayOfInterval(w)
+                    .flatMap((d) => clarityExport[isoDayStr(d)] ?? [])
+                    ?.filter((we) => we.taskIntId === taskToShow.taskIntId)
+                  return (
+                    <td
+                      key={taskToShow.taskIntId + '-' + isoDayStr(w.start)}
+                      title={workEntries.map((we) => we.comment).join('\n')}
+                      style={{ cursor: workEntries.some((we) => we.comment) ? 'help' : 'default' }}
+                      className='numberCell'
+                    >
+                      {workEntries.some((we) => we.comment) && (
+                        <span style={{ fontSize: 'xx-small' }}>m/K </span>
+                      )}
+                      {formatHours(sum(workEntries.map((we) => we.hours)))}
+                    </td>
+                  )
+                })}
+                <td className='numberCell'>
+                  {formatHours(
+                    sum(
+                      allWorkEntries
+                        .filter((we) => we.taskIntId === taskToShow.taskIntId)
+                        .map((we) => we.hours),
+                    ),
+                  )}
+                </td>
+              </tr>
+            ))}
         </tbody>
         <tfoot>
           <tr>
