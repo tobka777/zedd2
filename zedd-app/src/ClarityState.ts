@@ -95,11 +95,18 @@ export class ClarityState {
 
   public async importAndSaveClarityTasks(
     excludedProjects: string[],
-    toImport: string[] | 'ALL' = 'ALL',
+    toImport: string[] | 'ALL' | 'NEW',
     infoNotify?: (info: string) => void,
   ): Promise<ClarityTask[]> {
-    const importProject = (projectName: string) =>
-      'ALL' === toImport || toImport.includes(projectName)
+    const importProject = (projectName: string) => {
+      if (toImport === 'ALL') {
+        return true
+      } else if (toImport === 'NEW') {
+        return !this.projectNames.includes(projectName)
+      } else {
+        return toImport.includes(projectName)
+      }
+    }
     await this.importClarityTasks(
       (projectName) => excludedProjects.includes(projectName) || !importProject(projectName),
       (project) => {

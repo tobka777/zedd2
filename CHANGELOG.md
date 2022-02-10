@@ -1,4 +1,5 @@
 - Feature: Added a filter for searching projects in the clarity view
+- Feature: Added a new dropdown item 'NEW' in import button menu, to import only projects which have not been imported yet
 
 ## [2.9.1]
 
