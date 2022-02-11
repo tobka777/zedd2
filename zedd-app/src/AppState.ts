@@ -62,6 +62,7 @@ import {
   getUniqueId,
 } from './util'
 import { ZeddSettings } from './ZeddSettings'
+import { Undoer } from './Undoer'
 
 export const MIN_GAP_TIME_MIN = 5
 
@@ -355,6 +356,8 @@ export class AppState {
   @observable
   public links: [string, string][] = []
 
+  private undoer: Undoer = new Undoer()
+
   constructor() {
     makeObservable(this)
     this.showing = isoWeekInterval(Date.now())
@@ -366,6 +369,17 @@ export class AppState {
         throw new Error(JSON.stringify(change))
       }
     })
+
+    this.undoer.makeUndoable(this.slices)
+  }
+
+  public undo(): void {
+    console.log('trigger')
+    this.undoer.undo()
+  }
+
+  public redo(): void {
+    this.undoer.redo()
   }
 
   public static async saveToDir(instance: AppState, dir: string): Promise<void> {
@@ -596,9 +610,10 @@ export class AppState {
     if (index === this.slices.length - 1) {
       this.slices.length--
     } else {
-      transaction(() => {
+      this.slices.splice(index, 1)
+      /*transaction(() => {
         this.slices[index] = this.slices.pop()!
-      })
+      })*/
     }
   }
 

@@ -159,6 +159,7 @@ async function setup() {
     console.error('Could not load state from ' + path.join(saveDir, 'data'))
     state = new AppState()
   }
+
   state.startInterval()
   state.config = config
   let lastAwaySlice: string | undefined
@@ -471,6 +472,18 @@ async function setup() {
   let cleanup: () => void = undefined!
 
   window.addEventListener('beforeunload', cleanup)
+
+  ipcRenderer.on('ctrl+z', (_) => {
+    state.undo()
+  })
+
+  ipcRenderer.on('ctrl+y', (_) => {
+    state.redo()
+  })
+
+  ipcRenderer.on('ctrl+shift+z', (_) => {
+    state.undo()
+  })
 
   return {
     cleanup: (cleanup = () => {
