@@ -8,6 +8,8 @@
 - Feature: Seperate the next month button into three buttons. The new buttons are last, month and next
 - Feature: Add copy-task button, to copy the taskname in the taskcomment area
 - Delete: MAGIC from titlebar menu
+- Update: New order for the suggested tasks in the taskslice menu
+- Feature: Change the task of a slice to the lattest used task by ALT + right click on the taskslice
 - Fixed update server URL
 
 ## [2.9.0] - 2022-01-19
