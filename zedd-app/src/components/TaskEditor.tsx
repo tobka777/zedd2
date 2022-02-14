@@ -36,7 +36,6 @@ export const TaskEditor = observer(
     style,
     taskSelectRef,
   }: TaskEditorProps) => {
-    console.log('value', value)
     const importClarityTasks = useCallback(
       (which: string) =>
         clarityState

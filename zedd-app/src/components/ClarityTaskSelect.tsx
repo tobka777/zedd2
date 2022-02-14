@@ -22,7 +22,6 @@ export const ClarityTaskSelect = observer(
     const maxEntries = 20
 
     const resolvedVal = (value !== undefined && clarityState.resolveTask(value)) || undefined
-    console.log('value ' + value + ' res ', resolvedVal)
 
     return (
       <Autocomplete

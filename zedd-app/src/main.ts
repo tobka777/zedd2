@@ -1,4 +1,4 @@
-import { app, ipcMain, session, BrowserWindow, globalShortcut } from 'electron'
+import { app, ipcMain, session, BrowserWindow } from 'electron'
 import * as remoteMain from '@electron/remote/main'
 remoteMain.initialize()
 
@@ -94,17 +94,6 @@ app.on('ready', () => {
     callback({ cancel: false, requestHeaders: details.requestHeaders })
   })
   createWindow()
-  globalShortcut.register('CommandOrControl+Z', () => {
-    mainWindow!.webContents.send('ctrl+z')
-  })
-
-  globalShortcut.register('CommandOrControl+Y', () => {
-    mainWindow!.webContents.send('ctrl+y')
-  })
-
-  globalShortcut.register('CommandOrControl+Shift+Z', () => {
-    mainWindow!.webContents.send('ctrl+shift+z')
-  })
 })
 
 // Quit when all windows are closed.

@@ -160,6 +160,14 @@ async function setup() {
     state = new AppState()
   }
 
+  window.addEventListener('keydown', (e) => {
+    if ((e.ctrlKey && e.key === 'z') || (e.ctrlKey && e.key === 'Z' && e.shiftKey)) {
+      state.undo()
+    } else if (e.ctrlKey && e.key === 'y') {
+      state.redo()
+    }
+  })
+
   state.startInterval()
   state.config = config
   let lastAwaySlice: string | undefined
@@ -472,18 +480,6 @@ async function setup() {
   let cleanup: () => void = undefined!
 
   window.addEventListener('beforeunload', cleanup)
-
-  ipcRenderer.on('ctrl+z', (_) => {
-    state.undo()
-  })
-
-  ipcRenderer.on('ctrl+y', (_) => {
-    state.redo()
-  })
-
-  ipcRenderer.on('ctrl+shift+z', (_) => {
-    state.undo()
-  })
 
   return {
     cleanup: (cleanup = () => {

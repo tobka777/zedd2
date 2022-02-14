@@ -182,8 +182,10 @@ export class TimeSlice {
     if (differenceInMinutes(end, start) <= 0) {
       throw new Error(`start (${start}) must be at least one minute before end (${end})`)
     }
+    //x(() => {
     this._start = start
     this._end = end
+    //})
   }
 
   constructor(start: Date, end: Date, task: Task) {
@@ -374,7 +376,6 @@ export class AppState {
   }
 
   public undo(): void {
-    console.log('trigger')
     this.undoer.undo()
   }
 
