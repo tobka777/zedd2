@@ -31,26 +31,29 @@ div:focus {
   right: 0;
   bottom: 0;
   border-width: 0px 2px 2px 0px;
+  z-index: 10;
 }
 .top-left {
   top: 0;
   left: 0;
   border-width: 2px 0px 0px 2px;
+  z-index: 10;
 }
 .top-center {
   border-width: 2px;
   left: 35%;
   top: -2.5px;
+  z-index: 10;
 }
 
 .inside {
   cursor: move;
   box-sizing: border-box;
   position: absolute;
-  width: 90%;
-  height: 90%;
-  top: 5%;
-  left: 5%;
+  top: 0%;
+  left: 0%;
+  width: 100%;
+  height: 100%;
   border-color: rgba(0, 0, 0, 0);
 }
 
