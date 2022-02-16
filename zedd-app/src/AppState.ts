@@ -244,6 +244,7 @@ export class AppState {
   )
   public slices: IObservableArray<TimeSlice> = observable([])
 
+  @serializable(list(object(Task)))
   public lastInteractedTasks: IObservableArray<Task> = observable([])
 
   private slicesByTask = new ObservableGroupMap(
@@ -776,7 +777,17 @@ export class AppState {
   }
 
   public notifyTaskInteraction(task: Task): void {
-    this.lastInteractedTasks.push(task)
+    if (this.lastInteractedTasks.indexOf(task) !== -1) {
+      this.lastInteractedTasks.splice(this.lastInteractedTasks.indexOf(task), 1)
+    }
+    if (this.lastInteractedTasks.length === 5) {
+      this.lastInteractedTasks.pop()
+    }
+    this.lastInteractedTasks.unshift(task)
+  }
+
+  public getTasksForMenu(): Task[] {
+    return this.lastInteractedTasks
   }
 
   public dialogOpen(): boolean {

@@ -51,7 +51,14 @@ export const ChangeSliceTaskDialog = ({
           <Button onClick={(_) => done(slice.task)} color='primary'>
             Cancel
           </Button>
-          <Button type='submit' onClick={(_) => done(newTask)} color='primary'>
+          <Button
+            type='submit'
+            onClick={(_) => {
+              state.notifyTaskInteraction(newTask)
+              done(newTask)
+            }}
+            color='primary'
+          >
             Change
           </Button>
         </DialogActions>
