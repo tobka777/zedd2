@@ -220,7 +220,6 @@ async function setup() {
 
   const checkChromePath = async () => {
     if (!state.config.chrome.path) {
-      //state.config.chromePath = (await getNonEnvPathChromePath()) ?? ''
       state.config.chrome.path = (await getNonEnvPathChromePath()) ?? ''
       if (!state.config.chrome.path) {
         throw new Error(
