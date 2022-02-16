@@ -102,12 +102,13 @@ function setupAutoUpdater(state: AppState, config: ZeddSettings) {
 }
 
 const getMenuItems = (state: AppState) => [
+  { label: 'Undo (Ctrl+Z)', click: () => state.undo() },
+  { label: 'Redo (Ctrl+Y)', click: () => state.redo() },
   {
     label: 'Open Config Dir',
     click: () => shell.showItemInFolder(userConfigFile),
   },
   { label: 'Edit Settings', click: () => (state.settingsDialogOpen = true) },
-
   { label: 'Github', click: () => shell.openExternal('https://github.com/NaridaL/zedd2') },
   { label: 'Open Dev', click: () => getCurrentWindow().webContents.openDevTools() },
   { label: 'Reload Config', click: () => getCurrentWindow().reload() },

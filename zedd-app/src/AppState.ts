@@ -150,15 +150,13 @@ export class TimeSlice {
       taskName,
     ]
   }
-  @observable
-  private _start: Date
 
   @observable
-  private _end: Date
+  private _startEnd: { start: Date; end: Date }
 
   @serializable(date())
   get start(): Date {
-    return this._start
+    return this._startEnd.start
   }
 
   set start(start: Date) {
@@ -166,7 +164,7 @@ export class TimeSlice {
   }
   @serializable(date())
   get end(): Date {
-    return this._end
+    return this._startEnd.end
   }
 
   set end(end: Date) {
@@ -178,14 +176,11 @@ export class TimeSlice {
   public task: Task
 
   @action
-  public setInterval(start = this._start, end = this._end): void {
+  public setInterval(start = this._startEnd.start, end = this._startEnd.end): void {
     if (differenceInMinutes(end, start) <= 0) {
       throw new Error(`start (${start}) must be at least one minute before end (${end})`)
     }
-    //x(() => {
-    this._start = start
-    this._end = end
-    //})
+    this._startEnd = { start, end }
   }
 
   constructor(start: Date, end: Date, task: Task) {
@@ -402,7 +397,9 @@ export class AppState {
   }
 
   public static loadFromJsonString(json: string): AppState {
-    return deserialize(AppState, JSON.parse(json))
+    const newState = deserialize(AppState, JSON.parse(json))
+    newState.undoer.reset()
+    return newState
   }
 
   public static async loadFromDir(dir: string): Promise<AppState> {
@@ -640,87 +637,89 @@ export class AppState {
     secondsSinceLastUserInput = remote?.powerMonitor?.getSystemIdleTime() ?? 0,
     minIdleTimeInMin = Math.max(this?.config?.minIdleTimeMin ?? 15, 1),
   ): void => {
-    const prevLastUserAction = this.lastUserAction
-    this.lastUserAction = subSeconds(now, secondsSinceLastUserInput)
-    if (!this.timingInProgess || this.getUndefinedTask() === this.currentTask) {
-      this.lastTimedSlice = undefined
-      return
-    }
-    let lastSlice =
-      this.slices.reduce((prev, s) => {
-        if (abs(differenceInMinutes(now, s.end)) < 5 && isBefore(s.start, now)) {
-          if (!prev || isAfter(s.start, prev.start)) {
-            return s
-          }
-        }
-        return prev
-      }, undefined as TimeSlice | undefined) ?? this.lastTimedSlice
-
-    // console.log('lastSlice', strlastSlice)
-    if (differenceInMinutes(now, this.lastUserAction) > minIdleTimeInMin) {
-      if (lastSlice) {
-        lastSlice.end = startOfNextMinute(this.lastUserAction)
+    this.undoer.notUndoable(() => {
+      const prevLastUserAction = this.lastUserAction
+      this.lastUserAction = subSeconds(now, secondsSinceLastUserInput)
+      if (!this.timingInProgess || this.getUndefinedTask() === this.currentTask) {
         this.lastTimedSlice = undefined
+        return
       }
-      return
-    }
-    if (
-      isAfter(this.lastUserAction, prevLastUserAction) &&
-      differenceInMinutes(now, prevLastUserAction) > minIdleTimeInMin
-    ) {
-      // console.log('user is back', timeSliceStr(lastSlice))
+      let lastSlice =
+        this.slices.reduce((prev, s) => {
+          if (abs(differenceInMinutes(now, s.end)) < 5 && isBefore(s.start, now)) {
+            if (!prev || isAfter(s.start, prev.start)) {
+              return s
+            }
+          }
+          return prev
+        }, undefined as TimeSlice | undefined) ?? this.lastTimedSlice
 
-      if (lastSlice) {
-        lastSlice.end = startOfNextMinute(prevLastUserAction)
-        // console.log('lastSlice', timeSliceStr(lastSlice))
-        lastSlice = undefined
-      }
-      try {
-        if (this.idleSliceNotificationCallback) {
-          this.idleSliceNotificationCallback({
-            start: startOfNextMinute(prevLastUserAction),
-            end: startOfMinute(now),
-          })
+      // console.log('lastSlice', strlastSlice)
+      if (differenceInMinutes(now, this.lastUserAction) > minIdleTimeInMin) {
+        if (lastSlice) {
+          lastSlice.end = startOfNextMinute(this.lastUserAction)
+          this.lastTimedSlice = undefined
         }
-      } catch (e) {
-        console.error('There was an error calling idleSliceNotificationCallback', e)
+        return
       }
-    }
-
-    if (!lastSlice) {
-      const start = startOfMinute(now)
-      const newSlice: TimeSlice = new TimeSlice(start, addMinutes(start, 1), this.currentTask)
-      // console.log('ADDING SLICE', newSlice)
-
-      this.lastTimedSlice = this.addSlice(newSlice)
-    } else {
       if (
-        abs(differenceInMinutes(lastSlice.end, lastSlice.start)) < 5 &&
-        lastSlice.task !== this.currentTask
+        isAfter(this.lastUserAction, prevLastUserAction) &&
+        differenceInMinutes(now, prevLastUserAction) > minIdleTimeInMin
       ) {
-        // last slice is < 5min, convert it
-        lastSlice.task = this.currentTask
-      }
-      if (lastSlice.task === this.currentTask) {
-        if (isSameDay(lastSlice.start, now)) {
-          // extend current slice
-          lastSlice.end = startOfNextMinute(now)
-          this.lastTimedSlice = lastSlice
-        } else {
-          //   console.log('adding slice because of new day', now, timeSliceStr(lastSlice))
-          const boundary = startOfDay(now)
-          lastSlice.end = boundary
-          this.lastTimedSlice = this.addSlice(
-            new TimeSlice(boundary, startOfNextMinute(now), this.currentTask),
-          )
+        // console.log('user is back', timeSliceStr(lastSlice))
+
+        if (lastSlice) {
+          lastSlice.end = startOfNextMinute(prevLastUserAction)
+          // console.log('lastSlice', timeSliceStr(lastSlice))
+          lastSlice = undefined
         }
-      } else {
-        lastSlice.end = dateMin([lastSlice.end, startOfMinute(now)])
-        const newSlice = new TimeSlice(lastSlice.end, startOfNextMinute(now), this.currentTask)
-        // console.log('lastSlice is different, add', timeSliceStr(lastSlice), timeSliceStr(newSlice))
-        this.lastTimedSlice = this.addSlice(newSlice)
+        try {
+          if (this.idleSliceNotificationCallback) {
+            this.idleSliceNotificationCallback({
+              start: startOfNextMinute(prevLastUserAction),
+              end: startOfMinute(now),
+            })
+          }
+        } catch (e) {
+          console.error('There was an error calling idleSliceNotificationCallback', e)
+        }
       }
-    }
+
+      if (!lastSlice) {
+        const start = startOfMinute(now)
+        const newSlice: TimeSlice = new TimeSlice(start, addMinutes(start, 1), this.currentTask)
+        // console.log('ADDING SLICE', newSlice)
+
+        this.lastTimedSlice = this.addSlice(newSlice)
+      } else {
+        if (
+          abs(differenceInMinutes(lastSlice.end, lastSlice.start)) < 5 &&
+          lastSlice.task !== this.currentTask
+        ) {
+          // last slice is < 5min, convert it
+          lastSlice.task = this.currentTask
+        }
+        if (lastSlice.task === this.currentTask) {
+          if (isSameDay(lastSlice.start, now)) {
+            // extend current slice
+            lastSlice.end = startOfNextMinute(now)
+            this.lastTimedSlice = lastSlice
+          } else {
+            //   console.log('adding slice because of new day', now, timeSliceStr(lastSlice))
+            const boundary = startOfDay(now)
+            lastSlice.end = boundary
+            this.lastTimedSlice = this.addSlice(
+              new TimeSlice(boundary, startOfNextMinute(now), this.currentTask),
+            )
+          }
+        } else {
+          lastSlice.end = dateMin([lastSlice.end, startOfMinute(now)])
+          const newSlice = new TimeSlice(lastSlice.end, startOfNextMinute(now), this.currentTask)
+          // console.log('lastSlice is different, add', timeSliceStr(lastSlice), timeSliceStr(newSlice))
+          this.lastTimedSlice = this.addSlice(newSlice)
+        }
+      }
+    })
   }
 
   public isDayEmpty(timeInDay: Date): boolean {
