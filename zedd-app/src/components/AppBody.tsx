@@ -83,6 +83,15 @@ export const AppBody = observer(
 
     const theme = useTheme()
 
+    const onAltRightClick = useCallback(
+      (_: React.MouseEvent, slice: TimeSlice) => {
+        if (state.getTasksForMenu().length !== 0) {
+          slice.task = state.getTasksForMenu()[0]
+        }
+      },
+      [state],
+    )
+
     const onBlockClick = useCallback(
       (_: React.MouseEvent, slice: TimeSlice) => {
         Menu.buildFromTemplate([
@@ -162,7 +171,10 @@ export const AppBody = observer(
           <TaskEditor
             state={state}
             clarityState={clarityState}
-            onTaskSelectChange={(t) => (state.currentTask = t)}
+            onTaskSelectChange={(t) => {
+              state.currentTask = t
+              state.notifyTaskInteraction(t)
+            }}
             value={state.currentTask}
             getTasksForSearchString={getTasksForSearchString}
             taskSelectRef={taskSelectRef}
@@ -374,6 +386,7 @@ export const AppBody = observer(
                     {...attributes}
                     clarityState={clarityState}
                     onContextMenu={onBlockClick}
+                    onAltRightClick={onAltRightClick}
                   />
                 )
               }}
