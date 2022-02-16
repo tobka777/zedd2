@@ -25,7 +25,6 @@ import { MoreHoriz as PickFileIcon } from '@mui/icons-material'
 import { observer } from 'mobx-react-lite'
 import { uniq } from 'lodash'
 
-import { getChromeDriverVersion, getChromeVersion } from '../chromeDriverMgmt'
 import { ClarityTaskSelect } from './ClarityTaskSelect'
 import { ClarityState } from '../ClarityState'
 import { ZeddSettings } from '../ZeddSettings'
@@ -90,14 +89,6 @@ export const SettingsDialog = observer(
 
     const projects = uniq([...clarityState.projectNames, ...settings.excludeProjects])
     projects.sort()
-
-    const [chromeVersion, setChromeVersion] = useState('')
-    const [chromeDriverVersion, setChromeDriverVersion] = useState('')
-
-    getChromeVersion(settings.chromePath).then((version) => setChromeVersion(version))
-    getChromeDriverVersion(clarityState.chromedriverExe).then((version) =>
-      setChromeDriverVersion(version),
-    )
 
     return (
       <Dialog
@@ -358,9 +349,9 @@ export const SettingsDialog = observer(
               <TextField
                 placeholder='http://example.com/niku/nu'
                 style={{ width: '100%' }}
-                value={settings.chromePath}
+                value={settings.chrome.path}
                 onChange={(e) => {
-                  settings.chromePath = e.target.value
+                  settings.chrome.path = e.target.value
                   updateChromeStatusDebounced()
                 }}
                 InputProps={{
@@ -371,12 +362,12 @@ export const SettingsDialog = observer(
                         size='small'
                         onClick={async () => {
                           const result = await dialog.showOpenDialog({
-                            defaultPath: settings.chromePath,
+                            defaultPath: settings.chrome.path,
                             filters: [{ name: 'Executable', extensions: ['exe'] }],
                             properties: ['openFile'],
                           })
                           if (result.filePaths[0]) {
-                            settings.chromePath = result.filePaths[0]
+                            settings.chrome.path = result.filePaths[0]
                             updateChromeStatusDebounced()
                           }
                         }}
@@ -392,7 +383,8 @@ export const SettingsDialog = observer(
                 <span style={{ color: theme.palette.error.main }}>{'' + chromeStatus.error}</span>
               ) : chromeStatus.ok ? (
                 <span style={{ color: theme.palette.success.main }}>
-                  OK! Chrome Version: {chromeVersion}, Chrome Driver Version: {chromeDriverVersion}
+                  OK! Chrome Version: {settings.chrome.version}, Chrome Driver Version:{' '}
+                  {settings.chrome.driverVersion}
                 </span>
               ) : (
                 <CircularProgress size='0.8em' />

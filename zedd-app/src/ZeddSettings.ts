@@ -111,7 +111,11 @@ export class ZeddSettings {
 
   @observable
   @serializable
-  public chromePath: string = ''
+  public chrome: { path: string; version: string; driverVersion: string } = {
+    path: '',
+    version: '',
+    driverVersion: '',
+  }
 
   @observable
   @serializable
