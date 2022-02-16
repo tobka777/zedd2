@@ -47,10 +47,20 @@ export const SettingsDialog = observer(
     clarityState: ClarityState
     settings: ZeddSettings
     checkCgJira: (cgJira: ZeddSettings['cgJira']) => Promise<any>
-    checkChromePath: () => Promise<any>
+    checkChromePath: () => Promise<{
+      chromeVersion: string
+      chromeDriverVersion: string
+    }>
   }) => {
     const [chromeStatus, setChromeStatus] = useState(
-      {} as { error?: any; ok?: true; checking?: true },
+      {} as {
+        error?: any
+        ok?: {
+          chromeVersion: string
+          chromeDriverVersion: string
+        }
+        checking?: true
+      },
     )
     const [cgJiraStatus, setCgJiraStatus] = useState(
       {} as { error?: any; ok?: true; checking?: true },
@@ -64,7 +74,7 @@ export const SettingsDialog = observer(
       () => {
         setChromeStatus({ checking: true })
         checkChromePath()
-          .then(() => setChromeStatus({ ok: true }))
+          .then((versions) => setChromeStatus({ ok: versions }))
           .catch((error) => setChromeStatus({ error }))
       },
       [checkChromePath],
@@ -382,7 +392,10 @@ export const SettingsDialog = observer(
               {chromeStatus.error ? (
                 <span style={{ color: theme.palette.error.main }}>{'' + chromeStatus.error}</span>
               ) : chromeStatus.ok ? (
-                <span style={{ color: theme.palette.success.main }}>OK!</span>
+                <span style={{ color: theme.palette.success.main }}>
+                  OK! Chrome Version: {chromeStatus.ok.chromeVersion}, Chrome Driver Version:{' '}
+                  {chromeStatus.ok.chromeDriverVersion}
+                </span>
               ) : (
                 <CircularProgress size='0.8em' />
               )}
