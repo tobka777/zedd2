@@ -25,6 +25,7 @@ import { MoreHoriz as PickFileIcon } from '@mui/icons-material'
 import { observer } from 'mobx-react-lite'
 import { uniq } from 'lodash'
 
+import { getChromeDriverVersion, getChromeVersion } from '../chromeDriverMgmt'
 import { ClarityTaskSelect } from './ClarityTaskSelect'
 import { ClarityState } from '../ClarityState'
 import { ZeddSettings } from '../ZeddSettings'
@@ -89,6 +90,14 @@ export const SettingsDialog = observer(
 
     const projects = uniq([...clarityState.projectNames, ...settings.excludeProjects])
     projects.sort()
+
+    const [chromeVersion, setChromeVersion] = useState('')
+    const [chromeDriverVersion, setChromeDriverVersion] = useState('')
+
+    getChromeVersion(settings.chromePath).then((version) => setChromeVersion(version))
+    getChromeDriverVersion(clarityState.chromedriverExe).then((version) =>
+      setChromeDriverVersion(version),
+    )
 
     return (
       <Dialog
@@ -382,7 +391,9 @@ export const SettingsDialog = observer(
               {chromeStatus.error ? (
                 <span style={{ color: theme.palette.error.main }}>{'' + chromeStatus.error}</span>
               ) : chromeStatus.ok ? (
-                <span style={{ color: theme.palette.success.main }}>OK!</span>
+                <span style={{ color: theme.palette.success.main }}>
+                  OK! Chrome Version: {chromeVersion}, Chrome Driver Version: {chromeDriverVersion}
+                </span>
               ) : (
                 <CircularProgress size='0.8em' />
               )}
