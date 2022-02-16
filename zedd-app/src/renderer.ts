@@ -218,43 +218,42 @@ async function setup() {
     .then((e) => (state.assignedIssueTasks = e.map((t) => state.normalizeTask(t))))
     .catch((error) => state.addMessage(error.message))
 
-  const checkChromePath = async () => {
-    if (!state.config.chrome.path) {
-      state.config.chrome.path = (await getNonEnvPathChromePath()) ?? ''
-      if (!state.config.chrome.path) {
+  const checkChromePath = async (): Promise<{
+    chromeVersion: string
+    chromeDriverVersion: string
+  }> => {
+    if (!state.config.chromePath) {
+      state.config.chromePath = (await getNonEnvPathChromePath()) ?? ''
+      if (!state.config.chromePath) {
         throw new Error(
           'Could not find chrome.exe in standard locations! Is it installed?' +
             ' https://www.google.com/chrome',
         )
       }
     }
-    if (!(await fileExists(state.config.chrome.path))) {
+    if (!(await fileExists(state.config.chromePath))) {
       throw new Error(
-        `Could not find specified path '${state.config.chrome.path}'!` +
+        `Could not find specified path '${state.config.chromePath}'!` +
           ' Set to empty to try standard locations.',
       )
     }
-    if (state.config.chrome.path) {
-      console.log('configured chrome path', state.config.chrome.path)
-      const chromeVersion = await getChromeVersion(state.config.chrome.path)
-      state.config.chrome.version = chromeVersion
-      console.log('current chrome version', chromeVersion)
-      const requiredChromeDriverVersion = await getLatestChromeDriverVersion(chromeVersion)
-      const chromeDriverDir = path.join(app.getPath('appData'), 'chromedriver')
-      await mkdirIfNotExists(chromeDriverDir)
-      const chromeDriverPath = path.join(chromeDriverDir, 'chromedriver.exe')
-      state.config.chrome.driverVersion = await getChromeDriverVersion(chromeDriverPath)
-      if (
-        !(await fileExists(chromeDriverPath)) ||
-        requiredChromeDriverVersion !== state.config.chrome.driverVersion
-      ) {
-        console.log('chromedriver missing or has wrong version')
-        installChromeDriver(requiredChromeDriverVersion, chromeDriverDir, false)
-        state.config.chrome.driverVersion = await getChromeDriverVersion(chromeDriverPath)
-      }
-      clarityState.chromeExe = state.config.chrome.path
-      clarityState.chromedriverExe = chromeDriverPath
+    console.log('configured chrome path', state.config.chromePath)
+    const chromeVersion = await getChromeVersion(state.config.chromePath)
+    console.log('current chrome version', chromeVersion)
+    const requiredChromeDriverVersion = await getLatestChromeDriverVersion(chromeVersion)
+    const chromeDriverDir = path.join(app.getPath('appData'), 'chromedriver')
+    await mkdirIfNotExists(chromeDriverDir)
+    const chromeDriverPath = path.join(chromeDriverDir, 'chromedriver.exe')
+    if (
+      !(await fileExists(chromeDriverPath)) ||
+      requiredChromeDriverVersion !== (await getChromeDriverVersion(chromeDriverPath))
+    ) {
+      console.log('chromedriver missing or has wrong version')
+      installChromeDriver(requiredChromeDriverVersion, chromeDriverDir, false)
     }
+    clarityState.chromeExe = state.config.chromePath
+    clarityState.chromedriverExe = chromeDriverPath
+    return { chromeVersion, chromeDriverVersion: requiredChromeDriverVersion }
   }
   checkChromePath().catch((error) => state.addMessage(error.message))
 
