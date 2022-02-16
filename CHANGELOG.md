@@ -1,3 +1,5 @@
+- Feature: Undo (Ctrl+Z) and Redo (Ctrl+Y)
+
 ## [2.9.1]
 
 - Fixed: DateRangePicker starts at monday
