@@ -85,7 +85,9 @@ export const AppBody = observer(
 
     const onAltRightClick = useCallback(
       (_: React.MouseEvent, slice: TimeSlice) => {
-        slice.task = state.getTasksForMenu()[0]
+        if (state.getTasksForMenu().length !== 0) {
+          slice.task = state.getTasksForMenu()[0]
+        }
       },
       [state],
     )
