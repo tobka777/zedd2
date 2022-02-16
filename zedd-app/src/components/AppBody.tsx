@@ -400,10 +400,6 @@ export const AppBody = observer(
             onChangeSubmitTimesheets={(x) => (state.submitTimesheets = x)}
             errorHandler={(error) => state.addMessage(error.message)}
             calculateTargetHours={(interval) => state.calcTargetHours(interval)}
-            valueFilterProject={
-              state.clarityViewFilterProject ? state.clarityViewFilterProject : ''
-            }
-            onChangeProjectFilter={(newFilter) => (state.clarityViewFilterProject = newFilter)}
           />
         </ErrorBoundary>
       </div>

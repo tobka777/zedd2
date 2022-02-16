@@ -32,6 +32,7 @@ import {
 import { groupBy, remove, sortBy, uniqBy } from 'lodash'
 import { observer } from 'mobx-react-lite'
 import * as React from 'react'
+import { useState } from 'react'
 import { ClarityExportFormat } from 'zedd-clarity'
 
 import { TimeSlice, validDate } from '../AppState'
@@ -85,8 +86,6 @@ export interface ClarityViewProps {
   submitTimesheets: boolean
   onChangeSubmitTimesheets: (x: boolean) => void
   errorHandler: (e: Error) => void
-  valueFilterProject: string
-  onChangeProjectFilter: (f: string) => void
 }
 
 const useStyles = makeStyles((theme) => ({
@@ -249,9 +248,8 @@ export const ClarityView = observer((props: ClarityViewProps) => {
     errorHandler,
     clarityState,
     calculateTargetHours,
-    valueFilterProject,
-    onChangeProjectFilter,
   } = props
+  const [clarityViewFilterProject, setclarityViewFilterProject] = useState('')
   const noOfDays = differenceInDays(showing.end, showing.start)
   const groupBy = noOfDays > 366 ? 'year' : noOfDays > 64 ? 'month' : noOfDays > 21 ? 'week' : 'day'
   const untrimmedIntervals =
@@ -319,9 +317,9 @@ export const ClarityView = observer((props: ClarityViewProps) => {
             <th className='textHeader'>
               <TextField
                 label='Project / Task'
-                value={valueFilterProject}
+                value={clarityViewFilterProject}
                 fullWidth
-                onChange={(newFilter) => onChangeProjectFilter(newFilter.target.value)}
+                onChange={(newFilter) => setclarityViewFilterProject(newFilter.target.value)}
               />
             </th>
             {intervals.map((w) => (
@@ -334,9 +332,14 @@ export const ClarityView = observer((props: ClarityViewProps) => {
         </thead>
         <tbody>
           {tasksToShow
-            .filter((taskToShow) =>
-              taskToShow.projectName.toLowerCase().includes(valueFilterProject.toLowerCase()),
-            )
+            .filter((taskToShow) => {
+              return (
+                taskToShow.projectName
+                  .toLowerCase()
+                  .includes(clarityViewFilterProject.toLowerCase()) ||
+                taskToShow.taskName.toLowerCase().includes(clarityViewFilterProject.toLowerCase())
+              )
+            })
             .map((taskToShow) => (
               <tr
                 key={taskToShow.taskIntId}

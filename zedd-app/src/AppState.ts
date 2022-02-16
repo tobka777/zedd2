@@ -297,9 +297,6 @@ export class AppState {
   @observable
   public changingSliceTask: TimeSlice | undefined = undefined
 
-  @observable
-  public clarityViewFilterProject: string
-
   /**
    * init last, so this.slices is already set
    */
