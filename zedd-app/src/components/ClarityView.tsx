@@ -291,7 +291,12 @@ export const ClarityView = observer((props: ClarityViewProps) => {
     (x) => +(-1 === x.taskIntId), // placeholder task last
     (x) => x.projectName,
     (x) => x.taskName,
-  )
+  ).filter((taskToShow) => {
+    return (
+      taskToShow.projectName.toLowerCase().includes(clarityViewFilterProject.toLowerCase()) ||
+      taskToShow.taskName.toLowerCase().includes(clarityViewFilterProject.toLowerCase())
+    )
+  })
   const theme = useTheme()
   const classes = useStyles(props)
 
@@ -316,7 +321,7 @@ export const ClarityView = observer((props: ClarityViewProps) => {
           <tr>
             <th className='textHeader'>
               <TextField
-                label='Project / Task'
+                placeholder='Project / Task'
                 value={clarityViewFilterProject}
                 fullWidth
                 onChange={(newFilter) => setclarityViewFilterProject(newFilter.target.value)}
@@ -331,54 +336,45 @@ export const ClarityView = observer((props: ClarityViewProps) => {
           </tr>
         </thead>
         <tbody>
-          {tasksToShow
-            .filter((taskToShow) => {
-              return (
-                taskToShow.projectName
-                  .toLowerCase()
-                  .includes(clarityViewFilterProject.toLowerCase()) ||
-                taskToShow.taskName.toLowerCase().includes(clarityViewFilterProject.toLowerCase())
-              )
-            })
-            .map((taskToShow) => (
-              <tr
-                key={taskToShow.taskIntId}
-                style={-1 !== taskToShow.taskIntId ? {} : { color: theme.palette.error.main }}
-              >
-                <td>
-                  <span style={{ whiteSpace: 'nowrap' }}>{taskToShow.projectName}</span>
-                  {' / '}
-                  <span style={{ whiteSpace: 'nowrap' }}>{taskToShow.taskName}</span>
-                </td>
-                {intervals.map((w) => {
-                  const workEntries = eachDayOfInterval(w)
-                    .flatMap((d) => clarityExport[isoDayStr(d)] ?? [])
-                    ?.filter((we) => we.taskIntId === taskToShow.taskIntId)
-                  return (
-                    <td
-                      key={taskToShow.taskIntId + '-' + isoDayStr(w.start)}
-                      title={workEntries.map((we) => we.comment).join('\n')}
-                      style={{ cursor: workEntries.some((we) => we.comment) ? 'help' : 'default' }}
-                      className='numberCell'
-                    >
-                      {workEntries.some((we) => we.comment) && (
-                        <span style={{ fontSize: 'xx-small' }}>m/K </span>
-                      )}
-                      {formatHours(sum(workEntries.map((we) => we.hours)))}
-                    </td>
-                  )
-                })}
-                <td className='numberCell'>
-                  {formatHours(
-                    sum(
-                      allWorkEntries
-                        .filter((we) => we.taskIntId === taskToShow.taskIntId)
-                        .map((we) => we.hours),
-                    ),
-                  )}
-                </td>
-              </tr>
-            ))}
+          {tasksToShow.map((taskToShow) => (
+            <tr
+              key={taskToShow.taskIntId}
+              style={-1 !== taskToShow.taskIntId ? {} : { color: theme.palette.error.main }}
+            >
+              <td>
+                <span style={{ whiteSpace: 'nowrap' }}>{taskToShow.projectName}</span>
+                {' / '}
+                <span style={{ whiteSpace: 'nowrap' }}>{taskToShow.taskName}</span>
+              </td>
+              {intervals.map((w) => {
+                const workEntries = eachDayOfInterval(w)
+                  .flatMap((d) => clarityExport[isoDayStr(d)] ?? [])
+                  ?.filter((we) => we.taskIntId === taskToShow.taskIntId)
+                return (
+                  <td
+                    key={taskToShow.taskIntId + '-' + isoDayStr(w.start)}
+                    title={workEntries.map((we) => we.comment).join('\n')}
+                    style={{ cursor: workEntries.some((we) => we.comment) ? 'help' : 'default' }}
+                    className='numberCell'
+                  >
+                    {workEntries.some((we) => we.comment) && (
+                      <span style={{ fontSize: 'xx-small' }}>m/K </span>
+                    )}
+                    {formatHours(sum(workEntries.map((we) => we.hours)))}
+                  </td>
+                )
+              })}
+              <td className='numberCell'>
+                {formatHours(
+                  sum(
+                    allWorkEntries
+                      .filter((we) => we.taskIntId === taskToShow.taskIntId)
+                      .map((we) => we.hours),
+                  ),
+                )}
+              </td>
+            </tr>
+          ))}
         </tbody>
         <tfoot>
           <tr>
