@@ -1,4 +1,5 @@
 import { Send as SendIcon } from '@mui/icons-material'
+import { TextField } from '@mui/material'
 import {
   Box,
   Button,
@@ -31,6 +32,7 @@ import {
 import { groupBy, remove, sortBy, uniqBy } from 'lodash'
 import { observer } from 'mobx-react-lite'
 import * as React from 'react'
+import { useState } from 'react'
 import { ClarityExportFormat } from 'zedd-clarity'
 
 import { TimeSlice, validDate } from '../AppState'
@@ -247,6 +249,7 @@ export const ClarityView = observer((props: ClarityViewProps) => {
     clarityState,
     calculateTargetHours,
   } = props
+  const [clarityViewFilterProject, setclarityViewFilterProject] = useState('')
   const noOfDays = differenceInDays(showing.end, showing.start)
   const groupBy = noOfDays > 366 ? 'year' : noOfDays > 64 ? 'month' : noOfDays > 21 ? 'week' : 'day'
   const untrimmedIntervals =
@@ -288,7 +291,12 @@ export const ClarityView = observer((props: ClarityViewProps) => {
     (x) => +(-1 === x.taskIntId), // placeholder task last
     (x) => x.projectName,
     (x) => x.taskName,
-  )
+  ).filter((taskToShow) => {
+    return (
+      taskToShow.projectName.toLowerCase().includes(clarityViewFilterProject.toLowerCase()) ||
+      taskToShow.taskName.toLowerCase().includes(clarityViewFilterProject.toLowerCase())
+    )
+  })
   const theme = useTheme()
   const classes = useStyles(props)
 
@@ -311,7 +319,14 @@ export const ClarityView = observer((props: ClarityViewProps) => {
       >
         <thead>
           <tr>
-            <th className='textHeader'>Project / Task</th>
+            <th className='textHeader'>
+              <TextField
+                placeholder='Project / Task'
+                value={clarityViewFilterProject}
+                fullWidth
+                onChange={(newFilter) => setclarityViewFilterProject(newFilter.target.value)}
+              />
+            </th>
             {intervals.map((w) => (
               <th key={isoDayStr(w.start)} className='numberHeader'>
                 {formatDate(w.start, headerFormat)}
