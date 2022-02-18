@@ -610,9 +610,6 @@ export class AppState {
       this.slices.length--
     } else {
       this.slices.splice(index, 1)
-      /*transaction(() => {
-        this.slices[index] = this.slices.pop()!
-      })*/
     }
   }
 
