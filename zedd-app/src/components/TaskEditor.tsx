@@ -41,7 +41,7 @@ export const TaskEditor = observer(
         clarityState
           .importAndSaveClarityTasks(
             state.config.excludeProjects,
-            'ALL' === which ? 'ALL' : [which],
+            'ALL' === which ? 'ALL' : 'NEW' === which ? 'NEW' : [which],
             (info) => state.addMessage(info, 'info', 2000),
           )
           .catch((e) =>
@@ -155,6 +155,14 @@ export const TaskEditor = observer(
               }}
             >
               ALL
+            </MenuItem>
+            <MenuItem
+              onClick={() => {
+                setPopperOpen(false)
+                importClarityTasks('NEW')
+              }}
+            >
+              NEW
             </MenuItem>
             {clarityState.projectNames.map((pn) => (
               <MenuItem
