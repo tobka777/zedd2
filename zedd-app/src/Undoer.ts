@@ -8,7 +8,7 @@ import {
 } from 'mobx'
 
 export class Undoer {
-  private undoStack: any[] = []
+  public undoStack: any[] = []
   private trackUndoEvents: boolean = true
   private undoPosition: number = -1
 
@@ -48,7 +48,6 @@ export class Undoer {
                   newValue: updateChange.newValue,
                   name: updateChange.name,
                   oldValue: updateChange.oldValue,
-                  changedTime: new Date(),
                 })
               }
             }

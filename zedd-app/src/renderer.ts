@@ -169,7 +169,7 @@ async function setup() {
     }
   })
 
-  state.startInterval()
+  state.startInterval(() => powerMonitor?.getSystemIdleTime() ?? 0)
   state.config = config
   let lastAwaySlice: string | undefined
   state.idleSliceNotificationCallback = (when) => {

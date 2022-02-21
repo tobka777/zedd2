@@ -24,7 +24,6 @@ import {
   parse as dateParse,
   subSeconds,
 } from 'date-fns'
-import * as remote from '@electron/remote'
 import { promises as fsp } from 'fs'
 import { sum } from 'lodash'
 import { computed, observable, transaction, intercept, action, makeObservable } from 'mobx'
@@ -613,8 +612,11 @@ export class AppState {
     }
   }
 
-  public startInterval(): void {
-    this._interval = setInterval(this.trackTime, 5_000)
+  public startInterval(getUserIdleTime: () => number): void {
+    this._interval = setInterval(
+      () => this.trackTime(undefined, getUserIdleTime(), undefined),
+      5_000,
+    )
   }
   public cleanup(): void {
     if (this._interval) clearInterval(this._interval)
@@ -632,7 +634,7 @@ export class AppState {
    */
   public trackTime = (
     now = new Date(),
-    secondsSinceLastUserInput = remote?.powerMonitor?.getSystemIdleTime() ?? 0,
+    secondsSinceLastUserInput = 0,
     minIdleTimeInMin = Math.max(this?.config?.minIdleTimeMin ?? 15, 1),
   ): void => {
     this.undoer.notUndoable(() => {
