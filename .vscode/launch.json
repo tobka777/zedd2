@@ -5,6 +5,26 @@
   "version": "0.2.0",
   "configurations": [
     {
+      "args": [
+        "--timeout",
+        "999999",
+        "--require",
+        "ts-node/register",
+        "src/**/Undoer.test.ts"
+      ],
+      "cwd": "${workspaceFolder}/zedd-app",
+      "env": {
+        "TS_NODE_TRANSPILE_ONLY": "1",
+        "TS_NODE_COMPILER_OPTIONS": "{\"module\":\"commonjs\"}"
+      },
+      "internalConsoleOptions": "openOnSessionStart",
+      "name": "zedd-app: debug tests",
+      "program": "${workspaceFolder}/zedd-app/node_modules/mocha/bin/_mocha",
+      "request": "launch",
+      "skipFiles": ["<node_internals>/**"],
+      "type": "pwa-node"
+    },
+    {
       "type": "node",
       "request": "launch",
       "name": "electron@7.0.0 install",
