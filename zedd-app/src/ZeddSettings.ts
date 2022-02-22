@@ -53,7 +53,15 @@ export class ZeddSettings {
    */
   @observable
   @serializable(raw())
-  public urlaubClarityTaskIntId: number | undefined
+  public holidayClarityTaskIntId: number | undefined
+
+  /**
+   * int-id of the clarity-task to be used for vacation
+   *
+   */
+  @observable
+  @serializable(raw())
+  public vacationClarityTaskIntId: number | undefined
 
   /**
    * Name of the ERSATZ Task (not in Clarity!) You can configure the
@@ -120,4 +128,8 @@ export class ZeddSettings {
   @observable
   @serializable
   public clarityResourceName: string = ''
+
+  @observable
+  @serializable(raw())
+  public location: { code: string; label: string } = { code: '', label: '' }
 }

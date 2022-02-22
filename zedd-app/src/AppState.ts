@@ -539,11 +539,25 @@ export class AppState {
   )
 
   public fillErsatz(when: Interval): void {
-    for (const day of eachDayOfInterval(when)) {
-      this.addSliceIfDayEmpty(
-        this.makeFullDaySlice(day, this.getTaskForName(this.config.ersatzTask)),
-      )
-    }
+    this.getHolidays((when.start as Date).getFullYear()).then((holidays) => {
+      for (const day of eachDayOfInterval(when)) {
+        let task = this.getTaskForName(this.config.ersatzTask)
+        if (this.config.holidayClarityTaskIntId) {
+          holidays.forEach((holiday: { date: string }) => {
+            if (day.toLocaleDateString() === new Date(holiday.date).toLocaleDateString()) {
+              task = new Task('HOLIDAY', this.config.holidayClarityTaskIntId)
+            }
+          })
+        }
+        this.addSliceIfDayEmpty(this.makeFullDaySlice(day, task))
+      }
+    })
+  }
+
+  private async getHolidays(year: number): Promise<any> {
+    let url =
+      'https://date.nager.at/api/v3/publicholidays/' + year + '/' + this.config.location.code
+    return (await fetch(url)).json()
   }
 
   public clearErsatz(when: Interval): void {

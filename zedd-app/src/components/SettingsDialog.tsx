@@ -16,6 +16,7 @@ import {
   Switch,
   RadioGroup,
   Radio,
+  Autocomplete,
 } from '@mui/material'
 import { useTheme } from '@mui/material/styles'
 import * as React from 'react'
@@ -29,6 +30,7 @@ import { ClarityTaskSelect } from './ClarityTaskSelect'
 import { ClarityState } from '../ClarityState'
 import { ZeddSettings } from '../ZeddSettings'
 import { toggle, useDebouncedCallback } from '../util'
+import { countries } from '../countries'
 
 // const _inExternal = (e: React.MouseEvent<HTMLAnchorElement>) => {
 //   openExternal(e.currentTarget.href)
@@ -218,16 +220,52 @@ export const SettingsDialog = observer(
                 }}
               />
             </Grid>
-
+            <Grid item xs={4}>
+              <FormLabel>Clarity Vacation Account</FormLabel>
+            </Grid>
+            <Grid item xs={8}>
+              <ClarityTaskSelect
+                clarityState={clarityState}
+                value={settings.vacationClarityTaskIntId}
+                onChange={(newIntId) => (settings.vacationClarityTaskIntId = newIntId)}
+              />
+            </Grid>
             <Grid item xs={4}>
               <FormLabel>Clarity Holiday Account</FormLabel>
             </Grid>
             <Grid item xs={8}>
               <ClarityTaskSelect
                 clarityState={clarityState}
-                value={settings.urlaubClarityTaskIntId}
-                onChange={(newIntId) => (settings.urlaubClarityTaskIntId = newIntId)}
+                value={settings.holidayClarityTaskIntId}
+                onChange={(newIntId) => (settings.holidayClarityTaskIntId = newIntId)}
               />
+            </Grid>
+            <Grid item xs={4}>
+              <FormLabel>Location</FormLabel>
+            </Grid>
+            <Grid item xs={8}>
+              <Autocomplete
+                options={countries}
+                value={settings.location}
+                isOptionEqualToValue={(option, value) => option.code === value.code}
+                onChange={(_, newCountrie) => {
+                  settings.location = newCountrie
+                }}
+                renderOption={(props, option) => (
+                  <li {...props}>
+                    <div>{option.label}</div>
+                  </li>
+                )}
+                renderInput={(params) => (
+                  <TextField
+                    {...params}
+                    label='Choose a country'
+                    inputProps={{
+                      ...params.inputProps,
+                    }}
+                  />
+                )}
+              ></Autocomplete>
             </Grid>
 
             <Grid item xs={4}>
