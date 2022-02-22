@@ -256,7 +256,9 @@ export const SettingsDialog = observer(
             </Grid>
             <Grid item xs={8}>
               <Autocomplete
-                style={{ display: settings.location!.code === 'DE' ? 'block' : 'none' }}
+                style={{
+                  display: settings.location && settings.location.code === 'DE' ? 'block' : 'none',
+                }}
                 options={federalStates}
                 value={settings.federalState}
                 isOptionEqualToValue={(option, value) => option.code === value.code}
