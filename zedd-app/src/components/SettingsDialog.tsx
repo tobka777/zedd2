@@ -26,11 +26,10 @@ import { MoreHoriz as PickFileIcon } from '@mui/icons-material'
 import { observer } from 'mobx-react-lite'
 import { uniq } from 'lodash'
 
-import { ClarityTaskSelect } from './ClarityTaskSelect'
 import { ClarityState } from '../ClarityState'
 import { ZeddSettings } from '../ZeddSettings'
 import { toggle, useDebouncedCallback } from '../util'
-import { countries } from '../countries'
+import { countries, federalStates } from '../holidays'
 
 // const _inExternal = (e: React.MouseEvent<HTMLAnchorElement>) => {
 //   openExternal(e.currentTarget.href)
@@ -221,26 +220,6 @@ export const SettingsDialog = observer(
               />
             </Grid>
             <Grid item xs={4}>
-              <FormLabel>Clarity Vacation Account</FormLabel>
-            </Grid>
-            <Grid item xs={8}>
-              <ClarityTaskSelect
-                clarityState={clarityState}
-                value={settings.vacationClarityTaskIntId}
-                onChange={(newIntId) => (settings.vacationClarityTaskIntId = newIntId)}
-              />
-            </Grid>
-            <Grid item xs={4}>
-              <FormLabel>Clarity Holiday Account</FormLabel>
-            </Grid>
-            <Grid item xs={8}>
-              <ClarityTaskSelect
-                clarityState={clarityState}
-                value={settings.holidayClarityTaskIntId}
-                onChange={(newIntId) => (settings.holidayClarityTaskIntId = newIntId)}
-              />
-            </Grid>
-            <Grid item xs={4}>
               <FormLabel>Location</FormLabel>
             </Grid>
             <Grid item xs={8}>
@@ -250,6 +229,11 @@ export const SettingsDialog = observer(
                 isOptionEqualToValue={(option, value) => option.code === value.code}
                 onChange={(_, newCountrie) => {
                   settings.location = newCountrie
+                  if (newCountrie?.code !== 'DE') {
+                    settings.federalState = null
+                  } else {
+                    settings.federalState = { label: '', code: '' }
+                  }
                 }}
                 renderOption={(props, option) => (
                   <li {...props}>
@@ -267,7 +251,34 @@ export const SettingsDialog = observer(
                 )}
               ></Autocomplete>
             </Grid>
-
+            <Grid item xs={4}>
+              <FormLabel>Federal State</FormLabel>
+            </Grid>
+            <Grid item xs={8}>
+              <Autocomplete
+                style={{ display: settings.location!.code === 'DE' ? 'block' : 'none' }}
+                options={federalStates}
+                value={settings.federalState}
+                isOptionEqualToValue={(option, value) => option.code === value.code}
+                onChange={(_, newState) => {
+                  settings.federalState = newState
+                }}
+                renderOption={(props, option) => (
+                  <li {...props}>
+                    <div>{option.label}</div>
+                  </li>
+                )}
+                renderInput={(params) => (
+                  <TextField
+                    {...params}
+                    label='Choose your state'
+                    inputProps={{
+                      ...params.inputProps,
+                    }}
+                  />
+                )}
+              ></Autocomplete>
+            </Grid>
             <Grid item xs={4}>
               <FormLabel>Ersatz Task</FormLabel>
             </Grid>

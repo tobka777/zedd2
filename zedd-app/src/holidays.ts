@@ -1,4 +1,25 @@
-export const countries: readonly any[] = [
+export async function getHolidays(
+  year: number,
+  countryCode: string,
+  stateCode?: string,
+): Promise<Date[]> {
+  if (countryCode !== '') {
+    let url = 'https://date.nager.at/api/v3/publicholidays/' + year + '/' + countryCode
+    const response = await fetch(url)
+    const holidays = await response.json()
+    let filteredDays: any[] = holidays
+    if (stateCode && stateCode !== '') {
+      filteredDays = holidays.filter(
+        (holiday: { counties: string[]; global: boolean }) =>
+          (holiday.counties && holiday.counties.includes(stateCode)) || holiday.global,
+      )
+    }
+    return filteredDays.map((holiday: { date: string }) => new Date(holiday.date))
+  }
+  return []
+}
+
+export const countries: ReadonlyArray<{ code: string; label: string }> = [
   { code: '', label: '' },
   { code: 'AD', label: 'Andorra' },
   {
@@ -9,7 +30,6 @@ export const countries: readonly any[] = [
   {
     code: 'AG',
     label: 'Antigua and Barbuda',
-    phone: '1-',
   },
   { code: 'AI', label: 'Anguilla' },
   { code: 'AL', label: 'Albania' },
@@ -375,4 +395,24 @@ export const countries: readonly any[] = [
   { code: 'ZA', label: 'South Africa' },
   { code: 'ZM', label: 'Zambia' },
   { code: 'ZW', label: 'Zimbabwe' },
+]
+
+export const federalStates: ReadonlyArray<{ code: string; label: string }> = [
+  { code: 'DE-BW', label: 'Baden Württemberg' },
+  { code: 'DE-BY', label: 'Bayern' },
+  { code: 'DE-ST', label: 'Sachsen-Anhalt' },
+  { code: 'DE-BE', label: 'Berlin' },
+  { code: 'DE-BB', label: 'Brandenburg' },
+  { code: 'DE-HE', label: 'Hessen' },
+  { code: 'DE-NW', label: 'Nordrhein-Westfalen' },
+  { code: 'DE-RP', label: 'Rheinland-Pfalz' },
+  { code: 'DE-SL', label: 'Saarland' },
+  { code: 'DE-TH', label: 'Thüringen' },
+  { code: 'DE-MV', label: 'Mecklenburg-Vorpommern' },
+  { code: 'DE-SN', label: 'Sachsen' },
+  { code: 'DE-HB', label: 'Bremen' },
+  { code: 'DE-HH', label: 'Hamburg' },
+  { code: 'DE-NI', label: 'Niedersachsen' },
+  { code: 'DE-SH', label: 'Schleswig-Holstein' },
+  { code: '', label: '' },
 ]

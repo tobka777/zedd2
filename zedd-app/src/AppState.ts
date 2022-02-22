@@ -538,29 +538,16 @@ export class AppState {
     { debugNameGenerator: (t) => `getTaskMinutes${t?.name}` },
   )
 
-  public fillErsatz(when: Interval): void {
-    this.getHolidays((when.start as Date).getFullYear()).then((holidays) => {
-      for (const day of eachDayOfInterval(when)) {
-        let task = this.getTaskForName(this.config.ersatzTask)
-        if (this.config.holidayClarityTaskIntId && holidays.length > 0) {
-          holidays.forEach((holiday: { date: string }) => {
-            if (day.toLocaleDateString() === new Date(holiday.date).toLocaleDateString()) {
-              task = new Task('HOLIDAY', this.config.holidayClarityTaskIntId)
-            }
-          })
+  public fillErsatz(when: Interval, holidays: Date[]): void {
+    for (const day of eachDayOfInterval(when)) {
+      let task = this.getTaskForName(this.config.ersatzTask)
+      holidays.forEach((holiday) => {
+        if (isSameDay(day, holiday)) {
+          task = this.getTaskForName('HOLIDAY')
         }
-        this.addSliceIfDayEmpty(this.makeFullDaySlice(day, task))
-      }
-    })
-  }
-
-  private async getHolidays(year: number): Promise<any> {
-    if (this.config.location.code) {
-      let url =
-        'https://date.nager.at/api/v3/publicholidays/' + year + '/' + this.config.location.code
-      return (await fetch(url)).json()
+      })
+      this.addSliceIfDayEmpty(this.makeFullDaySlice(day, task))
     }
-    return []
   }
 
   public clearErsatz(when: Interval): void {
@@ -597,7 +584,7 @@ export class AppState {
     return (
       this.tasks.find((t) => taskNameLC === t.name.toLowerCase()) ||
       this.assignedIssueTasks.find((t) => taskNameLC === t.name.toLowerCase()) ||
-      new Task(taskName, undefined)
+      new Task(taskName)
     )
   }
 
