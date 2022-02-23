@@ -5,15 +5,11 @@ export async function getRangeHolidays(
   countryCode: string,
   stateCode?: string,
 ): Promise<Date[]> {
-  try {
-    let dates: Date[] = []
-    for (const year of eachYearOfInterval(range)) {
-      dates = [...dates, ...(await getHolidays(getYear(year), countryCode, stateCode))]
-    }
-    return dates
-  } catch (e) {
-    throw new Error('Error while getRangeHolidays: ' + e)
+  let dates: Date[] = []
+  for (const year of eachYearOfInterval(range)) {
+    dates = [...dates, ...(await getHolidays(getYear(year), countryCode, stateCode))]
   }
+  return dates
 }
 
 export async function getHolidays(
@@ -21,24 +17,19 @@ export async function getHolidays(
   countryCode: string,
   stateCode?: string,
 ): Promise<Date[]> {
-  try {
-    if (countryCode !== '') {
-      let url = 'https://date.nager.at/api/v3/publicholidays/' + year + '/' + countryCode
-      const response = await fetch(url)
-      const holidays: { counties: string[]; global: boolean; date: string }[] =
-        await response.json()
-      let filteredDays: any[] = holidays
-      if (stateCode && stateCode !== '') {
-        filteredDays = holidays.filter(
-          (holiday) => (holiday.counties && holiday.counties.includes(stateCode)) || holiday.global,
-        )
-      }
-      return filteredDays.map((holiday: { date: string }) => new Date(holiday.date))
+  if (countryCode !== '') {
+    let url = 'https://date.nager.at/api/v3/publicholidays/' + year + '/' + countryCode
+    const response = await fetch(url)
+    const holidays: { counties: string[]; global: boolean; date: string }[] = await response.json()
+    let filteredDays: any[] = holidays
+    if (stateCode && stateCode !== '') {
+      filteredDays = holidays.filter(
+        (holiday) => (holiday.counties && holiday.counties.includes(stateCode)) || holiday.global,
+      )
     }
-    return []
-  } catch (e) {
-    throw new Error('Error while getHolidays: ' + e)
+    return filteredDays.map((holiday: { date: string }) => new Date(holiday.date))
   }
+  return []
 }
 export const countries: ReadonlyArray<{ code: string; label: string }> = [
   { code: 'AR', label: 'Argentina' },

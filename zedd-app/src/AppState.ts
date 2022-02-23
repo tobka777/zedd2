@@ -46,7 +46,6 @@ import {
   getDefaultModelSchema,
 } from 'serializr'
 
-import feiertage from './feiertage.json'
 import {
   abs,
   isoWeekInterval,
@@ -724,14 +723,6 @@ export class AppState {
       this.addSlice(newSlice)
     }
     return dayIsEmpty
-  }
-
-  public importHolidays(): void {
-    for (const holidayDateStr of Object.keys(feiertage)) {
-      const date = new Date(holidayDateStr)
-      const slice = this.makeFullDaySlice(date, this.getTaskForName('URLAUB'))
-      this.addSliceIfDayEmpty(slice)
-    }
   }
 
   public toJsonString(): string {

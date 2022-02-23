@@ -254,18 +254,21 @@ export const AppBody = observer(
                 <Button
                   size='large'
                   onClick={async (_) => {
+                    let holidays: Date[] = []
                     try {
-                      state.fillErsatz(
+                      holidays = await getRangeHolidays(
                         state.showing,
-                        await getRangeHolidays(
-                          state.showing,
-                          settings.location!.code,
-                          settings.federalState?.code,
-                        ),
+                        settings.location!.code,
+                        settings.federalState?.code,
                       )
                     } catch (e) {
-                      throw new Error('Error while filling slices: ' + e)
+                      console.error('Error while filling slices: ' + e)
+                      state.addMessage(
+                        'Could not load holidays, the slices will filled only with ERSATZ task',
+                        e,
+                      )
                     }
+                    state.fillErsatz(state.showing, holidays)
                   }}
                 >
                   Ersatz
