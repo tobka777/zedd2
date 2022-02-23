@@ -540,12 +540,9 @@ export class AppState {
 
   public fillErsatz(when: Interval, holidays: Date[]): void {
     for (const day of eachDayOfInterval(when)) {
-      let task = this.getTaskForName(this.config.ersatzTask)
-      holidays.forEach((holiday) => {
-        if (isSameDay(day, holiday)) {
-          task = this.getTaskForName('HOLIDAY')
-        }
-      })
+      const task = holidays.some((holiday) => isSameDay(day, holiday))
+        ? this.getTaskForName('HOLIDAY')
+        : this.getTaskForName(this.config.ersatzTask)
       this.addSliceIfDayEmpty(this.makeFullDaySlice(day, task))
     }
   }
