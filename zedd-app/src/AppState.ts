@@ -538,6 +538,7 @@ export class AppState {
     { debugNameGenerator: (t) => `getTaskMinutes${t?.name}` },
   )
 
+  @action
   public fillErsatz(when: Interval, holidays: Date[]): void {
     for (const day of eachDayOfInterval(when)) {
       const task = holidays.some((holiday) => isSameDay(day, holiday))
