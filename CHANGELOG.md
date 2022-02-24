@@ -1,8 +1,7 @@
 - Feature: Added a filter for searching projects in the clarity view
 - Feature: Added a new dropdown item 'NEW' in import button menu, to import only projects which have not been imported yet
 - Feature: Added the path of chrome and chromedriver in the settings dialog
-- Feature: By clicking the ERSATZ button, the zeddapp fills empty days with ERSATZ task and if the day is a holiday, then the app fills these days with the selected holiday account in the settings
-- Feature: Added Holiday and vacation account selection field in the settings
+- Feature: ERSATZ button now takes into account public holidays. **Configure your location in the settings to enable this**.
 
 ## [2.9.1]
 
