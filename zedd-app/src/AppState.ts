@@ -46,7 +46,6 @@ import {
   getDefaultModelSchema,
 } from 'serializr'
 
-import feiertage from './feiertage.json'
 import {
   abs,
   isoWeekInterval,
@@ -538,11 +537,13 @@ export class AppState {
     { debugNameGenerator: (t) => `getTaskMinutes${t?.name}` },
   )
 
-  public fillErsatz(when: Interval): void {
+  @action
+  public fillErsatz(when: Interval, holidays: Date[]): void {
     for (const day of eachDayOfInterval(when)) {
-      this.addSliceIfDayEmpty(
-        this.makeFullDaySlice(day, this.getTaskForName(this.config.ersatzTask)),
-      )
+      const task = holidays.some((holiday) => isSameDay(day, holiday))
+        ? this.getTaskForName('HOLIDAY')
+        : this.getTaskForName(this.config.ersatzTask)
+      this.addSliceIfDayEmpty(this.makeFullDaySlice(day, task))
     }
   }
 
@@ -580,7 +581,7 @@ export class AppState {
     return (
       this.tasks.find((t) => taskNameLC === t.name.toLowerCase()) ||
       this.assignedIssueTasks.find((t) => taskNameLC === t.name.toLowerCase()) ||
-      new Task(taskName, undefined)
+      new Task(taskName)
     )
   }
 
@@ -722,14 +723,6 @@ export class AppState {
       this.addSlice(newSlice)
     }
     return dayIsEmpty
-  }
-
-  public importHolidays(): void {
-    for (const holidayDateStr of Object.keys(feiertage)) {
-      const date = new Date(holidayDateStr)
-      const slice = this.makeFullDaySlice(date, this.getTaskForName('URLAUB'))
-      this.addSliceIfDayEmpty(slice)
-    }
   }
 
   public toJsonString(): string {

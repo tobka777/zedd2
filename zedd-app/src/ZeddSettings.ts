@@ -48,14 +48,6 @@ export class ZeddSettings {
   public excludeProjects = [] as string[]
 
   /**
-   * int-id of the clarity-task to be used for holidays
-   *
-   */
-  @observable
-  @serializable(raw())
-  public urlaubClarityTaskIntId: number | undefined
-
-  /**
    * Name of the ERSATZ Task (not in Clarity!) You can configure the
    * Clarity-Account in the app.
    */
@@ -120,4 +112,12 @@ export class ZeddSettings {
   @observable
   @serializable
   public clarityResourceName: string = ''
+
+  @observable
+  @serializable(raw())
+  public location: { code: string; label: string } | null = { code: '', label: '' }
+
+  @observable
+  @serializable(raw())
+  public federalState: { code: string; label: string } | null = { code: '', label: '' }
 }

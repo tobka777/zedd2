@@ -159,6 +159,7 @@ export const AppGui = observer(
               display={!state.hoverMode}
               taskSelectRef={taskSelectRef}
               getLinksFromString={getLinksFromString}
+              settings={state.config}
             />
           </ErrorBoundary>
         </ThemeProvider>

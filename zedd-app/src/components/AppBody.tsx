@@ -44,6 +44,8 @@ import { TaskEditor } from './TaskEditor'
 import { ArrowBack, ArrowForward, Delete as DeleteIcon } from '@mui/icons-material'
 import { suggestedTaskMenuItems } from '../menuUtil'
 import { DateRangePicker } from './DateRangePicker'
+import { getRangeHolidays } from '../holidays'
+import { ZeddSettings } from '../ZeddSettings'
 
 const useStyles = makeStyles((theme) => ({
   contentRoot: {
@@ -68,6 +70,7 @@ export interface AppBodyProps {
   getLinksFromString: (s: string) => [string, string][]
   display: boolean
   taskSelectRef?: (r: HTMLInputElement) => void
+  settings: ZeddSettings
 }
 
 export const AppBody = observer(
@@ -78,6 +81,7 @@ export const AppBody = observer(
     display,
     taskSelectRef,
     getLinksFromString,
+    settings,
   }: AppBodyProps) => {
     const classes = useStyles()
 
@@ -247,7 +251,26 @@ export const AppBody = observer(
             </Button>
             <ButtonGroup variant='outlined'>
               <Tooltip title='Fill currently shown empty days with ERSATZ task.' arrow>
-                <Button size='large' onClick={(_) => state.fillErsatz(state.showing)}>
+                <Button
+                  size='large'
+                  onClick={async (_) => {
+                    let holidays: Date[] = []
+                    try {
+                      holidays = await getRangeHolidays(
+                        state.showing,
+                        settings.location!.code,
+                        settings.federalState?.code,
+                      )
+                    } catch (e) {
+                      console.error('Error while filling slices: ' + e)
+                      state.addMessage(
+                        'Could not load holidays, the slices will filled only with ERSATZ task',
+                        e,
+                      )
+                    }
+                    state.fillErsatz(state.showing, holidays)
+                  }}
+                >
                   Ersatz
                 </Button>
               </Tooltip>
