@@ -220,7 +220,7 @@ export const SettingsDialog = observer(
               />
             </Grid>
             <Grid item xs={4}>
-              <FormLabel>Location</FormLabel>
+              <FormLabel>Location (for public holidays)</FormLabel>
             </Grid>
             <Grid item xs={8}>
               <Autocomplete

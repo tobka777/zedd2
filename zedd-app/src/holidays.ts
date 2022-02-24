@@ -21,13 +21,13 @@ export async function getHolidays(
     let url = 'https://date.nager.at/api/v3/publicholidays/' + year + '/' + countryCode
     const response = await fetch(url)
     const holidays: { counties: string[]; global: boolean; date: string }[] = await response.json()
-    let filteredDays: any[] = holidays
+    let filteredDays = holidays
     if (stateCode && stateCode !== '') {
       filteredDays = holidays.filter(
         (holiday) => (holiday.counties && holiday.counties.includes(stateCode)) || holiday.global,
       )
     }
-    return filteredDays.map((holiday: { date: string }) => new Date(holiday.date))
+    return filteredDays.map((holiday) => new Date(holiday.date))
   }
   return []
 }
