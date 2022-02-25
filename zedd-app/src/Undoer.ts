@@ -8,7 +8,7 @@ import {
 } from 'mobx'
 
 export class Undoer {
-  public undoStack: any[] = []
+  private undoStack: any[] = []
   private trackUndoEvents: boolean = true
   private undoPosition: number = -1
 
@@ -24,8 +24,12 @@ export class Undoer {
             | IObjectDidChange<any>,
         ) => {
           if (this.trackUndoEvents) {
-            this.undoStack.length = this.undoPosition + 1
-            this.undoPosition = this.undoStack.length
+            if (change.type === 'splice' || change.type === 'update') {
+              this.undoStack.length = this.undoPosition + 1
+              this.undoPosition = this.undoStack.length
+            } else {
+              return
+            }
 
             if (change.type === 'splice') {
               this.undoStack.push({

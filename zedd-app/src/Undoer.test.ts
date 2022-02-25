@@ -1,25 +1,180 @@
 import * as assert from 'assert'
-import { makeAutoObservable, observable, makeObservable } from 'mobx'
+import { makeAutoObservable } from 'mobx'
 import { Undoer } from './Undoer'
 
 describe('Undoer', () => {
   describe('makeUndoable', () => {
-    let undoer: Undoer = new Undoer()
+    let undoer = new Undoer()
     let a = { foo: [] as any[] }
-    a = makeObservable(a, { foo: observable })
 
-    undoer.makeUndoable(a)
+    a = makeAutoObservable(a)
+    undoer.makeUndoable(a.foo)
 
-    it('is undoable', () => {
+    function reset(): void {
+      undoer.reset()
+      a.foo.length = 0
+    }
+
+    it('reset', () => {
       let t = { name: 'Test' }
+      t = makeAutoObservable(t)
 
       a.foo.push(t)
-      assert.equal(a.foo.length, 1, 'push success')
 
-      assert.equal(undoer.undoStack.length, 1, 'stack -size')
+      undoer.reset()
 
       undoer.undo()
-      assert.equal(a.foo.length, 0, 'undo success')
+      undoer.undo()
+
+      assert.equal(a.foo.length, 1)
+
+      undoer.redo()
+      undoer.redo()
+
+      assert.equal(a.foo.length, 1)
+    })
+
+    it('undo', () => {
+      reset()
+
+      let t = { name: 'Test' }
+      t = makeAutoObservable(t)
+
+      a.foo.push(t)
+
+      assert.equal(a.foo.length, 1)
+
+      undoer.undo()
+
+      assert.equal(a.foo.length, 0)
+
+      undoer.redo()
+
+      assert.equal(a.foo.length, 1)
+
+      t.name = 'Foo'
+
+      assert.equal(t.name, 'Foo')
+
+      undoer.undo()
+
+      assert.equal(t.name, 'Test')
+    })
+
+    it('undo and redo', () => {
+      reset()
+
+      let t = { name: 'Test' }
+      let v = { name: 'TestB' }
+
+      t = makeAutoObservable(t)
+      v = makeAutoObservable(v)
+
+      a.foo.push(t)
+      a.foo.push(v)
+
+      undoer.undo()
+      undoer.undo()
+
+      assert.equal(a.foo.length, 0)
+
+      undoer.redo()
+
+      assert.equal(a.foo.length, 1)
+      assert.equal(a.foo[0].name, 'Test')
+
+      undoer.redo()
+
+      assert.equal(a.foo.length, 2)
+      assert.equal(a.foo[1].name, 'TestB')
+    })
+
+    it('undo, change and redo', () => {
+      reset()
+
+      let t = { name: 'TestA' }
+      let v = { name: 'TestB' }
+      let b = { name: 'TestC' }
+      let n = { name: 'TestD' }
+
+      t = makeAutoObservable(t)
+      v = makeAutoObservable(v)
+
+      a.foo.push(t)
+      a.foo.push(v)
+      a.foo.push(b)
+
+      undoer.undo()
+      undoer.undo()
+
+      a.foo.push(n)
+
+      undoer.redo()
+
+      assert.equal(a.foo.length, 2)
+
+      undoer.redo()
+
+      assert.equal(a.foo.length, 2)
+    })
+
+    it('undo, change, redo and undo', () => {
+      reset()
+
+      let t = { name: 'TestA' }
+      let v = { name: 'TestB' }
+      let b = { name: 'TestC' }
+      let n = { name: 'TestD' }
+
+      t = makeAutoObservable(t)
+      v = makeAutoObservable(v)
+
+      a.foo.push(t)
+      a.foo.push(v)
+      a.foo.push(b)
+
+      undoer.undo()
+      undoer.undo()
+
+      a.foo.push(n)
+
+      undoer.redo()
+
+      undoer.undo()
+
+      assert.equal(a.foo.length, 1)
+
+      undoer.undo()
+
+      assert.equal(a.foo.length, 0)
+
+      undoer.redo()
+      undoer.redo()
+
+      assert.equal(a.foo.length, 2)
+      assert.equal(a.foo[1].name, 'TestD')
+    })
+
+    it('not undoable', () => {
+      reset()
+      reset()
+
+      let t = { name: 'TestA' }
+      t = makeAutoObservable(t)
+
+      undoer.notUndoable(() => {
+        a.foo.push(t)
+        t.name = 'TestB'
+      })
+
+      assert.equal(a.foo.length, 1)
+      assert.equal(t.name, 'TestB')
+
+      undoer.undo()
+      undoer.undo()
+
+      assert.equal(a.foo.length, 1)
+      assert.equal(t.name, 'TestB')
     })
   })
 })
