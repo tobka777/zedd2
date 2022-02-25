@@ -176,5 +176,22 @@ describe('Undoer', () => {
       assert.equal(a.foo.length, 1)
       assert.equal(t.name, 'TestB')
     })
+
+    it('new object properties are undoable', () => {
+      reset()
+
+      let foo = { x: undefined as any }
+      foo = makeAutoObservable(foo)
+
+      undoer.makeUndoable(foo)
+
+      foo.x = { bar: 2 }
+
+      foo.x.bar = 3
+
+      undoer.undo()
+
+      assert.equal(foo.x.bar, 2)
+    })
   })
 })

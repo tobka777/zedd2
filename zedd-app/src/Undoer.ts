@@ -11,6 +11,7 @@ export class Undoer {
   private undoStack: any[] = []
   private trackUndoEvents: boolean = true
   private undoPosition: number = -1
+  private readonly undoStateKey = Symbol('undoStateKey')
 
   makeUndoable = (object: any): void => {
     if (!object.x) {
@@ -53,14 +54,20 @@ export class Undoer {
                   name: updateChange.name,
                   oldValue: updateChange.oldValue,
                 })
+                if (!this.isPrimitive(updateChange.newValue)) {
+                  this.makeUndoable(updateChange.newValue)
+                }
               }
             }
           }
         },
       )
-      let x = Symbol()
-      object[x] = xx
+      object[this.undoStateKey] = xx
     }
+  }
+
+  private isPrimitive(element: any): boolean {
+    return element !== Object(element)
   }
 
   public undo(): void {
