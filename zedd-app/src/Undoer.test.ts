@@ -155,7 +155,7 @@ describe('Undoer', () => {
       assert.equal(a.foo[1].name, 'TestD')
     })
 
-    it('not undoable', () => {
+    it('action not undoable', () => {
       reset()
       reset()
 
@@ -177,7 +177,7 @@ describe('Undoer', () => {
       assert.equal(t.name, 'TestB')
     })
 
-    it('new object properties are undoable', () => {
+    it('new object propertie also undoable', () => {
       reset()
 
       let foo = { x: undefined as any }
@@ -189,9 +189,23 @@ describe('Undoer', () => {
 
       foo.x.bar = 3
 
+      assert.equal(foo.x.bar, 3)
+
       undoer.undo()
 
       assert.equal(foo.x.bar, 2)
+
+      undoer.undo()
+
+      assert.equal(foo.x, undefined)
+
+      undoer.redo()
+
+      assert.equal(foo.x.bar, 2)
+
+      undoer.redo()
+
+      assert.equal(foo.x.bar, 3)
     })
   })
 })
