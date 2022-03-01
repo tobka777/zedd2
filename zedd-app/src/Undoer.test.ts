@@ -1,5 +1,5 @@
 import * as assert from 'assert'
-import { makeAutoObservable } from 'mobx'
+import { makeAutoObservable, observable } from 'mobx'
 import { Undoer } from './Undoer'
 
 describe('Undoer', () => {
@@ -206,6 +206,24 @@ describe('Undoer', () => {
       undoer.redo()
 
       assert.equal(foo.x.bar, 3)
+    })
+
+    it('array did change', () => {
+      reset()
+
+      let foo = observable([1, 1, 1, 1])
+
+      undoer.makeUndoable(foo)
+
+      foo[1] = 2
+
+      undoer.undo()
+
+      assert.equal(foo[1], 1)
+
+      undoer.redo()
+
+      assert.equal(foo[1], 2)
     })
   })
 })
