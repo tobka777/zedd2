@@ -57,8 +57,8 @@ export class Undoer {
               } else {
                 const updateChange = change as IObjectDidChange & { type: 'update' }
                 this.undoStack.push({
-                  type: change.type,
-                  element: change.object,
+                  type: updateChange.type,
+                  element: updateChange.object,
                   newValue: updateChange.newValue,
                   name: updateChange.name,
                   oldValue: updateChange.oldValue,
