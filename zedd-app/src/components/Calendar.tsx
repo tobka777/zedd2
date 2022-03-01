@@ -266,7 +266,12 @@ const CalendarBase = <T extends Interval>({
     transaction(() => {
       local.currentlyDragging.forEach((cd) => {
         if (local.currentPositionValid) {
-          onSliceChange(cd.block!, cd.currentDragPosition!)
+          if (
+            cd.block!.start !== cd.currentDragPosition!.start ||
+            cd.block!.end !== cd.currentDragPosition!.end
+          ) {
+            onSliceChange(cd.block!, cd.currentDragPosition!)
+          }
         }
         cd.offsetDragDate = 0
       })

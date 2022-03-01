@@ -93,7 +93,6 @@ app.on('ready', () => {
     details.requestHeaders['User-Agent'] = 'zedd-app'
     callback({ cancel: false, requestHeaders: details.requestHeaders })
   })
-
   createWindow()
 })
 

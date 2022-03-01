@@ -102,12 +102,13 @@ function setupAutoUpdater(state: AppState, config: ZeddSettings) {
 }
 
 const getMenuItems = (state: AppState) => [
+  { label: 'Undo (Ctrl+Z)', click: () => state.undo() },
+  { label: 'Redo (Ctrl+Y)', click: () => state.redo() },
   {
     label: 'Open Config Dir',
     click: () => shell.showItemInFolder(userConfigFile),
   },
   { label: 'Edit Settings', click: () => (state.settingsDialogOpen = true) },
-
   { label: 'Github', click: () => shell.openExternal('https://github.com/NaridaL/zedd2') },
   { label: 'Open Dev', click: () => getCurrentWindow().webContents.openDevTools() },
   { label: 'Reload Config', click: () => getCurrentWindow().reload() },
@@ -159,7 +160,16 @@ async function setup() {
     console.error('Could not load state from ' + path.join(saveDir, 'data'))
     state = new AppState()
   }
-  state.startInterval()
+
+  const undoAndRedo = (e: KeyboardEvent) => {
+    if ((e.ctrlKey && e.key === 'z') || (e.ctrlKey && e.key === 'Z' && e.shiftKey)) {
+      state.undo()
+    } else if (e.ctrlKey && e.key === 'y') {
+      state.redo()
+    }
+  }
+
+  state.startInterval(() => powerMonitor?.getSystemIdleTime() ?? 0)
   state.config = config
   let lastAwaySlice: string | undefined
   state.idleSliceNotificationCallback = (when) => {
@@ -314,6 +324,7 @@ async function setup() {
     }
   }
 
+  currentWindowEvents.push(['keydown', undoAndRedo])
   currentWindowEvents.push(['resize', saveWindowBounds])
   currentWindowEvents.push(['maximize', saveWindowBounds])
   currentWindowEvents.push(['maximize', hoverModeOff])

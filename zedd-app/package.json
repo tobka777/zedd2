@@ -12,7 +12,7 @@
     "publish": "electron-forge publish",
     "genicons": "rimraf icons && ts-node -P genIcons.tsconfig.json genIcons.tsx",
     "prettier": "prettier --write src/**/*.{ts,tsx,js,d.ts,json}",
-    "test": "cross-env TS_NODE_TRANSPILE_ONLY=1 TS_NODE_COMPILER_OPTIONS={\\\"module\\\":\\\"commonjs\\\"} mocha --require ts-node/register src/**/*.test.ts",
+    "test": "cross-env TS_NODE_TRANSPILE_ONLY=1 TS_NODE_COMPILER_OPTIONS={\\\"module\\\":\\\"commonjs\\\"} mocha --require ts-node/register src/**/Undoer.test.ts",
     "test:watch": "npm t -- --extension ts,tsx --watch",
     "tslint": "tslint --project .",
     "lint": "eslint src --ext .ts,.js,.tsx,.jsx"
