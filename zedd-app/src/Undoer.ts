@@ -13,9 +13,9 @@ export class Undoer {
   private undoPosition: number = -1
   private readonly undoStateKey = Symbol('undoStateKey')
 
-  makeUndoable = (object: any): void => {
-    if (!object.x) {
-      const xx = observe(
+  public makeUndoable = (object: any): void => {
+    if (!object[this.undoStateKey] && !this.isPrimitive(object)) {
+      object[this.undoStateKey] = observe(
         object,
         (
           change:
@@ -45,6 +45,15 @@ export class Undoer {
               })
             } else if (change.type === 'update') {
               if (isObservableArray(change.object)) {
+                const updateChange = change as IArrayDidChange & { type: 'update' }
+                this.undoStack.push({
+                  type: updateChange.type,
+                  element: updateChange.object,
+                  newValue: updateChange.newValue,
+                  index: updateChange.index,
+                  oldValue: updateChange.oldValue,
+                })
+                this.makeUndoable(updateChange.newValue)
               } else {
                 const updateChange = change as IObjectDidChange & { type: 'update' }
                 this.undoStack.push({
@@ -54,20 +63,13 @@ export class Undoer {
                   name: updateChange.name,
                   oldValue: updateChange.oldValue,
                 })
-                if (!this.isPrimitive(updateChange.newValue)) {
-                  this.makeUndoable(updateChange.newValue)
-                }
+                this.makeUndoable(updateChange.newValue)
               }
             }
           }
         },
       )
-      object[this.undoStateKey] = xx
     }
-  }
-
-  private isPrimitive(element: any): boolean {
-    return element !== Object(element)
   }
 
   public undo(): void {
@@ -79,7 +81,7 @@ export class Undoer {
         if (action.type === 'splice') {
           action.element.splice(action.index, action.added.length, ...action.removed)
         } else if (action.type === 'update') {
-          action.element[action.name] = action.oldValue
+          action.element[action.name ? action.name : action.index] = action.oldValue
         }
       } finally {
         this.trackUndoEvents = true
@@ -96,7 +98,7 @@ export class Undoer {
         if (action.type === 'splice') {
           action.element.splice(action.index, action.removed.length, ...action.added)
         } else if (action.type === 'update') {
-          action.element[action.name] = action.newValue
+          action.element[action.name ? action.name : action.index] = action.newValue
         }
       } finally {
         this.trackUndoEvents = true
@@ -117,5 +119,9 @@ export class Undoer {
     } finally {
       this.trackUndoEvents = true
     }
+  }
+
+  private isPrimitive(element: any): boolean {
+    return element !== Object(element)
   }
 }
