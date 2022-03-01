@@ -70,6 +70,11 @@ export class Undoer {
         },
       )
     }
+    if (isObservableArray(object)) {
+      object.forEach((arrElement) => {
+        this.makeUndoable(arrElement)
+      })
+    }
   }
 
   public undo(): void {
