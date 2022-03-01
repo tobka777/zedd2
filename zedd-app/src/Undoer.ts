@@ -5,6 +5,7 @@ import {
   IMapDidChange,
   IObjectDidChange,
   isObservableArray,
+  isObservable,
 } from 'mobx'
 
 export class Undoer {
@@ -70,9 +71,11 @@ export class Undoer {
         },
       )
     }
-    if (isObservableArray(object)) {
-      object.forEach((arrElement) => {
-        this.makeUndoable(arrElement)
+    if (isObservable(object)) {
+      Object.keys(object).forEach((key) => {
+        if (object[key]) {
+          this.makeUndoable(object[key])
+        }
       })
     }
   }
