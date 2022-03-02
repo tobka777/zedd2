@@ -1,4 +1,4 @@
-## [2.9.2]
+## [2.9.2] - 2022-03-02
 
 - Feature: Undo (Ctrl+Z) and Redo (Ctrl+Y)
 - Feature: Added a filter for searching projects in the clarity view
@@ -6,7 +6,7 @@
 - Feature: Added the path of chrome and chromedriver in the settings dialog
 - Feature: ERSATZ button now takes into account public holidays. **Configure your location in the settings to enable this**.
 
-## [2.9.1]
+## [2.9.1] - 2022-02-04
 
 - Fixed: DateRangePicker starts at monday
 - Fixed: Arrow-Buttons add or sub full months or years, not only the amount of days that were selected

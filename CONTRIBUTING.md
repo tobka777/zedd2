@@ -22,7 +22,7 @@ npm run start
 
 1. Node 16+
 2. Create a GithubToken at https://github.com/settings/tokens (select all repo permissions)
-3. Customize changelog version
+3. Customize changelog version and date
 
 ```sh
 GITHUB_TOKEN=<YOUR_TOKEN>
