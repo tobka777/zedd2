@@ -14,7 +14,7 @@ import useMediaQuery from '@mui/material/useMediaQuery'
 import { autoUpdater } from '@electron/remote'
 import { observer } from 'mobx-react-lite'
 import * as React from 'react'
-import { useMemo } from 'react'
+import { useEffect, useMemo } from 'react'
 import ReactMarkdown from 'react-markdown'
 
 import { ErrorBoundary } from './ErrorBoundary'
@@ -86,6 +86,18 @@ export const AppGui = observer(
     useStyles()
 
     const message = !state.hoverMode && state.messages.length ? state.messages[0] : undefined
+
+    useEffect(() => {
+      const undoAndRedo = (e: KeyboardEvent) => {
+        if ((e.ctrlKey && e.key === 'z') || (e.ctrlKey && e.key === 'Z' && e.shiftKey)) {
+          state.undo()
+        } else if (e.ctrlKey && e.key === 'y') {
+          state.redo()
+        }
+      }
+      window.addEventListener('keydown', undoAndRedo)
+      return () => window.removeEventListener('keydown', undoAndRedo)
+    }, [state])
 
     return (
       <StyledEngineProvider injectFirst>

@@ -161,14 +161,6 @@ async function setup() {
     state = new AppState()
   }
 
-  const undoAndRedo = (e: KeyboardEvent) => {
-    if ((e.ctrlKey && e.key === 'z') || (e.ctrlKey && e.key === 'Z' && e.shiftKey)) {
-      state.undo()
-    } else if (e.ctrlKey && e.key === 'y') {
-      state.redo()
-    }
-  }
-
   state.startInterval(() => powerMonitor?.getSystemIdleTime() ?? 0)
   state.config = config
   let lastAwaySlice: string | undefined
@@ -324,7 +316,6 @@ async function setup() {
     }
   }
 
-  currentWindowEvents.push(['keydown', undoAndRedo])
   currentWindowEvents.push(['resize', saveWindowBounds])
   currentWindowEvents.push(['maximize', saveWindowBounds])
   currentWindowEvents.push(['maximize', hoverModeOff])
