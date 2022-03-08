@@ -23,6 +23,9 @@ import {
   startOfMinute,
   parse as dateParse,
   subSeconds,
+  eachYearOfInterval,
+  getYear,
+  differenceInMonths,
 } from 'date-fns'
 import { promises as fsp } from 'fs'
 import { sum } from 'lodash'
@@ -43,6 +46,7 @@ import {
   serialize,
   SKIP,
   getDefaultModelSchema,
+  createSimpleSchema,
 } from 'serializr'
 
 import {
@@ -268,6 +272,28 @@ export class AppState {
   public whatsNewDialogLastOpenedForVersion: string = ''
 
   @observable
+  @serializable(
+    list(
+      object(
+        createSimpleSchema({
+          fetchedDate: date(),
+          country: true,
+          holidays: list(date()),
+          year: true,
+          state: true,
+        }),
+      ),
+    ),
+  )
+  public cachedHolidays: {
+    fetchedDate: Date
+    countryCode: string
+    holidays: Date[]
+    year: number
+    stateCode?: string
+  }[] = []
+
+  @observable
   public messages: {
     msg: string
     severity: 'error' | 'warning' | 'info'
@@ -375,6 +401,77 @@ export class AppState {
 
   public redo(): void {
     this.undoer.redo()
+  }
+
+  public async getHolidays(
+    interval: Interval,
+    countryCode: string,
+    getHolidaysFromApi: (year: number, countryCode: string, stateCode?: string) => Promise<Date[]>,
+    stateCode?: string,
+  ): Promise<Date[]> {
+    const searchedYears = eachYearOfInterval(interval)
+    let holidays: Date[] = []
+
+    for (const dateYear of searchedYears) {
+      const year = getYear(dateYear)
+      let holidaysForYear = this.getHolidaysFromCacheAndDeleteExpired(year, countryCode, stateCode)
+
+      if (holidaysForYear.length === 0) {
+        holidaysForYear = await getHolidaysFromApi(year, countryCode, stateCode)
+        if (holidaysForYear.length !== 0) {
+          this.addHolidaysToCache(countryCode, holidaysForYear, year, stateCode!)
+        }
+      }
+
+      holidays = [...holidays, ...holidaysForYear]
+    }
+
+    return holidays
+  }
+
+  private getHolidaysFromCacheAndDeleteExpired(
+    searchedYear: number,
+    where: string,
+    state?: string,
+  ): Date[] {
+    let holidays: Date[] = []
+
+    for (let index = 0; index < this.cachedHolidays.length; index++) {
+      if (
+        this.cachedHolidays[index] &&
+        this.cachedHolidays[index].countryCode === where &&
+        this.cachedHolidays[index].year === searchedYear &&
+        this.cachedHolidays[index].stateCode === state
+      ) {
+        if (!this.isFetchedDateExpired(this.cachedHolidays[index].fetchedDate)) {
+          holidays = this.cachedHolidays[index].holidays
+        } else {
+          this.cachedHolidays.splice(index, 1)
+        }
+      }
+    }
+
+    return holidays
+  }
+
+  private addHolidaysToCache(
+    country: string,
+    holidays: Date[],
+    year: number,
+    state?: string,
+  ): void {
+    this.cachedHolidays.push({
+      fetchedDate: new Date(),
+      countryCode: country,
+      holidays: holidays,
+      year: year,
+      stateCode: state,
+    })
+  }
+
+  private isFetchedDateExpired(date: Date): boolean {
+    const now = new Date()
+    return differenceInMonths(now, date) > 1
   }
 
   public static async saveToDir(instance: AppState, dir: string): Promise<void> {
