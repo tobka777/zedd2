@@ -418,7 +418,9 @@ export class AppState {
 
       if (holidaysForYear.length === 0) {
         holidaysForYear = await getHolidaysFromApi(year, countryCode, stateCode)
-        this.addHolidaysToCache(countryCode, holidaysForYear, year, stateCode!)
+        if (holidaysForYear.length !== 0) {
+          this.addHolidaysToCache(countryCode, holidaysForYear, year, stateCode!)
+        }
       }
 
       holidays = [...holidays, ...holidaysForYear]

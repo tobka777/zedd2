@@ -259,9 +259,7 @@ export const AppBody = observer(
                       holidays = await state.getHolidays(
                         state.showing,
                         settings.location!.code,
-                        (year, countryCode, stateCode) => {
-                          return getHolidays(year, countryCode, stateCode)
-                        },
+                        getHolidays,
                         settings.federalState?.code,
                       )
                     } catch (e) {
