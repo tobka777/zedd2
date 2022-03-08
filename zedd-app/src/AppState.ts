@@ -416,7 +416,7 @@ export class AppState {
       const year = getYear(dateYear)
       let holidaysForYear = this.getHolidaysFromCacheAndDeleteExpired(year, countryCode, stateCode)
 
-      if (holidaysForYear.length == 0) {
+      if (holidaysForYear.length === 0) {
         holidaysForYear = await getHolidaysFromApi(year, countryCode, stateCode)
         this.addHolidaysToCache(countryCode, holidaysForYear, year, stateCode!)
       }
