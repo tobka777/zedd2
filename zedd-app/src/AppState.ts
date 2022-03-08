@@ -23,6 +23,8 @@ import {
   startOfMinute,
   parse as dateParse,
   subSeconds,
+  eachYearOfInterval,
+  getYear,
 } from 'date-fns'
 import { promises as fsp } from 'fs'
 import { sum } from 'lodash'
@@ -43,6 +45,7 @@ import {
   serialize,
   SKIP,
   getDefaultModelSchema,
+  raw,
 } from 'serializr'
 
 import {
@@ -61,6 +64,7 @@ import {
 } from './util'
 import { ZeddSettings } from './ZeddSettings'
 import { Undoer } from './Undoer'
+import { getHolidays } from './holidays'
 
 export const MIN_GAP_TIME_MIN = 5
 
@@ -268,6 +272,26 @@ export class AppState {
   public whatsNewDialogLastOpenedForVersion: string = ''
 
   @observable
+  @serializable(raw())
+  public cachedHolidays: [
+    {
+      fetchedDate: Date | undefined
+      country: string | undefined
+      holidays: Date[] | undefined
+      year: number | undefined
+      state?: string | undefined
+    },
+  ] = [
+    {
+      fetchedDate: undefined,
+      country: undefined,
+      holidays: undefined,
+      year: undefined,
+      state: undefined,
+    },
+  ]
+
+  @observable
   public messages: {
     msg: string
     severity: 'error' | 'warning' | 'info'
@@ -375,6 +399,75 @@ export class AppState {
 
   public redo(): void {
     this.undoer.redo()
+  }
+
+  public async getHolidays(interval: Interval, where: string, state?: string): Promise<Date[]> {
+    const searchedYears = eachYearOfInterval(interval)
+    let { holidays, foundedYears } = this.getHolidaysFromCache(searchedYears, where, state)
+
+    const notFoundedYears = searchedYears.filter((year) => !foundedYears.includes(getYear(year)))
+    for (const year of notFoundedYears) {
+      const y = getYear(year)
+      const h = await getHolidays(y, where, state)
+      holidays = [...holidays, ...h]
+      this.addHolidaysToCache(where, h, y, state!)
+    }
+
+    return holidays
+  }
+
+  private getHolidaysFromCache(
+    searchedYears: Date[],
+    where: string,
+    state?: string,
+  ): { holidays: Date[]; foundedYears: number[] } {
+    let holidays: Date[] = []
+    let foundedYears: number[] = []
+
+    for (let index = 0; index < this.cachedHolidays.length; index++) {
+      if (this.cachedHolidays[index].country) {
+        searchedYears.forEach((year) => {
+          if (
+            this.cachedHolidays[index] &&
+            this.cachedHolidays[index].country! === where &&
+            this.cachedHolidays[index].year! === getYear(year) &&
+            this.cachedHolidays[index].state === state
+          ) {
+            if (!this.isFetchedDateExpired(this.cachedHolidays[index].fetchedDate!)) {
+              holidays = [...holidays, ...this.cachedHolidays[index].holidays!]
+              foundedYears.push(this.cachedHolidays[index].year!)
+            } else {
+              this.cachedHolidays.splice(index, 1)
+            }
+          }
+        })
+      }
+    }
+
+    return { holidays, foundedYears }
+  }
+
+  private addHolidaysToCache(
+    country: string,
+    holidays: Date[],
+    year: number,
+    state?: string,
+  ): void {
+    this.cachedHolidays.push({
+      fetchedDate: new Date(),
+      country: country,
+      holidays: holidays,
+      year: year,
+      state: state,
+    })
+  }
+
+  private isFetchedDateExpired(date: Date): boolean {
+    const now = new Date()
+    if (differenceInMinutes(new Date(date), now) > 60 * 24 * 7 * 4) {
+      return true
+    }
+    return false
   }
 
   public static async saveToDir(instance: AppState, dir: string): Promise<void> {
@@ -551,7 +644,7 @@ export class AppState {
   @action
   public fillErsatz(when: Interval, holidays: Date[]): void {
     for (const day of eachDayOfInterval(when)) {
-      const task = holidays.some((holiday) => isSameDay(day, holiday))
+      const task = holidays.some((holiday) => isSameDay(day, new Date(holiday)))
         ? this.getTaskForName('HOLIDAY')
         : this.getTaskForName(this.config.ersatzTask)
       this.addSliceIfDayEmpty(this.makeFullDaySlice(day, task))

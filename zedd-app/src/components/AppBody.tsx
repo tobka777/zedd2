@@ -44,7 +44,6 @@ import { TaskEditor } from './TaskEditor'
 import { ArrowBack, ArrowForward, Delete as DeleteIcon } from '@mui/icons-material'
 import { suggestedTaskMenuItems } from '../menuUtil'
 import { DateRangePicker } from './DateRangePicker'
-import { getRangeHolidays } from '../holidays'
 import { ZeddSettings } from '../ZeddSettings'
 
 const useStyles = makeStyles((theme) => ({
@@ -256,7 +255,7 @@ export const AppBody = observer(
                   onClick={async (_) => {
                     let holidays: Date[] = []
                     try {
-                      holidays = await getRangeHolidays(
+                      holidays = await state.getHolidays(
                         state.showing,
                         settings.location!.code,
                         settings.federalState?.code,

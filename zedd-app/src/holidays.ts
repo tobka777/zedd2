@@ -1,17 +1,3 @@
-import { eachYearOfInterval, getYear } from 'date-fns'
-
-export async function getRangeHolidays(
-  range: Interval,
-  countryCode: string,
-  stateCode?: string,
-): Promise<Date[]> {
-  let dates: Date[] = []
-  for (const year of eachYearOfInterval(range)) {
-    dates = [...dates, ...(await getHolidays(getYear(year), countryCode, stateCode))]
-  }
-  return dates
-}
-
 export async function getHolidays(
   year: number,
   countryCode: string,
