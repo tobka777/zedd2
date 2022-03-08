@@ -45,6 +45,7 @@ import { ArrowBack, ArrowForward, Delete as DeleteIcon } from '@mui/icons-materi
 import { suggestedTaskMenuItems } from '../menuUtil'
 import { DateRangePicker } from './DateRangePicker'
 import { ZeddSettings } from '../ZeddSettings'
+import { getHolidays } from '../holidays'
 
 const useStyles = makeStyles((theme) => ({
   contentRoot: {
@@ -258,6 +259,9 @@ export const AppBody = observer(
                       holidays = await state.getHolidays(
                         state.showing,
                         settings.location!.code,
+                        (year, countryCode, stateCode) => {
+                          return getHolidays(year, countryCode, stateCode)
+                        },
                         settings.federalState?.code,
                       )
                     } catch (e) {

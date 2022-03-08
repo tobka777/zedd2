@@ -15,6 +15,7 @@ export async function getHolidays(
     }
     return filteredDays.map((holiday) => new Date(holiday.date))
   }
+
   return []
 }
 export const countries: ReadonlyArray<{ code: string; label: string }> = [
