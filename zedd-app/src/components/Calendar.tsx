@@ -1,4 +1,5 @@
 import { useTheme } from '@mui/material/styles'
+import { red, grey } from '@mui/material/colors'
 import * as chroma from 'chroma.ts'
 import {
   addDays,
@@ -63,6 +64,7 @@ export interface CalendarProps<T extends Interval> {
     },
   ) => ReactElement
   getVirtualSlice: (start: Date, end: Date) => T
+  holidays: Date[]
 }
 
 // const triple = (x: string) => [x, 'ctrl+' + x, 'shift+' + x]
@@ -122,6 +124,7 @@ const CalendarBase = <T extends Interval>({
   deleteSlice,
   splitBlock,
   getVirtualSlice,
+  holidays,
 }: CalendarProps<T>) => {
   const local = useLocalObservable(() => ({
     showTime: new Date(),
@@ -352,10 +355,16 @@ const CalendarBase = <T extends Interval>({
     .scale((t) => chroma.hsl(t * 360, 0.75, 'dark' === theme.palette.mode ? 0.1 : 0.97))
     .out(undefined)
 
-  const weekColors = weekColorScale.colors(7, 'color').map((c) => c.css())
   const weekBorderColors = weekColorScale
     .colors(7, 'color')
     .map((c) => c.darker('dark' === theme.palette.mode ? -1 : 1).css())
+
+  const getDayColor = (day: Date): string => {
+    if (holidays.some((d) => isSameDay(d, day)) || day.getDay() % 6 === 0) {
+      return red[50]
+    }
+    return grey[50]
+  }
 
   return (
     <div style={{ display: 'flex', flexFlow: 'row wrap' }}>
@@ -389,7 +398,7 @@ const CalendarBase = <T extends Interval>({
           key={'header-day-' + isoDayStr(d)}
           style={{
             width: percent(1 / days.length),
-            backgroundColor: weekColors[getDay(d)],
+            backgroundColor: getDayColor(d),
             textAlign: 'center',
           }}
         >
@@ -424,7 +433,7 @@ const CalendarBase = <T extends Interval>({
                 style={{
                   height: minutesToScreen(60),
                   boxSizing: 'border-box',
-                  backgroundColor: weekColors[getDay(d)],
+                  backgroundColor: getDayColor(d),
                   borderTop: `1px solid ${weekBorderColors[getDay(d)]}`,
                   fontSize: 'smaller',
                   color: weekBorderColors[getDay(d)],

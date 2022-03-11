@@ -15,7 +15,7 @@ export class Undoer {
   private readonly undoStateKey = Symbol('undoStateKey')
 
   public makeUndoable = (object: any): void => {
-    if (!object[this.undoStateKey] && !this.isPrimitive(object)) {
+    if (!object[this.undoStateKey] && !this.isPrimitive(object) && !this.isDate(object)) {
       object[this.undoStateKey] = observe(
         object,
         (
@@ -131,5 +131,9 @@ export class Undoer {
 
   private isPrimitive(element: any): boolean {
     return element !== Object(element)
+  }
+
+  private isDate(element: any): boolean {
+    return Object.prototype.toString.call(element) === '[object Date]'
   }
 }
