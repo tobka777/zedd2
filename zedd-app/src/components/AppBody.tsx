@@ -24,7 +24,7 @@ import { MenuItemConstructorOptions } from 'electron'
 import { Menu, shell } from '@electron/remote'
 import { observer } from 'mobx-react-lite'
 import * as React from 'react'
-import { useCallback } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 
 import { ErrorBoundary } from './ErrorBoundary'
 import { AppState, Task, TimeSlice } from '../AppState'
@@ -169,6 +169,26 @@ export const AppBody = observer(
       [state],
     )
 
+    const [allHolidays, setAllHolidays] = useState([] as Date[])
+    const fetchHolidays = async () => {
+      let holidays: Date[] = []
+      try {
+        holidays = await state.getHolidays(
+          state.showing,
+          settings.location!.code,
+          getHolidays,
+          settings.federalState?.code,
+        )
+      } catch (e) {
+        console.error('Error while fetching holidays: ' + e)
+        state.addMessage('Could not load holidays', e)
+      }
+      setAllHolidays(holidays)
+    }
+    useEffect(() => {
+      fetchHolidays()
+    }, [state.showing, settings.location, settings.federalState])
+
     return (
       <div className={classes.contentRoot} style={{ display: display ? 'block' : 'none' }}>
         <div>
@@ -253,23 +273,8 @@ export const AppBody = observer(
               <Tooltip title='Fill currently shown empty days with ERSATZ task.' arrow>
                 <Button
                   size='large'
-                  onClick={async (_) => {
-                    let holidays: Date[] = []
-                    try {
-                      holidays = await state.getHolidays(
-                        state.showing,
-                        settings.location!.code,
-                        getHolidays,
-                        settings.federalState?.code,
-                      )
-                    } catch (e) {
-                      console.error('Error while filling slices: ' + e)
-                      state.addMessage(
-                        'Could not load holidays, the slices will filled only with ERSATZ task',
-                        e,
-                      )
-                    }
-                    state.fillErsatz(state.showing, holidays)
+                  onClick={(_) => {
+                    state.fillErsatz(state.showing, allHolidays)
                   }}
                 >
                   Ersatz
@@ -414,6 +419,7 @@ export const AppBody = observer(
                   />
                 )
               }}
+              holidays={allHolidays}
             />
           </Paper>
         )}

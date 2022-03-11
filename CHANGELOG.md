@@ -1,3 +1,6 @@
+- Feature: Changed the color of the days in calendar. Weekend and holidays are highlited.
+- Fixed: Exclude mobx-administration of dates in undoer.
+
 ## [2.9.2] - 2022-03-02
 
 - Feature: Undo (Ctrl+Z) and Redo (Ctrl+Y)
