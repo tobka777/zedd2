@@ -24,6 +24,8 @@ import {
   startOfISOWeek,
   subMinutes,
   isBefore,
+  isSaturday,
+  isSunday,
 } from 'date-fns'
 import { orderBy } from 'lodash'
 import groupBy from 'lodash/groupBy'
@@ -360,7 +362,7 @@ const CalendarBase = <T extends Interval>({
     .map((c) => c.darker('dark' === theme.palette.mode ? -1 : 1).css())
 
   const getDayColor = (day: Date): string => {
-    if (holidays.some((d) => isSameDay(d, day)) || day.getDay() % 6 === 0) {
+    if (holidays.some((d) => isSameDay(d, day)) || isSaturday(day) || isSunday(day)) {
       return red[50]
     }
     return grey[50]
