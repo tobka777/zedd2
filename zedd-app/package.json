@@ -1,7 +1,7 @@
 {
   "name": "zedd-app",
   "productName": "zedd-app",
-  "version": "2.9.2",
+  "version": "2.10.0",
   "description": "Zedd-App Time Tracker",
   "main": ".webpack/main",
   "repository": "github:NaridaL/zedd2",
