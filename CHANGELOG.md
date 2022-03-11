@@ -1,3 +1,5 @@
+## [2.10.0] - 2022-03-14
+
 - Feature: Changed the color of the days in calendar. Weekend and holidays are highlited.
 - Fixed: Exclude mobx-administration of dates in undoer.
 
