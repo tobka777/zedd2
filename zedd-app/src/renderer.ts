@@ -84,6 +84,7 @@ function setupAutoUpdater(state: AppState, config: ZeddSettings) {
   autoUpdater.setFeedURL({
     url: `${config.updateServer}/update/${process.platform}/${app.getVersion()}`,
   })
+
   const checkForUpdatesInterval = setInterval(
     () => autoUpdater.checkForUpdates(),
     2 * 60 * 60 * 1000, // every 2 hours
@@ -109,7 +110,7 @@ const getMenuItems = (state: AppState) => [
     click: () => shell.showItemInFolder(userConfigFile),
   },
   { label: 'Edit Settings', click: () => (state.settingsDialogOpen = true) },
-  { label: 'Github', click: () => shell.openExternal('https://github.com/NaridaL/zedd2') },
+  { label: 'Github', click: () => shell.openExternal('https://github.com/Andrej1b/zedd2') },
   { label: 'Open Dev', click: () => getCurrentWindow().webContents.openDevTools() },
   { label: 'Reload Config', click: () => getCurrentWindow().reload() },
   { label: 'Quit', click: () => quit() },
@@ -477,7 +478,7 @@ async function setup() {
   window.addEventListener('beforeunload', cleanup)
 
   return {
-    cleanup: (cleanup = () => {
+    cleanup: cleanup = () => {
       console.log('setup().cleanup')
       clearInterval(saveInterval)
       clearInterval(lastActionInterval)
@@ -491,7 +492,7 @@ async function setup() {
       cleanupHoverModeAutorun()
       currentWindowEvents.forEach(([x, y]) => currentWindow.removeListener(x as any, y))
       window.removeEventListener('beforeunload', cleanup)
-    }),
+    },
     renderDOM: () => {
       ReactDOM.render(
         React.createElement(AppGui, {

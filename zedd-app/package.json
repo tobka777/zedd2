@@ -4,7 +4,7 @@
   "version": "2.10.0",
   "description": "Zedd-App Time Tracker",
   "main": ".webpack/main",
-  "repository": "github:NaridaL/zedd2",
+  "repository": "github:Andrej1b/zedd2",
   "scripts": {
     "start": "cross-env NODE_INSTALLER=npm electron-forge start -- --dev",
     "package": "electron-forge package",
@@ -19,8 +19,8 @@
   },
   "keywords": [],
   "author": {
-    "name": "Adrian Leonhard",
-    "email": "adrianleonhard@gmail.com"
+    "name": "Andrej Bespalov",
+    "email": "andrej.bespalov@capgemini.com"
   },
   "license": "UNLICENSED",
   "prettier": {
@@ -46,7 +46,7 @@
           "name": "@electron-forge/maker-squirrel",
           "config": {
             "name": "zedd",
-            "remoteReleases": "https://github.com/NaridaL/zedd2/releases/latest/download"
+            "remoteReleases": "https://github.com/Andrej1b/zedd2/releases/latest/download"
           }
         },
         {
@@ -80,7 +80,7 @@
           "name": "@electron-forge/publisher-github",
           "config": {
             "repository": {
-              "owner": "NaridaL",
+              "owner": "Andrej1b",
               "name": "zedd2"
             },
             "prerelease": false

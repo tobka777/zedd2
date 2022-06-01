@@ -171,7 +171,7 @@ export class ClarityState {
               projectName,
               projectIntId,
             },
-            task as unknown as ClarityTask,
+            (task as unknown) as ClarityTask,
           ),
         ),
       )
