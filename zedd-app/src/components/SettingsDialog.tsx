@@ -219,6 +219,19 @@ export const SettingsDialog = observer(
                 }}
               />
             </Grid>
+
+            <Grid item xs={4}>
+              <FormLabel>Open Chrome in</FormLabel>
+            </Grid>
+            <Grid item xs={8} component={'label'}>
+              Foreground
+              <Switch
+                checked={!!settings.chromeHeadless}
+                onChange={(_, checked) => (settings.chromeHeadless = !!checked)}
+              />
+              Background
+            </Grid>
+
             <Grid item xs={4}>
               <FormLabel>Location (for public holidays)</FormLabel>
             </Grid>

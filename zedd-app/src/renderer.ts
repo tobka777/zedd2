@@ -77,10 +77,10 @@ function quit() {
 
 function setupAutoUpdater(state: AppState, config: ZeddSettings) {
   if (global.isDev)
-    return () => {
-      /* do nothing */
-    }
-
+  return () => {
+    /* do nothing */
+  }
+  
   autoUpdater.setFeedURL({
     url: `${config.updateServer}/update/${process.platform}/${app.getVersion()}`,
   })
@@ -129,6 +129,7 @@ async function setup() {
   clarityState.init()
   autorun(() => {
     clarityState.nikuLink = config.nikuLink
+    clarityState.chromeHeadless = config.chromeHeadless
     clarityState.resourceName = config.clarityResourceName
   })
 

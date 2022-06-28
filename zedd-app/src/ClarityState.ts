@@ -25,6 +25,8 @@ export class ClarityState {
 
   public chromedriverExe: string
 
+  public chromeHeadless: boolean
+
   /**
    * The name of the "clarity resource" you are filling out
    * timesheets for, i.e. yourself. this is only required
@@ -84,7 +86,7 @@ export class ClarityState {
     try {
       this._currentlyImportingTasks = true
       await fillClarity(this.nikuLink, clarityExport, submitTimesheets, this.resourceName, {
-        headless: false,
+        headless: this.chromeHeadless,
         chromeExe: this.chromeExe,
         chromedriverExe: this.chromedriverExe,
       })
@@ -159,6 +161,7 @@ export class ClarityState {
           downloadDir: path.join(this.clarityDir, 'dl'),
           chromeExe: this.chromeExe,
           chromedriverExe: this.chromedriverExe,
+          headless: this.chromeHeadless
         },
         excludeProject,
         notifyProject,

@@ -63,6 +63,13 @@ export class ZeddSettings {
   public nikuLink = ''
 
   /**
+   * Open Chrome / Selenium in headless mode (background)
+   */
+  @observable
+  @serializable
+  public chromeHeadless: boolean = true
+  
+  /**
    * mininum user idle time in minutes which counts as "user is away"
    */
   @observable
