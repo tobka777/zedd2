@@ -45,14 +45,15 @@ export const TaskEditor = observer(
             'ALL' === which ? 'ALL' : 'NEW' === which ? 'NEW' : [which],
             (info) => state.addMessage(info, 'info', 2000),
           )
-          .catch((e) =>
+          .catch((e) => {
+            clarityState.error = e.message
             state.addMessage(
               e.message +
                 (e instanceof NikuUrlInvalidError
                   ? 'Check zeddConfig.nikuLink and reload config.'
                   : ''),
-            ),
-          ),
+            )
+          }),
         [clarityState, state],
     )
 
