@@ -18,6 +18,11 @@ export interface ClarityTask extends ZeddClarityTask {
   projectIntId: number
 }
 
+export enum ClarityActionType {
+  SubmitTimesheet,
+  ImportTasks
+}
+
 export class ClarityState {
   public nikuLink: string
 
@@ -34,6 +39,15 @@ export class ClarityState {
    * others.
    */
   public resourceName: string | undefined
+
+  @observable
+  public error: string = ""
+
+  @observable
+  public success: boolean = false
+
+  @observable
+  public actionType: ClarityActionType 
 
   @observable
   private _currentlyImportingTasks = false
@@ -82,14 +96,18 @@ export class ClarityState {
     clarityExport: ClarityExportFormat,
     submitTimesheets: boolean,
   ): Promise<void> {
+    this.actionType = ClarityActionType.SubmitTimesheet
     console.log('exporting timesheets', clarityExport)
     try {
       this._currentlyImportingTasks = true
+      this.error = ""
+      this.success = false
       await fillClarity(this.nikuLink, clarityExport, submitTimesheets, this.resourceName, {
         headless: this.chromeHeadless,
         chromeExe: this.chromeExe,
         chromedriverExe: this.chromedriverExe,
       })
+      this.success = true
     } finally {
       this._currentlyImportingTasks = false
     }
@@ -150,11 +168,14 @@ export class ClarityState {
     excludeProject: (projectName: string) => boolean,
     notifyProject?: (p: ZeddClarityProject) => void,
   ): Promise<ClarityTask[]> {
+    this.actionType = ClarityActionType.ImportTasks
     if (this._currentlyImportingTasks) {
       throw new Error('Already importing')
     }
     try {
       this._currentlyImportingTasks = true
+      this.error = ""
+      this.success = false
       const projectInfos = await getProjectInfo(
         this.nikuLink,
         {
@@ -166,6 +187,7 @@ export class ClarityState {
         excludeProject,
         notifyProject,
       )
+      this.success = true
       return projectInfos.flatMap(({ tasks, name: projectName, intId: projectIntId }) =>
         tasks.map((task) =>
           Object.assign(

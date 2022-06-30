@@ -36,7 +36,9 @@ import { useState } from 'react'
 import { ClarityExportFormat } from 'zedd-clarity'
 
 import { TimeSlice, validDate } from '../AppState'
-import { ClarityState } from '../ClarityState'
+import { ClarityState, ClarityActionType } from '../ClarityState'
+import { LoadingSpinner } from './LoadingSpinner'
+
 import { isoDayStr, omap, splitIntervalIntoCalendarDays, sum } from '../util'
 
 const roundToNearest = (x: number, toNearest: number) => Math.round(x / toNearest) * toNearest
@@ -402,10 +404,13 @@ export const ClarityView = observer((props: ClarityViewProps) => {
         </tfoot>
       </CardContent>
       <CardActions style={{ flexDirection: 'row-reverse' }}>
+        {clarityState.actionType === ClarityActionType.SubmitTimesheet &&
+          <LoadingSpinner loading={clarityState.currentlyImportingTasks} error={clarityState.error !== ""} success={clarityState.success} />
+        }
         <Button
           disabled={clarityState.currentlyImportingTasks}
           variant='contained'
-          onClick={() => {
+          onClick={() => 
             clarityState
               .export(
                 omap(clarityExport, (workEntries) =>
@@ -414,7 +419,7 @@ export const ClarityView = observer((props: ClarityViewProps) => {
                 submitTimesheets,
               )
               .catch(errorHandler)
-          }}
+          }
           endIcon={<SendIcon />}
         >
           Clarity!

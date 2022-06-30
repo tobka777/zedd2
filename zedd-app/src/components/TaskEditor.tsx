@@ -12,8 +12,9 @@ import { useCallback, useState, useRef } from 'react'
 import { NikuUrlInvalidError } from 'zedd-clarity'
 
 import { AppState, Task } from '../AppState'
-import { ClarityState } from '../ClarityState'
+import { ClarityState, ClarityActionType } from '../ClarityState'
 import { ClarityTaskSelect } from './ClarityTaskSelect'
+import { LoadingSpinner } from './LoadingSpinner'
 import { TaskSelect } from './TaskSelect'
 
 interface TaskEditorProps {
@@ -52,7 +53,7 @@ export const TaskEditor = observer(
                   : ''),
             ),
           ),
-      [clarityState, state],
+        [clarityState, state],
     )
 
     const [popperOpen, setPopperOpen] = useState(false)
@@ -133,10 +134,15 @@ export const TaskEditor = observer(
           >
             <Button
               variant='text'
-              onClick={() => setPopperOpen(!popperOpen)}
+              onClick={() => !clarityState.currentlyImportingTasks && setPopperOpen(!popperOpen)}
               style={{ width: '100%' }}
               ref={anchorRef}
-              endIcon={<ImportIcon />}
+              endIcon={<>
+                <ImportIcon />
+                {clarityState.actionType === ClarityActionType.ImportTasks &&
+                  <LoadingSpinner loading={clarityState.currentlyImportingTasks} error={clarityState.error !== ""} success={clarityState.success} />
+                }
+              </>}
             >
               Import
             </Button>

@@ -430,7 +430,10 @@ export const AppBody = observer(
             clarityState={clarityState}
             submitTimesheets={state.submitTimesheets}
             onChangeSubmitTimesheets={(x) => (state.submitTimesheets = x)}
-            errorHandler={(error) => state.addMessage(error.message)}
+            errorHandler={(error) => {
+              clarityState.error = error.message
+              state.addMessage(error.message)
+            }}
             calculateTargetHours={(interval) => state.calcTargetHours(interval)}
           />
         </ErrorBoundary>
