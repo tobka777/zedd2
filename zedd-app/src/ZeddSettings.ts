@@ -67,8 +67,8 @@ export class ZeddSettings {
    */
   @observable
   @serializable
-  public chromeHeadless: boolean = true
-  
+  public chromeHeadless = true
+
   /**
    * mininum user idle time in minutes which counts as "user is away"
    */

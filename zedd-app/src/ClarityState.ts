@@ -20,7 +20,7 @@ export interface ClarityTask extends ZeddClarityTask {
 
 export enum ClarityActionType {
   SubmitTimesheet,
-  ImportTasks
+  ImportTasks,
 }
 
 export class ClarityState {
@@ -41,13 +41,13 @@ export class ClarityState {
   public resourceName: string | undefined
 
   @observable
-  public error: string = ""
+  public error = ''
 
   @observable
-  public success: boolean = false
+  public success = false
 
   @observable
-  public actionType: ClarityActionType 
+  public actionType: ClarityActionType
 
   @observable
   private _currentlyImportingTasks = false
@@ -99,9 +99,7 @@ export class ClarityState {
     this.actionType = ClarityActionType.SubmitTimesheet
     console.log('exporting timesheets', clarityExport)
     try {
-      this._currentlyImportingTasks = true
-      this.error = ""
-      this.success = false
+      this.clearClarityState()
       await fillClarity(this.nikuLink, clarityExport, submitTimesheets, this.resourceName, {
         headless: this.chromeHeadless,
         chromeExe: this.chromeExe,
@@ -164,6 +162,12 @@ export class ClarityState {
     return this.resolveTask(intId) !== undefined
   }
 
+  private clearClarityState() {
+    this._currentlyImportingTasks = true
+    this.error = ''
+    this.success = false
+  }
+
   private async importClarityTasks(
     excludeProject: (projectName: string) => boolean,
     notifyProject?: (p: ZeddClarityProject) => void,
@@ -173,16 +177,14 @@ export class ClarityState {
       throw new Error('Already importing')
     }
     try {
-      this._currentlyImportingTasks = true
-      this.error = ""
-      this.success = false
+      this.clearClarityState()
       const projectInfos = await getProjectInfo(
         this.nikuLink,
         {
           downloadDir: path.join(this.clarityDir, 'dl'),
           chromeExe: this.chromeExe,
           chromedriverExe: this.chromedriverExe,
-          headless: this.chromeHeadless
+          headless: this.chromeHeadless,
         },
         excludeProject,
         notifyProject,
@@ -196,7 +198,7 @@ export class ClarityState {
               projectName,
               projectIntId,
             },
-            (task as unknown) as ClarityTask,
+            task as unknown as ClarityTask,
           ),
         ),
       )

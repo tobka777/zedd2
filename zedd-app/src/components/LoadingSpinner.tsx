@@ -1,35 +1,28 @@
-import * as React from 'react';
-import CircularProgress, {
-  CircularProgressProps,
-} from '@mui/material/CircularProgress';
-import Typography from '@mui/material/Typography';
-import Box from '@mui/material/Box';
-import Fab from '@mui/material/Fab';
-import { green, red } from '@mui/material/colors';
-import CloseIcon from '@mui/icons-material/Close';
-import CheckIcon from '@mui/icons-material/Check';
+import * as React from 'react'
+import CircularProgress, { CircularProgressProps } from '@mui/material/CircularProgress'
+import Typography from '@mui/material/Typography'
+import Box from '@mui/material/Box'
+import { green, red } from '@mui/material/colors'
+import { Close as CloseIcon, Check as CheckIcon } from '@mui/icons-material'
 
 interface ILoadingSpinner extends CircularProgressProps {
-  loading: boolean;
-  value?: number;
-  success: boolean;
-  error: boolean;
+  loading: boolean
+  value?: number
+  success: boolean
+  error: boolean
 }
 
-export function LoadingSpinner(
-  props: ILoadingSpinner
-) {
-
-  if(!props.success && !props.error && !props.loading) {
-    return null;
+export function LoadingSpinner(props: ILoadingSpinner) {
+  if (!props.success && !props.error && !props.loading) {
+    return null
   }
 
   return (
     <Box sx={{ position: 'relative', display: 'inline-flex' }}>
       {props.loading && (
         <>
-          <CircularProgress color="warning" thickness={5} {...props} />
-          {props.value && 
+          <CircularProgress color='warning' thickness={5} {...props} />
+          {props.value && (
             <Box
               sx={{
                 top: 0,
@@ -42,17 +35,15 @@ export function LoadingSpinner(
                 justifyContent: 'center',
               }}
             >
-              <Typography
-                variant="caption"
-                component="div"
-                color="text.secondary"
-              >{`${Math.round(props.value)}%`}</Typography>
+              <Typography variant='caption' component='div' color='text.secondary'>
+                {`${Math.round(props.value)}%`}
+              </Typography>
             </Box>
-          }
+          )}
         </>
       )}
-      {props.success && <CheckIcon sx={{color: green[700]}} />}
-      {props.error && <CloseIcon sx={{color: red[700]}} />}
+      {props.success && <CheckIcon sx={{ color: green[700] }} />}
+      {props.error && <CloseIcon sx={{ color: red[700] }} />}
     </Box>
-  );
+  )
 }

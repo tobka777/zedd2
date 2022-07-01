@@ -54,7 +54,7 @@ export const TaskEditor = observer(
                   : ''),
             )
           }),
-        [clarityState, state],
+      [clarityState, state],
     )
 
     const [popperOpen, setPopperOpen] = useState(false)
@@ -138,12 +138,18 @@ export const TaskEditor = observer(
               onClick={() => !clarityState.currentlyImportingTasks && setPopperOpen(!popperOpen)}
               style={{ width: '100%' }}
               ref={anchorRef}
-              endIcon={<>
-                <ImportIcon />
-                {clarityState.actionType === ClarityActionType.ImportTasks &&
-                  <LoadingSpinner loading={clarityState.currentlyImportingTasks} error={clarityState.error !== ""} success={clarityState.success} />
-                }
-              </>}
+              endIcon={
+                <>
+                  <ImportIcon />
+                  {clarityState.actionType === ClarityActionType.ImportTasks && (
+                    <LoadingSpinner
+                      loading={clarityState.currentlyImportingTasks}
+                      error={clarityState.error !== ''}
+                      success={clarityState.success}
+                    />
+                  )}
+                </>
+              }
             >
               Import
             </Button>

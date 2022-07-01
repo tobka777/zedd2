@@ -77,10 +77,10 @@ function quit() {
 
 function setupAutoUpdater(state: AppState, config: ZeddSettings) {
   if (global.isDev)
-  return () => {
-    /* do nothing */
-  }
-  
+    return () => {
+      /* do nothing */
+    }
+
   autoUpdater.setFeedURL({
     url: `${config.updateServer}/update/${process.platform}/${app.getVersion()}`,
   })
@@ -479,7 +479,7 @@ async function setup() {
   window.addEventListener('beforeunload', cleanup)
 
   return {
-    cleanup: cleanup = () => {
+    cleanup: (cleanup = () => {
       console.log('setup().cleanup')
       clearInterval(saveInterval)
       clearInterval(lastActionInterval)
@@ -493,7 +493,7 @@ async function setup() {
       cleanupHoverModeAutorun()
       currentWindowEvents.forEach(([x, y]) => currentWindow.removeListener(x as any, y))
       window.removeEventListener('beforeunload', cleanup)
-    },
+    }),
     renderDOM: () => {
       ReactDOM.render(
         React.createElement(AppGui, {

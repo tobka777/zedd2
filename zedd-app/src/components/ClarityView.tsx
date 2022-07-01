@@ -404,13 +404,17 @@ export const ClarityView = observer((props: ClarityViewProps) => {
         </tfoot>
       </CardContent>
       <CardActions style={{ flexDirection: 'row-reverse' }}>
-        {clarityState.actionType === ClarityActionType.SubmitTimesheet &&
-          <LoadingSpinner loading={clarityState.currentlyImportingTasks} error={clarityState.error !== ""} success={clarityState.success} />
-        }
+        {clarityState.actionType === ClarityActionType.SubmitTimesheet && (
+          <LoadingSpinner
+            loading={clarityState.currentlyImportingTasks}
+            error={clarityState.error !== ''}
+            success={clarityState.success}
+          />
+        )}
         <Button
           disabled={clarityState.currentlyImportingTasks}
           variant='contained'
-          onClick={() => 
+          onClick={() =>
             clarityState
               .export(
                 omap(clarityExport, (workEntries) =>
