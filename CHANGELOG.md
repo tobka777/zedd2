@@ -1,3 +1,8 @@
+## [2.11.0] - 2022-07-XX
+
+- Feature: Added headless mode for Selenium Browser to start in the background (configurable)
+- Feature: Log error messages in logfile located in `~/zedd/log/`.
+
 ## [2.10.0] - 2022-03-14
 
 - Feature: Changed the color of the days in calendar. Weekend and holidays are highlited.
