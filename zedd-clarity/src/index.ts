@@ -768,17 +768,29 @@ export async function withErrorHandling<R>(
   const ctx = await makeContext(seleniumOptions)
   try {
     return await cb(ctx)
-  } catch (err) {
+  } catch (err: any) {
     console.error(err)
-    const ssDir = path.join(homedir(), 'zedd')
+    const ssDir = path.join(homedir(), 'zedd', 'log')
     await fsp.mkdir(ssDir, { recursive: true })
-    const ssFile = path.join(ssDir, name + '_' + format(new Date(), 'yyyy-MM-dd_HHmm') + '.png')
+
+    const formatedDate = format(new Date(), 'yyyy-MM-dd_HHmm')
+
+    const ssFile = path.join(ssDir, name + '_' + formatedDate + '.png')
     console.warn('Saving screenshot to', ssFile)
     await fsp.writeFile(ssFile, await ctx[2].takeScreenshot(), 'base64')
-    const htmlFile = path.join(ssDir, name + '_' + format(new Date(), 'yyyy-MM-dd_HHmm') + '.html')
+
+    const htmlFile = path.join(ssDir, name + '_' + formatedDate + '.html')
     console.warn('Saving HTML to', htmlFile)
     await fsp.writeFile(htmlFile, await ctx[2].getPageSource(), 'utf8')
-    await logSleep(30_000)
+
+    const txtFile = path.join(ssDir, name + '_log.txt')
+    console.warn('Append LOG to', txtFile)
+    await fsp.appendFile(
+      txtFile,
+      name + '_' + formatedDate + '\n' + err.toString() + '\n\n',
+      'utf8',
+    )
+
     throw err
   } finally {
     await ctx[2].quit()
