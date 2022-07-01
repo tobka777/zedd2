@@ -18,12 +18,19 @@ export interface ClarityTask extends ZeddClarityTask {
   projectIntId: number
 }
 
+export enum ClarityActionType {
+  SubmitTimesheet,
+  ImportTasks,
+}
+
 export class ClarityState {
   public nikuLink: string
 
   public chromeExe: string
 
   public chromedriverExe: string
+
+  public chromeHeadless: boolean
 
   /**
    * The name of the "clarity resource" you are filling out
@@ -32,6 +39,15 @@ export class ClarityState {
    * others.
    */
   public resourceName: string | undefined
+
+  @observable
+  public error = ''
+
+  @observable
+  public success = false
+
+  @observable
+  public actionType: ClarityActionType
 
   @observable
   private _currentlyImportingTasks = false
@@ -80,14 +96,16 @@ export class ClarityState {
     clarityExport: ClarityExportFormat,
     submitTimesheets: boolean,
   ): Promise<void> {
+    this.actionType = ClarityActionType.SubmitTimesheet
     console.log('exporting timesheets', clarityExport)
     try {
-      this._currentlyImportingTasks = true
+      this.clearClarityState()
       await fillClarity(this.nikuLink, clarityExport, submitTimesheets, this.resourceName, {
-        headless: false,
+        headless: this.chromeHeadless,
         chromeExe: this.chromeExe,
         chromedriverExe: this.chromedriverExe,
       })
+      this.success = true
     } finally {
       this._currentlyImportingTasks = false
     }
@@ -144,25 +162,34 @@ export class ClarityState {
     return this.resolveTask(intId) !== undefined
   }
 
+  private clearClarityState() {
+    this._currentlyImportingTasks = true
+    this.error = ''
+    this.success = false
+  }
+
   private async importClarityTasks(
     excludeProject: (projectName: string) => boolean,
     notifyProject?: (p: ZeddClarityProject) => void,
   ): Promise<ClarityTask[]> {
+    this.actionType = ClarityActionType.ImportTasks
     if (this._currentlyImportingTasks) {
       throw new Error('Already importing')
     }
     try {
-      this._currentlyImportingTasks = true
+      this.clearClarityState()
       const projectInfos = await getProjectInfo(
         this.nikuLink,
         {
           downloadDir: path.join(this.clarityDir, 'dl'),
           chromeExe: this.chromeExe,
           chromedriverExe: this.chromedriverExe,
+          headless: this.chromeHeadless,
         },
         excludeProject,
         notifyProject,
       )
+      this.success = true
       return projectInfos.flatMap(({ tasks, name: projectName, intId: projectIntId }) =>
         tasks.map((task) =>
           Object.assign(
@@ -171,7 +198,7 @@ export class ClarityState {
               projectName,
               projectIntId,
             },
-            (task as unknown) as ClarityTask,
+            task as unknown as ClarityTask,
           ),
         ),
       )

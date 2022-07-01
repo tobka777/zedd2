@@ -129,6 +129,7 @@ async function setup() {
   clarityState.init()
   autorun(() => {
     clarityState.nikuLink = config.nikuLink
+    clarityState.chromeHeadless = config.chromeHeadless
     clarityState.resourceName = config.clarityResourceName
   })
 
@@ -478,7 +479,7 @@ async function setup() {
   window.addEventListener('beforeunload', cleanup)
 
   return {
-    cleanup: cleanup = () => {
+    cleanup: (cleanup = () => {
       console.log('setup().cleanup')
       clearInterval(saveInterval)
       clearInterval(lastActionInterval)
@@ -492,7 +493,7 @@ async function setup() {
       cleanupHoverModeAutorun()
       currentWindowEvents.forEach(([x, y]) => currentWindow.removeListener(x as any, y))
       window.removeEventListener('beforeunload', cleanup)
-    },
+    }),
     renderDOM: () => {
       ReactDOM.render(
         React.createElement(AppGui, {
