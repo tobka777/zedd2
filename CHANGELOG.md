@@ -1,9 +1,6 @@
-## [2.11.0] - 2022-07-22
-
-- Feature: Added minimize window to task bar and close to windows tray function
-
 ## [2.11.0] - 2022-07-XX
 
+- Feature: Added minimize window to task bar and close to windows tray function
 - Feature: Added headless mode for Selenium Browser to start in the background (configurable)
 - Feature: Log error messages in logfile located in `~/zedd/log/`.
 
