@@ -433,7 +433,7 @@ async function setup() {
         !clarityState.currentlyImportingTasks &&
         !state.windowFocused
       ) {
-        state.hoverMode = false
+        state.hoverMode = true
       }
     },
     { delay: 15_000 },
