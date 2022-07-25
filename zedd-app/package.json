@@ -39,7 +39,7 @@
           ".*\\.(iobj|pdb|ipdb)$"
         ],
         "derefSymlinks": true,
-        "icon": "icons/app.ico"
+        "icon": "icons/app"
       },
       "makers": [
         {
@@ -159,6 +159,7 @@
     "react-hotkeys": "^2.0.0",
     "react-markdown": "^8.0.0",
     "serializr": "^2.0.5",
+    "sharp": "^0.30.7",
     "sinon": "^14.0.0",
     "sleep-promise": "^9.1.0",
     "style-loader": "^3.3.1",
