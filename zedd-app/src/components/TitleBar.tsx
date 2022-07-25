@@ -174,6 +174,14 @@ export const TitleBar = observer(({ state, menuItems, showContextMenu }: TitleBa
       >
         {state.currentTask.name}
       </div>
+      {!state.hoverMode && state.config.keepHovering && (
+        <Button
+          onClick={() => getCurrentWindow().minimize()}
+          style={{ color: 'inherit', borderRadius: 0, ['WebkitAppRegion' as any]: 'no-drag' }}
+        >
+          <ToHoverIcon />
+        </Button>
+      )}
       {state.hoverMode && (
         <Button
           onClick={() => (state.hoverMode = false)}
@@ -191,20 +199,12 @@ export const TitleBar = observer(({ state, menuItems, showContextMenu }: TitleBa
           {local.maximized ? '🗗︎' : '🗖'}
         </Button>
       )}
-      {!state.hoverMode && !state.config.keepHovering && (
+      {!state.hoverMode && state.config.keepHovering && (
         <Button
-          onClick={() => getCurrentWindow().close()}
+          onClick={() => getCurrentWindow().hide()}
           style={{ color: 'inherit', borderRadius: 0, ['WebkitAppRegion' as any]: 'no-drag' }}
         >
           🗙︎
-        </Button>
-      )}
-      {!state.hoverMode && state.config.keepHovering && (
-        <Button
-          onClick={() => (state.hoverMode = true)}
-          style={{ color: 'inherit', borderRadius: 0, ['WebkitAppRegion' as any]: 'no-drag' }}
-        >
-          <ToHoverIcon />
         </Button>
       )}
     </AppBar>
