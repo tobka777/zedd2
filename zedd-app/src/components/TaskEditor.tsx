@@ -1,4 +1,4 @@
-import { Button, Grid, TextField, Tooltip, MenuItem, Menu } from '@mui/material'
+import { Button, Grid, TextField, Tooltip, MenuItem, Menu, ButtonGroup } from '@mui/material'
 import {
   Edit as EditIcon,
   GetApp as ImportIcon,
@@ -133,26 +133,36 @@ export const TaskEditor = observer(
                 : 'never'
             } ago`}
           >
-            <Button
-              variant='text'
-              onClick={() => !clarityState.currentlyImportingTasks && setPopperOpen(!popperOpen)}
-              style={{ width: '100%' }}
-              ref={anchorRef}
-              endIcon={
-                <>
-                  <ImportIcon />
-                  {clarityState.actionType === ClarityActionType.ImportTasks && (
-                    <LoadingSpinner
-                      loading={clarityState.currentlyImportingTasks}
-                      error={clarityState.error !== ''}
-                      success={clarityState.success}
-                    />
-                  )}
-                </>
-              }
-            >
-              Import
-            </Button>
+            <ButtonGroup variant='outlined'>
+              <Button
+                variant='text'
+                onClick={() => !clarityState.currentlyImportingTasks && setPopperOpen(!popperOpen)}
+                disabled={clarityState.currentlyImportingTasks}
+                style={{ width: '100%' }}
+                ref={anchorRef}
+                endIcon={
+                  <>
+                    <ImportIcon />
+                    {clarityState.actionType === ClarityActionType.ImportTasks && (
+                      <LoadingSpinner
+                        loading={clarityState.currentlyImportingTasks}
+                        error={clarityState.error !== ''}
+                        success={clarityState.success}
+                      />
+                    )}
+                  </>
+                }
+              >
+                Import
+              </Button>
+              <Button
+                variant='text'
+                disabled={!clarityState.currentlyImportingTasks}
+                onClick={() => clarityState.sileniumKill()}
+              >
+                Abort
+              </Button>
+            </ButtonGroup>
           </Tooltip>
           <Menu
             open={popperOpen}

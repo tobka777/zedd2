@@ -21,7 +21,7 @@ export function LoadingSpinner(props: ILoadingSpinner) {
     <Box sx={{ position: 'relative', display: 'inline-flex' }}>
       {props.loading && (
         <>
-          <CircularProgress color='warning' thickness={5} {...props} />
+          <CircularProgress color='inherit' size={17} thickness={5} {...props} />
           {props.value && (
             <Box
               sx={{
@@ -42,8 +42,12 @@ export function LoadingSpinner(props: ILoadingSpinner) {
           )}
         </>
       )}
+
+      {/* {props.onAbort && <CloseIcon sx={{ color: red[700] }} />} */}
+      {/* {props.} */}
       {props.success && <CheckIcon sx={{ color: green[700] }} />}
-      {props.error && <CloseIcon sx={{ color: red[700] }} />}
+      {props.onAbort && <CloseIcon sx={{ color: red[700] }} />}
+      {/* {props.error && <CloseIcon sx={{ color: red[700] }} />} */}
     </Box>
   )
 }

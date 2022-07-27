@@ -8,6 +8,7 @@ import {
   ClarityExportFormat,
   Task as ZeddClarityTask,
   Project as ZeddClarityProject,
+  webDriverQuit,
 } from 'zedd-clarity'
 import './index.css'
 
@@ -226,5 +227,9 @@ export class ClarityState {
       'end' === key || 'start' === key ? parseISO(value) : value,
     )
     return [date, tasks]
+  }
+
+  public sileniumKill(): void {
+    webDriverQuit(this.chromedriverExe)
   }
 }

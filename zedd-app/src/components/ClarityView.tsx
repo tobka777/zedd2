@@ -404,13 +404,6 @@ export const ClarityView = observer((props: ClarityViewProps) => {
         </tfoot>
       </CardContent>
       <CardActions style={{ flexDirection: 'row-reverse' }}>
-        {clarityState.actionType === ClarityActionType.SubmitTimesheet && (
-          <LoadingSpinner
-            loading={clarityState.currentlyImportingTasks}
-            error={clarityState.error !== ''}
-            success={clarityState.success}
-          />
-        )}
         <Button
           disabled={clarityState.currentlyImportingTasks}
           variant='contained'
@@ -424,7 +417,18 @@ export const ClarityView = observer((props: ClarityViewProps) => {
               )
               .catch(errorHandler)
           }
-          endIcon={<SendIcon />}
+          endIcon={
+            <>
+              <SendIcon />
+              {clarityState.actionType === ClarityActionType.SubmitTimesheet && (
+                <LoadingSpinner
+                  loading={clarityState.currentlyImportingTasks}
+                  error={clarityState.error !== ''}
+                  success={clarityState.success}
+                />
+              )}
+            </>
+          }
         >
           Clarity!
         </Button>{' '}
