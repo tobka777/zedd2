@@ -1,4 +1,4 @@
-import { Button, Grid, TextField, Tooltip, MenuItem, Menu, ButtonGroup } from '@mui/material'
+import { Button, Grid, TextField, Tooltip, MenuItem, Menu } from '@mui/material'
 import {
   Edit as EditIcon,
   GetApp as ImportIcon,
@@ -69,6 +69,12 @@ export const TaskEditor = observer(
       )?.intId
     }
 
+    if (clarityState.actionType === ClarityActionType.ImportTasks) {
+      setTimeout(() => {
+        clarityState.success = false
+      }, 60000)
+    }
+
     return (
       <Grid container style={{ ...style, alignItems: 'center' }} spacing={2}>
         <Grid item xs={10} lg={11}>
@@ -104,7 +110,7 @@ export const TaskEditor = observer(
             Rename
           </Button>
         </Grid>
-        <Grid item xs={8} lg={10}>
+        <Grid item xs={6} lg={9}>
           <ClarityTaskSelect
             value={value.clarityTaskIntId}
             disabled={value === state.getUndefinedTask()}
@@ -133,36 +139,29 @@ export const TaskEditor = observer(
                 : 'never'
             } ago`}
           >
-            <ButtonGroup variant='outlined'>
-              <Button
-                variant='text'
-                onClick={() => !clarityState.currentlyImportingTasks && setPopperOpen(!popperOpen)}
-                disabled={clarityState.currentlyImportingTasks}
-                style={{ width: '100%' }}
-                ref={anchorRef}
-                endIcon={
-                  <>
-                    <ImportIcon />
-                    {clarityState.actionType === ClarityActionType.ImportTasks && (
-                      <LoadingSpinner
-                        loading={clarityState.currentlyImportingTasks}
-                        error={clarityState.error !== ''}
-                        success={clarityState.success}
-                      />
-                    )}
-                  </>
-                }
-              >
-                Import
-              </Button>
-              <Button
-                variant='text'
-                disabled={!clarityState.currentlyImportingTasks}
-                onClick={() => clarityState.sileniumKill()}
-              >
-                Abort
-              </Button>
-            </ButtonGroup>
+            <Button
+              variant='text'
+              onClick={() => !clarityState.currentlyImportingTasks && setPopperOpen(!popperOpen)}
+              disabled={
+                clarityState.currentlyImportingTasks || clarityState.currentlyExportingTasks
+              }
+              style={{ width: '100%' }}
+              ref={anchorRef}
+              endIcon={
+                <>
+                  {clarityState.currentlyImportingTasks === false && <ImportIcon />}
+                  {clarityState.actionType === ClarityActionType.ImportTasks && (
+                    <LoadingSpinner
+                      loading={clarityState.currentlyImportingTasks}
+                      error={clarityState.error !== ''}
+                      success={clarityState.success}
+                    />
+                  )}
+                </>
+              }
+            >
+              Import
+            </Button>
           </Tooltip>
           <Menu
             open={popperOpen}
@@ -200,7 +199,16 @@ export const TaskEditor = observer(
             ))}
           </Menu>
         </Grid>
-
+        <Grid item xs={2} lg={1}>
+          <Button
+            variant='text'
+            style={{ width: '100%' }}
+            disabled={!clarityState.currentlyImportingTasks}
+            onClick={() => clarityState.sileniumKill()}
+          >
+            Cancel
+          </Button>
+        </Grid>
         <Grid item xs={10} lg={11}>
           <TextField
             value={value.clarityTaskComment}

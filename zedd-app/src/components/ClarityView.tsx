@@ -312,6 +312,12 @@ export const ClarityView = observer((props: ClarityViewProps) => {
     )
   }
 
+  if (clarityState.actionType === ClarityActionType.SubmitTimesheet) {
+    setTimeout(() => {
+      clarityState.success = false
+    }, 60000)
+  }
+
   return (
     <Card>
       <CardContent
@@ -405,7 +411,13 @@ export const ClarityView = observer((props: ClarityViewProps) => {
       </CardContent>
       <CardActions style={{ flexDirection: 'row-reverse' }}>
         <Button
-          disabled={clarityState.currentlyImportingTasks}
+          disabled={!clarityState.currentlyExportingTasks}
+          onClick={() => clarityState.sileniumKill()}
+        >
+          Cancel
+        </Button>
+        <Button
+          disabled={clarityState.currentlyExportingTasks || clarityState.currentlyImportingTasks}
           variant='contained'
           onClick={() =>
             clarityState
@@ -419,10 +431,10 @@ export const ClarityView = observer((props: ClarityViewProps) => {
           }
           endIcon={
             <>
-              <SendIcon />
+              {!clarityState.currentlyExportingTasks && <SendIcon />}
               {clarityState.actionType === ClarityActionType.SubmitTimesheet && (
                 <LoadingSpinner
-                  loading={clarityState.currentlyImportingTasks}
+                  loading={clarityState.currentlyExportingTasks}
                   error={clarityState.error !== ''}
                   success={clarityState.success}
                 />

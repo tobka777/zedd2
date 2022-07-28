@@ -42,11 +42,7 @@ export function LoadingSpinner(props: ILoadingSpinner) {
           )}
         </>
       )}
-
-      {/* {props.onAbort && <CloseIcon sx={{ color: red[700] }} />} */}
-      {/* {props.} */}
       {props.success && <CheckIcon sx={{ color: green[700] }} />}
-      {props.onAbort && <CloseIcon sx={{ color: red[700] }} />}
       {/* {props.error && <CloseIcon sx={{ color: red[700] }} />} */}
     </Box>
   )
