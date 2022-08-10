@@ -32,7 +32,7 @@ export class Undoer {
             } else {
               return
             }
-
+            const currentTimeStamp = Math.floor(Date.now() / 10)
             if (change.type === 'splice') {
               this.undoStack.push({
                 type: change.type,
@@ -40,7 +40,7 @@ export class Undoer {
                 removed: change.removed,
                 index: change.index,
                 element: change.object,
-                timeStamp: Math.floor(Date.now() / 10),
+                timeStamp: currentTimeStamp,
               })
               change.added.forEach((element) => {
                 this.makeUndoable(element)
@@ -54,7 +54,7 @@ export class Undoer {
                   newValue: updateChange.newValue,
                   index: updateChange.index,
                   oldValue: updateChange.oldValue,
-                  timeStamp: Math.floor(Date.now() / 10),
+                  timeStamp: currentTimeStamp,
                 })
                 this.makeUndoable(updateChange.newValue)
               } else {
@@ -65,7 +65,7 @@ export class Undoer {
                   newValue: updateChange.newValue,
                   name: updateChange.name,
                   oldValue: updateChange.oldValue,
-                  timeStamp: Math.floor(Date.now() / 10),
+                  timeStamp: currentTimeStamp,
                 })
                 this.makeUndoable(updateChange.newValue)
               }
@@ -90,7 +90,7 @@ export class Undoer {
       try {
         this.trackUndoEvents = false
         if (action.type === 'splice') {
-          let timeStampToDelete = action.timeStamp
+          const timeStampToDelete = action.timeStamp
           action.element.splice(action.index, action.added.length, ...action.removed)
           if (this.undoStack[this.undoPosition]) {
             if (timeStampToDelete - this.undoStack[this.undoPosition].timeStamp <= 1) {
@@ -115,7 +115,7 @@ export class Undoer {
         if (action.type === 'splice') {
           action.element.splice(action.index, action.removed.length, ...action.added)
         } else if (action.type === 'update') {
-          let timeStampToRedo = action.timeStamp
+          const timeStampToRedo = action.timeStamp
           action.element[action.name ? action.name : action.index] = action.newValue
           if (this.undoStack[this.undoPosition + 1]) {
             if (this.undoStack[this.undoPosition + 1].timeStamp - timeStampToRedo <= 1) {
