@@ -2,8 +2,8 @@ import * as React from 'react'
 import CircularProgress, { CircularProgressProps } from '@mui/material/CircularProgress'
 import Typography from '@mui/material/Typography'
 import Box from '@mui/material/Box'
-import { green, red } from '@mui/material/colors'
-import { Close as CloseIcon, Check as CheckIcon } from '@mui/icons-material'
+import { green } from '@mui/material/colors'
+import { Check as CheckIcon } from '@mui/icons-material'
 
 interface ILoadingSpinner extends CircularProgressProps {
   loading: boolean
@@ -43,7 +43,6 @@ export function LoadingSpinner(props: ILoadingSpinner) {
         </>
       )}
       {props.success && <CheckIcon sx={{ color: green[700] }} />}
-      {/* {props.error && <CloseIcon sx={{ color: red[700] }} />} */}
     </Box>
   )
 }

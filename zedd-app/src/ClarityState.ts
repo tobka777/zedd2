@@ -238,7 +238,7 @@ export class ClarityState {
     return [date, tasks]
   }
 
-  public sileniumKill(): void {
+  public killSelenium(): void {
     webDriverQuit()
   }
 }
