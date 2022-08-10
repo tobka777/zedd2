@@ -1,5 +1,6 @@
 ## [2.11.0] - 2022-07-XX
 
+- Feature: Undoing slice operation also updates element to previous state when it was earlier automatically cutted
 - Feature: Dependencies updated
 - Feature: Added minimize window to task bar and close to windows tray function
 - Feature: Added headless mode for Selenium Browser to start in the background (configurable)
