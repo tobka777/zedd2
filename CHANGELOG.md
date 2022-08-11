@@ -1,5 +1,6 @@
 ## [2.11.0] - 2022-07-XX
 
+- Feature: Undoing slice operation also updates element to previous state when it was earlier automatically cutted
 - Feature: Import/export buttons visual aspects changed, added cancel buttons for cancelling these operations during their lifetime
 - Feature: Dependencies updated
 - Feature: Added minimize window to task bar and close to windows tray function
