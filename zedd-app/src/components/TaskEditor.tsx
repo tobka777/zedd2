@@ -69,6 +69,12 @@ export const TaskEditor = observer(
       )?.intId
     }
 
+    if (clarityState.actionType === ClarityActionType.ImportTasks) {
+      setTimeout(() => {
+        clarityState.success = false
+      }, 60000)
+    }
+
     return (
       <Grid container style={{ ...style, alignItems: 'center' }} spacing={2}>
         <Grid item xs={10} lg={11}>
@@ -104,7 +110,7 @@ export const TaskEditor = observer(
             Rename
           </Button>
         </Grid>
-        <Grid item xs={8} lg={10}>
+        <Grid item xs={6} lg={9}>
           <ClarityTaskSelect
             value={value.clarityTaskIntId}
             disabled={value === state.getUndefinedTask()}
@@ -136,11 +142,14 @@ export const TaskEditor = observer(
             <Button
               variant='text'
               onClick={() => !clarityState.currentlyImportingTasks && setPopperOpen(!popperOpen)}
+              disabled={
+                clarityState.currentlyImportingTasks || clarityState.currentlyExportingTasks
+              }
               style={{ width: '100%' }}
               ref={anchorRef}
               endIcon={
                 <>
-                  <ImportIcon />
+                  {clarityState.currentlyImportingTasks === false && <ImportIcon />}
                   {clarityState.actionType === ClarityActionType.ImportTasks && (
                     <LoadingSpinner
                       loading={clarityState.currentlyImportingTasks}
@@ -190,7 +199,16 @@ export const TaskEditor = observer(
             ))}
           </Menu>
         </Grid>
-
+        <Grid item xs={2} lg={1}>
+          <Button
+            variant='text'
+            style={{ width: '100%' }}
+            disabled={!clarityState.currentlyImportingTasks}
+            onClick={() => clarityState.sileniumKill()}
+          >
+            Cancel
+          </Button>
+        </Grid>
         <Grid item xs={10} lg={11}>
           <TextField
             value={value.clarityTaskComment}
