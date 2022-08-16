@@ -10,6 +10,9 @@ import sudo from 'sudo-prompt'
 
 import { fileExists } from './util'
 
+const isMac = process.platform === 'darwin'
+const isWin = process.platform === 'win32'
+
 export const getEnvPathChromePath = async () => {
   const chromePath = (await which('chrome'))?.trim()
   if (!chromePath) {
@@ -19,10 +22,15 @@ export const getEnvPathChromePath = async () => {
 }
 
 export const getChromeVersion = async (chromePath: string) => {
-  const { stdout } = await promisify(exec)(
-    `wmic datafile where name=${JSON.stringify(chromePath)} get Version /value`,
-  )
-  return stdout.trim().replace(/^Version=/, '');
+  if (isWin) {
+    const { stdout } = await promisify(exec)(
+      `wmic datafile where name=${JSON.stringify(chromePath)} get Version /value`,
+    )
+    return stdout.trim().replace(/^Version=/, '')
+  } else {
+    const { stdout } = await promisify(exec)(`'${chromePath}' --version`)
+    return stdout.substring(stdout.trim().lastIndexOf(' ') + 1).trim()
+  }
 }
 
 export const getLatestChromeDriverVersion = async (chromeVersion: string) => {
@@ -43,7 +51,15 @@ export const installChromeDriver = async (
   adminPrompt = true,
 ) => {
   if (!targetDir) targetDir = dirname(await getEnvPathChromePath())
-  const url = `https://chromedriver.storage.googleapis.com/${chromeDriverVersion}/chromedriver_win32.zip`
+  let filename
+  if (isWin) {
+    filename = 'chromedriver_win32'
+  } else if (isMac) {
+    filename = 'chromedriver_mac64'
+  } else {
+    filename = 'chromedriver_linux64'
+  }
+  const url = `https://chromedriver.storage.googleapis.com/${chromeDriverVersion}/${filename}.zip`
 
   await withTmpDir(
     async (unzipDir) => {
@@ -58,9 +74,15 @@ export const installChromeDriver = async (
         })
       })
 
-      console.log(`Copying chromedriver.exe to ${targetDir}`)
-      const sourcePath = join(unzipDir.path, 'chromedriver.exe')
-      const targetPath = join(targetDir!, 'chromedriver.exe')
+      let chromedriver = 'chromedriver'
+      if (isWin) {
+        chromedriver += '.exe'
+      }
+      console.log(`Copying ${chromedriver} to ${targetDir}`)
+      const sourcePath = join(unzipDir.path, chromedriver)
+      const targetPath = join(targetDir!, chromedriver)
+      fsp.chmod(sourcePath, 0o755)
+
       if (adminPrompt) {
         await promisify<string, { name: string }, Buffer>(sudo.exec)(
           `move /Y ${JSON.stringify(sourcePath)} ${JSON.stringify(targetPath)}`,
@@ -74,11 +96,11 @@ export const installChromeDriver = async (
   )
 }
 export const getChromeDriverVersion = async (chromeDriverPath = 'chromedriver') => {
-  const { stdout } = await promisify(exec)(`${chromeDriverPath} --version`)
+  const { stdout } = await promisify(exec)(`'${chromeDriverPath}' --version`)
   return stdout
     .trim()
     .replace(/^ChromeDriver\s*/, '')
-    .replace(/\s.*/, '');
+    .replace(/\s.*/, '')
 }
 
 export const getNonEnvPathChromePath = async () => {
@@ -87,6 +109,7 @@ export const getNonEnvPathChromePath = async () => {
     'C:\\Program Files (x86)\\Google\\Chrome\\Application\\chrome.exe',
     'C:\\Users\\UserName\\AppDataLocal\\Google\\Chrome\\chrome.exe',
     'C:\\Documents and Settings\\UserName\\Local Settings\\Application Data\\Google\\Chrome\\chrome.exe',
+    '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome',
   ]) {
     if (await fileExists(path)) {
       return path

@@ -89,9 +89,12 @@ export const AppGui = observer(
 
     useEffect(() => {
       const undoAndRedo = (e: KeyboardEvent) => {
-        if ((e.ctrlKey && e.key === 'z') || (e.ctrlKey && e.key === 'Z' && e.shiftKey)) {
+        if (
+          ((e.ctrlKey || e.metaKey) && e.key === 'z') ||
+          ((e.ctrlKey || e.metaKey) && e.key === 'Z' && e.shiftKey)
+        ) {
           state.undo()
-        } else if (e.ctrlKey && e.key === 'y') {
+        } else if ((e.ctrlKey || e.metaKey) && e.key === 'y') {
           state.redo()
         }
       }

@@ -32,7 +32,7 @@ export const BlockDisplay = observer(
   }: BlockProps) => {
     const blockClickHandler = useCallback(
       (e: React.MouseEvent) => {
-        if (e.ctrlKey && onSplit) onSplit(slice, e)
+        if ((e.ctrlKey || e.metaKey) && onSplit) onSplit(slice, e)
         if (1 === e.button) onContextMenu(e, slice)
         if (0 === e.button && e.altKey === true) onAltRightClick(e, slice)
       },
