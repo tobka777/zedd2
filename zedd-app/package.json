@@ -39,7 +39,7 @@
           ".*\\.(iobj|pdb|ipdb)$"
         ],
         "derefSymlinks": true,
-        "icon": "icons/app.ico"
+        "icon": "icons/app"
       },
       "makers": [
         {
@@ -108,6 +108,7 @@
     "@emotion/react": "^11.7.1",
     "@emotion/styled": "^11.6.0",
     "@fiahfy/ico-convert": "^0.0.12",
+    "@fiahfy/icns-convert": "0.0.12",
     "@mui/icons-material": "^5.4.2",
     "@mui/material": "^5.4.2",
     "@mui/styles": "^5.4.2",
