@@ -55,6 +55,8 @@ function checkNikuUrl(urlToCheck: any) {
   }
 }
 
+var chromeDriver: WebDriver
+
 async function makeContext({
   headless = false,
   downloadDir,
@@ -80,7 +82,7 @@ async function makeContext({
     .setChromeService(new chrome.ServiceBuilder(chromedriverExe))
     .withCapabilities(Capabilities.chrome())
     .build()
-
+  chromeDriver = driver
   await driver.manage().setTimeouts({ implicit: 5000 })
 
   return wrapDriver(driver)
@@ -794,5 +796,11 @@ export async function withErrorHandling<R>(
     throw err
   } finally {
     await ctx[2].quit()
+  }
+}
+
+export async function webDriverQuit() {
+  if (chromeDriver) {
+    chromeDriver.quit()
   }
 }

@@ -1,5 +1,6 @@
 import * as assert from 'assert'
 import { isObservable, makeAutoObservable, observable } from 'mobx'
+import { setTimeout } from 'timers'
 import { Undoer } from './Undoer'
 
 describe('Undoer', () => {
@@ -34,31 +35,39 @@ describe('Undoer', () => {
       assert.equal(a.foo.length, 1)
     })
 
+    afterEach(function (done) {
+      this.timeout(1200)
+      setTimeout(done, 1000)
+    })
+
     it('undo', () => {
       reset()
 
       let t = { name: 'Test' }
+
       t = makeAutoObservable(t)
 
-      a.foo.push(t)
+      setTimeout(function () {
+        a.foo.push(t)
 
-      assert.equal(a.foo.length, 1)
+        assert.equal(a.foo.length, 1)
 
-      undoer.undo()
+        undoer.undo()
 
-      assert.equal(a.foo.length, 0)
+        assert.equal(a.foo.length, 0)
 
-      undoer.redo()
+        undoer.redo()
 
-      assert.equal(a.foo.length, 1)
+        assert.equal(a.foo.length, 1)
 
-      t.name = 'Foo'
+        t.name = 'Foo'
 
-      assert.equal(t.name, 'Foo')
+        assert.equal(t.name, 'Foo')
 
-      undoer.undo()
+        undoer.undo()
 
-      assert.equal(t.name, 'Test')
+        assert.equal(t.name, 'Test')
+      }, 100)
     })
 
     it('undo and redo', () => {
@@ -68,25 +77,32 @@ describe('Undoer', () => {
       let v = { name: 'TestB' }
 
       t = makeAutoObservable(t)
+
       v = makeAutoObservable(v)
 
-      a.foo.push(t)
-      a.foo.push(v)
+      setTimeout(function () {
+        a.foo.push(t)
+      }, 100)
 
-      undoer.undo()
-      undoer.undo()
+      setTimeout(function () {
+        a.foo.push(v)
 
-      assert.equal(a.foo.length, 0)
+        undoer.undo()
 
-      undoer.redo()
+        undoer.undo()
 
-      assert.equal(a.foo.length, 1)
-      assert.equal(a.foo[0].name, 'Test')
+        assert.equal(a.foo.length, 0)
 
-      undoer.redo()
+        undoer.redo()
 
-      assert.equal(a.foo.length, 2)
-      assert.equal(a.foo[1].name, 'TestB')
+        assert.equal(a.foo.length, 1)
+        assert.equal(a.foo[0].name, 'Test')
+
+        undoer.redo()
+
+        assert.equal(a.foo.length, 2)
+        assert.equal(a.foo[1].name, 'TestB')
+      }, 200)
     })
 
     it('undo, change and redo', () => {
@@ -100,22 +116,32 @@ describe('Undoer', () => {
       t = makeAutoObservable(t)
       v = makeAutoObservable(v)
 
-      a.foo.push(t)
-      a.foo.push(v)
-      a.foo.push(b)
+      setTimeout(function () {
+        a.foo.push(t)
+      }, 100)
 
-      undoer.undo()
-      undoer.undo()
+      setTimeout(function () {
+        a.foo.push(v)
+      }, 200)
 
-      a.foo.push(n)
+      setTimeout(function () {
+        a.foo.push(b)
+      }, 300)
 
-      undoer.redo()
+      setTimeout(function () {
+        undoer.undo()
+        undoer.undo()
 
-      assert.equal(a.foo.length, 2)
+        a.foo.push(n)
 
-      undoer.redo()
+        undoer.redo()
 
-      assert.equal(a.foo.length, 2)
+        assert.equal(a.foo.length, 2)
+
+        undoer.redo()
+
+        assert.equal(a.foo.length, 2)
+      }, 400)
     })
 
     it('undo, change, redo and undo', () => {
@@ -129,30 +155,39 @@ describe('Undoer', () => {
       t = makeAutoObservable(t)
       v = makeAutoObservable(v)
 
-      a.foo.push(t)
-      a.foo.push(v)
-      a.foo.push(b)
+      setTimeout(function () {
+        a.foo.push(t)
+      }, 100)
+      setTimeout(function () {
+        a.foo.push(v)
+      }, 200)
+      setTimeout(function () {
+        a.foo.push(b)
+      }, 300)
 
-      undoer.undo()
-      undoer.undo()
+      setTimeout(function () {
+        undoer.undo()
+        undoer.undo()
+        a.foo.push(n)
+      }, 400)
 
-      a.foo.push(n)
+      setTimeout(function () {
+        undoer.redo()
 
-      undoer.redo()
+        undoer.undo()
 
-      undoer.undo()
+        assert.equal(a.foo.length, 1)
 
-      assert.equal(a.foo.length, 1)
+        undoer.undo()
 
-      undoer.undo()
+        assert.equal(a.foo.length, 0)
 
-      assert.equal(a.foo.length, 0)
+        undoer.redo()
+        undoer.redo()
 
-      undoer.redo()
-      undoer.redo()
-
-      assert.equal(a.foo.length, 2)
-      assert.equal(a.foo[1].name, 'TestD')
+        assert.equal(a.foo.length, 2)
+        assert.equal(a.foo[1].name, 'TestD')
+      }, 600)
     })
 
     it('action not undoable', () => {
@@ -162,19 +197,23 @@ describe('Undoer', () => {
       let t = { name: 'TestA' }
       t = makeAutoObservable(t)
 
-      undoer.notUndoable(() => {
-        a.foo.push(t)
-        t.name = 'TestB'
-      })
+      setTimeout(function () {
+        undoer.notUndoable(() => {
+          a.foo.push(t)
+          t.name = 'TestB'
+        })
+      }, 100)
 
-      assert.equal(a.foo.length, 1)
-      assert.equal(t.name, 'TestB')
+      setTimeout(function () {
+        assert.equal(a.foo.length, 1)
+        assert.equal(t.name, 'TestB')
 
-      undoer.undo()
-      undoer.undo()
+        undoer.undo()
+        undoer.undo()
 
-      assert.equal(a.foo.length, 1)
-      assert.equal(t.name, 'TestB')
+        assert.equal(a.foo.length, 1)
+        assert.equal(t.name, 'TestB')
+      }, 200)
     })
 
     it('new object properties also undoable', () => {
@@ -185,27 +224,33 @@ describe('Undoer', () => {
 
       undoer.makeUndoable(foo)
 
-      foo.x = { bar: 2 }
+      setTimeout(function () {
+        foo.x = { bar: 2 }
+      }, 100)
 
-      foo.x.bar = 3
+      setTimeout(function () {
+        foo.x.bar = 3
+      }, 300)
 
-      assert.equal(foo.x.bar, 3)
+      setTimeout(function () {
+        assert.equal(foo.x.bar, 3)
 
-      undoer.undo()
+        undoer.undo()
 
-      assert.equal(foo.x.bar, 2)
+        assert.equal(foo.x.bar, 2)
 
-      undoer.undo()
+        undoer.undo()
 
-      assert.equal(foo.x, undefined)
+        assert.equal(foo.x, undefined)
 
-      undoer.redo()
+        undoer.redo()
 
-      assert.equal(foo.x.bar, 2)
+        assert.equal(foo.x.bar, 2)
 
-      undoer.redo()
+        undoer.redo()
 
-      assert.equal(foo.x.bar, 3)
+        assert.equal(foo.x.bar, 3)
+      }, 500)
     })
 
     it('array did change', () => {

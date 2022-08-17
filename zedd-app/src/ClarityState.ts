@@ -8,6 +8,7 @@ import {
   ClarityExportFormat,
   Task as ZeddClarityTask,
   Project as ZeddClarityProject,
+  webDriverQuit,
 } from 'zedd-clarity'
 import './index.css'
 
@@ -53,6 +54,9 @@ export class ClarityState {
   private _currentlyImportingTasks = false
 
   @observable
+  private _currentlyExportingTasks = false
+
+  @observable
   private _tasks: ClarityTask[] = []
 
   @observable
@@ -64,6 +68,10 @@ export class ClarityState {
 
   public get currentlyImportingTasks(): boolean {
     return this._currentlyImportingTasks
+  }
+
+  public get currentlyExportingTasks(): boolean {
+    return this._currentlyExportingTasks
   }
 
   get tasks(): ClarityTask[] {
@@ -99,7 +107,7 @@ export class ClarityState {
     this.actionType = ClarityActionType.SubmitTimesheet
     console.log('exporting timesheets', clarityExport)
     try {
-      this.clearClarityState()
+      this.clearClarityState(false)
       await fillClarity(this.nikuLink, clarityExport, submitTimesheets, this.resourceName, {
         headless: this.chromeHeadless,
         chromeExe: this.chromeExe,
@@ -107,7 +115,7 @@ export class ClarityState {
       })
       this.success = true
     } finally {
-      this._currentlyImportingTasks = false
+      this._currentlyExportingTasks = false
     }
   }
 
@@ -162,8 +170,9 @@ export class ClarityState {
     return this.resolveTask(intId) !== undefined
   }
 
-  private clearClarityState() {
-    this._currentlyImportingTasks = true
+  private clearClarityState(importing: boolean) {
+    this._currentlyImportingTasks = importing
+    this._currentlyExportingTasks = !importing
     this.error = ''
     this.success = false
   }
@@ -177,7 +186,8 @@ export class ClarityState {
       throw new Error('Already importing')
     }
     try {
-      this.clearClarityState()
+      this.clearClarityState(true)
+      this._currentlyExportingTasks = false
       const projectInfos = await getProjectInfo(
         this.nikuLink,
         {
@@ -226,5 +236,9 @@ export class ClarityState {
       'end' === key || 'start' === key ? parseISO(value) : value,
     )
     return [date, tasks]
+  }
+
+  public killSelenium(): void {
+    webDriverQuit()
   }
 }
