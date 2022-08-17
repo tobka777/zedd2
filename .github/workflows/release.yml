@@ -1,0 +1,36 @@
+name: Release
+on:
+  release:
+    types:
+      - created
+
+jobs:
+  publish:
+    strategy:
+      matrix:
+        os: [windows-latest, macos-latest, ubuntu-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions/setup-node@master
+        with:
+          node-version: 14
+
+      - name: install clarity dependencies
+        working-directory: ./zedd-clarity
+        run: npm install
+      - name: build clarity
+        working-directory: ./zedd-clarity
+        run: npm run build
+
+      - name: install app dependencies
+        working-directory: ./zedd-app
+        run: npm install
+      - name: generate icons
+        working-directory: ./zedd-app
+        run: npm run genicons
+      - name: publish app
+        working-directory: ./zedd-app
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: npm run publish
