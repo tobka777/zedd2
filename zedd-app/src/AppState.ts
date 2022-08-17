@@ -242,6 +242,7 @@ export class AppState {
     ),
   )
   public slices: IObservableArray<TimeSlice> = observable([])
+  public markedSlices: IObservableArray<TimeSlice> = observable([])
 
   @serializable(list(object(Task)))
   public lastInteractedTasks: IObservableArray<Task> = observable([])
@@ -701,13 +702,53 @@ export class AppState {
     return s
   }
 
-  public removeSlice(s: TimeSlice): void {
+  public removeSlices(s: TimeSlice): void {
     const index = this.slices.indexOf(s)
+    const onMarkedSlice = this.markedSlices.findIndex((e) => e === s)
+    if (onMarkedSlice === -1) {
+      this.removeSlice(index)
+    } else {
+      this.markedSlices.forEach((e) => {
+        const index = this.slices.indexOf(e)
+        this.removeSlice(index)
+      })
+    }
+    this.clearMarking()
+  }
+
+  private removeSlice(index: number): void {
     if (index === this.slices.length - 1) {
       this.slices.length--
     } else {
       this.slices.splice(index, 1)
     }
+  }
+
+  public markSlice(s: TimeSlice): void {
+    let ifExists = false
+    this.markedSlices.forEach((e) => {
+      console.log(e === s)
+      if (e === s) {
+        ifExists = true
+      }
+    })
+
+    if (ifExists) {
+      const index = this.markedSlices.indexOf(s)
+      if (index === this.markedSlices.length - 1) {
+        this.markedSlices.length--
+      } else {
+        this.markedSlices.splice(index, 1)
+      }
+    } else {
+      this.markedSlices.push(s)
+    }
+    console.log(this.markedSlices)
+  }
+
+  public clearMarking(): void {
+    this.markedSlices.clear()
+    console.log(this.markedSlices)
   }
 
   public startInterval(getUserIdleTime: () => number): void {

@@ -15,6 +15,7 @@ export type BlockProps = {
   onSplit?: SliceSplitHandler<TimeSlice>
   onContextMenu: (e: React.MouseEvent, block: TimeSlice) => void
   onAltRightClick: (e: React.MouseEvent, block: TimeSlice) => void
+  onMarkingBlock: (e: React.MouseEvent, block: TimeSlice) => void
   clarityState: ClarityState
 } & Omit<React.HTMLAttributes<HTMLDivElement>, 'onContextMenu'>
 
@@ -25,6 +26,7 @@ export const BlockDisplay = observer(
     startDrag,
     onContextMenu,
     onAltRightClick,
+    onMarkingBlock,
     clarityState,
     style,
     className,
@@ -35,9 +37,15 @@ export const BlockDisplay = observer(
         if (e.ctrlKey && onSplit) onSplit(slice, e)
         if (1 === e.button) onContextMenu(e, slice)
         if (0 === e.button && e.altKey === true) onAltRightClick(e, slice)
+        if (0 === e.button && e.shiftKey === true) {
+          setMarking((current) => !current)
+          onMarkingBlock(e, slice)
+        }
       },
       [slice, onSplit, onContextMenu],
     )
+    const [isMarked, setMarking] = React.useState(false)
+
     const startHandleHandler = useCallback(
       (e: React.MouseEvent) => {
         if (e.button === 0) {
@@ -88,11 +96,18 @@ export const BlockDisplay = observer(
           position: 'absolute',
           backgroundColor:
             'task' in slice
-              ? slice.task
-                  .getColor()
-                  .set('hsl.s', 0.9)
-                  .set('hsl.l', 'dark' === theme.palette.mode ? 0.2 : 0.8)
-                  .css()
+              ? isMarked
+                ? slice.task
+                    .getColor()
+                    .set('hsl.s', 50)
+                    .set('hsl.h', 160)
+                    .set('hsl.l', 'dark' === theme.palette.mode ? 0.2 : 0.8)
+                    .css()
+                : slice.task
+                    .getColor()
+                    .set('hsl.s', 0.9)
+                    .set('hsl.l', 'dark' === theme.palette.mode ? 0.2 : 0.8)
+                    .css()
               : '#eeeeee',
           right: 0,
           left: 20,

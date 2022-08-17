@@ -21,6 +21,14 @@ export const suggestedTaskMenuItems = (
       checked: checked === t,
       click: (x) => {
         onClick(state.getTaskForName(x.label))
+        const newTask = state.getTaskForName(x.label)
+        const onMarkedSlice = state.markedSlices.findIndex((e) => e.task === newTask)
+        if (onMarkedSlice !== -1) {
+          state.markedSlices.forEach((e) => {
+            e!.task = newTask
+          })
+        }
+        state.clearMarking()
         state.notifyTaskInteraction(state.getTaskForName(x.label))
       },
     }),

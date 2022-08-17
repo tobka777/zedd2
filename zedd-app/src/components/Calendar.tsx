@@ -46,6 +46,8 @@ export type SliceSplitHandler<T extends Interval> = (b: T, e: React.MouseEvent) 
 export interface CalendarProps<T extends Interval> {
   showing: Interval
   deleteSlice: (slice: T) => void
+  markSlice: (slice: T) => void
+  clearMarking: (click: boolean) => void
   startHour: number
   slices: T[]
   selectedSlice?: T
@@ -127,6 +129,7 @@ const CalendarBase = <T extends Interval>({
   splitBlock,
   getVirtualSlice,
   holidays,
+  clearMarking,
 }: CalendarProps<T>) => {
   const local = useLocalObservable(() => ({
     showTime: new Date(),
@@ -152,13 +155,15 @@ const CalendarBase = <T extends Interval>({
   const startHour = local.fixedShowInterval?.start ?? adjustStartHour(minStartHour, showing, slices)
 
   const hoursBlockMouseClick = useCallback(
-    (_: React.MouseEvent) => {
+    (e: React.MouseEvent) => {
       if (local.virtualSlice) {
         onSliceAdd(local.virtualSlice)
         local.virtualSlice = undefined
+      } else if (e.shiftKey === false) {
+        clearMarking(true)
       }
     },
-    [onSliceAdd, local],
+    [onSliceAdd, local, clearMarking],
   )
 
   const viewportXYToTime = useCallback(
