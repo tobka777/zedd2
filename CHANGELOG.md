@@ -2,6 +2,7 @@
 
 - Feature: Added headless mode for Selenium Browser to start in the background (configurable)
 - Feature: Log error messages in logfile located in `~/zedd/log/`.
+- Feature: Support for MacOS
 
 ## [2.10.0] - 2022-03-14
 
