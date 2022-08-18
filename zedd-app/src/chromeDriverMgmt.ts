@@ -96,7 +96,14 @@ export const installChromeDriver = async (
   )
 }
 export const getChromeDriverVersion = async (chromeDriverPath = 'chromedriver') => {
-  const { stdout } = await promisify(exec)(`'${chromeDriverPath}' --version`)
+  let chromedriverVersionCommand
+  if (isWin) {
+    chromedriverVersionCommand = `${chromeDriverPath} --version`
+  }
+  else {
+    chromedriverVersionCommand = `'${chromeDriverPath}' --version`
+  }
+  const { stdout } = await promisify(exec)(chromedriverVersionCommand)
   return stdout
     .trim()
     .replace(/^ChromeDriver\s*/, '')
