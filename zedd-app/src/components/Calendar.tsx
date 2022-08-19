@@ -163,7 +163,7 @@ const CalendarBase = <T extends Interval>({
         clearMarking(true)
       }
     },
-    [onSliceAdd, local, clearMarking],
+    [onSliceAdd, local],
   )
 
   const viewportXYToTime = useCallback(

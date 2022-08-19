@@ -17,11 +17,13 @@ export type BlockProps = {
   onAltRightClick: (e: React.MouseEvent, block: TimeSlice) => void
   onMarkingBlock: (e: React.MouseEvent, block: TimeSlice) => void
   clarityState: ClarityState
+  slicesMarked: boolean
 } & Omit<React.HTMLAttributes<HTMLDivElement>, 'onContextMenu'>
 
 export const BlockDisplay = observer(
   ({
     slice,
+    slicesMarked,
     onSplit,
     startDrag,
     onContextMenu,
@@ -45,6 +47,13 @@ export const BlockDisplay = observer(
       [slice, onSplit, onContextMenu],
     )
     const [isMarked, setMarking] = React.useState(false)
+
+    function checkIfMarked(): boolean {
+      if (slicesMarked === false && isMarked === true) {
+        setMarking((current) => !current)
+      }
+      return isMarked
+    }
 
     const startHandleHandler = useCallback(
       (e: React.MouseEvent) => {
@@ -96,11 +105,11 @@ export const BlockDisplay = observer(
           position: 'absolute',
           backgroundColor:
             'task' in slice
-              ? isMarked
+              ? checkIfMarked()
                 ? slice.task
                     .getColor()
                     .set('hsl.s', 50)
-                    .set('hsl.h', 160)
+                    .set('hsl.h', 120)
                     .set('hsl.l', 'dark' === theme.palette.mode ? 0.2 : 0.8)
                     .css()
                 : slice.task

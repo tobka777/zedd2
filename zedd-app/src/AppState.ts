@@ -206,6 +206,9 @@ export class AppState {
   /** FIELDS */
 
   @observable
+  public slicesMarked: boolean = false
+
+  @observable
   public windowFocused: boolean = false
 
   @observable
@@ -727,7 +730,6 @@ export class AppState {
   public markSlice(s: TimeSlice): void {
     let ifExists = false
     this.markedSlices.forEach((e) => {
-      console.log(e === s)
       if (e === s) {
         ifExists = true
       }
@@ -742,12 +744,14 @@ export class AppState {
       }
     } else {
       this.markedSlices.push(s)
+      this.slicesMarked = true
     }
     console.log(this.markedSlices)
   }
 
   public clearMarking(): void {
     this.markedSlices.clear()
+    this.slicesMarked = false
     console.log(this.markedSlices)
   }
 

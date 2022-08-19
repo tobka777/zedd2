@@ -93,7 +93,7 @@ export class Undoer {
           const timeStampToDelete = action.timeStamp
           action.element.splice(action.index, action.added.length, ...action.removed)
           if (this.undoStack[this.undoPosition]) {
-            if (timeStampToDelete - this.undoStack[this.undoPosition].timeStamp <= 1) {
+            if (timeStampToDelete - this.undoStack[this.undoPosition].timeStamp <= 6) {
               this.undo()
             }
           }
@@ -118,7 +118,7 @@ export class Undoer {
           const timeStampToRedo = action.timeStamp
           action.element[action.name ? action.name : action.index] = action.newValue
           if (this.undoStack[this.undoPosition + 1]) {
-            if (this.undoStack[this.undoPosition + 1].timeStamp - timeStampToRedo <= 1) {
+            if (this.undoStack[this.undoPosition + 1].timeStamp - timeStampToRedo <= 6) {
               this.redo()
             }
           }

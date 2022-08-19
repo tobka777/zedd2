@@ -426,6 +426,7 @@ export const AppBody = observer(
                     onContextMenu={onBlockClick}
                     onAltRightClick={onAltRightClick}
                     onMarkingBlock={onMarkingBlock}
+                    slicesMarked={state.slicesMarked}
                   />
                 )
               }}
