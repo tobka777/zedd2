@@ -131,6 +131,21 @@ export const SettingsDialog = observer(
             </Grid>
 
             <Grid item xs={4}>
+              <FormLabel>Default Weekly Working Time</FormLabel>
+            </Grid>
+            <Grid item xs={8} component={'label'}>
+              <TextField
+                type='number'
+                value={settings.workmask.reduce((total, day) => (total = total + day.valueOf()), 0)}
+                onChange={(e) => (settings.weeklyHours = +e.target.value)}
+                InputProps={{
+                  endAdornment: <InputAdornment position='end'>hours</InputAdornment>,
+                }}
+                inputProps={{ min: 1, max: 168, step: 1 }}
+              />
+            </Grid>
+
+            <Grid item xs={4}>
               <FormLabel>Start Hour</FormLabel>
               <div style={{ fontSize: 'small' }}>
                 First hour of the calendar by default, as well as start hour for holidays etc.
@@ -151,7 +166,7 @@ export const SettingsDialog = observer(
             <Grid item xs={4}>
               <FormLabel>Min Idle Time</FormLabel>
               <div style={{ fontSize: 'small' }}>
-                Mininum user idle time in minutes which counts as "user is away".
+                Minimum user idle time in minutes which counts as "user is away".
               </div>
             </Grid>
             <Grid item xs={8}>
