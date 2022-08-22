@@ -18,7 +18,7 @@ import { useEffect, useMemo } from 'react'
 import ReactMarkdown from 'react-markdown'
 
 import { ErrorBoundary } from './ErrorBoundary'
-import { AppState, Task, TimeSlice } from '../AppState'
+import { AppState, Task } from '../AppState'
 import { ClarityState } from '../ClarityState'
 import { ChangeSliceTaskDialog } from './ChangeSliceTaskDialog'
 import { RenameTaskDialog } from './RenameTaskDialog'
