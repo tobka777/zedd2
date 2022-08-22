@@ -1,3 +1,7 @@
+## [2.11.0] - 2022-08-XX
+
+- Feature: Marking many tasks simultaneously and operting on them - delete and change task operation.
+
 ## [2.11.0] - 2022-07-XX
 
 - Feature: Undoing slice operation also updates element to previous state when it was earlier automatically cutted

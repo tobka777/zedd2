@@ -108,9 +108,9 @@ export const BlockDisplay = observer(
               ? checkIfMarked()
                 ? slice.task
                     .getColor()
-                    .set('hsl.s', 50)
-                    .set('hsl.h', 120)
+                    .set('hsl.s', 0.9)
                     .set('hsl.l', 'dark' === theme.palette.mode ? 0.2 : 0.8)
+                    .darker()
                     .css()
                 : slice.task
                     .getColor()
