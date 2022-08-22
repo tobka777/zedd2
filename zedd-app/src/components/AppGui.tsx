@@ -18,7 +18,7 @@ import { useEffect, useMemo } from 'react'
 import ReactMarkdown from 'react-markdown'
 
 import { ErrorBoundary } from './ErrorBoundary'
-import { AppState, Task } from '../AppState'
+import { AppState, Task, TimeSlice } from '../AppState'
 import { ClarityState } from '../ClarityState'
 import { ChangeSliceTaskDialog } from './ChangeSliceTaskDialog'
 import { RenameTaskDialog } from './RenameTaskDialog'
@@ -107,6 +107,18 @@ export const AppGui = observer(
       }
       window.addEventListener('keydown', clearMarking)
       return () => window.removeEventListener('keydown', clearMarking)
+    }, [state])
+
+    useEffect(() => {
+      const removeSlicesOnDelete = (e: KeyboardEvent) => {
+        if (e.key === 'Delete') {
+          if (state.markedSlices.length !== 0) {
+            state.removeSlices(state.markedSlices[0])
+          }
+        }
+      }
+      window.addEventListener('keydown', removeSlicesOnDelete)
+      return () => window.removeEventListener('keydown', removeSlicesOnDelete)
     }, [state])
 
     return (
