@@ -746,13 +746,11 @@ export class AppState {
       this.markedSlices.push(s)
       this.slicesMarked = true
     }
-    console.log(this.markedSlices)
   }
 
   public clearMarking(): void {
     this.markedSlices.clear()
     this.slicesMarked = false
-    console.log(this.markedSlices)
   }
 
   public startInterval(getUserIdleTime: () => number): void {
