@@ -125,6 +125,15 @@ export const SettingsDialog = observer(
                   style={{ width: '3em' }}
                   type='number'
                   value={settings.workmask[di]}
+                  sx={{
+                    input: {
+                      color:
+                        settings.workmask.reduce((total, d) => (total = total + d), 0) ==
+                        settings.weeklyHours
+                          ? 'black'
+                          : 'red',
+                    },
+                  }}
                   onChange={(e) => (settings.workmask[di] = +e.target.value)}
                 />
               ))}
@@ -136,7 +145,8 @@ export const SettingsDialog = observer(
             <Grid item xs={8} component={'label'}>
               <TextField
                 type='number'
-                value={settings.workmask.reduce((total, day) => (total = total + day.valueOf()), 0)}
+                // value={settings.workmask.reduce((total, day) => (total = total + day.valueOf()), 0)}
+                value={settings.weeklyHours}
                 onChange={(e) => (settings.weeklyHours = +e.target.value)}
                 InputProps={{
                   endAdornment: <InputAdornment position='end'>hours</InputAdornment>,

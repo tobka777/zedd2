@@ -83,6 +83,7 @@ export function smartRound<T>(arr: T[], f: (t: T) => number, toNearest: number):
 export interface ClarityViewProps {
   showing: Interval
   calculateTargetHours: (interval: Interval) => number
+  weeklyHours: number
   slices: TimeSlice[]
   clarityState: ClarityState
   submitTimesheets: boolean
@@ -250,6 +251,7 @@ export const ClarityView = observer((props: ClarityViewProps) => {
     errorHandler,
     clarityState,
     calculateTargetHours,
+    weeklyHours,
   } = props
   const [clarityViewFilterProject, setclarityViewFilterProject] = useState('')
   const noOfDays = differenceInDays(showing.end, showing.start)
@@ -402,8 +404,14 @@ export const ClarityView = observer((props: ClarityViewProps) => {
               targetHours={calculateTargetHours(showing)}
               workedHours={showingTotal}
             >
-              <td className='numberCell' style={{ textDecoration: 'underline dotted' }}>
-                {formatHours(showingTotal)}
+              <td
+                className='numberCell'
+                style={{
+                  textDecoration: 'underline dotted',
+                  color: showingTotal === weeklyHours ? 'green' : 'red',
+                }}
+              >
+                {formatHours(weeklyHours)}
               </td>
             </DiffHoursTooltip>
           </tr>
