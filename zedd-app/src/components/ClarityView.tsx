@@ -408,10 +408,9 @@ export const ClarityView = observer((props: ClarityViewProps) => {
                 className='numberCell'
                 style={{
                   textDecoration: 'underline dotted',
-                  color: showingTotal === weeklyHours ? 'green' : 'red',
                 }}
               >
-                {formatHours(weeklyHours)}
+                {formatHours(showingTotal)}
               </td>
             </DiffHoursTooltip>
           </tr>

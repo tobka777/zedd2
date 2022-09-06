@@ -38,14 +38,6 @@ export class ZeddSettings {
   public startHour = 8
 
   /**
-   *
-   *
-   */
-  @observable
-  @serializable(raw())
-  public weeklyHours = 40
-
-  /**
    * define clarity projects whoses tasks should not be imported
    * function will be called with project names, returning true
    * will lead to the project being excluded
