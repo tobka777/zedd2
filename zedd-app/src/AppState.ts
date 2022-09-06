@@ -892,10 +892,6 @@ export class AppState {
     return sum(eachDayOfInterval(interval).map((day) => this.config.workmask[getDay(day) - 1]))
   }
 
-  public getWeeklyHours(): number {
-    return this.config.weeklyHours
-  }
-
   public formatHours = (hours: number): string =>
     'bt' === this.config.timeFormat ? formatHoursBT(hours) : formatHoursHHmm(hours)
 }

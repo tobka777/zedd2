@@ -435,7 +435,6 @@ export const AppBody = observer(
               state.addMessage(error.message)
             }}
             calculateTargetHours={(interval) => state.calcTargetHours(interval)}
-            weeklyHours={state.getWeeklyHours()}
           />
         </ErrorBoundary>
       </div>
