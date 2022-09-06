@@ -1,3 +1,7 @@
+[2.11.0] - 2022-08-XX
+
+Feature: Chose default weekly working hours and working mask in settings
+
 ## [2.11.0] - 2022-07-XX
 
 - Feature: Undoing slice operation also updates element to previous state when it was earlier automatically cutted

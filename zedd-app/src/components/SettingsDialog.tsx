@@ -126,8 +126,8 @@ export const SettingsDialog = observer(
     function changeDayHours(e: any): number {
       if (e < 0) {
         e = 0
-      } else if (e > 24) {
-        e = 24
+      } else if (e > 12) {
+        e = 12
       }
       return e
     }
@@ -155,7 +155,6 @@ export const SettingsDialog = observer(
                   style={{ width: '3em' }}
                   type='number'
                   value={settings.workmask[di]}
-                  // onChange={(e) => (settings.workmask[di] = +e.target.value)}
                   onChange={(e) => (settings.workmask[di] = +changeDayHours(e.target.value))}
                 />
               ))}
