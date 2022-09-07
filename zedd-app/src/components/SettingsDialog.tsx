@@ -101,36 +101,25 @@ export const SettingsDialog = observer(
     const projects = uniq([...clarityState.projectNames, ...settings.excludeProjects])
     projects.sort()
 
-    function updateWorkmask(newValueofHours: any) {
-      let indexToChange = 0
-      let actualSumOfHours = settings.workmask.reduce(
+    function updateWorkmask(newValueofHours: number) {
+      const actualSumOfHours = settings.workmask.reduce(
         (total, day) => (total = total + day.valueOf()),
         0,
       )
-      let workingDays = settings.workmask.slice(0, 5)
-      let valueToChange
-      if (newValueofHours - actualSumOfHours > 0) {
-        valueToChange = Math.min(...workingDays)
-      } else {
-        valueToChange = Math.max(...workingDays)
-      }
-      indexToChange = workingDays.indexOf(valueToChange)
+      const workingDays = settings.workmask.slice(0, 5)
+      const valueToChange =
+        newValueofHours - actualSumOfHours > 0 ? Math.min(...workingDays) : Math.max(...workingDays)
+      const indexToChange = workingDays.indexOf(valueToChange)
 
-      let value = 1
-      if (newValueofHours < actualSumOfHours) {
-        value = -value
-      }
+      const value = newValueofHours < actualSumOfHours ? -1 : 1
+
       settings.workmask[indexToChange] = settings.workmask[indexToChange] + value
     }
 
-    function changeDayHours(e: any): number {
-      if (e < 0) {
-        e = 0
-      } else if (e > 12) {
-        e = 12
-      }
-      return e
+    function changeDayHours(dayHours: number): number {
+      return dayHours < 0 ? 0 : dayHours > 12 ? 12 : dayHours
     }
+
     return (
       <Dialog
         open={true}
@@ -155,19 +144,21 @@ export const SettingsDialog = observer(
                   style={{ width: '3em' }}
                   type='number'
                   value={settings.workmask[di]}
-                  onChange={(e) => (settings.workmask[di] = +changeDayHours(e.target.value))}
+                  onChange={(e) =>
+                    (settings.workmask[di] = +changeDayHours(parseInt(e.target.value)))
+                  }
                 />
               ))}
             </Grid>
 
             <Grid item xs={4}>
-              <FormLabel>Default Weekly Working Time</FormLabel>
+              <FormLabel>Weekly Working Time</FormLabel>
             </Grid>
             <Grid item xs={8} component={'label'}>
               <TextField
                 type='number'
                 value={settings.workmask.reduce((total, day) => (total = total + day.valueOf()), 0)}
-                onChange={(e) => updateWorkmask(e.target.value)}
+                onChange={(e) => updateWorkmask(parseInt(e.target.value))}
                 InputProps={{
                   endAdornment: <InputAdornment position='end'>hours</InputAdornment>,
                 }}
