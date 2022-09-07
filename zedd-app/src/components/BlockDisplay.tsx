@@ -49,7 +49,7 @@ export const BlockDisplay = observer(
     const [isMarked, setMarking] = React.useState(false)
 
     function checkIfMarked(): boolean {
-      if (slicesMarked === false && isMarked === true) {
+      if (!slicesMarked && isMarked) {
         setMarking((current) => !current)
       }
       return isMarked

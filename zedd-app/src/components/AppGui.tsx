@@ -111,10 +111,8 @@ export const AppGui = observer(
 
     useEffect(() => {
       const removeSlicesOnDelete = (e: KeyboardEvent) => {
-        if (e.key === 'Delete') {
-          if (state.markedSlices.length !== 0) {
-            state.removeSlices(state.markedSlices[0])
-          }
+        if (e.key === 'Delete' && state.markedSlices.length !== 0) {
+          state.removeSlices(state.markedSlices[0])
         }
       }
       window.addEventListener('keydown', removeSlicesOnDelete)
@@ -178,10 +176,10 @@ export const AppGui = observer(
                 done={(newTask) => {
                   if ('string' === typeof newTask) newTask = state.getTaskForName(newTask)
                   console.log('ChangeSLiceTaskDialog', 'state.changingSliceTask!.task = newTask')
-                  const onMarkedSlice = state.markedSlices.findIndex(
+                  const sliceIndex = state.markedSlices.findIndex(
                     (e) => e === state.changingSliceTask!,
                   )
-                  if (onMarkedSlice !== -1) {
+                  if (sliceIndex !== -1) {
                     state.markedSlices.forEach((e) => {
                       e.task = newTask as Task
                     })

@@ -712,8 +712,7 @@ export class AppState {
       this.removeSlice(index)
     } else {
       this.markedSlices.forEach((e) => {
-        const index = this.slices.indexOf(e)
-        this.removeSlice(index)
+        this.removeSlice(this.slices.indexOf(e))
       })
     }
     this.clearMarking()
@@ -727,23 +726,18 @@ export class AppState {
     }
   }
 
-  public markSlice(s: TimeSlice): void {
-    let ifExists = false
-    this.markedSlices.forEach((e) => {
-      if (e === s) {
-        ifExists = true
-      }
-    })
+  public markSlice(slice: TimeSlice): void {
+    let ifExists = this.markedSlices.includes(slice)
 
     if (ifExists) {
-      const index = this.markedSlices.indexOf(s)
+      const index = this.markedSlices.indexOf(slice)
       if (index === this.markedSlices.length - 1) {
         this.markedSlices.length--
       } else {
         this.markedSlices.splice(index, 1)
       }
     } else {
-      this.markedSlices.push(s)
+      this.markedSlices.push(slice)
       this.slicesMarked = true
     }
   }

@@ -415,8 +415,8 @@ export const AppBody = observer(
                 }
               }}
               getVirtualSlice={(start, end) => new TimeSlice(start, end, state.getUndefinedTask())}
-              deleteSlice={(b) => state.removeSlices(b)}
-              markSlice={(s) => state.markSlice(s)}
+              deleteSlice={(slice) => state.removeSlices(slice)}
+              markSlice={(slice) => state.markSlice(slice)}
               clearMarking={() => state.clearMarking()}
               renderSlice={(attributes) => {
                 return (
