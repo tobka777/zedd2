@@ -727,7 +727,7 @@ export class AppState {
   }
 
   public markSlice(slice: TimeSlice): void {
-    let ifExists = this.markedSlices.includes(slice)
+    const ifExists = this.markedSlices.includes(slice)
 
     if (ifExists) {
       const index = this.markedSlices.indexOf(slice)
