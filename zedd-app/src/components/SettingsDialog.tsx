@@ -101,6 +101,25 @@ export const SettingsDialog = observer(
     const projects = uniq([...clarityState.projectNames, ...settings.excludeProjects])
     projects.sort()
 
+    function updateWorkmask(newValueofHours: number) {
+      const actualSumOfHours = settings.workmask.reduce(
+        (total, day) => (total = total + day.valueOf()),
+        0,
+      )
+      const workingDays = settings.workmask.slice(0, 5)
+      const valueToChange =
+        newValueofHours - actualSumOfHours > 0 ? Math.min(...workingDays) : Math.max(...workingDays)
+      const indexToChange = workingDays.indexOf(valueToChange)
+
+      const value = newValueofHours < actualSumOfHours ? -1 : 1
+
+      settings.workmask[indexToChange] = settings.workmask[indexToChange] + value
+    }
+
+    function changeDayHours(dayHours: number): number {
+      return dayHours < 0 ? 0 : dayHours > 12 ? 12 : dayHours
+    }
+
     return (
       <Dialog
         open={true}
@@ -125,9 +144,26 @@ export const SettingsDialog = observer(
                   style={{ width: '3em' }}
                   type='number'
                   value={settings.workmask[di]}
-                  onChange={(e) => (settings.workmask[di] = +e.target.value)}
+                  onChange={(e) =>
+                    (settings.workmask[di] = +changeDayHours(parseInt(e.target.value)))
+                  }
                 />
               ))}
+            </Grid>
+
+            <Grid item xs={4}>
+              <FormLabel>Weekly Working Time</FormLabel>
+            </Grid>
+            <Grid item xs={8} component={'label'}>
+              <TextField
+                type='number'
+                value={settings.workmask.reduce((total, day) => (total = total + day.valueOf()), 0)}
+                onChange={(e) => updateWorkmask(parseInt(e.target.value))}
+                InputProps={{
+                  endAdornment: <InputAdornment position='end'>hours</InputAdornment>,
+                }}
+                inputProps={{ min: 1, max: 168, step: 1 }}
+              />
             </Grid>
 
             <Grid item xs={4}>
@@ -151,7 +187,7 @@ export const SettingsDialog = observer(
             <Grid item xs={4}>
               <FormLabel>Min Idle Time</FormLabel>
               <div style={{ fontSize: 'small' }}>
-                Mininum user idle time in minutes which counts as "user is away".
+                Minimum user idle time in minutes which counts as "user is away".
               </div>
             </Grid>
             <Grid item xs={8}>
