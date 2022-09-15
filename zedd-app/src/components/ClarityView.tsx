@@ -402,7 +402,12 @@ export const ClarityView = observer((props: ClarityViewProps) => {
               targetHours={calculateTargetHours(showing)}
               workedHours={showingTotal}
             >
-              <td className='numberCell' style={{ textDecoration: 'underline dotted' }}>
+              <td
+                className='numberCell'
+                style={{
+                  textDecoration: 'underline dotted',
+                }}
+              >
                 {formatHours(showingTotal)}
               </td>
             </DiffHoursTooltip>
