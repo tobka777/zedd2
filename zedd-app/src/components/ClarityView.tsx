@@ -417,7 +417,7 @@ export const ClarityView = observer((props: ClarityViewProps) => {
       <CardActions style={{ flexDirection: 'row-reverse' }}>
         <Button
           disabled={!clarityState.currentlyExportingTasks}
-          onClick={() => clarityState.sileniumKill()}
+          onClick={() => clarityState.killSelenium()}
         >
           Cancel
         </Button>

@@ -123,14 +123,14 @@ export const AppBody = observer(
             label: 'Start Timing This',
             click: () => (state.currentTask = slice.task),
           },
-          { type: 'normal', label: 'Delete', click: (_) => state.removeSlice(slice) },
+          { type: 'normal', label: 'Delete', click: (_) => state.removeSlices(slice) },
           {
             type: 'normal',
             label: 'Eat Previous Slice',
             click: (_) => {
               const previousSlice = state.getPreviousSlice(slice)
               if (!previousSlice || !isSameDay(previousSlice.start, slice.start)) return
-              state.removeSlice(previousSlice)
+              state.removeSlices(previousSlice)
               slice.start = previousSlice.start
             },
           },
@@ -140,7 +140,7 @@ export const AppBody = observer(
             click: (_) => {
               const nextSlice = state.getNextSlice(slice)
               if (!nextSlice || !isSameDay(nextSlice.start, slice.start)) return
-              state.removeSlice(nextSlice)
+              state.removeSlices(nextSlice)
               slice.end = nextSlice.end
             },
           },
@@ -188,6 +188,13 @@ export const AppBody = observer(
     useEffect(() => {
       fetchHolidays()
     }, [state.showing, settings.location, settings.federalState])
+
+    const onMarkingBlock = useCallback(
+      (_: React.MouseEvent, slice: TimeSlice) => {
+        state.markSlice(slice)
+      },
+      [state],
+    )
 
     return (
       <div className={classes.contentRoot} style={{ display: display ? 'block' : 'none' }}>
@@ -408,7 +415,9 @@ export const AppBody = observer(
                 }
               }}
               getVirtualSlice={(start, end) => new TimeSlice(start, end, state.getUndefinedTask())}
-              deleteSlice={(b) => state.removeSlice(b)}
+              deleteSlice={(slice) => state.removeSlices(slice)}
+              markSlice={(slice) => state.markSlice(slice)}
+              clearMarking={() => state.clearMarking()}
               renderSlice={(attributes) => {
                 return (
                   <BlockDisplay
@@ -416,6 +425,8 @@ export const AppBody = observer(
                     clarityState={clarityState}
                     onContextMenu={onBlockClick}
                     onAltRightClick={onAltRightClick}
+                    onMarkingBlock={onMarkingBlock}
+                    slicesMarked={state.slicesMarked}
                   />
                 )
               }}
