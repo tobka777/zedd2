@@ -15,7 +15,7 @@ jobs:
       - uses: actions/checkout@v2
       - uses: actions/setup-node@master
         with:
-          node-version: 14
+          node-version: 16
 
       - name: install clarity dependencies
         working-directory: ./zedd-clarity
@@ -32,20 +32,20 @@ jobs:
         run: npm run genicons
       - name: build release
         working-directory: ./zedd-app
-        run: npm run package
+        run: npm run make
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      - name: Release
+      - name: create release
         uses: softprops/action-gh-release@v1
         with:
           #tag_name: ${{ github.ref }}
-          #name: Release ${{ github.ref }}
-          tag_name: 0.0.1-beta
-          name: Release 0.0.1-beta
+          #name: ${{ github.ref }}
+          tag_name: 0.0.2-beta
+          name: 0.0.2-beta
           draft: true
           files: |
-            ./zedd-app/dist/*.snap
-            ./zedd-app/dist/*.dmg
-            ./zedd-app/dist/*.exe
+            ./zedd-app/out/**/*.snap
+            ./zedd-app/out/**/*.dmg
+            ./zedd-app/out/**/*.exe
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
