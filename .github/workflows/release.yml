@@ -13,19 +13,21 @@ jobs:
     runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v2
-      - name: echo
-        run: |
-          echo "${{ github.event.head_commit.message }}"
-          echo "${{ github.ref }}"
-          echo "${{ github.event.head_commit.message }:1}"
-          echo "${{ github.event.head_commit.message :1}}"
       - uses: actions/setup-node@master
         with:
           node-version: 14
 
+      - name: Resolve Version
+        env:
+          BRANCH: ${{ github.event.head_commit.message }}
+        id: preprocess
+        run: echo "::set-output name=version::${BRANCH##*/}"
+
       - name: install clarity dependencies
         working-directory: ./zedd-clarity
-        run: npm install
+        run: |
+          echo ${{ steps.preprocess.outputs.version }}
+          npm install
       - name: build clarity
         working-directory: ./zedd-clarity
         run: npm run build
