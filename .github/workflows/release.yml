@@ -1,14 +1,15 @@
 name: Release
-on:
-  release:
-    types:
-      - created
+on: push
+#  push:
+#    tags:
+#      - '*'
 
 jobs:
   publish:
     strategy:
       matrix:
-        os: [windows-latest, macos-latest, ubuntu-latest]
+        #os: [windows-latest, macos-latest, ubuntu-latest]
+        os: [windows-latest]
     runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v2
@@ -29,8 +30,23 @@ jobs:
       - name: generate icons
         working-directory: ./zedd-app
         run: npm run genicons
-      - name: publish app
+      - name: build release
         working-directory: ./zedd-app
+        run: npm run make
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: npm run publish
+      - name: create release
+        uses: softprops/action-gh-release@v1
+        with:
+          #tag_name: ${{ github.ref }}
+          #name: ${{ github.ref }}
+          tag_name: 0.0.2-beta
+          name: 0.0.2-beta
+          draft: true
+          files: |
+            ./zedd-app/out/**/*.snap
+            ./zedd-app/out/**/*.dmg
+            ./zedd-app/out/**/*.exe
+            ./zedd-app/out/**/*.nupkg
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
