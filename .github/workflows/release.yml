@@ -19,11 +19,10 @@ jobs:
 
       - name: echo
         run: |
+          echo "${{ github.event.head_commit.message }}"
           echo "${{ github.ref }}"
-          echo "VERSION1=${{ github.ref }}"
-          echo "VERSION2=${VERSION:1}"
-          echo "VERSION3=${github.ref:1}"
-          echo "VERSION4=${${{ github.ref }}:1}"
+          echo "VERSIONREF=${GITHUB_REF}"
+          echo "VERSIONREF2=${GITHUB_REF:1}"
 
       - name: install clarity dependencies
         working-directory: ./zedd-clarity
