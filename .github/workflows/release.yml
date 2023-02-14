@@ -20,9 +20,8 @@ jobs:
       - name: Resolve Version
         id: preprocess
         run: |
-          echo ${GITHUB_REF_NAME#v}
-          echo ${GITHUB_REF_NAME:1}
-          echo "TAG=$(npm pkg get version)" >> "$GITHUB_OUTPUT"
+          echo "${GITHUB_REF_NAME#v}"
+          echo "${GITHUB_REF_NAME:1}"
 
       - name: install clarity dependencies
         working-directory: ./zedd-clarity
