@@ -20,13 +20,13 @@ jobs:
       - name: Resolve Version
         id: preprocess
         run: |
-          TAG=${{ github.event.head_commit.message }}
-          echo "VERSION=${TAG#v}" >> $GITHUB_ENV
+          TAG="${{ github.event.head_commit.message }}"
+          echo "TAG=${TAG#v}" >> $GITHUB_ENV
 
       - name: install clarity dependencies
         working-directory: ./zedd-clarity
         run: |
-          echo ${VERSION}
+          echo ${TAG}
           npm install
       - name: build clarity
         working-directory: ./zedd-clarity
