@@ -12,17 +12,16 @@ jobs:
         os: [windows-latest]
     runs-on: ${{ matrix.os }}
     steps:
-      - uses: actions/checkout@v2
-      - uses: actions/setup-node@master
-        with:
-          node-version: 14
-
       - name: echo
         run: |
           echo "${{ github.event.head_commit.message }}"
           echo "${{ github.ref }}"
-          echo "VERSIONREF=${GITHUB_REF}"
-          echo "VERSIONREF2=${GITHUB_REF:1}"
+          echo "${{ github.event.head_commit.message }:1}"
+          echo "${{ github.event.head_commit.message :1}}"
+      - uses: actions/checkout@v2
+      - uses: actions/setup-node@master
+        with:
+          node-version: 14
 
       - name: install clarity dependencies
         working-directory: ./zedd-clarity
