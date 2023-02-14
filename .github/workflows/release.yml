@@ -18,15 +18,15 @@ jobs:
           node-version: 14
 
       - name: Resolve Version
-        env:
-          BRANCH: ${{ github.event.head_commit.message }}
         id: preprocess
-        run: echo "::set-output name=version::${BRANCH##*/}"
+        run: |
+          TAG=${{ github.event.head_commit.message }}
+          echo "VERSION=${TAG#v}" >> $GITHUB_ENV
 
       - name: install clarity dependencies
         working-directory: ./zedd-clarity
         run: |
-          echo ${{ steps.preprocess.outputs.version }}
+          echo ${VERSION}
           npm install
       - name: build clarity
         working-directory: ./zedd-clarity
@@ -55,6 +55,6 @@ jobs:
             ./zedd-app/out/**/*.snap
             ./zedd-app/out/**/*.dmg
             ./zedd-app/out/make/squirrel.windows/x64/*.exe
-            ./zedd-app/out/make/squirrel.windows/x64/*.nupkg
+            ./zedd-app/out/make/squirrel.windows/x64/*${{ steps.preprocess.outputs.version }}*.nupkg
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
