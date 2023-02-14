@@ -17,6 +17,14 @@ jobs:
         with:
           node-version: 14
 
+      - name: echo
+        run: |
+          echo "${{ github.ref }}"
+          echo "VERSION1=${{ github.ref }}"
+          echo "VERSION2=${VERSION:1}"
+          echo "VERSION3=${github.ref:1}"
+          echo "VERSION4=${${{ github.ref }}:1}"
+
       - name: install clarity dependencies
         working-directory: ./zedd-clarity
         run: npm install
@@ -46,7 +54,7 @@ jobs:
           files: |
             ./zedd-app/out/**/*.snap
             ./zedd-app/out/**/*.dmg
-            ./zedd-app/out/**/*.exe
-            ./zedd-app/out/**/*.nupkg
+            ./zedd-app/out/make/squirrel.windows/x64/*.exe
+            ./zedd-app/out/make/squirrel.windows/x64/*.nupkg
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
