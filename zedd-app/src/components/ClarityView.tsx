@@ -402,7 +402,12 @@ export const ClarityView = observer((props: ClarityViewProps) => {
               targetHours={calculateTargetHours(showing)}
               workedHours={showingTotal}
             >
-              <td className='numberCell' style={{ textDecoration: 'underline dotted' }}>
+              <td
+                className='numberCell'
+                style={{
+                  textDecoration: 'underline dotted',
+                }}
+              >
                 {formatHours(showingTotal)}
               </td>
             </DiffHoursTooltip>
@@ -412,7 +417,7 @@ export const ClarityView = observer((props: ClarityViewProps) => {
       <CardActions style={{ flexDirection: 'row-reverse' }}>
         <Button
           disabled={!clarityState.currentlyExportingTasks}
-          onClick={() => clarityState.sileniumKill()}
+          onClick={() => clarityState.killSelenium()}
         >
           Cancel
         </Button>

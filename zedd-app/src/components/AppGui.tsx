@@ -99,6 +99,26 @@ export const AppGui = observer(
       return () => window.removeEventListener('keydown', undoAndRedo)
     }, [state])
 
+    useEffect(() => {
+      const clearMarking = (e: KeyboardEvent) => {
+        if (e.key === 'Escape') {
+          state.clearMarking()
+        }
+      }
+      window.addEventListener('keydown', clearMarking)
+      return () => window.removeEventListener('keydown', clearMarking)
+    }, [state])
+
+    useEffect(() => {
+      const removeSlicesOnDelete = (e: KeyboardEvent) => {
+        if (e.key === 'Delete' && state.markedSlices.length !== 0) {
+          state.removeSlices(state.markedSlices[0])
+        }
+      }
+      window.addEventListener('keydown', removeSlicesOnDelete)
+      return () => window.removeEventListener('keydown', removeSlicesOnDelete)
+    }, [state])
+
     return (
       <StyledEngineProvider injectFirst>
         <ThemeProvider theme={theme}>
@@ -156,8 +176,19 @@ export const AppGui = observer(
                 done={(newTask) => {
                   if ('string' === typeof newTask) newTask = state.getTaskForName(newTask)
                   console.log('ChangeSLiceTaskDialog', 'state.changingSliceTask!.task = newTask')
-                  state.changingSliceTask!.task = newTask
-                  state.changingSliceTask = undefined
+                  const sliceIndex = state.markedSlices.findIndex(
+                    (e) => e === state.changingSliceTask!,
+                  )
+                  if (sliceIndex !== -1) {
+                    state.markedSlices.forEach((e) => {
+                      e.task = newTask as Task
+                    })
+                    state.changingSliceTask = undefined
+                  } else {
+                    state.changingSliceTask!.task = newTask
+                    state.changingSliceTask = undefined
+                  }
+                  state.clearMarking()
                 }}
                 state={state}
               />
