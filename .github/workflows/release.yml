@@ -1,8 +1,8 @@
 name: Release
-on: push
-#  push:
-#    tags:
-#      - '*'
+on: 
+  push:
+    tags:
+      - '*'
 
 jobs:
   publish:
@@ -38,15 +38,13 @@ jobs:
       - name: create release
         uses: softprops/action-gh-release@v1
         with:
-          #tag_name: ${{ github.ref }}
-          #name: ${{ github.ref }}
-          tag_name: 0.0.3-beta
-          name: 0.0.3-beta
+          tag_name: ${{ github.ref }}
+          name: ${{ github.ref }}
           draft: true
           files: |
             ./zedd-app/out/**/*.snap
             ./zedd-app/out/**/*.dmg
             ./zedd-app/out/make/squirrel.windows/x64/*.exe
-            ./zedd-app/out/make/squirrel.windows/x64/*${{ steps.preprocess.outputs.version }}*.nupkg
+            ./zedd-app/out/make/squirrel.windows/x64/*.nupkg
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
