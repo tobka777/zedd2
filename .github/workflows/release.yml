@@ -17,21 +17,9 @@ jobs:
         with:
           node-version: 14
 
-      - name: Resolve Version
-        id: preprocess
-        run: |
-          echo "${{ github.event.head_commit.message }}"
-          echo "${TAG}"
-          echo "${TAG#v}"
-          echo "${TAG:1}"
-        env:
-          TAG: ${{ github.event.head_commit.message }}
-
       - name: install clarity dependencies
         working-directory: ./zedd-clarity
-        run: |
-          echo ${TAG}
-          npm install
+        run: npm install
       - name: build clarity
         working-directory: ./zedd-clarity
         run: npm run build
@@ -52,8 +40,8 @@ jobs:
         with:
           #tag_name: ${{ github.ref }}
           #name: ${{ github.ref }}
-          tag_name: 0.0.2-beta
-          name: 0.0.2-beta
+          tag_name: 0.0.3-beta
+          name: 0.0.3-beta
           draft: true
           files: |
             ./zedd-app/out/**/*.snap
