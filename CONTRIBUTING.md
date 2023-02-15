@@ -3,7 +3,7 @@
 1. Node 16+
 
 ```sh
-git clone https://github.com/Andrej1b/zedd2.git
+git clone https://github.com/tobka777/zedd2.git
 cd zedd
 
 cd zedd-clarity

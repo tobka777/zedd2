@@ -4,7 +4,7 @@
   "version": "2.11.0",
   "description": "Zedd-App Time Tracker",
   "main": ".webpack/main",
-  "repository": "github:Andrej1b/zedd2",
+  "repository": "github:tobka777/zedd2",
   "scripts": {
     "start": "cross-env NODE_INSTALLER=npm electron-forge start -- --dev",
     "package": "electron-forge package",
@@ -46,7 +46,7 @@
           "name": "@electron-forge/maker-squirrel",
           "config": {
             "name": "zedd",
-            "remoteReleases": "https://github.com/Andrej1b/zedd2/releases/latest/download"
+            "remoteReleases": "https://github.com/tobka777/zedd2/releases/latest/download"
           }
         },
         {
@@ -80,7 +80,7 @@
           "name": "@electron-forge/publisher-github",
           "config": {
             "repository": {
-              "owner": "Andrej1b",
+              "owner": "tobka777",
               "name": "zedd2"
             },
             "prerelease": false
