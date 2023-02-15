@@ -114,7 +114,7 @@ const getMenuItems = (state: AppState) => [
     click: () => shell.showItemInFolder(userConfigFile),
   },
   { label: 'Edit Settings', click: () => (state.settingsDialogOpen = true) },
-  { label: 'Github', click: () => shell.openExternal('https://github.com/Andrej1b/zedd2') },
+  { label: 'Github', click: () => shell.openExternal('https://github.com/tobka777/zedd2') },
   { label: 'Open Dev', click: () => getCurrentWindow().webContents.openDevTools() },
   { label: 'Reload Config', click: () => getCurrentWindow().reload() },
   { label: 'Quit', click: () => quit() },

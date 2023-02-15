@@ -1,8 +1,16 @@
-## [2.11.0] - 2022-07-XX
+## [2.12.0] - 2023-03-XX
+- Feature: Support for MacOS
 
+## [2.11.0] - 2022-09-15
+
+- Feature: Undoing slice operation also updates element to previous state when it was earlier automatically cutted
+- Feature: Import/export buttons visual aspects changed, added cancel buttons for cancelling these operations during their lifetime
+- Feature: Dependencies updated
+- Feature: Added minimize window to task bar and close to windows tray function
 - Feature: Added headless mode for Selenium Browser to start in the background (configurable)
 - Feature: Log error messages in logfile located in `~/zedd/log/`.
-- Feature: Support for MacOS
+- Feature: Marking many tasks simultaneously and operting on them - delete and change task operation.
+- Feature: Chose default weekly working hours and working mask in settings
 
 ## [2.10.0] - 2022-03-14
 

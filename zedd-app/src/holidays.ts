@@ -35,6 +35,7 @@ export const countries: ReadonlyArray<{ code: string; label: string }> = [
   { code: 'DE', label: 'Germany' },
   { code: 'GT', label: 'Guatemala' },
   { code: 'HU', label: 'Hungary' },
+  { code: 'IE', label: 'Ireland' },
   { code: 'IN', label: 'India' },
   { code: 'IT', label: 'Italy' },
   { code: 'JP', label: 'Japan' },
