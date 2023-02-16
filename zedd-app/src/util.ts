@@ -23,6 +23,9 @@ import * as fs from 'fs'
 import { promisify } from 'util'
 import { DependencyList, useCallback } from 'react'
 import { debounce } from 'lodash'
+import { useMemo } from 'react'
+import { css } from '@emotion/css'
+import { useTheme } from '@emotion/react'
 
 export const FILE_DATE_FORMAT = "yyyyMMdd'T'HHmm"
 
@@ -214,4 +217,18 @@ export function useDebouncedCallback<T extends (...args: any[]) => any>(
 let nextUniqueId = 0
 export function getUniqueId(): number {
   return nextUniqueId++
+}
+
+export const useClasses = (stylesElement) => {
+  const theme = useTheme()
+  return useMemo(() => {
+    const rawClasses = typeof stylesElement === 'function' ? stylesElement(theme) : stylesElement
+    const prepared = {}
+
+    Object.entries(rawClasses).forEach(([key, value = {}]) => {
+      prepared[key] = css(value)
+    })
+
+    return prepared
+  }, [stylesElement, theme])
 }

@@ -12,7 +12,6 @@ import {
   Typography,
 } from '@mui/material'
 import { useTheme } from '@mui/material/styles'
-import makeStyles from '@mui/styles/makeStyles'
 import {
   addDays,
   areIntervalsOverlapping,
@@ -39,7 +38,7 @@ import { TimeSlice, validDate } from '../AppState'
 import { ClarityState, ClarityActionType } from '../ClarityState'
 import { LoadingSpinner } from './LoadingSpinner'
 
-import { isoDayStr, omap, splitIntervalIntoCalendarDays, sum } from '../util'
+import { isoDayStr, omap, splitIntervalIntoCalendarDays, sum, useClasses } from '../util'
 
 const roundToNearest = (x: number, toNearest: number) => Math.round(x / toNearest) * toNearest
 const floorToNearest = (x: number, toNearest: number) => Math.floor(x / toNearest) * toNearest
@@ -90,7 +89,7 @@ export interface ClarityViewProps {
   errorHandler: (e: Error) => void
 }
 
-const useStyles = makeStyles((theme) => ({
+const styles = (theme) => ({
   table: {
     padding: 0,
     borderSpacing: 0,
@@ -108,7 +107,7 @@ const useStyles = makeStyles((theme) => ({
       backgroundColor: theme.palette.grey[200],
     },
   },
-}))
+})
 
 const formatHours = (h: number) =>
   h ? h.toLocaleString('de-DE', { minimumFractionDigits: 2 }) : '-'
@@ -300,7 +299,7 @@ export const ClarityView = observer((props: ClarityViewProps) => {
     )
   })
   const theme = useTheme()
-  const classes = useStyles(props)
+  const classes = useClasses(styles)
 
   const showingTotal = sum(allWorkEntries.map((we) => we.hours))
 
