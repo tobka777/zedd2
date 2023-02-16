@@ -43,6 +43,7 @@ jobs:
           files: |
             ./zedd-app/out/**/*.snap
             ./zedd-app/out/**/*.dmg
+            ./zedd-app/out/**/*.zip
             ./zedd-app/out/make/squirrel.windows/x64/*.exe
             ./zedd-app/out/make/squirrel.windows/x64/*.nupkg
         env:
