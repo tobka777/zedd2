@@ -245,7 +245,11 @@ export class AppState {
     ),
   )
   public slices: IObservableArray<TimeSlice> = observable([])
+
   public markedSlices: IObservableArray<TimeSlice> = observable([])
+
+  @observable
+  public copiedSlice: TimeSlice | undefined = undefined
 
   @serializable(list(object(Task)))
   public lastInteractedTasks: IObservableArray<Task> = observable([])
@@ -338,6 +342,9 @@ export class AppState {
 
   @observable
   public updateAvailable: string | undefined
+
+  @observable
+  public lastKeyPressed: string | undefined
 
   @serializable(
     custom(

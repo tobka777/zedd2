@@ -69,6 +69,7 @@ export interface CalendarProps<T extends Interval> {
   ) => ReactElement
   getVirtualSlice: (start: Date, end: Date) => T
   holidays: Date[]
+  copiedSlice: () => T | undefined
 }
 
 // const triple = (x: string) => [x, 'ctrl+' + x, 'shift+' + x]
@@ -130,6 +131,7 @@ const CalendarBase = <T extends Interval>({
   getVirtualSlice,
   holidays,
   clearMarking,
+  copiedSlice,
 }: CalendarProps<T>) => {
   const local = useLocalObservable(() => ({
     showTime: new Date(),
@@ -142,6 +144,7 @@ const CalendarBase = <T extends Interval>({
     fixedShowInterval: undefined as { start: number; end: number } | undefined,
     virtualSlice: undefined as T | undefined,
     currentPositionValid: true,
+    lastPointTime: undefined as Date | undefined,
   }))
   const timeBlockDivs: HTMLDivElement[] = useRef([]).current
   timeBlockDivs.length = 0
@@ -185,9 +188,29 @@ const CalendarBase = <T extends Interval>({
     [showing, startHour, timeBlockDivs],
   )
 
+  useEffect(() => {
+    const keyDown = (e: KeyboardEvent) => {
+      // Paste copied timeslot
+      const slice = copiedSlice()
+      if ((e.ctrlKey || e.metaKey) && e.key === 'v' && local.lastPointTime && slice) {
+        console.log('PASTE')
+        const diff = differenceInMinutes(slice.start, slice.end)
+        const start = local.lastPointTime
+        slice.end = addMinutes(start, diff)
+        slice.start = start
+        onSliceAdd(slice)
+      }
+    }
+    window.addEventListener('keydown', keyDown)
+    return () => window.removeEventListener('keydown', keyDown)
+  }, [])
+
   const hoursBlockMouseMove = useCallback(
     (e: React.MouseEvent) => {
       const pointTime = viewportXYToTime(e.clientX, e.clientY)
+      local.lastPointTime = pointTime
+
+      // New timeslot with CTRL
       if (
         (e.ctrlKey || e.metaKey) &&
         pointTime &&

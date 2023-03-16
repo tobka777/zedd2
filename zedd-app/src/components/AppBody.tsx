@@ -123,6 +123,13 @@ export const AppBody = observer(
             label: 'Start Timing This',
             click: () => (state.currentTask = slice.task),
           },
+          {
+            type: 'normal',
+            label: 'Copy',
+            click: (_) => {
+              state.copiedSlice = slice
+            },
+          },
           { type: 'normal', label: 'Delete', click: (_) => state.removeSlices(slice) },
           {
             type: 'normal',
@@ -192,6 +199,16 @@ export const AppBody = observer(
     const onMarkingBlock = useCallback(
       (_: React.MouseEvent, slice: TimeSlice) => {
         state.markSlice(slice)
+      },
+      [state],
+    )
+
+    const onKeyDown = useCallback(
+      (e: React.KeyboardEvent) => {
+        console.log('TRY COPY')
+        if ((e.ctrlKey || e.metaKey) && e.key === 'c') {
+          console.log('COPY')
+        }
       },
       [state],
     )
@@ -418,6 +435,7 @@ export const AppBody = observer(
               deleteSlice={(slice) => state.removeSlices(slice)}
               markSlice={(slice) => state.markSlice(slice)}
               clearMarking={() => state.clearMarking()}
+              copiedSlice={() => state.copiedSlice}
               renderSlice={(attributes) => {
                 return (
                   <BlockDisplay
@@ -427,6 +445,7 @@ export const AppBody = observer(
                     onAltRightClick={onAltRightClick}
                     onMarkingBlock={onMarkingBlock}
                     slicesMarked={state.slicesMarked}
+                    //onKeyDown={onKeyDown}
                   />
                 )
               }}
