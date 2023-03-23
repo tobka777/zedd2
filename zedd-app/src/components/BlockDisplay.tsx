@@ -1,7 +1,7 @@
 import { format } from 'date-fns'
 import { observer } from 'mobx-react-lite'
 import * as React from 'react'
-import { useCallback } from 'react'
+import {useCallback} from 'react'
 
 import { useTheme } from '@mui/material/styles'
 import { TimeSlice } from '../AppState'
@@ -36,13 +36,14 @@ export const BlockDisplay = observer(
   }: BlockProps) => {
     const blockClickHandler = useCallback(
       (e: React.MouseEvent) => {
+          if(e.button === 0){
+              setMarking((current) => !current)
+              onMarkingBlock(e, slice)
+              if(e.altKey === true) onAltRightClick(e, slice)
+              //TODO check SHIFT selection with more than one slice
+          }
         if ((e.ctrlKey || e.metaKey) && onSplit) onSplit(slice, e)
         if (1 === e.button) onContextMenu(e, slice)
-        if (0 === e.button && e.altKey === true) onAltRightClick(e, slice)
-        if (0 === e.button && e.shiftKey === true) {
-          setMarking((current) => !current)
-          onMarkingBlock(e, slice)
-        }
       },
       [slice, onSplit, onContextMenu],
     )
