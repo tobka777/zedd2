@@ -1,5 +1,5 @@
-## [2.12.0] - 2023-03-XX
-- Feature: Support for MacOS
+## [2.12.0] - 2023-04-XX
+- Feature: Support for MacOS including shortcuts
 
 ## [2.11.0] - 2022-09-15
 
