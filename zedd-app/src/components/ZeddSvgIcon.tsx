@@ -35,7 +35,7 @@ export const ZeddSvgIcon = ({
       viewBox={[-resHalf, -resHalf, res, res].join()}
       // transform='scale(0.125)'
     >
-      {background && <circle r='300' fill={background} />}
+      {background && <circle r={res / 2} fill={background} />}
       {stopped ? (
         <g>
           <polygon

@@ -34,6 +34,8 @@ import {
 import { de } from 'date-fns/locale'
 import uniq from 'lodash/uniq'
 
+const CONTROL_KEY: string = process.platform === 'darwin' ? Key.COMMAND : Key.CONTROL
+
 export class NikuUrlInvalidError extends Error {
   constructor(url: string) {
     super(`url ${JSON.stringify(url)} is not valid`)
@@ -361,13 +363,13 @@ async function addTasks(
     // const projectIdInput = await $('input[name=ff_project_id]')
     const applyFilterButton = await $('button[name=applyFilter]')
     const task = tasks[i]
-    await projectNameInput.sendKeys(Key.chord(Key.CONTROL, 'a'), task.projectName)
+    await projectNameInput.sendKeys(Key.chord(CONTROL_KEY, 'a'), task.projectName)
     if (task.strId) {
-      await taskIdInput.sendKeys(Key.chord(Key.CONTROL, 'a'), task.strId)
-      await taskNameInput.sendKeys(Key.chord(Key.CONTROL, 'a'), Key.BACK_SPACE)
+      await taskIdInput.sendKeys(Key.chord(CONTROL_KEY, 'a'), task.strId)
+      await taskNameInput.sendKeys(Key.chord(CONTROL_KEY, 'a'), Key.BACK_SPACE)
     } else {
-      await taskIdInput.sendKeys(Key.chord(Key.CONTROL, 'a'), Key.BACK_SPACE)
-      await taskNameInput.sendKeys(Key.chord(Key.CONTROL, 'a'), task.name)
+      await taskIdInput.sendKeys(Key.chord(CONTROL_KEY, 'a'), Key.BACK_SPACE)
+      await taskNameInput.sendKeys(Key.chord(CONTROL_KEY, 'a'), task.name)
     }
     await applyFilterButton.click()
     await pageLoad(ctx)
@@ -627,7 +629,7 @@ async function exportToClarity(
     // in which case you need to enter the "resource name", i.e. yourself in the
     // corresponding field, so your timesheets are shown
     if (resourceName) {
-      await $('input[name=ff_res_name]').sendKeys(Key.chord(Key.CONTROL, 'a'), resourceName)
+      await $('input[name=ff_res_name]').sendKeys(Key.chord(CONTROL_KEY, 'a'), resourceName)
       await $('select[name=ff_my_rights]').sendKeys('Alle')
     }
 
@@ -635,10 +637,10 @@ async function exportToClarity(
     d(`minDate is ${formatDayYYYY(minDate)}`)
     await $('input[name=ff_date_type][value=userdefined]').click()
     await $('input[name=ff_from_date]').sendKeys(
-      Key.chord(Key.CONTROL, 'a'),
+      Key.chord(CONTROL_KEY, 'a'),
       formatDayYYYY(minDate),
     )
-    await $('select[name=ff_status]').sendKeys(Key.chord(Key.CONTROL, 'a'))
+    await $('select[name=ff_status]').sendKeys(Key.chord(CONTROL_KEY, 'a'))
     await $('button[name=applyFilter]').click()
     await pageLoad(ctx)
 
@@ -720,7 +722,7 @@ async function exportToClarity(
           await $(
             rowInfo.tr,
             `input[alt^="${format(day, 'EEEEEE, dd.MM', { locale: de })}"]`,
-          ).sendKeys(Key.chord(Key.CONTROL, 'a'), hours)
+          ).sendKeys(Key.chord(CONTROL_KEY, 'a'), hours)
         }),
       )
     }

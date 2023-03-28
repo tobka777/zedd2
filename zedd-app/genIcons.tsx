@@ -4,6 +4,7 @@ import * as ReactDOMServer from 'react-dom/server'
 // import icongen = require('icon-gen')
 const { convertFile } = require('convert-svg-to-png')
 import { convert as icoConvert } from '@fiahfy/ico-convert'
+import { convert as icnsConvert } from '@fiahfy/icns-convert'
 
 import { ZeddSvgIcon } from './src/components/ZeddSvgIcon'
 
@@ -29,10 +30,18 @@ async function genIcon(name: string, svg: (res: number) => React.ReactElement) {
     await Promise.all(ress.map((res) => fsp.readFile(`./icons/${name}_${res}.png`))),
   )
   await fsp.writeFile(`./icons/${name}.ico`, icoData)
+
+  if (name == 'app') {
+    const icnsData = await icnsConvert(
+      await Promise.all(ress.map((res) => fsp.readFile(`./icons/${name}_${res}.png`))),
+    )
+    await fsp.writeFile(`./icons/${name}.icns`, icnsData)
+  }
 }
 
 ;(async () => {
   await fsp.mkdir('icons')
+
   const NUMBER_OF_SAMPLES = 13
   await genIcon('paused', (res) => (
     <ZeddSvgIcon stroke='white' res={res} stopped={true} progress={0} />

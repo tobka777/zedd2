@@ -1,6 +1,5 @@
 import { Button, ButtonGroup, Paper, Tooltip } from '@mui/material'
 import { useTheme } from '@mui/material/styles'
-import makeStyles from '@mui/styles/makeStyles'
 import {
   addMinutes,
   addMonths,
@@ -35,6 +34,7 @@ import {
   monthInterval,
   omap,
   startOfNextDay,
+  useClasses,
   yearInterval,
 } from '../util'
 import { BlockDisplay } from './BlockDisplay'
@@ -47,7 +47,7 @@ import { DateRangePicker } from './DateRangePicker'
 import { ZeddSettings } from '../ZeddSettings'
 import { getHolidays } from '../holidays'
 
-const useStyles = makeStyles((theme) => ({
+const styles = (theme) => ({
   contentRoot: {
     overflowY: 'scroll',
     '& > *': { margin: theme.spacing(2) },
@@ -61,7 +61,7 @@ const useStyles = makeStyles((theme) => ({
     '& .MuiButtonGroup-root > *': { flexGrow: 1 },
     '& input[type="date"]::-webkit-clear-button': { display: 'none' },
   },
-}))
+})
 
 export interface AppBodyProps {
   state: AppState
@@ -83,7 +83,7 @@ export const AppBody = observer(
     getLinksFromString,
     settings,
   }: AppBodyProps) => {
-    const classes = useStyles()
+    const classes = useClasses(styles)
 
     const theme = useTheme()
 

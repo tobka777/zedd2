@@ -1,3 +1,6 @@
+## [2.12.0] - 2023-04-XX
+- Feature: Support for MacOS including shortcuts
+
 ## [2.11.0] - 2022-09-15
 
 - Feature: Undoing slice operation also updates element to previous state when it was earlier automatically cutted

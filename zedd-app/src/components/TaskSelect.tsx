@@ -1,11 +1,10 @@
 import { TextField, TextFieldProps, Autocomplete } from '@mui/material'
-import makeStyles from '@mui/styles/makeStyles'
 import { observer } from 'mobx-react-lite'
 import * as React from 'react'
 
 import { useCallback, useState } from 'react'
 import { Task } from '../AppState'
-import { useDebouncedCallback } from '../util'
+import { useClasses, useDebouncedCallback } from '../util'
 
 export type TaskSelectProps = {
   tasks: Task[]
@@ -61,7 +60,7 @@ function cancellingPrevious<T, F extends (...args: any[]) => Promise<T>>(
   }) as any
 }
 
-const useStyles = makeStyles((theme) => ({
+const styles = (theme) => ({
   renderOptionBT: {
     textAlign: 'right',
     width: '90px',
@@ -70,7 +69,7 @@ const useStyles = makeStyles((theme) => ({
     display: 'inline-block',
     color: theme.palette.text.secondary,
   },
-}))
+})
 
 export const TaskSelect = observer(
   ({
@@ -89,7 +88,7 @@ export const TaskSelect = observer(
     const [searching, setSearching] = useState(false)
     const [currentRequest] = useState({ id: 0 })
 
-    const classes = useStyles()
+    const classes = useClasses(styles)
 
     const getTasksForSearchStringDebounced = useDebouncedCallback(
       (searchString: string) => {
