@@ -35,6 +35,7 @@ import * as React from 'react'
 import { useCallback, useEffect, useRef, ReactElement } from 'react'
 
 import { intRange, isoDayStr, min } from '../util'
+import {TimeSlice} from "../AppState";
 
 export type SliceDragStartHandler<T extends Interval> = (
   b: T,
@@ -69,7 +70,7 @@ export interface CalendarProps<T extends Interval> {
   ) => ReactElement
   getVirtualSlice: (start: Date, end: Date) => T
   holidays: Date[]
-  copiedSlice: () => T | undefined
+  copiedSlice: () => TimeSlice | undefined
 }
 
 // const triple = (x: string) => [x, 'ctrl+' + x, 'shift+' + x]
@@ -144,7 +145,7 @@ const CalendarBase = <T extends Interval>({
     fixedShowInterval: undefined as { start: number; end: number } | undefined,
     virtualSlice: undefined as T | undefined,
     currentPositionValid: true,
-    lastPointTime: undefined as Date | undefined,
+    lastPointTime: undefined as number | Date
   }))
   const timeBlockDivs: HTMLDivElement[] = useRef([]).current
   timeBlockDivs.length = 0
@@ -189,21 +190,40 @@ const CalendarBase = <T extends Interval>({
   )
 
   useEffect(() => {
-    const keyDown = (e: KeyboardEvent) => {
-      // Paste copied timeslot
-      const slice = copiedSlice()
-      if ((e.ctrlKey || e.metaKey) && e.key === 'v' && local.lastPointTime && slice) {
-        console.log('PASTE')
-        const diff = differenceInMinutes(slice.start, slice.end)
-        const start = local.lastPointTime
-        slice.end = addMinutes(start, diff)
-        slice.start = start
-        onSliceAdd(slice)
-      }
-    }
     window.addEventListener('keydown', keyDown)
     return () => window.removeEventListener('keydown', keyDown)
   }, [])
+
+  const keyDown = (e: KeyboardEvent) => {
+
+    // Paste copied timeslot
+    const slice = copiedSlice()
+
+    if ((e.ctrlKey || e.metaKey) && e.key === 'v' && local.lastPointTime && slice && !slices.some((s) => isWithinInterval(local.lastPointTime, s))) {
+      console.log('PASTE')
+      debugger;
+      console.log(slice.start + "  " + slice.end)
+      const minTime = dateMax(slices.map((s) => s.end).filter((s) => s <= local.lastPointTime))
+      const maxTime = dateMin(slices.map((s) => s.start).filter((s) => local.lastPointTime < s))
+      const sliceLength = differenceInMinutes(slice.end, slice.start)
+      console.log(sliceLength)
+      const middlePoint = sliceLength / 2
+      let start = roundToNearestMinutes(subMinutes(local.lastPointTime, middlePoint), {nearestTo: 5})
+      let end = addMinutes(start,sliceLength )
+      if (end > maxTime) {
+        end = maxTime
+        debugger;
+      }
+      if (start < minTime) {
+        start = minTime
+        debugger;
+      }
+      const newSlice = new TimeSlice(start, end, slice.task);
+
+      // @ts-ignore
+      onSliceAdd(newSlice);
+    }
+  }
 
   const hoursBlockMouseMove = useCallback(
     (e: React.MouseEvent) => {
