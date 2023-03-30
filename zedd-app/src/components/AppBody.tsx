@@ -29,12 +29,12 @@ import {ErrorBoundary} from './ErrorBoundary'
 import {AppState, Task, TimeSlice} from '../AppState'
 import {ClarityState} from '../ClarityState'
 import {
-  businessWeekInterval,
-  isoWeekInterval,
-  monthInterval,
-  omap,
-  startOfNextDay,
-  yearInterval,
+    businessWeekInterval,
+    isoWeekInterval,
+    monthInterval,
+    omap,
+    startOfNextDay, useClasses,
+    yearInterval,
 } from '../util'
 import {BlockDisplay} from './BlockDisplay'
 import {Calendar} from './Calendar'
@@ -207,7 +207,6 @@ export const AppBody = observer(
 
         if ((e.ctrlKey || e.metaKey) && e.key === 'c' && state.sliceToCopy !== undefined ) {
           state.copiedSlice = state.sliceToCopy
-          console.log("new " + state.sliceToCopy)
         }
       }
 

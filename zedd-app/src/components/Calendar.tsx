@@ -198,12 +198,9 @@ const CalendarBase = <T extends Interval>({
     const slice = copiedSlice()
 
     if ((e.ctrlKey || e.metaKey) && e.key === 'v' && local.lastPointTime && slice && !slices.some((s) => isWithinInterval(local.lastPointTime, s))) {
-      console.log('PASTE')
-      console.log(slice.start + "  " + slice.end)
       const minTime = dateMax(slices.map((s) => s.end).filter((s) => s <= local.lastPointTime))
       const maxTime = dateMin(slices.map((s) => s.start).filter((s) => local.lastPointTime < s))
       const sliceLength = differenceInMinutes(slice.end, slice.start)
-      console.log(sliceLength)
       const middlePoint = sliceLength / 2
       let start = roundToNearestMinutes(subMinutes(local.lastPointTime, middlePoint), {nearestTo: 5})
       let end = addMinutes(start,sliceLength )
