@@ -195,8 +195,6 @@ const CalendarBase = <T extends Interval>({
   }, [])
 
   const keyDown = (e: KeyboardEvent) => {
-
-    // Paste copied timeslot
     const slice = copiedSlice()
 
     if ((e.ctrlKey || e.metaKey) && e.key === 'v' && local.lastPointTime && slice && !slices.some((s) => isWithinInterval(local.lastPointTime, s))) {
@@ -244,7 +242,6 @@ const CalendarBase = <T extends Interval>({
           start = minTime
         }
         local.virtualSlice = local.virtualSlice || getVirtualSlice(start, end)
-        // make sure we don't create an invalid slice in between the assignments
         if (isBefore(start, local.virtualSlice.start)) {
           local.virtualSlice.start = start
           local.virtualSlice.end = end
