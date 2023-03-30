@@ -188,7 +188,11 @@ const CalendarBase = <T extends Interval>({
   const hoursBlockMouseMove = useCallback(
     (e: React.MouseEvent) => {
       const pointTime = viewportXYToTime(e.clientX, e.clientY)
-      if (e.ctrlKey && pointTime && !slices.some((s) => isWithinInterval(pointTime, s))) {
+      if (
+        (e.ctrlKey || e.metaKey) &&
+        pointTime &&
+        !slices.some((s) => isWithinInterval(pointTime, s))
+      ) {
         const minTime = dateMax(slices.map((s) => s.end).filter((s) => s <= pointTime))
         const maxTime = dateMin(slices.map((s) => s.start).filter((s) => pointTime < s))
         let start = roundToNearestMinutes(subMinutes(pointTime, 30), { nearestTo: 15 })
@@ -229,7 +233,9 @@ const CalendarBase = <T extends Interval>({
     (e: MouseEvent) => {
       const newDate = viewportXYToTime(e.clientX, e.clientY)
       if (newDate && isValid(newDate) && local.currentlyDragging.length) {
-        const newDateRounded = roundToNearestMinutes(newDate, { nearestTo: e.ctrlKey ? 5 : 15 })
+        const newDateRounded = roundToNearestMinutes(newDate, {
+          nearestTo: e.ctrlKey || e.metaKey ? 5 : 15,
+        })
         const refDate = local.currentlyDragging[0].block[local.currentlyDragging[0].startEnd]
         // sort currentlyDragging so that they don't overlap each other as we change start/end
         // individually, which isn't allowed
@@ -484,7 +490,7 @@ const CalendarBase = <T extends Interval>({
                         }
                     keyMap[startEnd + earlierLater] = keys
                     handlers[startEnd + earlierLater] = (e: React.KeyboardEvent) => {
-                      const minutes = e.shiftKey ? 60 : e.ctrlKey ? 5 : 15
+                      const minutes = e.shiftKey ? 60 : e.ctrlKey || e.metaKey ? 5 : 15
                       const dir = 'EARLIER' === earlierLater ? -1 : 1
                       if ('START' === startEnd) {
                         correctSlicePositionStart(s, addMinutes(s.start, dir * minutes))

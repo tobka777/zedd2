@@ -48,6 +48,9 @@ const userConfigFile = path.join(saveDir, 'zeddconfig.json')
 
 const d = (...x: any[]) => console.log('renderer.ts', ...x)
 
+const isMac = process.platform === 'darwin'
+const isWin = process.platform === 'win32'
+
 // class Todo {
 //   name: string
 // }
@@ -76,7 +79,8 @@ function quit() {
 }
 
 function setupAutoUpdater(state: AppState, config: ZeddSettings) {
-  if (global.isDev)
+  if (global.isDev || !isWin)
+    // disable autoupdater for mac,linux and development
     return () => {
       /* do nothing */
     }
@@ -110,7 +114,7 @@ const getMenuItems = (state: AppState) => [
     click: () => shell.showItemInFolder(userConfigFile),
   },
   { label: 'Edit Settings', click: () => (state.settingsDialogOpen = true) },
-  { label: 'Github', click: () => shell.openExternal('https://github.com/Andrej1b/zedd2') },
+  { label: 'Github', click: () => shell.openExternal('https://github.com/tobka777/zedd2') },
   { label: 'Open Dev', click: () => getCurrentWindow().webContents.openDevTools() },
   { label: 'Reload Config', click: () => getCurrentWindow().reload() },
   { label: 'Quit', click: () => quit() },
@@ -247,7 +251,11 @@ async function setup() {
     const requiredChromeDriverVersion = await getLatestChromeDriverVersion(chromeVersion)
     const chromeDriverDir = path.join(app.getPath('appData'), 'chromedriver')
     await mkdirIfNotExists(chromeDriverDir)
-    const chromeDriverPath = path.join(chromeDriverDir, 'chromedriver.exe')
+    let chromedriver = 'chromedriver'
+    if (isWin) {
+      chromedriver += '.exe'
+    }
+    const chromeDriverPath = path.join(chromeDriverDir, chromedriver)
     if (
       !(await fileExists(chromeDriverPath)) ||
       requiredChromeDriverVersion !== (await getChromeDriverVersion(chromeDriverPath))
@@ -325,16 +333,18 @@ async function setup() {
   currentWindowEvents.push(['move', saveWindowBounds])
   const currentIconImage = computed(() => {
     const NUMBER_OF_SAMPLES = 12
+    let iconExt = '.ico'
+    if (!isWin) {
+      iconExt = '_24.png'
+    }
     if (state.timingInProgess) {
-      return (
-        app.getAppPath() +
-        '/' +
-        'icons/progress' +
-        floor((state.getDayProgress(new Date()) % 1) * NUMBER_OF_SAMPLES) +
-        '.ico'
+      return path.join(
+        app.getAppPath(),
+        'icons',
+        'progress' + floor((state.getDayProgress(new Date()) % 1) * NUMBER_OF_SAMPLES) + iconExt,
       )
     } else {
-      return app.getAppPath() + '/' + 'icons/paused.ico'
+      return path.join(app.getAppPath(), 'icons', 'paused' + iconExt)
     }
   })
   const tray = new Tray(currentIconImage.get())

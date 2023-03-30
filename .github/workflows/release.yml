@@ -1,0 +1,50 @@
+name: Release
+on:
+  push:
+    tags:
+      - '*'
+
+jobs:
+  publish:
+    strategy:
+      matrix:
+        os: [windows-latest, macos-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions/setup-node@master
+        with:
+          node-version: 14
+
+      - name: install clarity dependencies
+        working-directory: ./zedd-clarity
+        run: npm install
+      - name: build clarity
+        working-directory: ./zedd-clarity
+        run: npm run build
+
+      - name: install app dependencies
+        working-directory: ./zedd-app
+        run: npm install
+      - name: generate icons
+        working-directory: ./zedd-app
+        run: npm run genicons
+      - name: build release
+        working-directory: ./zedd-app
+        run: npm run make
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: create release
+        uses: softprops/action-gh-release@v1
+        with:
+          tag_name: ${{ github.ref }}
+          name: ${{ github.ref }}
+          draft: true
+          files: |
+            ./zedd-app/out/**/*.snap
+            ./zedd-app/out/**/*.dmg
+            ./zedd-app/out/**/*.zip
+            ./zedd-app/out/make/squirrel.windows/x64/*.exe
+            ./zedd-app/out/make/squirrel.windows/x64/*.nupkg
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
