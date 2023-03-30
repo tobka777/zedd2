@@ -201,7 +201,6 @@ const CalendarBase = <T extends Interval>({
 
     if ((e.ctrlKey || e.metaKey) && e.key === 'v' && local.lastPointTime && slice && !slices.some((s) => isWithinInterval(local.lastPointTime, s))) {
       console.log('PASTE')
-      debugger;
       console.log(slice.start + "  " + slice.end)
       const minTime = dateMax(slices.map((s) => s.end).filter((s) => s <= local.lastPointTime))
       const maxTime = dateMin(slices.map((s) => s.start).filter((s) => local.lastPointTime < s))
@@ -212,14 +211,11 @@ const CalendarBase = <T extends Interval>({
       let end = addMinutes(start,sliceLength )
       if (end > maxTime) {
         end = maxTime
-        debugger;
       }
       if (start < minTime) {
         start = minTime
-        debugger;
       }
       const newSlice = new TimeSlice(start, end, slice.task);
-
       // @ts-ignore
       onSliceAdd(newSlice);
     }
@@ -228,9 +224,8 @@ const CalendarBase = <T extends Interval>({
   const hoursBlockMouseMove = useCallback(
     (e: React.MouseEvent) => {
       const pointTime = viewportXYToTime(e.clientX, e.clientY)
+      // @ts-ignore
       local.lastPointTime = pointTime
-
-      // New timeslot with CTRL
       if (
         (e.ctrlKey || e.metaKey) &&
         pointTime &&
