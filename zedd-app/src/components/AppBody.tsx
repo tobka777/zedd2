@@ -34,7 +34,6 @@ import {
   monthInterval,
   omap,
   startOfNextDay,
-  useClasses,
   yearInterval,
 } from '../util'
 import {BlockDisplay} from './BlockDisplay'
@@ -448,7 +447,6 @@ export const AppBody = observer(
                     onAltRightClick={onAltRightClick}
                     onMarkingBlock={onMarkingBlock}
                     slicesMarked={state.slicesMarked}
-                    //onKeyDown={onKeyDown}
                   />
                 )
               }}

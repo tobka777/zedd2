@@ -43,8 +43,6 @@ export const BlockDisplay = observer(
       }
           if ((e.ctrlKey || e.metaKey) && onSplit) onSplit(slice, e)
           if (1 === e.button) {
-              console.log(slice)
-              // onContextMenu(e, slice)
           }
       },
       [slice, onSplit, onContextMenu],
