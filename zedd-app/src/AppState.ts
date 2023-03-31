@@ -248,7 +248,7 @@ export class AppState {
 
   public markedSlices: IObservableArray<TimeSlice> = observable([])
 
-  public sliceToCopy: TimeSlice | undefined
+  public lastClickedSlice: TimeSlice | undefined
   @observable
   public copiedSlice: TimeSlice | undefined = undefined
 
@@ -343,9 +343,6 @@ export class AppState {
 
   @observable
   public updateAvailable: string | undefined
-
-  @observable
-  public lastKeyPressed: string | undefined
 
   @serializable(
     custom(
@@ -747,7 +744,7 @@ export class AppState {
     } else {
       this.markedSlices.push(slice)
       this.slicesMarked = true
-      this.sliceToCopy = this.markedSlices.pop()
+      this.lastClickedSlice = this.markedSlices[this.markedSlices.length - 1]
     }
   }
 

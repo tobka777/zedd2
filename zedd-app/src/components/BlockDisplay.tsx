@@ -39,11 +39,9 @@ export const BlockDisplay = observer(
           if(e.button === 0){
           setMarking((current) => !current)
           onMarkingBlock(e, slice)
-          if(e.altKey === true) onAltRightClick(e, slice)
+          if(e.altKey) onAltRightClick(e, slice)
       }
           if ((e.ctrlKey || e.metaKey) && onSplit) onSplit(slice, e)
-          if (1 === e.button) {
-          }
       },
       [slice, onSplit, onContextMenu],
     )

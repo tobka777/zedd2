@@ -1,50 +1,51 @@
-import {Button, ButtonGroup, Paper, Tooltip} from '@mui/material'
-import {useTheme} from '@mui/material/styles'
+import { Button, ButtonGroup, Paper, Tooltip } from '@mui/material'
+import { useTheme } from '@mui/material/styles'
 import {
-  addMinutes,
-  addMonths,
-  addWeeks,
-  max as dateMax,
-  min as dateMin,
-  startOfDay,
-  differenceInDays,
-  isMonday,
-  addDays,
-  startOfMonth,
-  isSameDay,
-  endOfMonth,
-  subMinutes as sub,
-  differenceInMinutes,
-  startOfYear,
-  addYears,
-  endOfYear,
+    addMinutes,
+    addMonths,
+    addWeeks,
+    max as dateMax,
+    min as dateMin,
+    startOfDay,
+    differenceInDays,
+    isMonday,
+    addDays,
+    startOfMonth,
+    isSameDay,
+    endOfMonth,
+    subMinutes as sub,
+    differenceInMinutes,
+    startOfYear,
+    addYears,
+    endOfYear,
 } from 'date-fns'
-import {MenuItemConstructorOptions} from 'electron'
-import {Menu, shell} from '@electron/remote'
-import {observer} from 'mobx-react-lite'
+import { MenuItemConstructorOptions } from 'electron'
+import { Menu, shell } from '@electron/remote'
+import { observer } from 'mobx-react-lite'
 import * as React from 'react'
-import {useCallback, useEffect, useState} from 'react'
+import { useCallback, useEffect, useState } from 'react'
 
-import {ErrorBoundary} from './ErrorBoundary'
-import {AppState, Task, TimeSlice} from '../AppState'
-import {ClarityState} from '../ClarityState'
+import { ErrorBoundary } from './ErrorBoundary'
+import { AppState, Task, TimeSlice } from '../AppState'
+import { ClarityState } from '../ClarityState'
 import {
     businessWeekInterval,
     isoWeekInterval,
     monthInterval,
     omap,
-    startOfNextDay, useClasses,
+    startOfNextDay,
+    useClasses,
     yearInterval,
 } from '../util'
-import {BlockDisplay} from './BlockDisplay'
-import {Calendar} from './Calendar'
-import {ClarityView} from './ClarityView'
-import {TaskEditor} from './TaskEditor'
-import {ArrowBack, ArrowForward, Delete as DeleteIcon} from '@mui/icons-material'
-import {suggestedTaskMenuItems} from '../menuUtil'
-import {DateRangePicker} from './DateRangePicker'
-import {ZeddSettings} from '../ZeddSettings'
-import {getHolidays} from '../holidays'
+import { BlockDisplay } from './BlockDisplay'
+import { Calendar } from './Calendar'
+import { ClarityView } from './ClarityView'
+import { TaskEditor } from './TaskEditor'
+import { ArrowBack, ArrowForward, Delete as DeleteIcon } from '@mui/icons-material'
+import { suggestedTaskMenuItems } from '../menuUtil'
+import { DateRangePicker } from './DateRangePicker'
+import { ZeddSettings } from '../ZeddSettings'
+import { getHolidays } from '../holidays'
 
 const styles = (theme) => ({
   contentRoot: {
@@ -204,9 +205,8 @@ export const AppBody = observer(
 
     useEffect(() => {
       const keyDown = (e: KeyboardEvent) => {
-
-        if ((e.ctrlKey || e.metaKey) && e.key === 'c' && state.sliceToCopy !== undefined ) {
-          state.copiedSlice = state.sliceToCopy
+        if ((e.ctrlKey || e.metaKey) && e.key === 'c' && state.lastClickedSlice !== undefined ) {
+          state.copiedSlice = state.lastClickedSlice
         }
       }
 

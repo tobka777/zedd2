@@ -60,7 +60,7 @@ export interface CalendarProps<T extends Interval> {
   ) => Interval | undefined
   onSliceChange: (slice: T, newPos: Interval) => void
   splitBlock: (slice: T, splitAt: Date) => void
-  onSliceAdd: (slice: T) => void
+  onSliceAdd: (slice: T | TimeSlice) => void
   renderSlice: (
     attributes: React.HTMLAttributes<HTMLDivElement> & {
       slice: T
@@ -145,7 +145,7 @@ const CalendarBase = <T extends Interval>({
     fixedShowInterval: undefined as { start: number; end: number } | undefined,
     virtualSlice: undefined as T | undefined,
     currentPositionValid: true,
-    lastPointTime: undefined as number | Date
+    lastPointTime: undefined as unknown as number | Date
   }))
   const timeBlockDivs: HTMLDivElement[] = useRef([]).current
   timeBlockDivs.length = 0
@@ -211,7 +211,6 @@ const CalendarBase = <T extends Interval>({
         start = minTime
       }
       const newSlice = new TimeSlice(start, end, slice.task);
-      // @ts-ignore
       onSliceAdd(newSlice);
     }
   }
@@ -219,8 +218,9 @@ const CalendarBase = <T extends Interval>({
   const hoursBlockMouseMove = useCallback(
     (e: React.MouseEvent) => {
       const pointTime = viewportXYToTime(e.clientX, e.clientY)
-      // @ts-ignore
-      local.lastPointTime = pointTime
+      if(pointTime !== undefined){
+        local.lastPointTime = pointTime
+      }
       if (
         (e.ctrlKey || e.metaKey) &&
         pointTime &&
@@ -239,6 +239,7 @@ const CalendarBase = <T extends Interval>({
           start = minTime
         }
         local.virtualSlice = local.virtualSlice || getVirtualSlice(start, end)
+        // make sure we don't create an invalid slice in between the assignments
         if (isBefore(start, local.virtualSlice.start)) {
           local.virtualSlice.start = start
           local.virtualSlice.end = end
