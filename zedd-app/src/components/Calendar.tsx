@@ -192,11 +192,10 @@ const CalendarBase = <T extends Interval>({
   useEffect(() => {
     window.addEventListener('keydown', keyDown)
     return () => window.removeEventListener('keydown', keyDown)
-  }, [])
+  }, [slices])
 
-  const keyDown = (e: KeyboardEvent) => {
+  const keyDown = useCallback((e: KeyboardEvent) => {
     const slice = copiedSlice()
-
     if ((e.ctrlKey || e.metaKey) && e.key === 'v' && local.lastPointTime && slice && !slices.some((s) => isWithinInterval(local.lastPointTime, s))) {
       const minTime = dateMax(slices.map((s) => s.end).filter((s) => s <= local.lastPointTime))
       const maxTime = dateMin(slices.map((s) => s.start).filter((s) => local.lastPointTime < s))
@@ -213,7 +212,9 @@ const CalendarBase = <T extends Interval>({
       const newSlice = new TimeSlice(start, end, slice.task);
       onSliceAdd(newSlice);
     }
-  }
+      },
+      [slices, local.lastPointTime, copiedSlice() ],
+  )
 
   const hoursBlockMouseMove = useCallback(
     (e: React.MouseEvent) => {
