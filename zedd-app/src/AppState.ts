@@ -751,6 +751,7 @@ export class AppState {
   public clearMarking(): void {
     this.markedSlices.clear()
     this.slicesMarked = false
+    this.copiedSlice = undefined;
   }
 
   public startInterval(getUserIdleTime: () => number): void {
