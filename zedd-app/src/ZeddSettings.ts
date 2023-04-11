@@ -98,7 +98,7 @@ export class ZeddSettings {
 
   @observable
   @serializable
-  public keepHovering: boolean | 'vertical' = true
+  public keepHovering: boolean | 'vertical' = false
 
   @serializable(
     custom(
