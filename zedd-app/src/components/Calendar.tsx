@@ -192,11 +192,11 @@ const CalendarBase = <T extends Interval>({
   )
 
   useEffect(() => {
-    window.addEventListener('keydown', keyDown)
-    return () => window.removeEventListener('keydown', keyDown)
+    window.addEventListener('keydown', paste)
+    return () => window.removeEventListener('keydown', paste)
   }, [slices])
 
-  const keyDown = useCallback((e: KeyboardEvent) => {
+  const paste = useCallback((e: KeyboardEvent) => {
     const slice = copiedSlice()
     if ((e.ctrlKey || e.metaKey) && e.key === 'v' && local.lastPointTime && slice && !slices.some((s) => isWithinInterval(local.lastPointTime, s))) {
       const minTime = dateMax(slices.map((s) => s.end).filter((s) => s <= local.lastPointTime))

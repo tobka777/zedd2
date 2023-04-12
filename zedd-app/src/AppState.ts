@@ -248,7 +248,6 @@ export class AppState {
 
   public markedSlices: IObservableArray<TimeSlice> = observable([])
 
-  public lastClickedSlice: TimeSlice | undefined
   @observable
   public copiedSlice: TimeSlice | undefined = undefined
 
@@ -744,7 +743,6 @@ export class AppState {
     } else {
       this.markedSlices.push(slice)
       this.slicesMarked = true
-      this.lastClickedSlice = this.markedSlices[this.markedSlices.length - 1]
     }
   }
 

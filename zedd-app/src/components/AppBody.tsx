@@ -127,7 +127,9 @@ export const AppBody = observer(
             type: 'normal',
             label: 'Copy',
             click: (_) => {
-              state.copiedSlice = slice
+                if(state.markedSlices.length === 1){
+                    state.copiedSlice = state.markedSlices[0]
+                }
             },
           },
           { type: 'normal', label: 'Delete', click: (_) => state.removeSlices(slice) },
@@ -205,8 +207,8 @@ export const AppBody = observer(
 
     useEffect(() => {
       const keyDown = (e: KeyboardEvent) => {
-        if ((e.ctrlKey || e.metaKey) && e.key === 'c' && state.lastClickedSlice !== undefined ) {
-          state.copiedSlice = state.lastClickedSlice
+        if ((e.ctrlKey || e.metaKey) && e.key === 'c' && state.markedSlices.length === 1 ) {
+          state.copiedSlice = state.markedSlices[0]
         }
       }
 
