@@ -98,12 +98,12 @@ export const AppBody = observer(
 
     const onBlockClick = useCallback(
       (_: React.MouseEvent, slice: TimeSlice) => {
-        Menu.buildFromTemplate([
+        const items = [
           ...suggestedTaskMenuItems(state, clarityState, slice.task, (task) => (slice.task = task)),
           {
             type: 'normal',
             label: 'Other...',
-            click: (_) => (state.changingSliceTask = slice),
+            click: () => (state.changingSliceTask = slice),
           },
 
           { type: 'separator' },
@@ -126,17 +126,17 @@ export const AppBody = observer(
           {
             type: 'normal',
             label: 'Copy',
-            click: (_) => {
+            click: () => {
                 if(state.markedSlices.length === 1){
                     state.copiedSlice = state.markedSlices[0]
                 }
             },
           },
-          { type: 'normal', label: 'Delete', click: (_) => state.removeSlices(slice) },
+          { type: 'normal', label: 'Delete', click: () => state.removeSlices(slice) },
           {
             type: 'normal',
             label: 'Eat Previous Slice',
-            click: (_) => {
+            click: () => {
               const previousSlice = state.getPreviousSlice(slice)
               if (!previousSlice || !isSameDay(previousSlice.start, slice.start)) return
               state.removeSlices(previousSlice)
@@ -146,14 +146,15 @@ export const AppBody = observer(
           {
             type: 'normal',
             label: 'Eat Next Slice',
-            click: (_) => {
+            click: () => {
               const nextSlice = state.getNextSlice(slice)
               if (!nextSlice || !isSameDay(nextSlice.start, slice.start)) return
               state.removeSlices(nextSlice)
               slice.end = nextSlice.end
             },
           },
-        ]).popup()
+        ].filter(Boolean);
+          Menu.buildFromTemplate(items).popup();
       },
       [clarityState, state],
     )
