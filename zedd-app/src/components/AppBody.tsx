@@ -124,7 +124,7 @@ export const AppBody = observer(
             label: 'Start Timing This',
             click: () => (state.currentTask = slice.task),
           },
-          {
+              state.markedSlices.length === 1 && {
             type: 'normal',
             label: 'Copy',
             click: () => {
