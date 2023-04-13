@@ -47,6 +47,7 @@ import { DateRangePicker } from './DateRangePicker'
 import { ZeddSettings } from '../ZeddSettings'
 import { getHolidays } from '../holidays'
 
+
 const styles = (theme) => ({
   contentRoot: {
     overflowY: 'scroll',
@@ -98,7 +99,7 @@ export const AppBody = observer(
 
     const onBlockClick = useCallback(
       (_: React.MouseEvent, slice: TimeSlice) => {
-        const items = [
+          const items: Array<any> = [
           ...suggestedTaskMenuItems(state, clarityState, slice.task, (task) => (slice.task = task)),
           {
             type: 'normal',
