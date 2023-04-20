@@ -99,12 +99,12 @@ export const AppBody = observer(
 
     const onBlockClick = useCallback(
       (_: React.MouseEvent, slice: TimeSlice) => {
-          const items: Array<any> = [
+        Menu.buildFromTemplate([
           ...suggestedTaskMenuItems(state, clarityState, slice.task, (task) => (slice.task = task)),
           {
             type: 'normal',
             label: 'Other...',
-            click: () => (state.changingSliceTask = slice),
+            click: (_) => (state.changingSliceTask = slice),
           },
 
           { type: 'separator' },
@@ -124,20 +124,20 @@ export const AppBody = observer(
             label: 'Start Timing This',
             click: () => (state.currentTask = slice.task),
           },
-              state.markedSlices.length === 1 && {
+          {
             type: 'normal',
             label: 'Copy',
-            click: () => {
-                if(state.markedSlices.length === 1){
-                    state.copiedSlice = state.markedSlices[0]
-                }
+            click: (_) => {
+              state.copiedSlice = slice
+                console.log("state.copiedSlice: " + slice)
+                state.markSlice(slice)
             },
           },
-          { type: 'normal', label: 'Delete', click: () => state.removeSlices(slice) },
+          { type: 'normal', label: 'Delete', click: (_) => state.removeSlices(slice) },
           {
             type: 'normal',
             label: 'Eat Previous Slice',
-            click: () => {
+            click: (_) => {
               const previousSlice = state.getPreviousSlice(slice)
               if (!previousSlice || !isSameDay(previousSlice.start, slice.start)) return
               state.removeSlices(previousSlice)
@@ -154,8 +154,7 @@ export const AppBody = observer(
               slice.end = nextSlice.end
             },
           },
-        ].filter(Boolean);
-          Menu.buildFromTemplate(items).popup();
+        ]).popup()
       },
       [clarityState, state],
     )
@@ -201,21 +200,21 @@ export const AppBody = observer(
     }, [state.showing, settings.location, settings.federalState])
 
     const onMarkingBlock = useCallback(
-      (_: React.MouseEvent, slice: TimeSlice) => {
+      ( slice: TimeSlice) => {
         state.markSlice(slice)
       },
       [state],
     )
 
     useEffect(() => {
-      const keyDown = (e: KeyboardEvent) => {
-        if ((e.ctrlKey || e.metaKey) && e.key === 'c' && state.markedSlices.length === 1 ) {
-          state.copiedSlice = state.markedSlices[0]
+      const copy = (e: KeyboardEvent) => {
+        if ((e.ctrlKey || e.metaKey) && e.key === 'c' && state.lastClickedSlice !== undefined ) {
+            state.copiedSlice = state.lastClickedSlice
         }
       }
 
-      window.addEventListener('keydown', keyDown)
-      return () => window.removeEventListener('keydown', keyDown)
+      window.addEventListener('keydown', copy)
+      return () => window.removeEventListener('keydown', copy)
     }, [])
 
     return (
@@ -438,8 +437,6 @@ export const AppBody = observer(
               }}
               getVirtualSlice={(start, end) => new TimeSlice(start, end, state.getUndefinedTask())}
               deleteSlice={(slice) => state.removeSlices(slice)}
-              markSlice={(slice) => state.markSlice(slice)}
-              markedSlices={state.markedSlices.length}
               clearMarking={() => state.clearMarking()}
               copiedSlice={() => state.copiedSlice}
               renderSlice={(attributes) => {

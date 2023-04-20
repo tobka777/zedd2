@@ -15,7 +15,7 @@ export type BlockProps = {
   onSplit?: SliceSplitHandler<TimeSlice>
   onContextMenu: (e: React.MouseEvent, block: TimeSlice) => void
   onAltRightClick: (e: React.MouseEvent, block: TimeSlice) => void
-  onMarkingBlock: (e: React.MouseEvent, block: TimeSlice) => void
+  onMarkingBlock: ( block: TimeSlice) => void
   clarityState: ClarityState
   slicesMarked: boolean
 } & Omit<React.HTMLAttributes<HTMLDivElement>, 'onContextMenu'>
@@ -38,7 +38,7 @@ export const BlockDisplay = observer(
       (e: React.MouseEvent) => {
           if(e.button === 0){
           setMarking((current) => !current)
-          onMarkingBlock(e, slice)
+          onMarkingBlock(slice)
           if(e.altKey) onAltRightClick(e, slice)
       }
           if ((e.ctrlKey || e.metaKey) && onSplit) onSplit(slice, e)
