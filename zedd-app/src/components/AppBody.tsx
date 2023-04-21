@@ -65,7 +65,6 @@ const styles = (theme) => ({
 })
 
 export interface AppBodyProps {
-  slice: TimeSlice
   state: AppState
   clarityState: ClarityState
   getTasksForSearchString: (s: string) => Promise<Task[]>
