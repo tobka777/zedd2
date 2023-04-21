@@ -245,7 +245,13 @@ export class AppState {
     ),
   )
   public slices: IObservableArray<TimeSlice> = observable([])
+
   public markedSlices: IObservableArray<TimeSlice> = observable([])
+
+  public lastClickedSlice: TimeSlice | undefined
+
+  @observable
+  public copiedSlice: TimeSlice | undefined = undefined
 
   @serializable(list(object(Task)))
   public lastInteractedTasks: IObservableArray<Task> = observable([])
@@ -739,12 +745,14 @@ export class AppState {
     } else {
       this.markedSlices.push(slice)
       this.slicesMarked = true
+      this.lastClickedSlice = this.markedSlices[this.markedSlices.length - 1]
     }
   }
 
   public clearMarking(): void {
     this.markedSlices.clear()
     this.slicesMarked = false
+    this.copiedSlice = undefined;
   }
 
   public startInterval(getUserIdleTime: () => number): void {

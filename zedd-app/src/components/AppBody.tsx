@@ -1,23 +1,23 @@
 import { Button, ButtonGroup, Paper, Tooltip } from '@mui/material'
 import { useTheme } from '@mui/material/styles'
 import {
-  addMinutes,
-  addMonths,
-  addWeeks,
-  max as dateMax,
-  min as dateMin,
-  startOfDay,
-  differenceInDays,
-  isMonday,
-  addDays,
-  startOfMonth,
-  isSameDay,
-  endOfMonth,
-  subMinutes as sub,
-  differenceInMinutes,
-  startOfYear,
-  addYears,
-  endOfYear,
+    addMinutes,
+    addMonths,
+    addWeeks,
+    max as dateMax,
+    min as dateMin,
+    startOfDay,
+    differenceInDays,
+    isMonday,
+    addDays,
+    startOfMonth,
+    isSameDay,
+    endOfMonth,
+    subMinutes as sub,
+    differenceInMinutes,
+    startOfYear,
+    addYears,
+    endOfYear,
 } from 'date-fns'
 import { MenuItemConstructorOptions } from 'electron'
 import { Menu, shell } from '@electron/remote'
@@ -29,13 +29,13 @@ import { ErrorBoundary } from './ErrorBoundary'
 import { AppState, Task, TimeSlice } from '../AppState'
 import { ClarityState } from '../ClarityState'
 import {
-  businessWeekInterval,
-  isoWeekInterval,
-  monthInterval,
-  omap,
-  startOfNextDay,
-  useClasses,
-  yearInterval,
+    businessWeekInterval,
+    isoWeekInterval,
+    monthInterval,
+    omap,
+    startOfNextDay,
+    useClasses,
+    yearInterval,
 } from '../util'
 import { BlockDisplay } from './BlockDisplay'
 import { Calendar } from './Calendar'
@@ -47,19 +47,20 @@ import { DateRangePicker } from './DateRangePicker'
 import { ZeddSettings } from '../ZeddSettings'
 import { getHolidays } from '../holidays'
 
+
 const styles = (theme) => ({
   contentRoot: {
     overflowY: 'scroll',
-    '& > *': { margin: theme.spacing(2) },
+    '& > *': {margin: theme.spacing(2)},
   },
   controlBar: {
     margin: theme.spacing(-1),
     display: 'flex',
     flexWrap: 'wrap',
     alignItems: 'center',
-    '& > *': { margin: theme.spacing(1), flexGrow: 1 },
-    '& .MuiButtonGroup-root > *': { flexGrow: 1 },
-    '& input[type="date"]::-webkit-clear-button': { display: 'none' },
+    '& > *': {margin: theme.spacing(1), flexGrow: 1},
+    '& .MuiButtonGroup-root > *': {flexGrow: 1},
+    '& input[type="date"]::-webkit-clear-button': {display: 'none'},
   },
 })
 
@@ -74,19 +75,18 @@ export interface AppBodyProps {
 }
 
 export const AppBody = observer(
-  ({
-    state,
-    clarityState,
-    getTasksForSearchString,
-    display,
-    taskSelectRef,
-    getLinksFromString,
-    settings,
-  }: AppBodyProps) => {
-    const classes = useClasses(styles)
+    ({
+       state,
+       clarityState,
+       getTasksForSearchString,
+       display,
+       taskSelectRef,
+       getLinksFromString,
+       settings,
+     }: AppBodyProps) => {
+      const classes = useClasses(styles)
 
-    const theme = useTheme()
-
+      const theme = useTheme()
     const onAltRightClick = useCallback(
       (_: React.MouseEvent, slice: TimeSlice) => {
         if (state.getTasksForMenu().length !== 0) {
@@ -122,6 +122,13 @@ export const AppBody = observer(
             type: 'normal',
             label: 'Start Timing This',
             click: () => (state.currentTask = slice.task),
+          },
+          {
+            type: 'normal',
+            label: 'Copy',
+            click: (_) => {
+              state.copiedSlice = slice
+            },
           },
           { type: 'normal', label: 'Delete', click: (_) => state.removeSlices(slice) },
           {
@@ -190,11 +197,22 @@ export const AppBody = observer(
     }, [state.showing, settings.location, settings.federalState])
 
     const onMarkingBlock = useCallback(
-      (_: React.MouseEvent, slice: TimeSlice) => {
+      ( slice: TimeSlice) => {
         state.markSlice(slice)
       },
       [state],
     )
+
+    useEffect(() => {
+      const copy = (e: KeyboardEvent) => {
+        if ((e.ctrlKey || e.metaKey) && e.key === 'c' && state.lastClickedSlice !== undefined ) {
+            state.copiedSlice = state.lastClickedSlice
+        }
+      }
+
+      window.addEventListener('keydown', copy)
+      return () => window.removeEventListener('keydown', copy)
+    }, [])
 
     return (
       <div className={classes.contentRoot} style={{ display: display ? 'block' : 'none' }}>
@@ -416,8 +434,8 @@ export const AppBody = observer(
               }}
               getVirtualSlice={(start, end) => new TimeSlice(start, end, state.getUndefinedTask())}
               deleteSlice={(slice) => state.removeSlices(slice)}
-              markSlice={(slice) => state.markSlice(slice)}
               clearMarking={() => state.clearMarking()}
+              copiedSlice={() => state.copiedSlice}
               renderSlice={(attributes) => {
                 return (
                   <BlockDisplay
