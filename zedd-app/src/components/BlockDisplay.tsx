@@ -38,10 +38,10 @@ export const BlockDisplay = observer(
       (e: React.MouseEvent) => {
           if ((e.ctrlKey || e.metaKey) && onSplit) onSplit(slice, e)
           if (1 === e.button) onContextMenu(e, slice)
-          if (0 === e.button) {
+          if (0 === e.button && e.altKey === true) onAltRightClick(e, slice)
+          if (0 === e.button && e.shiftKey === true) {
               setMarking((current) => !current)
               onMarkingBlock(slice)
-              if (e.altKey === true) onAltRightClick(e, slice)
           }
       },
       [slice, onSplit, onContextMenu],
