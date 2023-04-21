@@ -36,12 +36,13 @@ export const BlockDisplay = observer(
   }: BlockProps) => {
     const blockClickHandler = useCallback(
       (e: React.MouseEvent) => {
-          if(e.button === 0){
-          setMarking((current) => !current)
-          onMarkingBlock(slice)
-          if(e.altKey) onAltRightClick(e, slice)
-      }
           if ((e.ctrlKey || e.metaKey) && onSplit) onSplit(slice, e)
+          if (1 === e.button) onContextMenu(e, slice)
+          if (0 === e.button && e.altKey === true) onAltRightClick(e, slice)
+          if (0 === e.button && e.shiftKey === true) {
+              setMarking((current) => !current)
+              onMarkingBlock(slice)
+          }
       },
       [slice, onSplit, onContextMenu],
     )

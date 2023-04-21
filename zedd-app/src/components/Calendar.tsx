@@ -212,7 +212,7 @@ const CalendarBase = <T extends Interval>({
       onSliceAdd(newSlice);
     }
       },
-      [slices, local.lastPointTime, copiedSlice()],
+      [slices, local.lastPointTime, copiedSlice],
   )
 
   const hoursBlockMouseMove = useCallback(

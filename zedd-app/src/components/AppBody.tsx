@@ -129,8 +129,6 @@ export const AppBody = observer(
             label: 'Copy',
             click: (_) => {
               state.copiedSlice = slice
-                console.log("state.copiedSlice: " + slice)
-                state.markSlice(slice)
             },
           },
           { type: 'normal', label: 'Delete', click: (_) => state.removeSlices(slice) },
@@ -147,7 +145,7 @@ export const AppBody = observer(
           {
             type: 'normal',
             label: 'Eat Next Slice',
-            click: () => {
+            click: (_) => {
               const nextSlice = state.getNextSlice(slice)
               if (!nextSlice || !isSameDay(nextSlice.start, slice.start)) return
               state.removeSlices(nextSlice)
