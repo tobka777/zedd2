@@ -14,7 +14,7 @@ The goal is to make work planning more organized, stress-free and user-friendly.
 - Summary window for work hours.
 - Overview of working time and overtime.
 - Automatic pause of working time when computer is inactive.
-- Forecast possible with a substitute button.
+- Forecast possible with an "Ersatz" button.
 - Individual names for tasks that can be assigned to a Clarity task with a comment.
 - Automatic detection of holidays by country and federal state.
 
