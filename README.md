@@ -6,18 +6,17 @@ The goal is to make work planning more organized, stress-free and user-friendly.
 
 ## Feature 📝
 
-- Task selection or input windows
-- Main window with movable and stretchable task tiles
-- Arrow buttons and buttons for changing days, weeks, or months
-- Reservation button
-- Trash button for deleting all reservations
-- Three dashes button in the upper right corner for accessing and customizing the application settings
-- Work time clock for the application with stop option
-- Name change button
-- Import button for importing data from the Clarity system.
-- Summary window for work hours in the bottom part of the interface
-- Submit button for sending the set information to the Clarity system with the option of automatic submission.
-- Tasks can be linked to Jira tasks
+- Tasks exported to the Clarity system with the option of automatic submission.
+- Export can also take place in the background.
+- Work clock time.
+- Tasks can be linked to Jira tasks.
+- Importing data from the Clarity system.
+- Summary window for work hours.
+- Overview of working time and overtime.
+- Automatic pause of working time when computer is inactive.
+- Forecast possible with a substitute button.
+- Individual names for tasks that can be assigned to a Clarity task with a comment.
+- Automatic detection of holidays by country and federal state.
 
 ## Screenshots 📺
 
@@ -70,7 +69,7 @@ Download and run the latest release on [Github](https://github.com/tobka777/zedd
 - Windows (nupkg): `zedd-<release>-full.nupkg`
 - Mac (zip): `zedd-app-darwin-x64-<release>.zip`
 
-## Contributing
+## Contributing 👨‍🔧
 
 Pull requests are welcome. For major changes, please open an [GitHub Issues](https://github.com/tobka777/zedd2/issues) first to discuss what you would like to change.
 
