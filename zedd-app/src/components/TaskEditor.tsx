@@ -1,9 +1,9 @@
 import { Button, Grid, TextField, Tooltip, MenuItem, Menu } from '@mui/material'
 import {
-  Edit as EditIcon,
-  GetApp as ImportIcon,
-  SentimentSatisfiedAlt,
-  ContentCopy as CopyIcon,
+    Edit as EditIcon,
+    GetApp as ImportIcon,
+    SentimentSatisfiedAlt,
+    ContentCopy as CopyIcon, GroupAdd, LeakAdd, LibraryAdd,
 } from '@mui/icons-material'
 import { format as formatDate, formatDistance } from 'date-fns'
 import { observer } from 'mobx-react-lite'
@@ -108,6 +108,14 @@ export const TaskEditor = observer(
             endIcon={<EditIcon />}
           >
             Rename
+          </Button>
+          <Button
+            // disabled={!value || value === state.getUndefinedTask()}
+            // onClick={(_) => (state.renamingTask = value)}
+            style={{ width: '100%' }}
+            endIcon={<LibraryAdd />}
+          >
+            Add
           </Button>
         </Grid>
         <Grid item xs={6} lg={9}>
