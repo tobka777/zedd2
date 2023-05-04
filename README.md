@@ -40,12 +40,14 @@ At the bottom, you can see what will be exported to Clarity. What is currently d
 
 | **Command**                                         | **Description**                                 | 
 |-----------------------------------------------------|-------------------------------------------------|
-| **CTRL+Click** on an empty space in the calendar    | Adds a new slice                                |                          
-| **CTRL+Click** on an existing slice in the calendar | Divides it into two                             |                          
+| **CTRL+Click** on an empty space in the calendar    | Adds a new slice                                |
+| **CTRL+Click** on an existing slice in the calendar | Divides it into two                             |
 | **ALT+Click**                                       | Sets the slice to the last used Clarity account | 
 | **CTRL+Z**                                          | Undoes the last action                          | 
 | **CTRL+Y**                                          | Will redo any previously-undone action          |
 | Pressing the **Clarity button**                     | The current view is booked in Clarity.          | 
+| **CTRL+C** on an existing slice in the calendar     | Copy slice                                      | 
+| **CTRL+V** on an empty space in the calendar        | Paste slice at mouse pointer                    |
 
 - To book the forecast:
     - Click `NEXT MONTH`

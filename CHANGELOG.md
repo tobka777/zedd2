@@ -1,5 +1,8 @@
-## [2.12.0] - 2023-04-XX
+## [2.12.0] - 2023-05-04
+- Feature: Copy & Paste Tasks
+- Fix: Minimize, fullscreen and close button always visible
 - Feature: Support for MacOS including shortcuts
+- Feature: Release Workflow with Github Action
 
 ## [2.11.0] - 2022-09-15
 
