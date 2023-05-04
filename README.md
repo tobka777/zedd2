@@ -20,7 +20,7 @@ The goal is to make work planning more organized, stress-free and user-friendly.
 
 ## Screenshots 📺
 
-![Screenshot](screenschots/screenshot.png)
+![Screenshot](screenshots/screenshot.png)
 
 ## Usage 🔥
 
@@ -52,14 +52,14 @@ At the bottom, you can see what will be exported to Clarity. What is currently d
     - Click `ERSATZ`
     - Right-click on a slice, select `Other...` and choose the replacement account. (This step only needs to be done the first time.)
     - Press the `CLARITY` button at the bottom.
-    ![img_5.png](screenschots/img_5.png)
+    ![img_5.png](screenshots/img_5.png)
 
 - If you want to view the overtime hours of a month:
     - select the period of the month accordingly, or click `NEXT
       MONTH`
     - navigate using the `←` (left) or `→` (right) buttons. 
     - at the bottom, the summary of all tasks and bookings including overtime/undertime is displayed:
-    ![img_6.png](screenschots/img_6.png)
+    ![img_6.png](screenshots/img_6.png)
 
 ## Download 📥
 
