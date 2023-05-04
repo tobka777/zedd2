@@ -4,23 +4,23 @@
 
 The goal is to make work planning more organized, stress-free and user-friendly. The app is built with Electron, TypeScript, React, MobX, and MUI.
 
-## Feature 📝
+## Features 📝
 
-- Tasks exported to the Clarity system with the option of automatic submission.
-- Export can also take place in the background.
-- Work clock time.
-- Tasks can be linked to Jira tasks.
-- Importing data from the Clarity system.
-- Summary window for work hours.
-- Overview of working time and overtime.
-- Automatic pause of working time when computer is inactive.
-- Forecast possible with an "Ersatz" button.
-- Individual names for tasks that can be assigned to a Clarity task with a comment.
-- Automatic detection of holidays by country and federal state.
+- Working time tracking with integrated clock
+- Summary window for working hours
+- Overview of working time and overtime
+- Automatic break of working time when computer is inactive
+- Tasks can be exported to the Clarity system with the option of automatic submission
+- Export can also take place in the background
+- Importing tasks from the Clarity system
+- Individual names for tasks that can be assigned to a Clarity task and a comment
+- Tasks can be linked to Jira tasks
+- Forecast booking possible with "Ersatz" task
+- Automatic detection of holidays by country and federal state
 
 ## Screenshots 📺
 
-![Screenshot](zedd-app/screenshot.png)
+![Screenshot](screenschots/screenshot.png)
 
 ## Usage 🔥
 
