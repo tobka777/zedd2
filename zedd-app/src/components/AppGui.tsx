@@ -104,23 +104,18 @@ export const AppGui = observer(
     }, [state])
 
     useEffect(() => {
-      const clearMarking = (e: KeyboardEvent) => {
+      const keyDown = (e: KeyboardEvent) => {
+        // clearMarking
         if (e.key === 'Escape') {
           state.clearMarking()
         }
-      }
-      window.addEventListener('keydown', clearMarking)
-      return () => window.removeEventListener('keydown', clearMarking)
-    }, [state])
-
-    useEffect(() => {
-      const removeSlicesOnDelete = (e: KeyboardEvent) => {
+        // removeSlicesOnDelete
         if (e.key === 'Delete' && state.markedSlices.length !== 0) {
           state.removeSlices(state.markedSlices[0])
         }
       }
-      window.addEventListener('keydown', removeSlicesOnDelete)
-      return () => window.removeEventListener('keydown', removeSlicesOnDelete)
+      window.addEventListener('keydown', keyDown)
+      return () => window.removeEventListener('keydown', keyDown)
     }, [state])
 
     return (

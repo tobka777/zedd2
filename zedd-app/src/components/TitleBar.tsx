@@ -174,7 +174,7 @@ export const TitleBar = observer(({ state, menuItems, showContextMenu }: TitleBa
       >
         {state.currentTask.name}
       </div>
-      {!state.hoverMode && state.config.keepHovering && (
+      {!state.hoverMode && (
         <Button
           onClick={() => getCurrentWindow().minimize()}
           style={{ color: 'inherit', borderRadius: 0, ['WebkitAppRegion' as any]: 'no-drag' }}
@@ -199,7 +199,7 @@ export const TitleBar = observer(({ state, menuItems, showContextMenu }: TitleBa
           {local.maximized ? '🗗︎' : '🗖'}
         </Button>
       )}
-      {!state.hoverMode && state.config.keepHovering && (
+      {!state.hoverMode && (
         <Button
           onClick={() => getCurrentWindow().hide()}
           style={{ color: 'inherit', borderRadius: 0, ['WebkitAppRegion' as any]: 'no-drag' }}
