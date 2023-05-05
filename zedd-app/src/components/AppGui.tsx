@@ -26,6 +26,7 @@ import { AppState, Task } from '../AppState'
 import { ClarityState } from '../ClarityState'
 import { ChangeSliceTaskDialog } from './ChangeSliceTaskDialog'
 import { RenameTaskDialog } from './RenameTaskDialog'
+import { AddTaskToListDialog } from './AddTaskToListDialog'
 import { SettingsDialog } from './SettingsDialog'
 import { ZeddSettings } from '../ZeddSettings'
 import { TitleBar } from './TitleBar'
@@ -160,6 +161,31 @@ export const AppGui = observer(
                 clarityState={clarityState}
               />
             )}
+            {state.changingSliceTask1 && (
+                <AddTaskToListDialog
+                    clarityState={clarityState}
+                    getTasksForSearchString={getTasksForSearchString}
+                    done={(newTask) => {
+                      debugger;
+                      if ('string' === typeof newTask) newTask = state.getTaskForName(newTask)
+                      {
+                        console.log("newTask: " + newTask)
+                        state.changingSliceTask1!.task = newTask
+                        state.changingSliceTask1 = undefined
+                      }
+                      // try {
+                      //   console.log(newTask)
+                      //   if (typeof newTask !== 'string') {
+                      //     state.addTask(newTask);
+                      //   }
+                      // } catch(e) {
+                      //   console.log(e)
+                      //   }
+                    }}
+                    state={state}
+                />
+            )
+          }
             {state.renamingTask ? (
               <RenameTaskDialog
                 task={state.renamingTask}
@@ -174,7 +200,9 @@ export const AppGui = observer(
                   slice={state.changingSliceTask}
                   getTasksForSearchString={getTasksForSearchString}
                   done={(newTask) => {
+                    debugger;
                     if ('string' === typeof newTask) newTask = state.getTaskForName(newTask)
+                    console.log("newTask: " + newTask)
                     console.log('ChangeSLiceTaskDialog', 'state.changingSliceTask!.task = newTask')
                     const sliceIndex = state.markedSlices.findIndex(
                       (e) => e === state.changingSliceTask!,

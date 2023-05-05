@@ -41,7 +41,7 @@ import { BlockDisplay } from './BlockDisplay'
 import { Calendar } from './Calendar'
 import { ClarityView } from './ClarityView'
 import { TaskEditor } from './TaskEditor'
-import { ArrowBack, ArrowForward, Delete as DeleteIcon } from '@mui/icons-material'
+import {ArrowBack, ArrowForward, Delete as DeleteIcon, Edit as EditIcon} from '@mui/icons-material'
 import { suggestedTaskMenuItems } from '../menuUtil'
 import { DateRangePicker } from './DateRangePicker'
 import { ZeddSettings } from '../ZeddSettings'
@@ -129,8 +129,6 @@ export const AppBody = observer(
             label: 'Copy',
             click: (_) => {
               state.copiedSlice = slice
-                console.log("state.copiedSlice: " + slice)
-                state.markSlice(slice)
             },
           },
           { type: 'normal', label: 'Delete', click: (_) => state.removeSlices(slice) },
@@ -220,6 +218,14 @@ export const AppBody = observer(
     return (
       <div className={classes.contentRoot} style={{ display: display ? 'block' : 'none' }}>
         <div>
+            <Button
+                // disabled={!value || value === state.getUndefinedTask()}
+                onClick={(_) => (state.changingSliceTask1 = state.slices[0])}
+                style={{ width: '100%' }}
+                endIcon={<EditIcon />}
+            >
+                Add
+            </Button>
           <TaskEditor
             state={state}
             clarityState={clarityState}

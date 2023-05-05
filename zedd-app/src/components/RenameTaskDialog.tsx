@@ -17,8 +17,8 @@ export const RenameTaskDialog = ({
 }): ReactElement => {
   const [newName, setNewName] = useState(task.name)
 
-  const matchingTask = state.tasks.find((t) => t.name === newName)
-  const showWarning = !!newName && matchingTask !== undefined && matchingTask !== task
+  const matchingTask = state.tasks.find((t) => t.name === newName.trim())
+  const showWarning = newName && matchingTask !== undefined && matchingTask !== task
 
   return (
     <Dialog open={true} onClose={onClose} aria-labelledby='form-dialog-title' maxWidth='lg'>
