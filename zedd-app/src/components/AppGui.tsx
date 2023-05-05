@@ -161,7 +161,7 @@ export const AppGui = observer(
                 clarityState={clarityState}
               />
             )}
-            {state.changingSliceTask1 && (
+            {state.addedSliceTask && (
                 <AddTaskToListDialog
                     clarityState={clarityState}
                     getTasksForSearchString={getTasksForSearchString}
@@ -169,18 +169,9 @@ export const AppGui = observer(
                       debugger;
                       if ('string' === typeof newTask) newTask = state.getTaskForName(newTask)
                       {
-                        console.log("newTask: " + newTask)
-                        state.changingSliceTask1!.task = newTask
-                        state.changingSliceTask1 = undefined
+                        state.addedSliceTask!.task = newTask
+                        state.addedSliceTask = undefined
                       }
-                      // try {
-                      //   console.log(newTask)
-                      //   if (typeof newTask !== 'string') {
-                      //     state.addTask(newTask);
-                      //   }
-                      // } catch(e) {
-                      //   console.log(e)
-                      //   }
                     }}
                     state={state}
                 />

@@ -41,7 +41,7 @@ import { BlockDisplay } from './BlockDisplay'
 import { Calendar } from './Calendar'
 import { ClarityView } from './ClarityView'
 import { TaskEditor } from './TaskEditor'
-import {ArrowBack, ArrowForward, Delete as DeleteIcon, Edit as EditIcon} from '@mui/icons-material'
+import {AddBox, ArrowBack, ArrowForward, Delete as DeleteIcon, Edit as EditIcon} from '@mui/icons-material'
 import { suggestedTaskMenuItems } from '../menuUtil'
 import { DateRangePicker } from './DateRangePicker'
 import { ZeddSettings } from '../ZeddSettings'
@@ -65,7 +65,7 @@ const styles = (theme) => ({
 })
 
 export interface AppBodyProps {
-  slice: TimeSlice
+
   state: AppState
   clarityState: ClarityState
   getTasksForSearchString: (s: string) => Promise<Task[]>
@@ -220,9 +220,9 @@ export const AppBody = observer(
         <div>
             <Button
                 // disabled={!value || value === state.getUndefinedTask()}
-                onClick={(_) => (state.changingSliceTask1 = state.slices[0])}
+                onClick={(_) => (state.addedSliceTask = state.slices[0])}
                 style={{ width: '100%' }}
-                endIcon={<EditIcon />}
+                endIcon={<AddBox/>}
             >
                 Add
             </Button>

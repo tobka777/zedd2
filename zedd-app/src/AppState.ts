@@ -330,7 +330,7 @@ export class AppState {
   public changingSliceTask: TimeSlice | undefined = undefined
 
   @observable
-  public changingSliceTask1: TimeSlice | undefined = undefined
+  public addedSliceTask: TimeSlice | undefined = undefined
 
   /**
    * init last, so this.slices is already set
