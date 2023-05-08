@@ -1,4 +1,4 @@
-import {Dialog, DialogActions, DialogContent, DialogTitle, Grid, TextField} from '@mui/material'
+import {Dialog, DialogActions, DialogContent, DialogTitle, Grid, TextField, Tooltip} from '@mui/material'
 import Button from '@mui/material/Button'
 import {format as formatDate} from 'date-fns'
 import * as React from 'react'
@@ -8,6 +8,7 @@ import {AppState, Task} from '../AppState'
 import {ClarityState} from '../ClarityState'
 import {TaskSelect} from "./TaskSelect";
 import {ClarityTaskSelect} from "./ClarityTaskSelect";
+import {ContentCopy as CopyIcon} from "@mui/icons-material";
 
 export const AddTaskToListDialog = ({
 
@@ -23,7 +24,7 @@ export const AddTaskToListDialog = ({
     clarityState: ClarityState
 }) => {
 
-    const [newTask, setNewTask] = useState<Task>(new Task())
+    const [newTask, setNewTask] = useState(new Task())
 
     return (
         <Dialog
@@ -74,7 +75,7 @@ export const AddTaskToListDialog = ({
                         </Grid>
                         <Grid item xs={10} lg={11}>
                             <TextField
-                                value={newTask.clarityTaskComment}
+                                // value={newTask.clarityTaskComment}
                                 label='Clarity-Account Comment for This Task'
                                 disabled={newTask === state.getUndefinedTask()}
                                 onChange={(e) => (newTask.clarityTaskComment = e.target.value)}
@@ -82,16 +83,16 @@ export const AddTaskToListDialog = ({
                             />
                         </Grid>
                         <Grid item xs={2} lg={1}>
-                            {/*<Tooltip title='Copy task name to task comment'>*/}
-                            {/*<Button*/}
-                            {/*    disabled={!newTask || newTask === state.getUndefinedTask()}*/}
-                            {/*    onClick={() => (newTask.clarityTaskComment = newTask.name)}*/}
-                            {/*    fullWidth*/}
-                            {/*    endIcon={<CopyIcon/>}*/}
-                            {/*>*/}
-                            {/*    Copy*/}
-                            {/*</Button>*/}
-                            {/*</Tooltip>*/}
+                            <Tooltip title='Copy task name to task comment'>
+                            <Button
+                                disabled={!newTask || newTask === state.getUndefinedTask()}
+                                onClick={() => (newTask.clarityTaskComment = newTask.name)}
+                                fullWidth
+                                endIcon={<CopyIcon />}
+                            >
+                                Copy
+                            </Button>
+                            </Tooltip>
                         </Grid>
                     </Grid>
                 </DialogContent>
