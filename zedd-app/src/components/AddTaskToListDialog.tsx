@@ -1,23 +1,18 @@
 import {Dialog, DialogActions, DialogContent, DialogTitle, Grid, TextField, Tooltip} from '@mui/material'
 import Button from '@mui/material/Button'
-import {format as formatDate} from 'date-fns'
 import * as React from 'react'
 import {useState} from 'react'
 
 import {AppState, Task} from '../AppState'
 import {ClarityState} from '../ClarityState'
-import {TaskSelect} from "./TaskSelect";
 import {ClarityTaskSelect} from "./ClarityTaskSelect";
 import {ContentCopy as CopyIcon} from "@mui/icons-material";
 
 export const AddTaskToListDialog = ({
-
                                         done,
                                         state,
-                                        getTasksForSearchString,
                                         clarityState,
                                     }: {
-
     done: (newTask: Task | string) => void
     state: AppState
     getTasksForSearchString: (ss: string) => Promise<Task[]>
@@ -25,6 +20,9 @@ export const AddTaskToListDialog = ({
 }) => {
 
     const [newTask, setNewTask] = useState(new Task())
+
+    const matchingTask = state.tasks.find((t) => t.name === newTask.name.trim())
+    const showWarning = newTask.name && matchingTask !== undefined
 
     return (
         <Dialog
@@ -37,29 +35,22 @@ export const AddTaskToListDialog = ({
             <DialogTitle id='form-dialog-title'>
                 {`Plan your tasks for the future`}
             </DialogTitle>
-            <form>
                 <DialogContent>
                     <Grid container style={{alignItems: 'center'}} spacing={2}>
                         <Grid item xs={10} lg={15}>
-                            <TaskSelect
-                                tasks={state.tasks}
-                                label={
-                                    state.focused
-                                        ? `Task for time slice ${formatDate(state.focused.start, 'do MMMM')} ${formatDate(
-                                            state.focused.start,
-                                            'HH:mm',
-                                        )} - ${formatDate(state.focused.end, 'HH:mm')}`
-                                        : 'Currently timing'
-                                }
-                                value={newTask}
-                                onChange={(_, t) => {
-                                    setNewTask(state.getTaskForName(t))
+                            <TextField
+                                autoFocus
+                                error={showWarning}
+                                margin='dense'
+                                id='name'
+                                label='Task name'
+                                type='text'
+                                // value={newTask}
+                                onChange={(e) => {
+                                    setNewTask(state.getTaskForName(e.target.value))
                                 }}
                                 fullWidth
-                                style={{flex: '1 1 auto', width: '100%'}}
-                                getTasksForSearchString={getTasksForSearchString}
-                                handleError={(error) => state.addMessage(error.message)}
-                                getHoursForTask={(t) => state.formatHours(state.getTaskHours(t))}
+                                helperText={!showWarning ? '' : 'A task with this name already exists. '}
                             />
                         </Grid>
                         <Grid item xs={10} lg={15}>
@@ -84,14 +75,14 @@ export const AddTaskToListDialog = ({
                         </Grid>
                         <Grid item xs={2} lg={1}>
                             <Tooltip title='Copy task name to task comment'>
-                            <Button
-                                disabled={!newTask || newTask === state.getUndefinedTask()}
-                                onClick={() => (newTask.clarityTaskComment = newTask.name)}
-                                fullWidth
-                                endIcon={<CopyIcon />}
-                            >
-                                Copy
-                            </Button>
+                                <Button
+                                    disabled={!newTask || newTask === state.getUndefinedTask()}
+                                    onClick={() => (newTask.clarityTaskComment = newTask.name)}
+                                    fullWidth
+                                    endIcon={<CopyIcon/>}
+                                >
+                                    Copy
+                                </Button>
                             </Tooltip>
                         </Grid>
                     </Grid>
@@ -111,7 +102,6 @@ export const AddTaskToListDialog = ({
                         Add
                     </Button>
                 </DialogActions>
-            </form>
         </Dialog>
     )
 }
