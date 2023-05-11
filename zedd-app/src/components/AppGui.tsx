@@ -166,7 +166,6 @@ export const AppGui = observer(
                     clarityState={clarityState}
                     getTasksForSearchString={getTasksForSearchString}
                     done={(newTask) => {
-                      debugger;
                       if ('string' === typeof newTask) newTask = state.getTaskForName(newTask)
                       {
                         state.addedSliceTask!.task = newTask
@@ -191,9 +190,7 @@ export const AppGui = observer(
                   slice={state.changingSliceTask}
                   getTasksForSearchString={getTasksForSearchString}
                   done={(newTask) => {
-                    debugger;
                     if ('string' === typeof newTask) newTask = state.getTaskForName(newTask)
-                    console.log("newTask: " + newTask)
                     console.log('ChangeSLiceTaskDialog', 'state.changingSliceTask!.task = newTask')
                     const sliceIndex = state.markedSlices.findIndex(
                       (e) => e === state.changingSliceTask!,

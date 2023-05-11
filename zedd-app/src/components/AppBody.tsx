@@ -220,7 +220,7 @@ export const AppBody = observer(
         <div>
             <Button
                 // disabled={!value || value === state.getUndefinedTask()}
-                onClick={(_) => (state.addedSliceTask = state.slices[0])}
+                onClick={(_) => (state.addedSliceTask = true)}
                 style={{ width: '100%' }}
                 endIcon={<AddBox/>}
             >

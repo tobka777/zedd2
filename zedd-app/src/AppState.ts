@@ -330,7 +330,7 @@ export class AppState {
   public changingSliceTask: TimeSlice | undefined = undefined
 
   @observable
-  public addedSliceTask: TimeSlice | undefined = undefined
+  public addedSliceTask: boolean = false
 
   /**
    * init last, so this.slices is already set
@@ -642,6 +642,10 @@ export class AppState {
       this.tasks.find((t) => 'UNDEFINED' === t.name) ||
       new Task('UNDEFINED', undefined, 'UNDEFINED')
     )
+  }
+
+  public addTask = (task : Task) => {
+    this.tasks.push(task)
   }
 
   public getMostRecentTasks(n: number): Task[] {

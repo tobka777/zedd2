@@ -18,23 +18,28 @@ export const AddTaskToListDialog = ({
     getTasksForSearchString: (ss: string) => Promise<Task[]>
     clarityState: ClarityState
 }) => {
+    const [newTaskComment, setNewTaskComment] = useState("")
+    const [newTaskId, setNewTaskId] = useState(0 )
+    const [newTaskName, setNewTaskName] = useState("")
 
-    const [newTask, setNewTask] = useState(new Task())
 
-    const matchingTask = state.tasks.find((t) => t.name === newTask.name.trim())
-    const showWarning = newTask.name && matchingTask !== undefined
+    const matchingTask = state.tasks.find((t) => t.name === newTaskName.trim())
+    const showWarning = newTaskName && matchingTask !== undefined
+
 
     return (
-        <Dialog
-            open={true}
-            onClose={(_) => done(newTask)}
-            aria-labelledby='form-dialog-title'
-            maxWidth='lg'
-            fullWidth
-        >
-            <DialogTitle id='form-dialog-title'>
-                {`Plan your tasks for the future`}
-            </DialogTitle>
+        <form>
+            <Dialog
+                open={true}
+                onClose={() => state.addedSliceTask = false}
+                aria-labelledby='form-dialog-title'
+                maxWidth='lg'
+                fullWidth
+            >
+                <DialogTitle id='form-dialog-title'>
+                    {`Plan your tasks for the future`}
+                </DialogTitle>
+
                 <DialogContent>
                     <Grid container style={{alignItems: 'center'}} spacing={2}>
                         <Grid item xs={10} lg={15}>
@@ -43,11 +48,11 @@ export const AddTaskToListDialog = ({
                                 error={showWarning}
                                 margin='dense'
                                 id='name'
-                                label='Task name'
+                                label='New task name '
                                 type='text'
-                                // value={newTask}
+                                value={newTaskName}
                                 onChange={(e) => {
-                                    setNewTask(state.getTaskForName(e.target.value))
+                                    setNewTaskName(e.target.value)
                                 }}
                                 fullWidth
                                 helperText={!showWarning ? '' : 'A task with this name already exists. '}
@@ -55,29 +60,29 @@ export const AddTaskToListDialog = ({
                         </Grid>
                         <Grid item xs={10} lg={15}>
                             <ClarityTaskSelect
-                                value={newTask.clarityTaskIntId}
-                                disabled={newTask === state.getUndefinedTask()}
-                                label={`Clarity-Account for Task ${newTask && newTask.name}`}
+                                value={newTaskId}
+                                // disabled={task === state.getUndefinedTask()}
+                                // label={`Clarity-Account for Task ${task && newTaskName}`}
                                 fullWidth
                                 style={{flex: '1 1 auto'}}
-                                onChange={(newIntId) => (newTask.clarityTaskIntId = newIntId)}
+                                onChange={(newIntId) => (setNewTaskId(newIntId))}
                                 clarityState={clarityState}
                             />
                         </Grid>
                         <Grid item xs={10} lg={11}>
                             <TextField
-                                // value={newTask.clarityTaskComment}
+                                value={newTaskComment}
                                 label='Clarity-Account Comment for This Task'
-                                disabled={newTask === state.getUndefinedTask()}
-                                onChange={(e) => (newTask.clarityTaskComment = e.target.value)}
+                                // disabled={task === state.getUndefinedTask()}
+                                onChange={(e) => (setNewTaskComment(e.target.value))}
                                 fullWidth
                             />
                         </Grid>
                         <Grid item xs={2} lg={1}>
                             <Tooltip title='Copy task name to task comment'>
                                 <Button
-                                    disabled={!newTask || newTask === state.getUndefinedTask()}
-                                    onClick={() => (newTask.clarityTaskComment = newTask.name)}
+                                    // disabled={!task || task === state.getUndefinedTask()}
+                                    onClick={() => (setNewTaskComment(newTaskName)) }
                                     fullWidth
                                     endIcon={<CopyIcon/>}
                                 >
@@ -88,20 +93,27 @@ export const AddTaskToListDialog = ({
                     </Grid>
                 </DialogContent>
                 <DialogActions>
-                    <Button onClick={(_) => done(newTask)} color='primary'>
+                    <Button onClick={() => state.addedSliceTask = false} color='primary'>
                         Cancel
                     </Button>
                     <Button
-                        type='submit'
-                        onClick={(_) => {
-                            state.notifyTaskInteraction(newTask)
-                            done(newTask)
+                        type='button'
+                        onClick={() => {
+                            console.log("coś")
+                            // state.notifyTaskInteraction(task);
+                            // done(task);
+                            state.addTask( new Task(newTaskName, newTaskId,"",newTaskComment))
+                            setNewTaskName("")
+                            setNewTaskComment("")
+                            setNewTaskId("")
                         }}
                         color='primary'
                     >
                         Add
                     </Button>
                 </DialogActions>
-        </Dialog>
+            </Dialog>
+        </form>
     )
+
 }
