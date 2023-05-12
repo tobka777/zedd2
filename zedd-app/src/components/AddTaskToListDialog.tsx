@@ -13,7 +13,7 @@ export const AddTaskToListDialog = ({
                                         state,
                                         clarityState,
                                     }: {
-    done: (newTask: Task | string) => void
+
     state: AppState
     getTasksForSearchString: (ss: string) => Promise<Task[]>
     clarityState: ClarityState
@@ -102,7 +102,7 @@ export const AddTaskToListDialog = ({
                             console.log("coś")
                             // state.notifyTaskInteraction(task);
                             // done(task);
-                            state.addTask( new Task(newTaskName, newTaskId,"",newTaskComment))
+                            state.addTask( new Task(newTaskName, newTaskId,undefined,newTaskComment))
                             setNewTaskName("")
                             setNewTaskComment("")
                             setNewTaskId("")

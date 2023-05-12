@@ -165,13 +165,7 @@ export const AppGui = observer(
                 <AddTaskToListDialog
                     clarityState={clarityState}
                     getTasksForSearchString={getTasksForSearchString}
-                    done={(newTask) => {
-                      if ('string' === typeof newTask) newTask = state.getTaskForName(newTask)
-                      {
-                        state.addedSliceTask!.task = newTask
-                        state.addedSliceTask = undefined
-                      }
-                    }}
+
                     state={state}
                 />
             )

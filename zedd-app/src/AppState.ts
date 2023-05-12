@@ -332,6 +332,9 @@ export class AppState {
   @observable
   public addedSliceTask: boolean = false
 
+  @observable
+  public addedTasks: Task[] = []
+
   /**
    * init last, so this.slices is already set
    */
@@ -537,7 +540,14 @@ export class AppState {
   @serializable(list(object(Task), { afterDeserialize: (callback) => callback(undefined, SKIP) }))
   @computed
   get tasks(): Task[] {
-    return Array.from(this.slicesByTask.keys())
+    const tasksArray = Array.from(this.slicesByTask.keys());
+    const result = new Set(tasksArray.concat(this.addedTasks));
+    return Array.from(result);
+
+  }
+
+  public addTask = (task : Task) => {
+    this.addedTasks.push(task)
   }
 
   @computed
@@ -642,10 +652,6 @@ export class AppState {
       this.tasks.find((t) => 'UNDEFINED' === t.name) ||
       new Task('UNDEFINED', undefined, 'UNDEFINED')
     )
-  }
-
-  public addTask = (task : Task) => {
-    this.tasks.push(task)
   }
 
   public getMostRecentTasks(n: number): Task[] {
