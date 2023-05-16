@@ -541,8 +541,8 @@ export class AppState {
   @computed
   get tasks(): Task[] {
     const tasksArray = Array.from(this.slicesByTask.keys());
-    const result = new Set(tasksArray.concat(this.addedTasks));
-    return Array.from(result);
+    const uniqueSet = new Set(tasksArray.concat(this.addedTasks));
+    return Array.from(uniqueSet);
 
   }
 

@@ -165,7 +165,6 @@ export const AppGui = observer(
                 <AddTaskToListDialog
                     clarityState={clarityState}
                     getTasksForSearchString={getTasksForSearchString}
-
                     state={state}
                 />
             )
