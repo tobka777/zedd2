@@ -29,7 +29,7 @@ import {
 } from 'date-fns'
 import { promises as fsp } from 'fs'
 import { sum } from 'lodash'
-import { computed, observable, transaction, intercept, action, makeObservable } from 'mobx'
+import {computed, observable, transaction, intercept, action, makeObservable} from 'mobx'
 import type { IObservableArray } from 'mobx'
 import { createTransformer, ObservableGroupMap } from 'mobx-utils'
 import * as path from 'path'
@@ -549,6 +549,18 @@ export class AppState {
   public addTask = (task : Task) => {
     this.addedTasks.push(task)
   }
+
+  // public removeTask(taskToDelete: Task): void {
+  //
+  //   // this._slicesByTask.delete(taskToDelete)
+  //
+  //   this.addedTasks = this.addedTasks.filter(task => task.name !== taskToDelete.name)
+  // }
+  public deleteTask(task: Task): void {
+    const filteredTasks = this.tasks.filter((t) => t.name !== task.name)
+    this.tasks = filteredTasks;
+    this.slices.replace(this.slices.slice().filter((slice) => slice.task.name !== task.name))
+    }
 
   @computed
   get tasksInfos(): { task: Task; lastEnd: Date }[] {

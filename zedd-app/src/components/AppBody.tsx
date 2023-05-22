@@ -218,14 +218,7 @@ export const AppBody = observer(
     return (
       <div className={classes.contentRoot} style={{ display: display ? 'block' : 'none' }}>
         <div>
-            <Button
-                // disabled={!value || value === state.getUndefinedTask()}
-                onClick={(_) => (state.addedSliceTask = true)}
-                style={{ width: '100%' }}
-                endIcon={<AddBox/>}
-            >
-                Add
-            </Button>
+
           <TaskEditor
             state={state}
             clarityState={clarityState}

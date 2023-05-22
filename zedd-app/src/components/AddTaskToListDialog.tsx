@@ -6,7 +6,7 @@ import {useState} from 'react'
 import {AppState, Task} from '../AppState'
 import {ClarityState} from '../ClarityState'
 import {ClarityTaskSelect} from "./ClarityTaskSelect";
-import {ContentCopy as CopyIcon} from "@mui/icons-material";
+import {ContentCopy as CopyIcon, Delete} from "@mui/icons-material";
 import {TaskSelect} from "./TaskSelect";
 import {format as formatDate} from "date-fns";
 
@@ -14,26 +14,20 @@ export const AddTaskToListDialog = ({
                                         state,
                                         clarityState,
                                         getTasksForSearchString,
-                                        // onTaskSelectChange,
                                     }: {
-    // onTaskSelectChange: (t: Task) => void
     state: AppState
     getTasksForSearchString: (ss: string) => Promise<Task[]>
     clarityState: ClarityState
 }) => {
     const [newTask, setNewTask] = useState(new Task())
-    const [showError, setShowError] = useState(true);
-    const [isDuplicateTask, setIsDuplicateTask] = useState(false);
+    const [isDuplicateTaskOrEmpty, setIsDuplicateTaskOrEmpty] = useState(true);
+    const [initHandler, setInitHandler] = useState(false);
 
-    const matchingTask = state.tasks.some((t) => t.name === newTask.name.trim())
-    const showWarning =  newTask.name && matchingTask !== undefined  && matchingTask || (newTask.name.trim() === "")
-
-    // const task = new Task(newTaskName, newTaskId, undefined, newTaskComment);
 
     const handleAddTask = () => {
-            state.addTask(newTask);
-            setNewTask(new Task())
-
+        state.addTask(newTask);
+        setNewTask(new Task("",undefined,"",""))
+        setIsDuplicateTaskOrEmpty(true)
     };
     return (
 
@@ -50,7 +44,7 @@ export const AddTaskToListDialog = ({
 
             <DialogContent>
                 <Grid container style={{alignItems: 'center'}} spacing={2}>
-                    <Grid item xs={10} lg={15}>
+                    <Grid item xs={10} lg={11}>
                         <TaskSelect
                             tasks={state.tasks}
                             label={
@@ -59,17 +53,21 @@ export const AddTaskToListDialog = ({
                                         state.focused.start,
                                         'HH:mm',
                                     )} - ${formatDate(state.focused.end, 'HH:mm')}`
-                                    : 'Currently timing'
+                                    : 'Task name'
                             }
                             value={newTask}
                             onChangeCapture={(e) => {
-                                // setNewTask(new Task(e.target.value))
                                 const matchingTask = state.tasks.some((t) => t.name === e.target.value.trim())
                                 const showWarning = matchingTask || e.target.value.trim() === ""
-                                if(showWarning ){
-                                    setIsDuplicateTask(true)
-                                }else {
-                                    setIsDuplicateTask(false)
+
+                                // const matchingTask = state.tasks.some((t) => t.name === newTask.name.trim())
+                                // const showWarning = matchingTask || newTask.name.trim() === ""
+                                if (showWarning) {
+                                    setIsDuplicateTaskOrEmpty(true)
+                                    setInitHandler(true)
+                                } else {
+                                    setIsDuplicateTaskOrEmpty(false)
+                                    setInitHandler(false)
                                 }
 
                             }}
@@ -86,9 +84,21 @@ export const AddTaskToListDialog = ({
                             getTasksForSearchString={getTasksForSearchString}
                             handleError={(error) => state.addMessage(error.message)}
                             getHoursForTask={(t) => state.formatHours(state.getTaskHours(t))}
-                            error={isDuplicateTask}
-                            helperText={!isDuplicateTask ? '' : 'A task with this name already exists.'}
+                            error={isDuplicateTaskOrEmpty && initHandler}
+                            helperText={isDuplicateTaskOrEmpty && initHandler ? 'A task with this name already exists.' : ''}
                         />
+                    </Grid>
+                    <Grid item xs={2} lg={1}>
+                        <Button
+                            disabled={newTask === state.getUndefinedTask()}
+                            onClick={() => {
+                                state.deleteTask(newTask)
+                            }}
+                            style={{width: '100%'}}
+                            endIcon={<Delete/>}
+                        >
+                            Delete
+                        </Button>
                     </Grid>
                     <Grid item xs={10} lg={15}>
                         <ClarityTaskSelect
@@ -106,10 +116,8 @@ export const AddTaskToListDialog = ({
                         <TextField
                             value={newTask.clarityTaskComment}
                             label='Clarity-Account Comment for This Task'
-                            disabled={newTask.name === state.getUndefinedTask().name}
+                            disabled={newTask === state.getUndefinedTask()}
                             onChange={(e) => {
-                                // const updatedTask = { ...newTask, clarityTaskComment: e.target.value }
-                                //  (newTask.clarityTaskComment = e.target.value)
                                 setNewTask(new Task(newTask.name, newTask.clarityTaskIntId, newTask.key, e.target.value))
                             }}
                             fullWidth
@@ -118,7 +126,7 @@ export const AddTaskToListDialog = ({
                     <Grid item xs={2} lg={1}>
                         <Tooltip title='Copy task name to task comment'>
                             <Button
-                                // disabled={!task || task === state.getUndefinedTask()}
+                                disabled={!newTask || newTask === state.getUndefinedTask()}
                                 onClick={() =>
                                     setNewTask(new Task(newTask.name, newTask.clarityTaskIntId, newTask.key, newTask.name))
                                 }
@@ -132,14 +140,17 @@ export const AddTaskToListDialog = ({
                 </Grid>
             </DialogContent>
             <DialogActions>
-                <Button onClick={() => state.addedSliceTask = false} color='primary'>
+                <Button onClick={() => {
+                    state.addedSliceTask = false
+                    setIsDuplicateTaskOrEmpty(false)
+                }} color='primary'>
                     Cancel
                 </Button>
                 <Button
                     type='button'
                     onClick={handleAddTask}
                     color='primary'
-                    disabled={isDuplicateTask}
+                    disabled={isDuplicateTaskOrEmpty}
                 >
                     Add
                 </Button>

@@ -1,9 +1,9 @@
 import { Button, Grid, TextField, Tooltip, MenuItem, Menu } from '@mui/material'
 import {
-  Edit as EditIcon,
-  GetApp as ImportIcon,
-  SentimentSatisfiedAlt,
-  ContentCopy as CopyIcon,
+    Edit as EditIcon,
+    GetApp as ImportIcon,
+    SentimentSatisfiedAlt,
+    ContentCopy as CopyIcon, AddBox,
 } from '@mui/icons-material'
 import { format as formatDate, formatDistance } from 'date-fns'
 import { observer } from 'mobx-react-lite'
@@ -101,13 +101,20 @@ export const TaskEditor = observer(
           />
         </Grid>
         <Grid item xs={2} lg={1}>
-          <Button
+            <Button
+                onClick={(_) => (state.addedSliceTask = true)}
+                style={{ width: '100%' }}
+                endIcon={<AddBox/>}
+            >
+                Add
+            </Button>
+            <Button
             disabled={!value || value === state.getUndefinedTask()}
             onClick={(_) => (state.renamingTask = value)}
             style={{ width: '100%' }}
             endIcon={<EditIcon />}
           >
-            Rename
+              Rename
           </Button>
         </Grid>
         <Grid item xs={6} lg={9}>
