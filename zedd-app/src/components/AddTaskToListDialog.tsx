@@ -1,7 +1,7 @@
 import {Dialog, DialogActions, DialogContent, DialogTitle, Grid, TextField, Tooltip} from '@mui/material'
 import Button from '@mui/material/Button'
 import * as React from 'react'
-import {useState} from 'react'
+import {ChangeEvent, useState} from 'react'
 
 import {AppState, Task} from '../AppState'
 import {ClarityState} from '../ClarityState'
@@ -20,14 +20,14 @@ export const AddTaskToListDialog = ({
     clarityState: ClarityState
 }) => {
     const [newTask, setNewTask] = useState(new Task())
-    const [isDuplicateTaskOrEmpty, setIsDuplicateTaskOrEmpty] = useState(true);
+    const [isDuplicateOrEmptyTask, setIsDuplicateOrEmptyTask] = useState(true);
     const [initHandler, setInitHandler] = useState(false);
 
 
     const handleAddTask = () => {
         state.addTask(newTask);
-        setNewTask(new Task("",undefined,"",""))
-        setIsDuplicateTaskOrEmpty(true)
+        setNewTask(new Task())
+        setIsDuplicateOrEmptyTask(true)
     };
     return (
 
@@ -56,17 +56,15 @@ export const AddTaskToListDialog = ({
                                     : 'Task name'
                             }
                             value={newTask}
-                            onChangeCapture={(e) => {
+                            onChangeCapture={(e: ChangeEvent<HTMLInputElement>) => {
                                 const matchingTask = state.tasks.some((t) => t.name === e.target.value.trim())
                                 const showWarning = matchingTask || e.target.value.trim() === ""
 
-                                // const matchingTask = state.tasks.some((t) => t.name === newTask.name.trim())
-                                // const showWarning = matchingTask || newTask.name.trim() === ""
                                 if (showWarning) {
-                                    setIsDuplicateTaskOrEmpty(true)
+                                    setIsDuplicateOrEmptyTask(true)
                                     setInitHandler(true)
                                 } else {
-                                    setIsDuplicateTaskOrEmpty(false)
+                                    setIsDuplicateOrEmptyTask(false)
                                     setInitHandler(false)
                                 }
 
@@ -84,8 +82,8 @@ export const AddTaskToListDialog = ({
                             getTasksForSearchString={getTasksForSearchString}
                             handleError={(error) => state.addMessage(error.message)}
                             getHoursForTask={(t) => state.formatHours(state.getTaskHours(t))}
-                            error={isDuplicateTaskOrEmpty && initHandler}
-                            helperText={isDuplicateTaskOrEmpty && initHandler ? 'A task with this name already exists.' : ''}
+                            error={isDuplicateOrEmptyTask && initHandler}
+                            helperText={isDuplicateOrEmptyTask && initHandler ? 'A task with this name already exists.' : ''}
                         />
                     </Grid>
                     <Grid item xs={2} lg={1}>
@@ -93,6 +91,7 @@ export const AddTaskToListDialog = ({
                             disabled={newTask === state.getUndefinedTask()}
                             onClick={() => {
                                 state.deleteTask(newTask)
+                                setNewTask(new Task("",undefined,"",""))
                             }}
                             style={{width: '100%'}}
                             endIcon={<Delete/>}
@@ -142,7 +141,7 @@ export const AddTaskToListDialog = ({
             <DialogActions>
                 <Button onClick={() => {
                     state.addedSliceTask = false
-                    setIsDuplicateTaskOrEmpty(false)
+                    setIsDuplicateOrEmptyTask(false)
                 }} color='primary'>
                     Cancel
                 </Button>
@@ -150,7 +149,7 @@ export const AddTaskToListDialog = ({
                     type='button'
                     onClick={handleAddTask}
                     color='primary'
-                    disabled={isDuplicateTaskOrEmpty}
+                    disabled={isDuplicateOrEmptyTask}
                 >
                     Add
                 </Button>
