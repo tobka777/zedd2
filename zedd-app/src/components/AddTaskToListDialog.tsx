@@ -90,7 +90,7 @@ export const AddTaskToListDialog = ({
                         <Button
                             disabled={newTask === state.getUndefinedTask()}
                             onClick={() => {
-                                state.deleteTask(newTask)
+                                state.removeTask(newTask)
                                 setNewTask(new Task("",undefined,"",""))
                             }}
                             style={{width: '100%'}}

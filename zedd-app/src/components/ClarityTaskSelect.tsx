@@ -3,7 +3,6 @@ import * as React from 'react'
 import { TextField, Autocomplete } from '@mui/material'
 import { StandardTextFieldProps } from '@mui/material/TextField'
 import { ClarityState, ClarityTask } from '../ClarityState'
-import {useEffect} from "react";
 
 export type ClarityTaskSelectProps = {
   clarityState: ClarityState
@@ -22,12 +21,15 @@ export const ClarityTaskSelect = observer(
   }: ClarityTaskSelectProps) => {
     const maxEntries = 20
 
-    // const resolvedVal = (value !== undefined && clarityState.resolveTask(value)) || undefined
-
+      const generateUniqueId = () => {
+          const timestamp = Date.now().toString();
+          const randomSuffix = Math.random().toString().slice(2, 8);
+          return `${timestamp}_${randomSuffix}`;
+      }
 
     return (
       <Autocomplete
-          key = {Math.random().toString()}
+         key = {generateUniqueId()}
         renderInput={(params) =>
             <TextField {...params} {...textFieldProps}  />}
         options={clarityState.tasks}

@@ -333,6 +333,7 @@ export class AppState {
   public addedSliceTask: boolean = false
 
   @observable
+  @serializable(reference(Task))
   public addedTasks: Task[] = []
 
   /**
@@ -543,24 +544,29 @@ export class AppState {
     const tasksArray = Array.from(this.slicesByTask.keys());
     const uniqueSet = new Set(tasksArray.concat(this.addedTasks));
     return Array.from(uniqueSet);
-
   }
 
   public addTask = (task : Task) => {
     this.addedTasks.push(task)
   }
 
-  // public removeTask(taskToDelete: Task): void {
-  //
-  //   // this._slicesByTask.delete(taskToDelete)
-  //
-  //   this.addedTasks = this.addedTasks.filter(task => task.name !== taskToDelete.name)
-  // }
-  public deleteTask(task: Task): void {
-    const filteredTasks = this.tasks.filter((t) => t.name !== task.name)
-    this.tasks = filteredTasks;
-    this.slices.replace(this.slices.slice().filter((slice) => slice.task.name !== task.name))
+  public removeTask(taskToRemove: Task): void {
+    const index = this.tasks.findIndex((task) => task.name === taskToRemove.name);
+    if (index !== -1) {
+      this.tasks.splice(index, 1);
     }
+    const index1 = this.addedTasks.findIndex((task) => task.name === taskToRemove.name);
+    if (index1 !== -1) {
+      this.addedTasks.splice(index1, 1);
+    }
+    const index2 = this.lastInteractedTasks.findIndex((task) => task.name === taskToRemove.name);
+    if (index2 !== -1) {
+      this.lastInteractedTasks.splice(index2, 1);
+    }
+        this.slices
+            .filter((slice) => slice.task.name === taskToRemove.name)
+            .forEach((s)=> s.task = this.getUndefinedTask())
+  }
 
   @computed
   get tasksInfos(): { task: Task; lastEnd: Date }[] {
