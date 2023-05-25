@@ -29,7 +29,7 @@ import {
 } from 'date-fns'
 import { promises as fsp } from 'fs'
 import { sum } from 'lodash'
-import {computed, observable, transaction, intercept, action, makeObservable} from 'mobx'
+import {computed, observable, transaction, intercept, action, makeObservable, observe} from 'mobx'
 import type { IObservableArray } from 'mobx'
 import { createTransformer, ObservableGroupMap } from 'mobx-utils'
 import * as path from 'path'
@@ -256,6 +256,9 @@ export class AppState {
   @serializable(list(object(Task)))
   public lastInteractedTasks: IObservableArray<Task> = observable([])
 
+  @serializable(list(object(Task)))
+  public tasks: Task[] = []
+
   private slicesByTask = new ObservableGroupMap(
     this.slices,
     (slice) => slice.task, //
@@ -333,7 +336,6 @@ export class AppState {
   public addedSliceTask: boolean = false
 
   @observable
-  @serializable(reference(Task))
   public addedTasks: Task[] = []
 
   /**
@@ -407,6 +409,14 @@ export class AppState {
       } else {
         throw new Error(JSON.stringify(change))
       }
+    })
+
+    observe(this.addedTasks, change => {
+      this.updateTasks()
+    })
+
+    observe(this.slicesByTask, change => {
+      this.updateTasks()
     })
 
     this.undoer.makeUndoable(this.slices)
@@ -538,12 +548,11 @@ export class AppState {
     return pathsToDelete.length
   }
 
-  @serializable(list(object(Task), { afterDeserialize: (callback) => callback(undefined, SKIP) }))
-  @computed
-  get tasks(): Task[] {
+  private updateTasks = () => {
+    // TODO remove undefined Tasks
     const tasksArray = Array.from(this.slicesByTask.keys());
     const uniqueSet = new Set(tasksArray.concat(this.addedTasks));
-    return Array.from(uniqueSet);
+    this.tasks = Array.from(uniqueSet);
   }
 
   public addTask = (task : Task) => {
