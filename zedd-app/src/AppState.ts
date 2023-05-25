@@ -563,9 +563,13 @@ export class AppState {
     if (index2 !== -1) {
       this.lastInteractedTasks.splice(index2, 1);
     }
-        this.slices
-            .filter((slice) => slice.task.name === taskToRemove.name)
-            .forEach((s)=> s.task = this.getUndefinedTask())
+    this.changeSlicesToUndefined(taskToRemove)
+  }
+  
+  public changeSlicesToUndefined = (taskToChange: Task) : void => {
+    this.slices
+        .filter((slice) => slice.task.name === taskToChange.name)
+        .forEach((s)=> s.task = this.getUndefinedTask())
   }
 
   @computed

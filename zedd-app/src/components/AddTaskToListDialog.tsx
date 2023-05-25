@@ -88,7 +88,7 @@ export const AddTaskToListDialog = ({
                     </Grid>
                     <Grid item xs={2} lg={1}>
                         <Button
-                            disabled={newTask === state.getUndefinedTask()}
+                            disabled={!isDuplicateOrEmptyTask }
                             onClick={() => {
                                 state.removeTask(newTask)
                                 setNewTask(new Task("",undefined,"",""))
