@@ -3,7 +3,7 @@ import {
     Edit as EditIcon,
     GetApp as ImportIcon,
     SentimentSatisfiedAlt,
-    ContentCopy as CopyIcon, AddBox,
+    ContentCopy as CopyIcon, EventNoteOutlined,
 } from '@mui/icons-material'
 import { format as formatDate, formatDistance } from 'date-fns'
 import { observer } from 'mobx-react-lite'
@@ -104,9 +104,9 @@ export const TaskEditor = observer(
             <Button
                 onClick={(_) => (state.addedSliceTask = true)}
                 style={{ width: '100%' }}
-                endIcon={<AddBox/>}
+                endIcon={<EventNoteOutlined />}
             >
-                Add
+                Plan tasks
             </Button>
             <Button
             disabled={!value || value === state.getUndefinedTask()}

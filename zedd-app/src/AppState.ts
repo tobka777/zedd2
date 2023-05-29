@@ -411,11 +411,16 @@ export class AppState {
       }
     })
 
-    observe(this.addedTasks, change => {
+    observe(this.addedTasks, () => {
       this.updateTasks()
     })
 
-    observe(this.slicesByTask, change => {
+
+    observe(this.slicesByTask, () => {
+      this.updateTasks()
+    })
+
+    observe(this.lastInteractedTasks, () => {
       this.updateTasks()
     })
 
@@ -552,10 +557,19 @@ export class AppState {
     // TODO remove undefined Tasks
     const tasksArray = Array.from(this.slicesByTask.keys());
     const uniqueSet = new Set(tasksArray.concat(this.addedTasks));
-    this.tasks = Array.from(uniqueSet);
+    this.tasks = Array.from(uniqueSet)
   }
 
+  // private updateTasks = () => {
+  //   // TODO remove undefined Tasks
+  //   this.slicesByTask.add(new Task())
+  //   const tasksArray = Array.from(this.slicesByTask.keys());
+  //   const uniqueSet = new Set(tasksArray.concat(this.addedTasks));
+  //   this.tasks = Array.from(uniqueSet)
+  // }
+
   public addTask = (task : Task) => {
+  // this.slicesByTask.set(task,this.slices)
     this.addedTasks.push(task)
   }
 
