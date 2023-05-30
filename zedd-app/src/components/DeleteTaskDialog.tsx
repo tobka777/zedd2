@@ -19,7 +19,6 @@ export const DeleteTaskDialog = ({
 
 
     useEffect(() => {
-        debugger;
         const matchingTask = state.tasks.some((t) => t.name === newTask.name)
         if (matchingTask) {
             setIsDuplicateOrEmptyTask(() => {
@@ -30,7 +29,7 @@ export const DeleteTaskDialog = ({
                 return true
             })
         }
-    }, [setIsDuplicateOrEmptyTask, newTask.name, state.tasks])
+    }, [newTask.name, state.tasks])
 
     return (
 
@@ -61,7 +60,7 @@ export const DeleteTaskDialog = ({
                             }
                             value={newTask}
                             onChangeCapture={(e: ChangeEvent<HTMLInputElement>) => {
-                                setNewTask(new Task(e.target.value.trim()))
+                                setNewTask(new Task(e.target.value))
                             }}
                             onChange={(_, t) => {
                                 if (typeof t === 'string') {

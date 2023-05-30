@@ -6,7 +6,7 @@ import {ChangeEvent, useState} from 'react'
 import {AppState, Task} from '../AppState'
 import {ClarityState} from '../ClarityState'
 import {ClarityTaskSelect} from "./ClarityTaskSelect";
-import {ContentCopy as CopyIcon, Delete} from "@mui/icons-material";
+import {ContentCopy as CopyIcon} from "@mui/icons-material";
 import {TaskSelect} from "./TaskSelect";
 import {format as formatDate} from "date-fns";
 

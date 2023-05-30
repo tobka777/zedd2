@@ -423,9 +423,6 @@ export class AppState {
       this.updateTasks()
     })
 
-    observe(this.lastInteractedTasks, () => {
-      this.updateTasks()
-    })
 
     this.undoer.makeUndoable(this.slices)
   }
@@ -570,6 +567,7 @@ export class AppState {
   //   const uniqueSet = new Set(tasksArray.concat(this.addedTasks));
   //   this.tasks = Array.from(uniqueSet)
   // }
+
 
   public addTask = (task : Task) => {
   // this.slicesByTask.set(task,this.slices)
