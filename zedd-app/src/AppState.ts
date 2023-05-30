@@ -336,6 +336,9 @@ export class AppState {
   public addedSliceTask: boolean = false
 
   @observable
+  public deletedTask: boolean = false
+
+  @observable
   public addedTasks: Task[] = []
 
   /**

@@ -26,6 +26,7 @@ import { AppState, Task } from '../AppState'
 import { ClarityState } from '../ClarityState'
 import { ChangeSliceTaskDialog } from './ChangeSliceTaskDialog'
 import { RenameTaskDialog } from './RenameTaskDialog'
+import { DeleteTaskDialog } from './DeleteTaskDialog'
 import { AddTaskToListDialog } from './AddTaskToListDialog'
 import { SettingsDialog } from './SettingsDialog'
 import { ZeddSettings } from '../ZeddSettings'
@@ -167,6 +168,13 @@ export const AppGui = observer(
                     getTasksForSearchString={getTasksForSearchString}
                     state={state}
                 />
+            )
+          }
+          {state.deletedTask && (
+              <DeleteTaskDialog
+                  getTasksForSearchString={getTasksForSearchString}
+                  state={state}
+              />
             )
           }
             {state.renamingTask ? (

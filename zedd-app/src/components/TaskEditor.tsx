@@ -3,7 +3,7 @@ import {
     Edit as EditIcon,
     GetApp as ImportIcon,
     SentimentSatisfiedAlt,
-    ContentCopy as CopyIcon, EventNoteOutlined,
+    ContentCopy as CopyIcon, EventNoteOutlined, Delete,
 } from '@mui/icons-material'
 import { format as formatDate, formatDistance } from 'date-fns'
 import { observer } from 'mobx-react-lite'
@@ -77,7 +77,7 @@ export const TaskEditor = observer(
 
     return (
       <Grid container style={{ ...style, alignItems: 'center' }} spacing={2}>
-        <Grid item xs={10} lg={11}>
+        <Grid item xs={10} lg={9}>
           <TaskSelect
             tasks={state.tasks}
             label={
@@ -100,23 +100,34 @@ export const TaskEditor = observer(
             getHoursForTask={(t) => state.formatHours(state.getTaskHours(t))}
           />
         </Grid>
-        <Grid item xs={2} lg={1}>
-            <Button
-                onClick={(_) => (state.addedSliceTask = true)}
-                style={{ width: '100%' }}
-                endIcon={<EventNoteOutlined />}
-            >
-                Plan tasks
-            </Button>
-            <Button
-            disabled={!value || value === state.getUndefinedTask()}
-            onClick={(_) => (state.renamingTask = value)}
-            style={{ width: '100%' }}
-            endIcon={<EditIcon />}
-          >
-              Rename
-          </Button>
-        </Grid>
+          <Grid item xs={2} lg={1}>
+              <Button
+                  disabled={!value || value === state.getUndefinedTask()}
+                  onClick={(_) => (state.renamingTask = value)}
+                  style={{width: '100%'}}
+                  endIcon={<EditIcon/>}
+              >
+                  Rename
+              </Button>
+          </Grid>
+          <Grid item xs={2} lg={1}>
+              <Button
+                  onClick={(_) => (state.addedSliceTask = true)}
+                  style={{width: '100%'}}
+                  endIcon={<EventNoteOutlined/>}
+              >
+                  Plan tasks
+              </Button>
+          </Grid>
+          <Grid item xs={2} lg={1}>
+              <Button
+                  onClick={(_) => (state.deletedTask = true)}
+                  style={{width: '100%'}}
+                  endIcon={<Delete/>}
+              >
+                  Delete task
+              </Button>
+          </Grid>
         <Grid item xs={6} lg={9}>
           <ClarityTaskSelect
             value={value.clarityTaskIntId}

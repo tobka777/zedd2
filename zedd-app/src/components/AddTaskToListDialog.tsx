@@ -44,7 +44,7 @@ export const AddTaskToListDialog = ({
 
             <DialogContent>
                 <Grid container style={{alignItems: 'center'}} spacing={2}>
-                    <Grid item xs={10} lg={11}>
+                    <Grid item xs={10} lg={12}>
                         <TaskSelect
                             tasks={state.tasks}
                             label={
@@ -86,20 +86,7 @@ export const AddTaskToListDialog = ({
                             helperText={isDuplicateOrEmptyTask && initHandler ? 'A task with this name already exists.' : ''}
                         />
                     </Grid>
-                    <Grid item xs={2} lg={1}>
-                        <Button
-                            disabled={!isDuplicateOrEmptyTask }
-                            onClick={() => {
-                                state.removeTask(newTask)
-                                setNewTask(new Task("",undefined,"",""))
-                            }}
-                            style={{width: '100%'}}
-                            endIcon={<Delete/>}
-                        >
-                            Delete
-                        </Button>
-                    </Grid>
-                    <Grid item xs={10} lg={15}>
+                    <Grid item xs={10} lg={12}>
                         <ClarityTaskSelect
                             value={newTask.clarityTaskIntId}
                             disabled={newTask.name === state.getUndefinedTask().name}
