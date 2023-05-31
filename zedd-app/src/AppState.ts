@@ -257,6 +257,7 @@ export class AppState {
   public lastInteractedTasks: IObservableArray<Task> = observable([])
 
   @serializable(list(object(Task)))
+  @observable
   public tasks: Task[] = []
 
   private slicesByTask = new ObservableGroupMap(

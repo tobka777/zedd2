@@ -41,8 +41,7 @@ export const DeleteTaskDialog = ({
             fullWidth
         >
             <DialogTitle id='form-dialog-title'>
-                {`Delete
-                tasks from the list`}
+                {`Delete tasks from the list`}
             </DialogTitle>
 
             <DialogContent>
