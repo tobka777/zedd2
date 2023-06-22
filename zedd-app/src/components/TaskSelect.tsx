@@ -140,7 +140,7 @@ export const TaskSelect = observer(
           />
         )}
         renderOption={(props, t: Task) => (
-          <li {...props}>
+          <li {...props} key = {Math.random().toString()}>
             <span className={classes.renderOptionBT}>{getHoursForTask(t)}</span>
             <span>{t.name}</span>
           </li>
