@@ -1,3 +1,7 @@
+## [2.12.1] - 2023-09-08
+- Fix: invalid time value in Clarity Export
+- Fix: Update Download-Url for Chrome 115 or newer
+
 ## [2.12.0] - 2023-05-04
 - Feature: Copy & Paste Tasks
 - Fix: Minimize, fullscreen and close button always visible
