@@ -37,7 +37,7 @@ export const getLatestChromeDriverVersion = async (chromeVersion: string) => {
   // See https://stackoverflow.com/a/55266105/1980909
 
   const url =
-    'https://chromedriver.storage.googleapis.com/LATEST_RELEASE_' +
+    'https://googlechromelabs.github.io/chrome-for-testing/LATEST_RELEASE_' +
     chromeVersion.replace(/\.\d+$/, '')
 
   return await fetch(url)
@@ -51,15 +51,20 @@ export const installChromeDriver = async (
   adminPrompt = true,
 ) => {
   if (!targetDir) targetDir = dirname(await getEnvPathChromePath())
-  let filename
+  let folder
+  let zipname
   if (isWin) {
-    filename = 'chromedriver_win32'
+      folder = 'win64'
+      zipname = 'chromedriver-win64'
   } else if (isMac) {
-    filename = 'chromedriver_mac64'
+      folder = 'mac-x64'
+      zipname = 'chromedriver-mac-x64'
   } else {
-    filename = 'chromedriver_linux64'
+      folder = 'linux64'
+      zipname = 'chromedriver-linux64'
   }
-  const url = `https://chromedriver.storage.googleapis.com/${chromeDriverVersion}/${filename}.zip`
+
+  const url = `https://edgedl.me.gvt1.com/edgedl/chrome/chrome-for-testing/${chromeDriverVersion}/${folder}/${zipname}.zip`
 
   await withTmpDir(
     async (unzipDir) => {
@@ -79,7 +84,7 @@ export const installChromeDriver = async (
         chromedriver += '.exe'
       }
       console.log(`Copying ${chromedriver} to ${targetDir}`)
-      const sourcePath = join(unzipDir.path, chromedriver)
+      const sourcePath = join(unzipDir.path, zipname, chromedriver)
       const targetPath = join(targetDir!, chromedriver)
       fsp.chmod(sourcePath, 0o755)
 
@@ -92,7 +97,7 @@ export const installChromeDriver = async (
         await fsp.copyFile(sourcePath, targetPath)
       }
     },
-    { prefix: 'chromedriver' },
+    { prefix: 'chromedriver', unsafeCleanup: true },
   )
 }
 export const getChromeDriverVersion = async (chromeDriverPath = 'chromedriver') => {

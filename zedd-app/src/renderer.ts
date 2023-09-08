@@ -248,6 +248,11 @@ async function setup() {
     console.log('configured chrome path', state.config.chromePath)
     const chromeVersion = await getChromeVersion(state.config.chromePath)
     console.log('current chrome version', chromeVersion)
+    if (parseInt(chromeVersion.split('.')[0]) < 115) {
+      // Requirement Check if Chrome newer than 115
+      throw new Error(`Chrome ${chromeVersion} is not supported. Update Chrome to version 115 or newer!`)
+    }
+
     const requiredChromeDriverVersion = await getLatestChromeDriverVersion(chromeVersion)
     const chromeDriverDir = path.join(app.getPath('appData'), 'chromedriver')
     await mkdirIfNotExists(chromeDriverDir)

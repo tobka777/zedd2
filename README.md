@@ -71,6 +71,10 @@ Download and run the latest release on [Github](https://github.com/tobka777/zedd
 - Windows (nupkg): `zedd-<release>-full.nupkg`
 - Mac (zip): `zedd-app-darwin-x64-<release>.zip`
 
+### Requirements
+
+- [Chrome](https://www.google.com/chrome/de/download-chrome/) with version 115 or newer must be installed
+
 ## Contributing 👨‍🔧
 
 Pull requests are welcome. For major changes, please open an [GitHub Issues](https://github.com/tobka777/zedd2/issues) first to discuss what you would like to change.
