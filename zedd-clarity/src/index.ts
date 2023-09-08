@@ -649,7 +649,7 @@ async function exportToClarity(
     await pageLoad(ctx)
     const txt = await $('select[name=timeperiod] > option[selected=true]').getText()
     const [start, end] = txt
-      .split(' - ')
+      .split(' – ')
       .map((ds) => parseDate(ds, 'dd.MM.yy', Date.now(), { locale: de }))
     d('start ' + start)
     d('end ' + end)
