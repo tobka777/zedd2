@@ -33,10 +33,7 @@ export function initJiraClient(
     host: url.toString(),
     telemetry: false,
     authentication: {
-      basic: {
-        username: jc.username,
-        password: Buffer.from(jc.password, 'base64').toString('utf8'),
-      },
+        personalAccessToken: jc.token,
     },
   })
 }
@@ -51,38 +48,35 @@ const jiraConnectorErrorToMessage = (x: any) => {
 }
 
 export const checkCgJira = (config: ZeddSettings['cgJira']): Promise<any> => {
-  return new Promise((resolve, reject) =>
-    request(
-      {
-        method: 'GET',
-        jar,
-        url: config.url,
-        auth: {
-          username: config.username,
-          password: Buffer.from(config.password, 'base64').toString('utf8'),
-        },
-      },
-      (err: any, response: any) => {
-        if (err) {
-          reject(err)
-        } else if (response.statusCode >= 400) {
-          console.error(response)
-          reject(
-            new Error(
-              response.request.method +
-                ' ' +
-                response.request.uri.href +
-                ' returned ' +
-                response.statusCode +
-                ' ' +
-                response.statusMessage,
-            ),
-          )
-        } else {
-          resolve(response)
-        }
-      },
-    ),
+    console.log(config.url)
+  return new Promise(async (resolve, reject) => {
+          try {
+              const response = await fetch(config.url + '/rest/api/2/myself', {
+                  method: 'GET',
+                  headers: {
+                      "Authorization": 'Bearer ' + config.token
+                  }
+              })
+              if (response.status >= 400) {
+                  console.error(response)
+                  reject(
+                      new Error(
+                          response.url +
+                          ' returned ' +
+                          response.status +
+                          ' ' +
+                          response.statusText,
+                      ),
+                  )
+              }
+              else {
+                resolve(response)
+              }
+          } catch (error) {
+              reject(error)
+          }
+          return
+      }
   )
 }
 
@@ -135,7 +129,7 @@ const issueInfoToTask = async (clarityTasks: ClarityTask[], i: any): Promise<Tas
       .filter((t) => t.name.includes(externalKey))
       .sort((a, b) => compareDesc(a.start, b.start))[0]?.intId
     if (!clarityTaskId) {
-      console.warn("No clarity-account found for exernal JIRA-Key '" + externalKey + "'")
+      console.warn("No clarity-account found for external JIRA-Key '" + externalKey + "'")
     }
   }
   console.log(
@@ -171,7 +165,7 @@ export const getTasksForSearchString = async (s: string): Promise<Task[]> =>
   callWithJsessionCookie(async () => {
     const sClean = s.trim().replace('"', '\\\\"')
     const orKeyMatch = sClean.match(/^[a-z]{1,6}-\d+$/i) ? ` OR key = "${sClean}"` : ''
-    const jql = `(text ~ "${sClean}*"${orKeyMatch}) AND resolution = Unresolved ORDER BY updated DESC`
+    const jql = `(text ~ "${sClean}"${orKeyMatch}) AND resolution = Unresolved ORDER BY updated DESC`
     console.log('searching ' + jql)
     const result = await jira.issueSearch
       .searchForIssuesUsingJqlPost({
