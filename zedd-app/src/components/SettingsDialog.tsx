@@ -87,7 +87,7 @@ export const SettingsDialog = observer(
     const checkCgJiraDebounced = useDebouncedCallback(
       () => {
         const cgJira = settings.cgJira
-        if (cgJira.url && settings.cgJira.username && settings.cgJira.password) {
+        if (cgJira.url && settings.cgJira.token) {
           setCgJiraStatus({ checking: true })
           checkCgJira(cgJira)
             .then(() => setCgJiraStatus({ ok: true }))
@@ -402,27 +402,18 @@ export const SettingsDialog = observer(
             <Grid item xs={4}></Grid>
             <Grid item xs={8}>
               <TextField
-                label='Username'
-                style={{ marginRight: 8 }}
-                value={settings.cgJira.username}
+                label='Personal Access Token'
+                style={{ width: '95%' }}
+                value={settings.cgJira.token}
                 onChange={(e) => {
-                  settings.cgJira.username = e.target.value.trim()
-                  checkCgJiraDebounced()
-                }}
-              />
-              <TextField
-                label='Password'
-                type='password'
-                value={Buffer.from(settings.cgJira.password, 'base64').toString('utf8')}
-                onChange={(e) => {
-                  settings.cgJira.password = Buffer.from(e.target.value, 'utf8').toString('base64')
+                  settings.cgJira.token = e.target.value.trim()
                   checkCgJiraDebounced()
                 }}
               />
               {cgJiraStatus.checking ? (
                 <CircularProgress size='0.8em' />
               ) : cgJiraStatus.ok ? (
-                '✔️'
+                '✅'
               ) : cgJiraStatus.error ? (
                 <Tooltip title={'' + cgJiraStatus.error}>
                   <span style={{ cursor: 'help' }}>❌</span>

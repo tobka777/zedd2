@@ -81,8 +81,7 @@ export class ZeddSettings {
   public cgJira = {
     // Everything *before* 'secure/Dashboard.jspa'.
     url: '',
-    username: '',
-    password: '',
+    token: '',
     currentIssuesJql: 'assignee = currentUser() AND resolution = Unresolved ORDER BY updated DESC',
 
     // updated automatically by the app
