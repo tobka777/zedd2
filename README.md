@@ -1,6 +1,6 @@
 # Zedd-App
 
- The Zedd-app is a Grindstone-like application that automates booking in Clarity and simplifies working with multiple accounts. It operates as an interactive calendar, allowing you to schedule tasks and manage your work time efficiently.
+ The Zedd-App is a Grindstone-like application that automates booking in Clarity and simplifies working with multiple accounts. It operates as an interactive calendar, allowing you to schedule tasks and manage your work time efficiently.
 
 The goal is to make work planning more organized, stress-free and user-friendly. The app is built with Electron, TypeScript, React, MobX, and MUI.
 
@@ -62,6 +62,14 @@ At the bottom, you can see what will be exported to Clarity. What is currently d
     - navigate using the `←` (left) or `→` (right) buttons. 
     - at the bottom, the summary of all tasks and bookings including overtime/undertime is displayed:
     ![img_6.png](screenshots/img_6.png)
+
+### Jira Integration
+
+The Zedd-App enables an integration of Jira. Thus, the issues can be used as names for the timeslots.
+When searching for tasks, Jira is requested.
+
+In the settings, the url of Jira must be entered under PL Jira.
+The Personal Access Token must be generated in Jira (see [Instructions](https://confluence.atlassian.com/enterprise/using-personal-access-tokens-1026032365.html)) and stored in the Settings under Token.
 
 ## Download 📥
 
