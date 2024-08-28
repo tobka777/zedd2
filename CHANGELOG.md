@@ -1,4 +1,4 @@
-## [2.12.3] - 2024-08-23
+## [2.12.3] - 2024-08-28
 
 - Fix: Automatischer Chromedriver Update funktioniert nicht mehr
 
