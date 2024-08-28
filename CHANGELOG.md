@@ -1,11 +1,18 @@
+## [2.12.3] - 2024-08-28
+
+- Fix: Automatischer Chromedriver Update funktioniert nicht mehr
+
 ## [2.12.2] - 2023-10-24
+
 - Fix: Jira Authentification with Personal Access Token
 
 ## [2.12.1] - 2023-09-08
+
 - Fix: invalid time value in Clarity Export
 - Fix: Update Download-Url for Chrome 115 or newer
 
 ## [2.12.0] - 2023-05-04
+
 - Feature: Copy & Paste Tasks
 - Fix: Minimize, fullscreen and close button always visible
 - Feature: Support for MacOS including shortcuts

@@ -54,17 +54,17 @@ export const installChromeDriver = async (
   let folder
   let zipname
   if (isWin) {
-      folder = 'win64'
-      zipname = 'chromedriver-win64'
+    folder = 'win64'
+    zipname = 'chromedriver-win64'
   } else if (isMac) {
-      folder = 'mac-x64'
-      zipname = 'chromedriver-mac-x64'
+    folder = 'mac-x64'
+    zipname = 'chromedriver-mac-x64'
   } else {
-      folder = 'linux64'
-      zipname = 'chromedriver-linux64'
+    folder = 'linux64'
+    zipname = 'chromedriver-linux64'
   }
 
-  const url = `https://edgedl.me.gvt1.com/edgedl/chrome/chrome-for-testing/${chromeDriverVersion}/${folder}/${zipname}.zip`
+  const url = `https://storage.googleapis.com/chrome-for-testing-public/${chromeDriverVersion}/${folder}/${zipname}.zip`
 
   await withTmpDir(
     async (unzipDir) => {
@@ -104,8 +104,7 @@ export const getChromeDriverVersion = async (chromeDriverPath = 'chromedriver') 
   let chromedriverVersionCommand
   if (isWin) {
     chromedriverVersionCommand = `${chromeDriverPath} --version`
-  }
-  else {
+  } else {
     chromedriverVersionCommand = `'${chromeDriverPath}' --version`
   }
   const { stdout } = await promisify(exec)(chromedriverVersionCommand)
