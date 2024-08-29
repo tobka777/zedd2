@@ -1,8 +1,8 @@
 name: Release
 on:
   push:
-    tags:
-      - '*'
+    branches:
+      - main
 
 jobs:
   publish:
@@ -15,6 +15,7 @@ jobs:
       - uses: actions/setup-node@master
         with:
           node-version: 14
+          architecture: 'x64' 
 
       - name: install clarity dependencies
         working-directory: ./zedd-clarity
