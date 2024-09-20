@@ -1,4 +1,4 @@
-## [2.12.4]
+## [2.12.4] - 2024-09-20
 
 - Fix: Error messages are closable
 
