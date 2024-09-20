@@ -1,6 +1,6 @@
 ## [2.12.4]
 
-- Fix: Fehlermeldungen besser anzeigen
+- Fix: Error messages are closable
 
 ## [2.12.3] - 2024-08-28
 
