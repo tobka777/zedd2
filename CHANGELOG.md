@@ -1,3 +1,7 @@
+## [2.12.4]
+
+- Fix: Error messages are closable
+
 ## [2.12.3] - 2024-08-28
 
 - Fix: Automatischer Chromedriver Update funktioniert nicht mehr

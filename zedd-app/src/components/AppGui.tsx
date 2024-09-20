@@ -124,13 +124,10 @@ export const AppGui = observer(
           <ThemeProvider theme={theme}>
             <CssBaseline />
             {message && (
-              <Snackbar
-                open={true}
-                autoHideDuration={message.timeout}
-                onClose={() => state.messages.shift()}
-                key={message.id}
-              >
-                <Alert severity={message.severity}>{message.msg}</Alert>
+              <Snackbar open={true} onClose={() => state.messages.shift()} key={message.id}>
+                <Alert severity={message.severity} onClose={() => state.messages.shift()}>
+                  {message.msg}
+                </Alert>
               </Snackbar>
             )}
             {state.whatsNewDialogOpen && !state.hoverMode && (
