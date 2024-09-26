@@ -8,4 +8,5 @@ declare module '*.md' {
 }
 
 declare var isDev: boolean
+declare var isInsideDocument: boolean
 declare var appUserModelId: string
