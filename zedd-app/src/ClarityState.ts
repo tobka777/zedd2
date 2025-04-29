@@ -1,18 +1,18 @@
-import { format as formatDate, parseISO } from 'date-fns'
-import { promises as fsp } from 'fs'
-import { computed, observable, makeObservable } from 'mobx'
+import {format as formatDate, parseISO} from 'date-fns'
+import {promises as fsp} from 'fs'
+import {computed, makeObservable, observable} from 'mobx'
 import * as path from 'path'
 import {
-  fillClarity,
-  getProjectInfo,
-  ClarityExportFormat,
-  Task as ZeddClarityTask,
-  Project as ZeddClarityProject,
-  webDriverQuit,
-} from 'zedd-clarity'
+    ClarityExportFormat,
+    fillClarity,
+    getProjectInfo,
+    Project as ZeddClarityProject,
+    Task as ZeddClarityTask,
+    webDriverQuit,
+} from 'zedd-platform'
 import './index.css'
 
-import { getLatestFileInDir, mkdirIfNotExists, FILE_DATE_FORMAT } from './util'
+import {FILE_DATE_FORMAT, getLatestFileInDir, mkdirIfNotExists} from './util'
 
 export interface ClarityTask extends ZeddClarityTask {
   projectName: string
