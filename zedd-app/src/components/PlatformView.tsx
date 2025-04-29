@@ -34,8 +34,8 @@ import * as React from 'react'
 import {useState} from 'react'
 import {ClarityExportFormat} from 'zedd-platform'
 
-import {TimeSlice, validDate} from '../AppState'
-import {ClarityActionType, ClarityState} from '../ClarityState'
+import {validDate, TimeSlice} from '../AppState'
+import {ClarityActionType, PlatformState} from '../PlatformState'
 import {LoadingSpinner} from './LoadingSpinner'
 
 import {isoDayStr, omap, splitIntervalIntoCalendarDays, sum, useClasses} from '../util'
@@ -79,11 +79,11 @@ export function smartRound<T>(arr: T[], f: (t: T) => number, toNearest: number):
     return result
 }
 
-export interface ClarityViewProps {
+export interface PlatformViewProps {
     showing: Interval
     calculateTargetHours: (interval: Interval) => number
     slices: TimeSlice[]
-    clarityState: ClarityState
+    platformState: PlatformState
     submitTimesheets: boolean
     onChangeSubmitTimesheets: (x: boolean) => void
     errorHandler: (e: Error) => void
@@ -118,7 +118,7 @@ const placeholderClarityTask = {
     name: 'UNDEFINED',
 }
 
-function transform({slices, showing, clarityState}: ClarityViewProps): ClarityExportFormat {
+function transform({slices, showing, platformState}: PlatformViewProps): ClarityExportFormat {
     // add 1 to the end of showing, because we want the interval to go to the end of the
     // not just the begining
     const showInterval = {start: showing.start, end: addDays(showing.end, 1)}
@@ -144,7 +144,7 @@ function transform({slices, showing, clarityState}: ClarityViewProps): ClarityEx
             throw e
         }
         const task =
-            (slice.task.clarityTaskIntId && clarityState.resolveTask(+slice.task.clarityTaskIntId)) ||
+            (slice.task.clarityTaskIntId && platformState.resolveTask(+slice.task.clarityTaskIntId)) ||
             placeholderClarityTask
         // fix start/end of b, as part of the interval may be outside showInterval
         const bStartFixed = dateMax([slice.start, showInterval.start])
@@ -241,13 +241,13 @@ const DiffHoursTooltip = ({
     )
 }
 
-export const ClarityView = observer((props: ClarityViewProps) => {
+export const PlatformView = observer((props: PlatformViewProps) => {
     const {
         showing,
         submitTimesheets,
         onChangeSubmitTimesheets,
         errorHandler,
-        clarityState,
+        platformState,
         calculateTargetHours,
     } = props
     const [clarityViewFilterProject, setclarityViewFilterProject] = useState('')
@@ -311,9 +311,9 @@ export const ClarityView = observer((props: ClarityViewProps) => {
         )
     }
 
-    if (clarityState.actionType === ClarityActionType.SubmitTimesheet) {
+    if (platformState.actionType === ClarityActionType.SubmitTimesheet) {
         setTimeout(() => {
-            clarityState.success = false
+            platformState.success = false
         }, 60000)
     }
 
@@ -415,16 +415,16 @@ export const ClarityView = observer((props: ClarityViewProps) => {
             </CardContent>
             <CardActions style={{flexDirection: 'row-reverse'}}>
                 <Button
-                    disabled={!clarityState.currentlyExportingTasks}
-                    onClick={() => clarityState.killSelenium()}
+                    disabled={!platformState.currentlyExportingTasks}
+                    onClick={() => platformState.killSelenium()}
                 >
                     Cancel
                 </Button>
                 <Button
-                    disabled={clarityState.currentlyExportingTasks || clarityState.currentlyImportingTasks}
+                    disabled={platformState.currentlyExportingTasks || platformState.currentlyImportingTasks}
                     variant='contained'
                     onClick={() =>
-                        clarityState
+                        platformState
                             .export(
                                 omap(clarityExport, (workEntries) =>
                                     workEntries.filter((entry) => -1 !== entry.taskIntId),
@@ -435,18 +435,64 @@ export const ClarityView = observer((props: ClarityViewProps) => {
                     }
                     endIcon={
                         <>
-                            {!clarityState.currentlyExportingTasks && <SendIcon/>}
-                            {clarityState.actionType === ClarityActionType.SubmitTimesheet && (
+                            {!platformState.currentlyExportingTasks && <SendIcon/>}
+                            {platformState.actionType === ClarityActionType.SubmitTimesheet && (
                                 <LoadingSpinner
-                                    loading={clarityState.currentlyExportingTasks}
-                                    error={clarityState.error !== ''}
-                                    success={clarityState.success}
+                                    loading={platformState.currentlyExportingTasks}
+                                    error={platformState.error !== ''}
+                                    success={platformState.success}
                                 />
                             )}
                         </>
                     }
                 >
                     Clarity!
+                </Button>{' '}
+                <FormControlLabel
+                    control={
+                        <Checkbox
+                            checked={submitTimesheets}
+                            onChange={(_, checked) => onChangeSubmitTimesheets(!!checked)}
+                        />
+                    }
+                    title='Autosubmit timesheets or just save them'
+                    label='Autosubmit'
+                />
+            </CardActions>
+            <CardActions style={{flexDirection: 'row-reverse'}}>
+                <Button
+                    disabled={!platformState.currentlyExportingTasks}
+                    onClick={() => platformState.killOTTBrowser()}
+                >
+                    Cancel
+                </Button>
+                <Button
+                    disabled={platformState.currentlyExportingTasks || platformState.currentlyImportingTasks}
+                    variant='contained'
+                    onClick={() =>
+                        platformState
+                            .exportOTT(
+                                omap(clarityExport, (workEntries) =>
+                                    workEntries.filter((entry) => -1 !== entry.taskIntId),
+                                ),
+                                submitTimesheets,
+                            )
+                            .catch(errorHandler)
+                    }
+                    endIcon={
+                        <>
+                            {!platformState.currentlyExportingTasks && <SendIcon/>}
+                            {platformState.actionType === ClarityActionType.SubmitTimesheet && (
+                                <LoadingSpinner
+                                    loading={platformState.currentlyExportingTasks}
+                                    error={platformState.error !== ''}
+                                    success={platformState.success}
+                                />
+                            )}
+                        </>
+                    }
+                >
+                    OTT!
                 </Button>{' '}
                 <FormControlLabel
                     control={

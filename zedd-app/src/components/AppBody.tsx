@@ -27,7 +27,7 @@ import { useCallback, useEffect, useState } from 'react'
 
 import { ErrorBoundary } from './ErrorBoundary'
 import { AppState, Task, TimeSlice } from '../AppState'
-import { ClarityState } from '../ClarityState'
+import { PlatformState } from '../PlatformState'
 import {
     businessWeekInterval,
     isoWeekInterval,
@@ -39,7 +39,7 @@ import {
 } from '../util'
 import { BlockDisplay } from './BlockDisplay'
 import { Calendar } from './Calendar'
-import { ClarityView } from './ClarityView'
+import { PlatformView } from './PlatformView'
 import { TaskEditor } from './TaskEditor'
 import { ArrowBack, ArrowForward, Delete as DeleteIcon } from '@mui/icons-material'
 import { suggestedTaskMenuItems } from '../menuUtil'
@@ -66,7 +66,7 @@ const styles = (theme) => ({
 
 export interface AppBodyProps {
   state: AppState
-  clarityState: ClarityState
+  clarityState: PlatformState
   getTasksForSearchString: (s: string) => Promise<Task[]>
   getLinksFromString: (s: string) => [string, string][]
   display: boolean
@@ -453,10 +453,10 @@ export const AppBody = observer(
           </Paper>
         )}
         <ErrorBoundary>
-          <ClarityView
+          <PlatformView
             showing={state.showing}
             slices={state.showingSlices}
-            clarityState={clarityState}
+            platformState={clarityState}
             submitTimesheets={state.submitTimesheets}
             onChangeSubmitTimesheets={(x) => (state.submitTimesheets = x)}
             errorHandler={(error) => {

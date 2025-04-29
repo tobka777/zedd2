@@ -5,7 +5,7 @@ import * as React from 'react'
 import { useState } from 'react'
 
 import { AppState, Task, TimeSlice } from '../AppState'
-import { ClarityState } from '../ClarityState'
+import { PlatformState } from '../PlatformState'
 import { TaskEditor } from './TaskEditor'
 
 export const ChangeSliceTaskDialog = ({
@@ -19,7 +19,7 @@ export const ChangeSliceTaskDialog = ({
   done: (newTask: Task | string) => void
   state: AppState
   getTasksForSearchString: (ss: string) => Promise<Task[]>
-  clarityState: ClarityState
+  clarityState: PlatformState
 }) => {
   const [newTask, setNewTask] = useState(slice.task)
 

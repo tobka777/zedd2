@@ -2,10 +2,10 @@ import { observer } from 'mobx-react-lite'
 import * as React from 'react'
 import { TextField, Autocomplete } from '@mui/material'
 import { StandardTextFieldProps } from '@mui/material/TextField'
-import { ClarityState, ClarityTask } from '../ClarityState'
+import { PlatformState, ClarityTask } from '../PlatformState'
 
 export type ClarityTaskSelectProps = {
-  clarityState: ClarityState
+  clarityState: PlatformState
   onChange: (taskIntId: number | undefined) => void
   value: number | undefined
 } & Omit<StandardTextFieldProps, 'onChange' | 'value'>

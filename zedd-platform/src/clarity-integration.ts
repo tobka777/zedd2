@@ -33,6 +33,7 @@ import {
 } from 'date-fns'
 import {de} from 'date-fns/locale'
 import uniq from 'lodash/uniq'
+import {PlatformExportFormat} from "./model/platform-export-format.model";
 
 const CONTROL_KEY: string = process.platform === 'darwin' ? Key.COMMAND : Key.CONTROL
 
@@ -397,20 +398,10 @@ async function addTasks(
     // await sleep(30000)
 }
 
-interface WorkEntry {
-    projectName: string
-    taskName: string
-    taskIntId: number
-    hours: number
-    comment?: string
-}
-export type ClarityExportFormat = {
-    [day: string]: WorkEntry[]
-}
 
 async function exportToClarity(
     ctx: Context,
-    whatt: ClarityExportFormat,
+    whatt: PlatformExportFormat,
     submitTimesheets: boolean,
     resourceName: string | undefined,
     nikuLink: string,
@@ -753,7 +744,7 @@ export interface SeleniumOptions {
 
 export async function fillClarity(
     nikuLink: string,
-    data: ClarityExportFormat,
+    data: PlatformExportFormat,
     submitTimesheets: boolean,
     resourceName: string | undefined,
     seleniumOptions: SeleniumOptions,

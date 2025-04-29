@@ -5,7 +5,7 @@ import { useCallback } from 'react'
 
 import { useTheme } from '@mui/material/styles'
 import { TimeSlice } from '../AppState'
-import { ClarityState } from '../ClarityState'
+import { PlatformState } from '../PlatformState'
 import { SliceDragStartHandler, SliceSplitHandler } from './Calendar'
 
 export type BlockProps = {
@@ -16,7 +16,7 @@ export type BlockProps = {
   onContextMenu: (e: React.MouseEvent, block: TimeSlice) => void
   onAltRightClick: (e: React.MouseEvent, block: TimeSlice) => void
   onMarkingBlock: ( block: TimeSlice) => void
-  clarityState: ClarityState
+  clarityState: PlatformState
   slicesMarked: boolean
 } & Omit<React.HTMLAttributes<HTMLDivElement>, 'onContextMenu'>
 

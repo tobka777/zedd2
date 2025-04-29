@@ -23,7 +23,7 @@ import ReactMarkdown from 'react-markdown'
 
 import { ErrorBoundary } from './ErrorBoundary'
 import { AppState, Task } from '../AppState'
-import { ClarityState } from '../ClarityState'
+import { PlatformState } from '../PlatformState'
 import { ChangeSliceTaskDialog } from './ChangeSliceTaskDialog'
 import { RenameTaskDialog } from './RenameTaskDialog'
 import { SettingsDialog } from './SettingsDialog'
@@ -35,7 +35,7 @@ import { useClasses } from '../util'
 
 export interface AppGuiProps {
   state: AppState
-  clarityState: ClarityState
+  clarityState: PlatformState
   getTasksForSearchString: (s: string) => Promise<Task[]>
   menuItems: { label: string; click: () => void }[]
   checkCgJira: (cg: ZeddSettings['cgJira']) => Promise<any>

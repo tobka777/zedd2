@@ -1,10 +1,10 @@
 import { MenuItemConstructorOptions } from 'electron'
 import { AppState, Task } from './AppState'
-import { ClarityState } from './ClarityState'
+import { PlatformState } from './PlatformState'
 
 export const suggestedTaskMenuItems = (
   state: AppState,
-  clarityState: ClarityState,
+  clarityState: PlatformState,
   checked: Task,
   onClick: (t: Task) => void,
 ): MenuItemConstructorOptions[] => {

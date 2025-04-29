@@ -12,7 +12,7 @@ import {useCallback, useRef, useState} from 'react'
 import {NikuUrlInvalidError} from 'zedd-platform'
 
 import {AppState, Task} from '../AppState'
-import {ClarityActionType, ClarityState} from '../ClarityState'
+import {ClarityActionType, PlatformState} from '../PlatformState'
 import {ClarityTaskSelect} from './ClarityTaskSelect'
 import {LoadingSpinner} from './LoadingSpinner'
 import {TaskSelect} from './TaskSelect'
@@ -20,7 +20,7 @@ import {TaskSelect} from './TaskSelect'
 interface TaskEditorProps {
     state: AppState
     value: Task
-    clarityState: ClarityState
+    clarityState: PlatformState
     getTasksForSearchString: (s: string) => Promise<Task[]>
     onTaskSelectChange: (t: Task) => void
     style?: React.CSSProperties

@@ -26,7 +26,7 @@ import { MoreHoriz as PickFileIcon } from '@mui/icons-material'
 import { observer } from 'mobx-react-lite'
 import { uniq } from 'lodash'
 
-import { ClarityState } from '../ClarityState'
+import { PlatformState } from '../PlatformState'
 import { ZeddSettings } from '../ZeddSettings'
 import { toggle, useDebouncedCallback } from '../util'
 import { countries, federalStates } from '../holidays'
@@ -45,7 +45,7 @@ export const SettingsDialog = observer(
     checkChromePath,
   }: {
     done: () => void
-    clarityState: ClarityState
+    clarityState: PlatformState
     settings: ZeddSettings
     checkCgJira: (cgJira: ZeddSettings['cgJira']) => Promise<any>
     checkChromePath: () => Promise<{

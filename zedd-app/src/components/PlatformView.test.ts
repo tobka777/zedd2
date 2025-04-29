@@ -1,5 +1,5 @@
 import * as assert from 'assert'
-import { smartRound } from './ClarityView'
+import { smartRound } from './PlatformView'
 
 describe.only('smartRound', () => {
   it('works for [2.1, 2.1] nearestTo=0.25', () => {

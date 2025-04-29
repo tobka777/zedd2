@@ -4,7 +4,7 @@ import { Version2Client as JiraClient } from 'jira.js'
 import * as request from 'request'
 
 import { Task } from './AppState'
-import { ClarityTask, ClarityState } from './ClarityState'
+import { ClarityTask, PlatformState } from './PlatformState'
 import { ZeddSettings } from './ZeddSettings'
 import { isEqual } from 'lodash'
 
@@ -15,12 +15,12 @@ let jira: JiraClient
 let saveSettings: () => void
 
 let lastJiraCall: Date | undefined = undefined
-let clarityState: ClarityState
+let clarityState: PlatformState
 let jira2url: string = ''
 
 export function initJiraClient(
   jc: ZeddSettings['cgJira'],
-  newClarityState: ClarityState,
+  newClarityState: PlatformState,
   newSaveSettings: () => void,
   newJira2url: string,
 ): void {

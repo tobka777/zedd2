@@ -3,16 +3,16 @@ import {promises as fsp} from 'fs'
 import {computed, makeObservable, observable} from 'mobx'
 import * as path from 'path'
 import {
-    ClarityExportFormat,
-    fillClarity,
-    getProjectInfo,
-    Project as ZeddClarityProject,
-    Task as ZeddClarityTask,
-    webDriverQuit,
+  fillClarity,
+  fillOTT, getProjectInfo,
+  webDriverQuit,
+  PlatformExportFormat,
+  Project as ZeddClarityProject,
+  Task as ZeddClarityTask, closeBrowser,
 } from 'zedd-platform'
 import './index.css'
 
-import {FILE_DATE_FORMAT, getLatestFileInDir, mkdirIfNotExists} from './util'
+import {getLatestFileInDir, mkdirIfNotExists, FILE_DATE_FORMAT} from './util'
 
 export interface ClarityTask extends ZeddClarityTask {
   projectName: string
@@ -24,7 +24,7 @@ export enum ClarityActionType {
   ImportTasks,
 }
 
-export class ClarityState {
+export class PlatformState {
   public nikuLink: string
 
   public chromeExe: string
@@ -101,18 +101,33 @@ export class ClarityState {
   }
 
   public async export(
-    clarityExport: ClarityExportFormat,
+    clarityExport: PlatformExportFormat,
     submitTimesheets: boolean,
   ): Promise<void> {
     this.actionType = ClarityActionType.SubmitTimesheet
     console.log('exporting timesheets', clarityExport)
     try {
-      this.clearClarityState(false)
+      this.clearPlatformState(false)
       await fillClarity(this.nikuLink, clarityExport, submitTimesheets, this.resourceName, {
         headless: this.chromeHeadless,
         chromeExe: this.chromeExe,
         chromedriverExe: this.chromedriverExe,
       })
+      this.success = true
+    } finally {
+      this._currentlyExportingTasks = false
+    }
+  }
+
+  public async exportOTT(
+    platformExport: PlatformExportFormat,
+    submitTimesheets: boolean,
+  ): Promise<void> {
+    this.actionType = ClarityActionType.SubmitTimesheet
+    console.log('exporting timesheets', platformExport)
+    try {
+      this.clearPlatformState(false)
+      await fillOTT(this.nikuLink, platformExport, submitTimesheets, this.resourceName)
       this.success = true
     } finally {
       this._currentlyExportingTasks = false
@@ -170,7 +185,7 @@ export class ClarityState {
     return this.resolveTask(intId) !== undefined
   }
 
-  private clearClarityState(importing: boolean) {
+  private clearPlatformState(importing: boolean) {
     this._currentlyImportingTasks = importing
     this._currentlyExportingTasks = !importing
     this.error = ''
@@ -186,7 +201,7 @@ export class ClarityState {
       throw new Error('Already importing')
     }
     try {
-      this.clearClarityState(true)
+      this.clearPlatformState(true)
       this._currentlyExportingTasks = false
       const projectInfos = await getProjectInfo(
         this.nikuLink,
@@ -240,5 +255,9 @@ export class ClarityState {
 
   public killSelenium(): void {
     webDriverQuit()
+  }
+
+  public killOTTBrowser(): void {
+    closeBrowser()
   }
 }

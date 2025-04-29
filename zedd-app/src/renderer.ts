@@ -16,7 +16,7 @@ import * as ReactDOM from 'react-dom'
 import 'win-ca' // use windows root certificates
 
 import { format, AppState, TimeSlice, formatInterval } from './AppState'
-import { ClarityState } from './ClarityState'
+import { PlatformState } from './PlatformState'
 import { AppGui } from './components/AppGui'
 import './index.css'
 import {
@@ -123,7 +123,7 @@ const getMenuItems = (state: AppState) => [
 async function setup() {
   await mkdirIfNotExists(saveDir)
 
-  const clarityState = new ClarityState(clarityDir)
+  const clarityState = new PlatformState(clarityDir)
 
   const config = (await fileExists(userConfigFile))
     ? await ZeddSettings.readFromFile(userConfigFile)
