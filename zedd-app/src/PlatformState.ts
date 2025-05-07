@@ -1,14 +1,14 @@
-import { format as formatDate, parseISO } from 'date-fns'
-import { promises as fsp } from 'fs'
-import { computed, makeObservable, observable } from 'mobx'
+import {format as formatDate, parseISO} from 'date-fns'
+import {promises as fsp} from 'fs'
+import {computed, makeObservable, observable} from 'mobx'
 import * as path from 'path'
-import { fillClarity, webDriverQuit } from 'zedd-platform'
-import { PlatformExportFormat } from 'zedd-platform/out/model/platform-export-format.model'
-import { Task as ZeddPlatformTask } from 'zedd-platform/src/model/task.model'
+import {fillClarity, webDriverQuit} from 'zedd-platform/out/src/clarity-integration'
+import {PlatformExportFormat} from 'zedd-platform/out/src/model/platform-export-format.model'
+import {Task as ZeddPlatformTask} from 'zedd-platform/src/model/task.model'
 import './index.css'
 
-import { importOTTTasks } from 'zedd-platform/out/src'
-import { FILE_DATE_FORMAT, getLatestFileInDir, mkdirIfNotExists } from './util'
+import {importOTTTasks} from 'zedd-platform/out/src'
+import {FILE_DATE_FORMAT, getLatestFileInDir, mkdirIfNotExists} from './util'
 
 export interface PlatformTask extends ZeddPlatformTask {
   projectName: string
@@ -21,7 +21,7 @@ export enum PlatformActionType {
 }
 
 export class PlatformState {
-  public nikuLink: string
+  public ottLink: string
 
   public chromeExe: string
 
@@ -104,7 +104,7 @@ export class PlatformState {
     console.log('exporting timesheets', platformExport)
     try {
       this.clearPlatformState(false)
-      await fillClarity(this.nikuLink, platformExport, submitTimesheets, this.resourceName, {
+      await fillClarity(this.ottLink, platformExport, submitTimesheets, this.resourceName, {
         headless: this.chromeHeadless,
         chromeExe: this.chromeExe,
         chromedriverExe: this.chromedriverExe,
@@ -115,8 +115,25 @@ export class PlatformState {
     }
   }
 
-  public async importAndSavePlatformTasks(): Promise<PlatformTask[]> {
-    this._tasks = await this.importPlatformTasks()
+  public async importAndSavePlatformTasks(
+      infoNotify?: (info: string) => void,
+  ): Promise<PlatformTask[]> {
+    this._tasks = await this.importPlatformTasks(
+        (tasks) => {
+          infoNotify &&
+          infoNotify(
+              'Imported ' + tasks.length + '.',
+          )
+
+          this._tasks = [
+            ...tasks.map((t) => ({
+              ...t,
+              projectName: t.projectName,
+              projectIntId: t.projectIntId,
+            } as PlatformTask)),
+          ]
+        },
+    )
     await this.savePlatformTasksToFile(this._tasks)
     return this._tasks
   }
@@ -144,7 +161,9 @@ export class PlatformState {
     this.success = false
   }
 
-  private async importPlatformTasks(): Promise<PlatformTask[]> {
+  private async importPlatformTasks(
+      notifyTasks?: (p: ZeddPlatformTask[]) => void,
+  ): Promise<PlatformTask[]> {
     this.actionType = PlatformActionType.ImportTasks
     if (this._currentlyImportingTasks) {
       throw new Error('Already importing')
@@ -152,7 +171,7 @@ export class PlatformState {
     try {
       this.clearPlatformState(true)
       this._currentlyExportingTasks = false
-      const tasks = await importOTTTasks(this.nikuLink)
+      const tasks = await importOTTTasks(this.ottLink, notifyTasks)
 
       this.success = true
       return tasks.map((task) => Object.assign(task, task as unknown as PlatformTask))

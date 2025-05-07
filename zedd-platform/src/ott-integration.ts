@@ -1,10 +1,10 @@
-import puppeteer, { Browser, Page } from 'puppeteer'
-import { Task } from './model/task.model'
+import puppeteer, {Browser, Page} from 'puppeteer'
+import {Task} from './model/task.model'
 
 let browser: Browser
 let page: Page
 
-export async function importOTTTasks(nikuLink: string): Promise<Task[]> {
+export async function importOTTTasks(nikuLink: string, notifyTasks?: (p: Task[]) => void): Promise<Task[]> {
   browser = await puppeteer.launch({ headless: false })
   page = await browser.newPage()
 
@@ -37,6 +37,7 @@ export async function importOTTTasks(nikuLink: string): Promise<Task[]> {
 
           if (jsonResponse && Array.isArray(jsonResponse.data)) {
             const tasks = getTasksFromJson(jsonResponse)
+            notifyTasks && notifyTasks(tasks)
             await browser.close()
             resolve(tasks) // Resolving the promise with the tasks
           }
