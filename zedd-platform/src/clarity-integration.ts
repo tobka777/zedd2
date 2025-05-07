@@ -1,12 +1,12 @@
 import {
-    Builder as WebDriverBuilder,
-    By,
-    Capabilities,
-    Key,
-    until,
-    WebDriver,
-    WebElement,
-    WebElementPromise,
+  Builder as WebDriverBuilder,
+  By,
+  Capabilities,
+  Key,
+  until,
+  WebDriver,
+  WebElement,
+  WebElementPromise,
 } from 'selenium-webdriver'
 import * as path from 'path'
 import * as url from 'url'
@@ -15,26 +15,26 @@ import partition from 'lodash/partition'
 import uniqBy from 'lodash/uniqBy'
 import sleep from 'sleep-promise'
 import * as fs from 'fs'
-import {promises as fsp} from 'fs'
+import { promises as fsp } from 'fs'
 import * as csv from 'fast-csv'
 import deepEqual from 'deep-equal'
 import 'selenium-webdriver/lib/atoms/get-attribute'
 import 'selenium-webdriver/lib/atoms/is-displayed'
-import {homedir} from 'os'
+import { homedir } from 'os'
 import {
-    compareAsc,
-    differenceInCalendarDays,
-    format,
-    isSameDay,
-    isWithinInterval,
-    min as dateMin,
-    parse as parseDate,
-    parseISO,
+  compareAsc,
+  differenceInCalendarDays,
+  format,
+  isSameDay,
+  isWithinInterval,
+  min as dateMin,
+  parse as parseDate,
+  parseISO,
 } from 'date-fns'
-import {de} from 'date-fns/locale'
+import { de } from 'date-fns/locale'
 import uniq from 'lodash/uniq'
-import {Project} from './model/projekt.model'
-import {Task} from './model/task.model'
+import { Project } from './model/projekt.model'
+import { Task } from './model/task.model'
 
 const CONTROL_KEY: string = process.platform === 'darwin' ? Key.COMMAND : Key.CONTROL
 
@@ -62,11 +62,11 @@ function checkNikuUrl(urlToCheck: any) {
 var chromeDriver: WebDriver
 
 async function makeContext({
-                             headless = false,
-                             downloadDir,
-                             chromeExe,
-                             chromedriverExe,
-                           }: SeleniumOptions) {
+  headless = false,
+  downloadDir,
+  chromeExe,
+  chromedriverExe,
+}: SeleniumOptions) {
   d('making context headless=' + headless)
   const chromeOptions = new chrome.Options().addArguments('--no-sandbox')
   if (downloadDir) {
@@ -139,7 +139,6 @@ function escapeRegExp(string: string) {
 
 const urlHashQueryParam = (url: string, p: string) =>
   new URL(new URL(url).hash.replace(/^#/, 'http://example.com?')).searchParams.get(p)
-
 
 async function forceGetSSO(ctx: Context, url: string) {
   const [$, $$, driver] = ctx
@@ -414,7 +413,7 @@ async function exportToPlatform(
   async function getRowInfos(editMode: boolean) {
     const trs = await $$(
       '#portlet-table-timeadmin\\.editTimesheet div.ppm_gridcontent ' +
-      '> table > tbody > tr:not(:first-child):not(:last-child)',
+        '> table > tbody > tr:not(:first-child):not(:last-child)',
     )
     d(`found ${trs.length} trs`)
     return Promise.all(
@@ -495,7 +494,9 @@ async function exportToPlatform(
     const joinedCommentContents = delComments
       .map((c) => c.content.replace('\n', ' ').trim())
       .join(' ')
-    for (const commentFromPlatform of joinedCommentContents.split(/(?=\[.{2}\])/).filter((x) => x)) {
+    for (const commentFromPlatform of joinedCommentContents
+      .split(/(?=\[.{2}\])/)
+      .filter((x) => x)) {
       d(commentFromPlatform)
       const [_, day, comment] = commentFromPlatform.match(/\[(.{2})\](.*)/)!
       if (targetComments[day.toUpperCase()] === undefined) {
@@ -569,12 +570,12 @@ async function exportToPlatform(
           daysInfo
             .find((di) => di.day == day)!
             .work.push({
-            taskIntId: rowInfo.taskIntId,
-            taskName: rowInfo.taskName,
-            projectName: rowInfo.projectName,
-            hours,
-            comment: dayComment && dayComment.substring(4),
-          })
+              taskIntId: rowInfo.taskIntId,
+              taskName: rowInfo.taskName,
+              projectName: rowInfo.projectName,
+              hours,
+              comment: dayComment && dayComment.substring(4),
+            })
       }
     }
     return daysInfo

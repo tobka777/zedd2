@@ -1,14 +1,14 @@
-import {format as formatDate, parseISO} from 'date-fns'
-import {promises as fsp} from 'fs'
-import {computed, makeObservable, observable} from 'mobx'
+import { format as formatDate, parseISO } from 'date-fns'
+import { promises as fsp } from 'fs'
+import { computed, makeObservable, observable } from 'mobx'
 import * as path from 'path'
-import {fillClarity, webDriverQuit,} from 'zedd-platform'
-import {PlatformExportFormat} from 'zedd-platform/out/model/platform-export-format.model'
-import {Task as ZeddPlatformTask} from 'zedd-platform/src/model/task.model'
+import { fillClarity, webDriverQuit } from 'zedd-platform'
+import { PlatformExportFormat } from 'zedd-platform/out/model/platform-export-format.model'
+import { Task as ZeddPlatformTask } from 'zedd-platform/src/model/task.model'
 import './index.css'
 
-import {importOTTTasks} from "zedd-platform/out/src";
-import {FILE_DATE_FORMAT, getLatestFileInDir, mkdirIfNotExists} from './util'
+import { importOTTTasks } from 'zedd-platform/out/src'
+import { FILE_DATE_FORMAT, getLatestFileInDir, mkdirIfNotExists } from './util'
 
 export interface PlatformTask extends ZeddPlatformTask {
   projectName: string
@@ -116,7 +116,6 @@ export class PlatformState {
   }
 
   public async importAndSavePlatformTasks(): Promise<PlatformTask[]> {
-
     this._tasks = await this.importPlatformTasks()
     await this.savePlatformTasksToFile(this._tasks)
     return this._tasks
@@ -156,13 +155,7 @@ export class PlatformState {
       const tasks = await importOTTTasks(this.nikuLink)
 
       this.success = true
-      return tasks.map((task) =>
-        Object.assign(
-          task,
-          task as unknown as PlatformTask,
-        ),
-      )
-
+      return tasks.map((task) => Object.assign(task, task as unknown as PlatformTask))
     } finally {
       this._currentlyImportingTasks = false
     }

@@ -1,6 +1,7 @@
 # Zedd-App
 
-The Zedd-App is a Grindstone-like application that automates booking in Platform and simplifies working with multiple
+The Zedd-App is a Grindstone-like application that automates booking in Replicon and OTT and simplifies working with
+multiple
 accounts. It operates as an interactive calendar, allowing you to schedule tasks and manage your work time efficiently.
 
 The goal is to make work planning more organized, stress-free and user-friendly. The app is built with Electron,
@@ -12,10 +13,10 @@ TypeScript, React, MobX, and MUI.
 - Summary window for working hours
 - Overview of working time and overtime
 - Automatic break of working time when computer is inactive
-- Tasks can be exported to the Platform system with the option of automatic submission
+- Tasks can be exported to Replicon and OTT with the option of automatic submission
 - Export can also take place in the background
-- Importing tasks from the Platform system
-- Individual names for tasks that can be assigned to a Platform task and a comment
+- Importing tasks from Replicon and OTT
+- Individual names for tasks that can be assigned to a OTT/Replicon task and a comment
 - Tasks can be linked to Jira tasks
 - Forecast booking possible with "Ersatz" task
 - Automatic detection of holidays by country and federal state
@@ -39,21 +40,23 @@ retroactive.
 Optionally, add a comment in `Platform-Account Comment for This Task`. The tag is automatically calculated and entered
 in Platform beforehand.
 
-At the bottom, you can see what will be exported to Platform. What is currently displayed will always be exported. The
-`Autosubmit` checkbox next to the `Platform` button will submit the timesheets as well.
+At the bottom, you can see what will be exported to Replicon/OTT. What is currently displayed will always be exported.
+The
+`Autosubmit` checkbox will submit the timesheets as well.
 
 ### Tips and Tricks
 
-| **Command**                                         | **Description**                                  | 
-|-----------------------------------------------------|--------------------------------------------------|
-| **CTRL+Click** on an empty space in the calendar    | Adds a new slice                                 |
-| **CTRL+Click** on an existing slice in the calendar | Divides it into two                              |
-| **ALT+Click**                                       | Sets the slice to the last used Platform account | 
-| **CTRL+Z**                                          | Undoes the last action                           | 
-| **CTRL+Y**                                          | Will redo any previously-undone action           |
-| Pressing the **Platform button**                    | The current view is booked in Platform.          | 
-| **CTRL+C** on an existing slice in the calendar     | Copy slice                                       | 
-| **CTRL+V** on an empty space in the calendar        | Paste slice at mouse pointer                     |
+| **Command**                                         | **Description**                         | 
+|-----------------------------------------------------|-----------------------------------------|
+| **CTRL+Click** on an empty space in the calendar    | Adds a new slice                        |
+| **CTRL+Click** on an existing slice in the calendar | Divides it into two                     |
+| **ALT+Click**                                       | Sets the slice to the last used task    |
+| **CTRL+Z**                                          | Undoes the last action                  | 
+| **CTRL+Y**                                          | Will redo any previously-undone action  |
+| Pressing the **Replicon** button                    | The current view is booked in Replicon. | 
+| Pressing the **OTT** button                         | The current view is booked in OTT.      | 
+| **CTRL+C** on an existing slice in the calendar     | Copy slice                              | 
+| **CTRL+V** on an empty space in the calendar        | Paste slice at mouse pointer            |
 
 - To book the forecast:
   - Click `NEXT MONTH`

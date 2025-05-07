@@ -8,15 +8,15 @@ import {
   shell,
   Tray,
 } from '@electron/remote'
-import {BrowserWindow, ipcRenderer, MenuItemConstructorOptions, Rectangle} from 'electron'
-import {autorun, computed, configure as configureMobx} from 'mobx'
+import { BrowserWindow, ipcRenderer, MenuItemConstructorOptions, Rectangle } from 'electron'
+import { autorun, computed, configure as configureMobx } from 'mobx'
 import * as path from 'path'
 import * as React from 'react'
 import * as ReactDOM from 'react-dom'
 import 'win-ca' // use windows root certificates
-import {AppState, format, formatInterval, TimeSlice} from './AppState'
-import {PlatformState} from './PlatformState'
-import {AppGui} from './components/AppGui'
+import { AppState, format, formatInterval, TimeSlice } from './AppState'
+import { PlatformState } from './PlatformState'
+import { AppGui } from './components/AppGui'
 import './index.css'
 import {
   checkCgJira,
@@ -25,8 +25,8 @@ import {
   getTasksFromAssignedJiraIssues,
   initJiraClient,
 } from './plJiraConnector'
-import {fileExists, floor, formatHoursBT, formatHoursHHmm, mkdirIfNotExists} from './util'
-import {ZeddSettings} from './ZeddSettings'
+import { fileExists, floor, formatHoursBT, formatHoursHHmm, mkdirIfNotExists } from './util'
+import { ZeddSettings } from './ZeddSettings'
 import {
   getChromeDriverVersion,
   getChromeVersion,
@@ -34,7 +34,7 @@ import {
   getNonEnvPathChromePath,
   installChromeDriver,
 } from './chromeDriverMgmt'
-import {suggestedTaskMenuItems} from './menuUtil'
+import { suggestedTaskMenuItems } from './menuUtil'
 
 configureMobx({ enforceActions: 'never' })
 
@@ -249,7 +249,9 @@ async function setup() {
     console.log('current chrome version', chromeVersion)
     if (parseInt(chromeVersion.split('.')[0]) < 115) {
       // Requirement Check if Chrome newer than 115
-      throw new Error(`Chrome ${chromeVersion} is not supported. Update Chrome to version 115 or newer!`)
+      throw new Error(
+        `Chrome ${chromeVersion} is not supported. Update Chrome to version 115 or newer!`,
+      )
     }
 
     const requiredChromeDriverVersion = await getLatestChromeDriverVersion(chromeVersion)

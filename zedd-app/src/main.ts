@@ -1,7 +1,6 @@
 import * as remoteMain from '@electron/remote/main'
-import {app, BrowserWindow, ipcMain, session} from 'electron'
-import {importOTTTasks} from 'zedd-platform'
-
+import { app, BrowserWindow, ipcMain, session } from 'electron'
+import { importOTTTasks } from 'zedd-platform'
 
 remoteMain.initialize()
 
@@ -88,17 +87,17 @@ ipcMain.on('quit', () => {
   app.quit()
 })
 
-ipcMain.handle('scrape-data', async (event, ...args:any) => {
+ipcMain.handle('scrape-data', async (event, ...args: any) => {
   try {
     console.log('scrape-data LOGGER')
     console.log(args)
     console.log('AAAAA')
-    const data = await importOTTTasks(args[0]);//'https://vvm.capgemini.com/visualmanagement/?type=work'
-    return { success: true, data };
+    const data = await importOTTTasks(args[0]) //'https://vvm.capgemini.com/visualmanagement/?type=work'
+    return { success: true, data }
   } catch (error) {
-    return { success: false, error: error.message };
+    return { success: false, error: error.message }
   }
-});
+})
 
 // This method will be called when Electron has finished
 // initialization and is ready to create browser windows.

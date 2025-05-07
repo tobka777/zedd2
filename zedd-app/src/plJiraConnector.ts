@@ -1,12 +1,12 @@
-import {compareDesc, differenceInMinutes} from 'date-fns'
-import {Version2Client as JiraClient} from 'jira.js'
+import { compareDesc, differenceInMinutes } from 'date-fns'
+import { Version2Client as JiraClient } from 'jira.js'
 // @ts-ignore
 import * as request from 'request'
 
-import {isEqual} from 'lodash'
-import {Task} from './AppState'
-import {PlatformState, PlatformTask} from './PlatformState'
-import {ZeddSettings} from './ZeddSettings'
+import { isEqual } from 'lodash'
+import { Task } from './AppState'
+import { PlatformState, PlatformTask } from './PlatformState'
+import { ZeddSettings } from './ZeddSettings'
 
 // Initialize
 const jar = request.jar()
@@ -33,7 +33,7 @@ export function initJiraClient(
     host: url.toString(),
     telemetry: false,
     authentication: {
-        personalAccessToken: jc.token,
+      personalAccessToken: jc.token,
     },
   })
 }
@@ -48,36 +48,26 @@ const jiraConnectorErrorToMessage = (x: any) => {
 }
 
 export const checkCgJira = (config: ZeddSettings['cgJira']): Promise<any> => {
-    console.log(config.url)
+  console.log(config.url)
   return new Promise(async (resolve, reject) => {
-          try {
-              const response = await fetch(config.url + '/rest/api/2/myself', {
-                  method: 'GET',
-                  headers: {
-                      "Authorization": 'Bearer ' + config.token
-                  }
-              })
-              if (response.status >= 400) {
-                  console.error(response)
-                  reject(
-                      new Error(
-                          response.url +
-                          ' returned ' +
-                          response.status +
-                          ' ' +
-                          response.statusText,
-                      ),
-                  )
-              }
-              else {
-                resolve(response)
-              }
-          } catch (error) {
-              reject(error)
-          }
-          return
+    try {
+      const response = await fetch(config.url + '/rest/api/2/myself', {
+        method: 'GET',
+        headers: {
+          Authorization: 'Bearer ' + config.token,
+        },
+      })
+      if (response.status >= 400) {
+        console.error(response)
+        reject(new Error(response.url + ' returned ' + response.status + ' ' + response.statusText))
+      } else {
+        resolve(response)
       }
-  )
+    } catch (error) {
+      reject(error)
+    }
+    return
+  })
 }
 
 const callWithJsessionCookie = async <T>(cb: () => Promise<T>) => {

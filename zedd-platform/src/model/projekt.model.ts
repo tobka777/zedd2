@@ -1,8 +1,8 @@
-import {Task} from './task.model'
+import { Task } from './task.model'
 
 //deprecated
 export interface Project {
-    name: string
-    intId: number
-    tasks: Task[]
+  name: string
+  intId: number
+  tasks: Task[]
 }

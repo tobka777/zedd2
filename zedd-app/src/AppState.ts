@@ -1,70 +1,70 @@
 import * as assert from 'assert'
 import {
-    addMinutes,
-    areIntervalsOverlapping,
-    compareDesc,
-    differenceInDays,
-    differenceInHours,
-    differenceInMinutes,
-    differenceInMonths,
-    eachDayOfInterval,
-    eachYearOfInterval,
-    endOfDay,
-    format as formatDate,
-    getDay,
-    getISODay,
-    getYear,
-    isAfter,
-    isBefore,
-    isSameDay,
-    isValid,
-    max as dateMax,
-    min as dateMin,
-    parse as dateParse,
-    parseISO,
-    set as dateSet,
-    startOfDay,
-    startOfMinute,
-    subSeconds,
+  addMinutes,
+  areIntervalsOverlapping,
+  compareDesc,
+  differenceInDays,
+  differenceInHours,
+  differenceInMinutes,
+  differenceInMonths,
+  eachDayOfInterval,
+  eachYearOfInterval,
+  endOfDay,
+  format as formatDate,
+  getDay,
+  getISODay,
+  getYear,
+  isAfter,
+  isBefore,
+  isSameDay,
+  isValid,
+  max as dateMax,
+  min as dateMin,
+  parse as dateParse,
+  parseISO,
+  set as dateSet,
+  startOfDay,
+  startOfMinute,
+  subSeconds,
 } from 'date-fns'
-import {promises as fsp} from 'fs'
-import {sum} from 'lodash'
-import type {IObservableArray} from 'mobx'
-import {action, computed, intercept, makeObservable, observable, transaction} from 'mobx'
-import {createTransformer, ObservableGroupMap} from 'mobx-utils'
+import { promises as fsp } from 'fs'
+import { sum } from 'lodash'
+import type { IObservableArray } from 'mobx'
+import { action, computed, intercept, makeObservable, observable, transaction } from 'mobx'
+import { createTransformer, ObservableGroupMap } from 'mobx-utils'
 import * as path from 'path'
 import * as chroma from 'chroma.ts'
 import {
-    createSimpleSchema,
-    custom,
-    date,
-    deserialize,
-    getDefaultModelSchema,
-    identifier,
-    list,
-    object,
-    reference,
-    serializable,
-    serialize,
-    SKIP,
+  createSimpleSchema,
+  custom,
+  date,
+  deserialize,
+  getDefaultModelSchema,
+  identifier,
+  list,
+  object,
+  reference,
+  serializable,
+  serialize,
+  SKIP,
 } from 'serializr'
 
 import {
-    abs,
-    FILE_DATE_FORMAT,
-    formatHoursBT,
-    formatHoursHHmm,
-    getUniqueId,
-    isoWeekInterval,
-    mkdirIfNotExists,
-    readFilesWithDate,
-    startOfNextMinute,
-    stringHashColor,
-    tryWithFilesInDir,
-    uniqCustom,
+  abs,
+  FILE_DATE_FORMAT,
+  formatHoursBT,
+  formatHoursHHmm,
+  getUniqueId,
+  isoWeekInterval,
+  mkdirIfNotExists,
+  readFilesWithDate,
+  startOfNextMinute,
+  stringHashColor,
+  tryWithFilesInDir,
+  uniqCustom,
 } from './util'
-import {ZeddSettings} from './ZeddSettings'
-import {Undoer} from './Undoer'
+import { ZeddSettings } from './ZeddSettings'
+import { Undoer } from './Undoer'
 
 export const MIN_GAP_TIME_MIN = 5
 
@@ -752,7 +752,7 @@ export class AppState {
   public clearMarking(): void {
     this.markedSlices.clear()
     this.slicesMarked = false
-    this.copiedSlice = undefined;
+    this.copiedSlice = undefined
   }
 
   public startInterval(getUserIdleTime: () => number): void {

@@ -1,3 +1,3 @@
 export type PlatformExportFormat = {
-    [day: string]: WorkEntry[]
+  [day: string]: WorkEntry[]
 }
