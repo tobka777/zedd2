@@ -1,4 +1,4 @@
-import puppeteer, {Browser, Page} from 'puppeteer'
+import puppeteer, {Browser, ElementHandle, Page} from 'puppeteer'
 import {Task} from './model/task.model'
 
 let browser: Browser
@@ -14,15 +14,15 @@ export async function importOTTTasks(nikuLink: string, notifyTasks?: (p: Task[])
 
   await page.setRequestInterception(true)
 
-  const dropdown = await page.waitForSelector(
-    '.MuiBox-root.jss137.jss124 > .MuiInputBase-root.MuiOutlinedInput-root.jss125',
-  )
 
-  await dropdown!.click()
+  const [dropdownNode] = await page.$x(
+      "//div[@role='button' and contains(text(), 'Started & ended in selected period')]"
+  );
 
-  const dropdownOptions = await page.waitForSelector(
-    '.MuiPaper-root.MuiMenu-paper.MuiPopover-paper.MuiPaper-elevation8.MuiPaper-rounded > .MuiList-root.MuiMenu-list.MuiList-padding',
-  )
+  const dropdown = dropdownNode as unknown as ElementHandle<Element>;
+  await dropdown.click();
+
+  const dropdownOptions = await page.waitForSelector('ul[role="listbox"]');
 
   const allAssigned = await dropdownOptions?.waitForSelector('li[data-value="All"]')
   await allAssigned!.click()
