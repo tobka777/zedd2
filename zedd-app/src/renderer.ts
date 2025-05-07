@@ -1,41 +1,40 @@
-import { ipcRenderer, BrowserWindow, MenuItemConstructorOptions, Rectangle } from 'electron'
 import {
-  Tray,
-  Menu,
-  getCurrentWindow,
   app,
-  shell,
-  screen as electronScreen,
-  powerMonitor,
   autoUpdater,
+  getCurrentWindow,
+  Menu,
+  powerMonitor,
+  screen as electronScreen,
+  shell,
+  Tray,
 } from '@electron/remote'
-import { autorun, computed, configure as configureMobx } from 'mobx'
+import {BrowserWindow, ipcRenderer, MenuItemConstructorOptions, Rectangle} from 'electron'
+import {autorun, computed, configure as configureMobx} from 'mobx'
 import * as path from 'path'
 import * as React from 'react'
 import * as ReactDOM from 'react-dom'
 import 'win-ca' // use windows root certificates
-
-import { format, AppState, TimeSlice, formatInterval } from './AppState'
-import { PlatformState } from './PlatformState'
-import { AppGui } from './components/AppGui'
+import {AppState, format, formatInterval, TimeSlice} from './AppState'
+import {PlatformState} from './PlatformState'
+import {AppGui} from './components/AppGui'
 import './index.css'
 import {
+  checkCgJira,
+  getLinksFromString,
   getTasksForSearchString,
   getTasksFromAssignedJiraIssues,
   initJiraClient,
-  checkCgJira,
-  getLinksFromString,
 } from './plJiraConnector'
-import { fileExists, formatHoursBT, formatHoursHHmm, mkdirIfNotExists, floor } from './util'
-import { ZeddSettings } from './ZeddSettings'
+import {fileExists, floor, formatHoursBT, formatHoursHHmm, mkdirIfNotExists} from './util'
+import {ZeddSettings} from './ZeddSettings'
 import {
-  getNonEnvPathChromePath,
+  getChromeDriverVersion,
   getChromeVersion,
   getLatestChromeDriverVersion,
-  getChromeDriverVersion,
+  getNonEnvPathChromePath,
   installChromeDriver,
 } from './chromeDriverMgmt'
-import { suggestedTaskMenuItems } from './menuUtil'
+import {suggestedTaskMenuItems} from './menuUtil'
 
 configureMobx({ enforceActions: 'never' })
 

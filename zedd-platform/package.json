@@ -2,7 +2,7 @@
   "name": "zedd-platform",
   "version": "1.0.0",
   "description": "",
-  "main": "out/index.js",
+  "main": "out/src/index.js",
   "scripts": {
     "test:ott-export": "ts-node --compiler-options '{\"module\":\"CommonJS\"}' test/ott-export.ts",
     "test": "echo \"Error: no test specified\" && exit 1",

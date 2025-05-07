@@ -4,15 +4,16 @@ import {computed, makeObservable, observable} from 'mobx'
 import * as path from 'path'
 import {
   fillClarity,
-  fillOTT, getProjectInfo,
-  webDriverQuit,
-  PlatformExportFormat,
+  getProjectInfo,
   Project as ZeddClarityProject,
-  Task as ZeddClarityTask, closeBrowser,
+  Task as ZeddClarityTask,
+  webDriverQuit,
 } from 'zedd-platform'
+import {PlatformExportFormat} from 'zedd-platform/src/model/platform-export-format.model'
 import './index.css'
 
-import {getLatestFileInDir, mkdirIfNotExists, FILE_DATE_FORMAT} from './util'
+import {importOTTTasks} from "zedd-platform/out/src";
+import {FILE_DATE_FORMAT, getLatestFileInDir, mkdirIfNotExists} from './util'
 
 export interface ClarityTask extends ZeddClarityTask {
   projectName: string
@@ -107,7 +108,7 @@ export class PlatformState {
     this.actionType = ClarityActionType.SubmitTimesheet
     console.log('exporting timesheets', clarityExport)
     try {
-      this.clearPlatformState(false)
+      this.clearClarityState(false)
       await fillClarity(this.nikuLink, clarityExport, submitTimesheets, this.resourceName, {
         headless: this.chromeHeadless,
         chromeExe: this.chromeExe,
@@ -119,26 +120,16 @@ export class PlatformState {
     }
   }
 
-  public async exportOTT(
-    platformExport: PlatformExportFormat,
-    submitTimesheets: boolean,
-  ): Promise<void> {
-    this.actionType = ClarityActionType.SubmitTimesheet
-    console.log('exporting timesheets', platformExport)
-    try {
-      this.clearPlatformState(false)
-      await fillOTT(this.nikuLink, platformExport, submitTimesheets, this.resourceName)
-      this.success = true
-    } finally {
-      this._currentlyExportingTasks = false
-    }
-  }
-
   public async importAndSaveClarityTasks(
     excludedProjects: string[],
     toImport: string[] | 'ALL' | 'NEW',
     infoNotify?: (info: string) => void,
   ): Promise<ClarityTask[]> {
+    // TODO import data
+    //const res = await ipcRenderer.invoke('scrape-data', this.nikuLink);
+
+    await importOTTTasks(this.nikuLink)
+
     const importProject = (projectName: string) => {
       if (toImport === 'ALL') {
         return true
@@ -148,28 +139,28 @@ export class PlatformState {
         return toImport.includes(projectName)
       }
     }
-    await this.importClarityTasks(
-      (projectName) => excludedProjects.includes(projectName) || !importProject(projectName),
-      (project) => {
-        infoNotify &&
-          infoNotify(
-            'Imported ' + project.tasks.length + ' tasks from project ' + project.name + '.',
-          )
-        const tasksToKeep = this._tasks.filter(
-          ({ projectName }) =>
-            !excludedProjects.includes(projectName) && projectName !== project.name,
-        )
-        this._tasks = [
-          ...tasksToKeep,
-          ...project.tasks.map((t) => ({
-            ...t,
-            projectName: project.name,
-            projectIntId: project.intId,
-          })),
-        ]
-      },
-    )
-    await this.saveClarityTasksToFile(this._tasks)
+    // await this.importClarityTasks(
+    //   (projectName) => excludedProjects.includes(projectName) || !importProject(projectName),
+    //   (project) => {
+    //     infoNotify &&
+    //       infoNotify(
+    //         'Imported ' + project.tasks.length + ' tasks from project ' + project.name + '.',
+    //       )
+    //     const tasksToKeep = this._tasks.filter(
+    //       ({ projectName }) =>
+    //         !excludedProjects.includes(projectName) && projectName !== project.name,
+    //     )
+    //     this._tasks = [
+    //       ...tasksToKeep,
+    //       ...project.tasks.map((t) => ({
+    //         ...t,
+    //         projectName: project.name,
+    //         projectIntId: project.intId,
+    //       })),
+    //     ]
+    //   },
+    // )
+    // await this.saveClarityTasksToFile(this._tasks)
     return this._tasks
   }
 
@@ -185,7 +176,7 @@ export class PlatformState {
     return this.resolveTask(intId) !== undefined
   }
 
-  private clearPlatformState(importing: boolean) {
+  private clearClarityState(importing: boolean) {
     this._currentlyImportingTasks = importing
     this._currentlyExportingTasks = !importing
     this.error = ''
@@ -201,7 +192,7 @@ export class PlatformState {
       throw new Error('Already importing')
     }
     try {
-      this.clearPlatformState(true)
+      this.clearClarityState(true)
       this._currentlyExportingTasks = false
       const projectInfos = await getProjectInfo(
         this.nikuLink,
@@ -255,9 +246,5 @@ export class PlatformState {
 
   public killSelenium(): void {
     webDriverQuit()
-  }
-
-  public killOTTBrowser(): void {
-    closeBrowser()
   }
 }
