@@ -32,10 +32,10 @@ import {groupBy, remove, sortBy, uniqBy} from 'lodash'
 import {observer} from 'mobx-react-lite'
 import * as React from 'react'
 import {useState} from 'react'
-import {ClarityExportFormat} from 'zedd-platform'
+import {PlatformExportFormat} from 'zedd-platform/out/src/model/platform-export-format.model'
 
-import {validDate, TimeSlice} from '../AppState'
-import {ClarityActionType, PlatformState} from '../PlatformState'
+import {TimeSlice, validDate} from '../AppState'
+import {PlatformActionType, PlatformState} from '../PlatformState'
 import {LoadingSpinner} from './LoadingSpinner'
 
 import {isoDayStr, omap, splitIntervalIntoCalendarDays, sum, useClasses} from '../util'
@@ -112,20 +112,20 @@ const styles = (theme) => ({
 const formatHours = (h: number) =>
     h ? h.toLocaleString('de-DE', {minimumFractionDigits: 2}) : '-'
 
-const placeholderClarityTask = {
+const placeholderPlatformTask = {
     projectName: 'UNDEFINED',
     intId: -1,
     name: 'UNDEFINED',
 }
 
-function transform({slices, showing, platformState}: PlatformViewProps): ClarityExportFormat {
+function transform({slices, showing, platformState}: PlatformViewProps): PlatformExportFormat {
     // add 1 to the end of showing, because we want the interval to go to the end of the
     // not just the begining
     const showInterval = {start: showing.start, end: addDays(showing.end, 1)}
 
-    // in the first step, create a ClarityExportFormat with an entry for each
+    // in the first step, create a PlatformExportFormat with an entry for each
     // task/comment combination
-    const dayMap: ClarityExportFormat = {}
+    const dayMap: PlatformExportFormat = {}
     // init dayMap so that days without slices are also included
     for (const day of eachDayOfInterval(showing)) {
         dayMap[isoDayStr(day)] = []
@@ -144,8 +144,8 @@ function transform({slices, showing, platformState}: PlatformViewProps): Clarity
             throw e
         }
         const task =
-            (slice.task.clarityTaskIntId && platformState.resolveTask(+slice.task.clarityTaskIntId)) ||
-            placeholderClarityTask
+            (slice.task.platformTaskIntId && platformState.resolveTask(+slice.task.platformTaskIntId)) ||
+            placeholderPlatformTask
         // fix start/end of b, as part of the interval may be outside showInterval
         const bStartFixed = dateMax([slice.start, showInterval.start])
         const bEndFixed = dateMin([slice.end, showInterval.end])
@@ -157,8 +157,8 @@ function transform({slices, showing, platformState}: PlatformViewProps): Clarity
             const dayHourss = dayMap[dayKey]
             let dayHours = dayHourss.find(
                 (d) =>
-                    d.taskIntId === slice.task.clarityTaskIntId &&
-                    d.comment === slice.task.clarityTaskComment,
+                    d.taskIntId === slice.task.platformTaskIntId &&
+                    d.comment === slice.task.platformTaskComment,
             )
             if (!dayHours) {
                 dayHours = {
@@ -166,7 +166,7 @@ function transform({slices, showing, platformState}: PlatformViewProps): Clarity
                     projectName: task.projectName,
                     taskIntId: task.intId,
                     taskName: task.name,
-                    comment: slice.task.clarityTaskComment,
+                    comment: slice.task.platformTaskComment,
                 }
                 dayHourss.push(dayHours)
             }
@@ -250,7 +250,7 @@ export const PlatformView = observer((props: PlatformViewProps) => {
         platformState,
         calculateTargetHours,
     } = props
-    const [clarityViewFilterProject, setclarityViewFilterProject] = useState('')
+    const [platformViewFilterProject, setPlatformViewFilterProject] = useState('')
     const noOfDays = differenceInDays(showing.end, showing.start)
     const groupBy = noOfDays > 366 ? 'year' : noOfDays > 64 ? 'month' : noOfDays > 21 ? 'week' : 'day'
     const untrimmedIntervals =
@@ -285,8 +285,8 @@ export const PlatformView = observer((props: PlatformViewProps) => {
                 : 'week' === groupBy
                     ? "'Wk' RRRR / I"
                     : 'EEEEEE, dd.MM'
-    const clarityExport = transform(props)
-    const allWorkEntries = Object.values(clarityExport).flatMap((x) => x)
+    const platformExport = transform(props)
+    const allWorkEntries = Object.values(platformExport).flatMap((x) => x)
     const tasksToShow = sortBy(
         uniqBy(allWorkEntries, (we) => we.taskIntId),
         (x) => +(-1 === x.taskIntId), // placeholder task last
@@ -294,8 +294,8 @@ export const PlatformView = observer((props: PlatformViewProps) => {
         (x) => x.taskName,
     ).filter((taskToShow) => {
         return (
-            taskToShow.projectName.toLowerCase().includes(clarityViewFilterProject.toLowerCase()) ||
-            taskToShow.taskName.toLowerCase().includes(clarityViewFilterProject.toLowerCase())
+            taskToShow.projectName.toLowerCase().includes(platformViewFilterProject.toLowerCase()) ||
+            taskToShow.taskName.toLowerCase().includes(platformViewFilterProject.toLowerCase())
         )
     })
     const theme = useTheme()
@@ -306,12 +306,12 @@ export const PlatformView = observer((props: PlatformViewProps) => {
     const getWorkedHours = (interval: Interval) => {
         return sum(
             eachDayOfInterval(interval).map((d) =>
-                sum(clarityExport[isoDayStr(d)]?.map((we) => we.hours) ?? []),
+                sum(platformExport[isoDayStr(d)]?.map((we) => we.hours) ?? []),
             ),
         )
     }
 
-    if (platformState.actionType === ClarityActionType.SubmitTimesheet) {
+    if (platformState.actionType === PlatformActionType.SubmitTimesheet) {
         setTimeout(() => {
             platformState.success = false
         }, 60000)
@@ -329,9 +329,9 @@ export const PlatformView = observer((props: PlatformViewProps) => {
                     <th className='textHeader'>
                         <TextField
                             placeholder='Project / Task'
-                            value={clarityViewFilterProject}
+                            value={platformViewFilterProject}
                             fullWidth
-                            onChange={(newFilter) => setclarityViewFilterProject(newFilter.target.value)}
+                            onChange={(newFilter) => setPlatformViewFilterProject(newFilter.target.value)}
                         />
                     </th>
                     {intervals.map((w) => (
@@ -355,7 +355,7 @@ export const PlatformView = observer((props: PlatformViewProps) => {
                         </td>
                         {intervals.map((w) => {
                             const workEntries = eachDayOfInterval(w)
-                                .flatMap((d) => clarityExport[isoDayStr(d)] ?? [])
+                                .flatMap((d) => platformExport[isoDayStr(d)] ?? [])
                                 ?.filter((we) => we.taskIntId === taskToShow.taskIntId)
                             return (
                                 <td
@@ -426,7 +426,7 @@ export const PlatformView = observer((props: PlatformViewProps) => {
                     onClick={() =>
                         platformState
                             .export(
-                                omap(clarityExport, (workEntries) =>
+                                omap(platformExport, (workEntries) =>
                                     workEntries.filter((entry) => -1 !== entry.taskIntId),
                                 ),
                                 submitTimesheets,
@@ -436,7 +436,7 @@ export const PlatformView = observer((props: PlatformViewProps) => {
                     endIcon={
                         <>
                             {!platformState.currentlyExportingTasks && <SendIcon/>}
-                            {platformState.actionType === ClarityActionType.SubmitTimesheet && (
+                            {platformState.actionType === PlatformActionType.SubmitTimesheet && (
                                 <LoadingSpinner
                                     loading={platformState.currentlyExportingTasks}
                                     error={platformState.error !== ''}
@@ -462,7 +462,7 @@ export const PlatformView = observer((props: PlatformViewProps) => {
             <CardActions style={{flexDirection: 'row-reverse'}}>
                 <Button
                     disabled={!platformState.currentlyExportingTasks}
-                    onClick={() => platformState.killOTTBrowser()}
+                    onClick={() => platformState.killSelenium()}
                 >
                     Cancel
                 </Button>
@@ -471,8 +471,8 @@ export const PlatformView = observer((props: PlatformViewProps) => {
                     variant='contained'
                     onClick={() =>
                         platformState
-                            .exportOTT(
-                                omap(clarityExport, (workEntries) =>
+                            .export(
+                                omap(platformExport, (workEntries) =>
                                     workEntries.filter((entry) => -1 !== entry.taskIntId),
                                 ),
                                 submitTimesheets,
@@ -482,7 +482,7 @@ export const PlatformView = observer((props: PlatformViewProps) => {
                     endIcon={
                         <>
                             {!platformState.currentlyExportingTasks && <SendIcon/>}
-                            {platformState.actionType === ClarityActionType.SubmitTimesheet && (
+                            {platformState.actionType === PlatformActionType.SubmitTimesheet && (
                                 <LoadingSpinner
                                     loading={platformState.currentlyExportingTasks}
                                     error={platformState.error !== ''}

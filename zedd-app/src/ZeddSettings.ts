@@ -1,6 +1,6 @@
-import { observable, makeObservable } from 'mobx'
-import { serializable, raw, list, primitive, deserialize, serialize, custom } from 'serializr'
-import { promises as fsp } from 'fs'
+import {promises as fsp} from 'fs'
+import {makeObservable, observable} from 'mobx'
+import {custom, deserialize, list, primitive, raw, serializable, serialize} from 'serializr'
 
 export class ZeddSettings {
   constructor(fromFile?: string) {
@@ -38,7 +38,7 @@ export class ZeddSettings {
   public startHour = 8
 
   /**
-   * define clarity projects whoses tasks should not be imported
+   * define platform projects whoses tasks should not be imported
    * function will be called with project names, returning true
    * will lead to the project being excluded
    *
@@ -48,15 +48,15 @@ export class ZeddSettings {
   public excludeProjects = [] as string[]
 
   /**
-   * Name of the ERSATZ Task (not in Clarity!) You can configure the
-   * Clarity-Account in the app.
+   * Name of the ERSATZ Task (not in Platform!) You can configure the
+   * Platform-Account in the app.
    */
   @observable
   @serializable(raw())
   public ersatzTask = 'ERSATZ'
 
   /**
-   * Link to clarity. Everything before the '#'.
+   * Link to platform. Everything before the '#'.
    */
   @observable
   @serializable(raw())
@@ -117,7 +117,7 @@ export class ZeddSettings {
 
   @observable
   @serializable
-  public clarityResourceName: string = ''
+  public platformResourceName: string = ''
 
   @observable
   @serializable(raw())

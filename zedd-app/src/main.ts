@@ -1,5 +1,5 @@
-import {app, BrowserWindow, ipcMain, session} from 'electron'
 import * as remoteMain from '@electron/remote/main'
+import {app, BrowserWindow, ipcMain, session} from 'electron'
 import {importOTTTasks} from 'zedd-platform'
 
 

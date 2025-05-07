@@ -41,7 +41,7 @@ configureMobx({ enforceActions: 'never' })
 const currentWindow = getCurrentWindow()
 const saveDir = path.join(app.getPath('home'), 'zedd')
 
-const clarityDir = path.join(saveDir, 'clarity')
+const platformDir = path.join(saveDir, 'platform')
 
 const userConfigFile = path.join(saveDir, 'zeddconfig.json')
 
@@ -122,31 +122,31 @@ const getMenuItems = (state: AppState) => [
 async function setup() {
   await mkdirIfNotExists(saveDir)
 
-  const clarityState = new PlatformState(clarityDir)
+  const platformState = new PlatformState(platformDir)
 
   const config = (await fileExists(userConfigFile))
     ? await ZeddSettings.readFromFile(userConfigFile)
     : new ZeddSettings(userConfigFile)
 
-  d('clarityDir=' + clarityDir)
-  clarityState.init()
+  d('platformDir=' + platformDir)
+  platformState.init()
   autorun(() => {
-    clarityState.nikuLink = config.nikuLink
-    clarityState.chromeHeadless = config.chromeHeadless
-    clarityState.resourceName = config.clarityResourceName
+    platformState.nikuLink = config.nikuLink
+    platformState.chromeHeadless = config.chromeHeadless
+    platformState.resourceName = config.platformResourceName
   })
 
   // await sleep(5000);
   // importAndSaveClarityTasks();
   try {
-    await clarityState.loadStateFromFile()
+    await platformState.loadStateFromFile()
   } catch (e) {
     console.error('Could not load clarity tasks')
     console.error(e)
   }
 
   try {
-    initJiraClient(config.cgJira, clarityState, () => config.saveToFile(), config.jira2.url)
+    initJiraClient(config.cgJira, platformState, () => config.saveToFile(), config.jira2.url)
   } catch (e) {
     console.error('Could not init JiraClient')
     console.error(e)
@@ -221,7 +221,7 @@ async function setup() {
   state.whatsNewDialogOpen = app.getVersion() !== state.whatsNewDialogLastOpenedForVersion
   state.whatsNewDialogLastOpenedForVersion = app.getVersion()
 
-  getTasksFromAssignedJiraIssues(clarityState.tasks)
+  getTasksFromAssignedJiraIssues(platformState.tasks)
     .then((e) => (state.assignedIssueTasks = e.map((t) => state.normalizeTask(t))))
     .catch((error) => state.addMessage(error.message))
 
@@ -267,8 +267,8 @@ async function setup() {
       console.log('chromedriver missing or has wrong version')
       installChromeDriver(requiredChromeDriverVersion, chromeDriverDir, false)
     }
-    clarityState.chromeExe = state.config.chromePath
-    clarityState.chromedriverExe = chromeDriverPath
+    platformState.chromeExe = state.config.chromePath
+    platformState.chromedriverExe = chromeDriverPath
     return { chromeVersion, chromeDriverVersion: requiredChromeDriverVersion }
   }
   checkChromePath().catch((error) => state.addMessage(error.message))
@@ -376,7 +376,7 @@ async function setup() {
 
         ...suggestedTaskMenuItems(
           state,
-          clarityState,
+          platformState,
           state.currentTask,
           (task) => (state.currentTask = task),
         ),
@@ -444,7 +444,7 @@ async function setup() {
         config.keepHovering &&
         !state.hoverMode &&
         !state.dialogOpen() &&
-        !clarityState.currentlyImportingTasks &&
+        !platformState.currentlyImportingTasks &&
         !state.windowFocused
       ) {
         state.hoverMode = true
@@ -516,7 +516,7 @@ async function setup() {
           state,
           checkCgJira,
           checkChromePath,
-          clarityState,
+          platformState: platformState,
           menuItems: getMenuItems(state),
           getTasksForSearchString: (s) =>
             getTasksForSearchString(s).then((ts) =>

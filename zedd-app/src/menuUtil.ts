@@ -1,10 +1,10 @@
-import { MenuItemConstructorOptions } from 'electron'
-import { AppState, Task } from './AppState'
-import { PlatformState } from './PlatformState'
+import {MenuItemConstructorOptions} from 'electron'
+import {AppState, Task} from './AppState'
+import {PlatformState} from './PlatformState'
 
 export const suggestedTaskMenuItems = (
   state: AppState,
-  clarityState: PlatformState,
+  platformState: PlatformState,
   checked: Task,
   onClick: (t: Task) => void,
 ): MenuItemConstructorOptions[] => {
@@ -15,7 +15,7 @@ export const suggestedTaskMenuItems = (
         // U+2007 = FIGURE SPACE (space the width of a number)
         state.formatHours(state.getTaskHours(t)).padStart(6, '\u2007') +
         ((x) => (x ? '   ' + x.projectName + ' / ' + x.name : ''))(
-          clarityState.resolveTask(t.clarityTaskIntId),
+          platformState.resolveTask(t.platformTaskIntId),
         ),
       type: 'checkbox',
       checked: checked === t,

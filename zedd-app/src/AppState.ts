@@ -1,70 +1,70 @@
 import * as assert from 'assert'
 import {
-  addMinutes,
-  areIntervalsOverlapping,
-  compareDesc,
-  differenceInDays,
-  differenceInHours,
-  differenceInMinutes,
-  eachDayOfInterval,
-  endOfDay,
-  format as formatDate,
-  getDay,
-  getISODay,
-  isAfter,
-  isBefore,
-  isSameDay,
-  isValid,
-  max as dateMax,
-  min as dateMin,
-  parseISO,
-  set as dateSet,
-  startOfDay,
-  startOfMinute,
-  parse as dateParse,
-  subSeconds,
-  eachYearOfInterval,
-  getYear,
-  differenceInMonths,
+    addMinutes,
+    areIntervalsOverlapping,
+    compareDesc,
+    differenceInDays,
+    differenceInHours,
+    differenceInMinutes,
+    differenceInMonths,
+    eachDayOfInterval,
+    eachYearOfInterval,
+    endOfDay,
+    format as formatDate,
+    getDay,
+    getISODay,
+    getYear,
+    isAfter,
+    isBefore,
+    isSameDay,
+    isValid,
+    max as dateMax,
+    min as dateMin,
+    parse as dateParse,
+    parseISO,
+    set as dateSet,
+    startOfDay,
+    startOfMinute,
+    subSeconds,
 } from 'date-fns'
-import { promises as fsp } from 'fs'
-import { sum } from 'lodash'
-import { computed, observable, transaction, intercept, action, makeObservable } from 'mobx'
-import type { IObservableArray } from 'mobx'
-import { createTransformer, ObservableGroupMap } from 'mobx-utils'
+import {promises as fsp} from 'fs'
+import {sum} from 'lodash'
+import type {IObservableArray} from 'mobx'
+import {action, computed, intercept, makeObservable, observable, transaction} from 'mobx'
+import {createTransformer, ObservableGroupMap} from 'mobx-utils'
 import * as path from 'path'
 import * as chroma from 'chroma.ts'
 import {
-  custom,
-  date,
-  deserialize,
-  identifier,
-  list,
-  object,
-  reference,
-  serializable,
-  serialize,
-  SKIP,
-  getDefaultModelSchema,
-  createSimpleSchema,
+    createSimpleSchema,
+    custom,
+    date,
+    deserialize,
+    getDefaultModelSchema,
+    identifier,
+    list,
+    object,
+    reference,
+    serializable,
+    serialize,
+    SKIP,
 } from 'serializr'
 
 import {
-  abs,
-  isoWeekInterval,
-  mkdirIfNotExists,
-  startOfNextMinute,
-  stringHashColor,
-  tryWithFilesInDir,
-  uniqCustom,
-  FILE_DATE_FORMAT,
-  readFilesWithDate,
-  formatHoursBT,
-  formatHoursHHmm,
-  getUniqueId,
+    abs,
+    FILE_DATE_FORMAT,
+    formatHoursBT,
+    formatHoursHHmm,
+    getUniqueId,
+    isoWeekInterval,
+    mkdirIfNotExists,
+    readFilesWithDate,
+    startOfNextMinute,
+    stringHashColor,
+    tryWithFilesInDir,
+    uniqCustom,
 } from './util'
-import { ZeddSettings } from './ZeddSettings'
-import { Undoer } from './Undoer'
+import {ZeddSettings} from './ZeddSettings'
+import {Undoer} from './Undoer'
 
 export const MIN_GAP_TIME_MIN = 5
 
@@ -98,7 +98,7 @@ export class Task {
 
   @serializable
   @observable
-  public clarityTaskIntId: number | undefined
+  public platformTaskIntId: number | undefined
 
   /**
    * The internal key for JIRA-Issues.
@@ -110,19 +110,19 @@ export class Task {
 
   @serializable
   @observable
-  public clarityTaskComment: string = ''
+  public platformTaskComment: string = ''
 
   constructor(
     name: string = '',
-    clarityTaskIntId?: number | undefined,
+    platformTaskIntId?: number | undefined,
     key?: string,
-    clarityTaskComment?: string,
+    platformTaskComment?: string,
   ) {
     makeObservable(this)
     this.name = name
-    this.clarityTaskIntId = clarityTaskIntId
+    this.platformTaskIntId = platformTaskIntId
     this.key = key
-    this.clarityTaskComment = clarityTaskComment || ''
+    this.platformTaskComment = platformTaskComment || ''
   }
 
   public static same(a: Task, b: Task): boolean {

@@ -1,47 +1,85 @@
-import puppeteer from 'puppeteer'
+import puppeteer, {Browser, Page} from 'puppeteer'
+import {Task} from './model/task.model'
 
-export async function importOTTTasks(nikuLink: string) {
-    const browser = await puppeteer.launch({ headless: false });
-    const page = await browser.newPage();
+let browser: Browser;
+let page: Page;
 
-    await page.goto(nikuLink);
+export async function importOTTTasks(
+    nikuLink: string
+): Promise<Task[]> {
+    browser = await puppeteer.launch({ headless: false })
+    page = await browser.newPage()
 
-    await page.waitForSelector('[role="table"]');
+    await page.goto(nikuLink)
 
-    await page.setRequestInterception(true);
+    await page.waitForSelector('[role="table"]')
 
-    const dropdown = await page.waitForSelector('.MuiBox-root.jss137.jss124 > .MuiInputBase-root.MuiOutlinedInput-root.jss125');
+    await page.setRequestInterception(true)
 
-    await dropdown!.click();
+    const dropdown = await page.waitForSelector(
+        '.MuiBox-root.jss137.jss124 > .MuiInputBase-root.MuiOutlinedInput-root.jss125',
+    )
 
-    const dropdownOptions = await page.waitForSelector('.MuiPaper-root.MuiMenu-paper.MuiPopover-paper.MuiPaper-elevation8.MuiPaper-rounded > .MuiList-root.MuiMenu-list.MuiList-padding');
+    await dropdown!.click()
 
-    console.log('TU JESTEM1')
+    const dropdownOptions = await page.waitForSelector(
+        '.MuiPaper-root.MuiMenu-paper.MuiPopover-paper.MuiPaper-elevation8.MuiPaper-rounded > .MuiList-root.MuiMenu-list.MuiList-padding',
+    )
+
     const allAssigned = await dropdownOptions?.waitForSelector('li[data-value="All"]')
-    console.log('TU JESTEM2')
-    await allAssigned!.click();
-    console.log('TU JESTEM3')
-
-    page.on('request', req => {
+    await allAssigned!.click()
+    page.on('request', (req) => {
         req.continue();
     });
-    page.on('response', async res => {
-        try {
-            const jsonResponse = await res.json();
-            if (jsonResponse && Array.isArray(jsonResponse.data)) {
-                // const mappedData = jsonResponse.data.map(item => ({
-                //
-                // }));
-                //console.log('Mapped Data:', mappedData);
+    return new Promise<Task[]>((resolve, reject) => {
+        page.on('response', async (res) => {
+            try {
+                if ((await res.text()).includes('assignedIssues')) {
+                    const jsonResponse = await res.json();
+
+                    if (jsonResponse && Array.isArray(jsonResponse.data)) {
+                        const tasks = getTasksFromJson(jsonResponse);
+                        await browser.close();
+                        resolve(tasks);  // Resolving the promise with the tasks
+                    }
+                }
+            } catch (error) {
+                console.error('Error parsing JSON:', error);
+                await browser.close();
+                reject(error);  // Rejecting the promise if there is an error
             }
-        } catch (error) {
-            console.error('Error parsing JSON:', error);
-        }
-
+        });
     });
-    // sleep(50000)
-    // await browser.close();
 
-    return "HALLOS wie gehts";
+}
 
+function getTasksFromJson(
+    jsonResponse: any
+): Task[] {
+    let tasks: Task[] = []
+
+    for (let i = 0; i < jsonResponse.data[0].assignedIssues.length; i++) {
+        let assignedIssue = jsonResponse.data[0].assignedIssues[i]
+        let assoBoardProjectCodes = jsonResponse.data[0].assoBoardProjectCodes
+        let projectIndex = -1
+        for (let j = 0; j < assoBoardProjectCodes.length; j++) {
+            if (assoBoardProjectCodes[j].projectCodeId === +assignedIssue.projectCode) {
+                projectIndex = j
+            }
+        }
+        let task: Task = {
+            name: assignedIssue.title,
+            strId: projectIndex > -1 ? assoBoardProjectCodes[projectIndex].gfsTaskCode : null,
+            intId: assignedIssue.appointmentId,
+            projectName: projectIndex > -1 ? assoBoardProjectCodes[projectIndex].gtmProjectName : null,
+            start: null,
+            end: null,
+            projectIntId: projectIndex > -1 ? assoBoardProjectCodes[projectIndex].gfsProjectCode : null,
+            taskCode: projectIndex > -1 ? assoBoardProjectCodes[projectIndex].gfsTaskCode : null,
+            typ: 'OTT',
+        }
+        tasks.push(task)
+    }
+
+    return tasks
 }

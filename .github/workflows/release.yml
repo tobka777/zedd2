@@ -17,10 +17,10 @@ jobs:
           node-version: 14
           architecture: 'x64' 
 
-      - name: install clarity dependencies
+      - name: install platform dependencies
         working-directory: ./zedd-platform
         run: npm install
-      - name: build clarity
+      - name: build platform
         working-directory: ./zedd-platform
         run: npm run build
 

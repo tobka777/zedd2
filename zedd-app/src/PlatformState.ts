@@ -2,25 +2,20 @@ import {format as formatDate, parseISO} from 'date-fns'
 import {promises as fsp} from 'fs'
 import {computed, makeObservable, observable} from 'mobx'
 import * as path from 'path'
-import {
-  fillClarity,
-  getProjectInfo,
-  Project as ZeddClarityProject,
-  Task as ZeddClarityTask,
-  webDriverQuit,
-} from 'zedd-platform'
-import {PlatformExportFormat} from 'zedd-platform/src/model/platform-export-format.model'
+import {fillClarity, webDriverQuit,} from 'zedd-platform'
+import {PlatformExportFormat} from 'zedd-platform/out/model/platform-export-format.model'
+import {Task as ZeddPlatformTask} from 'zedd-platform/src/model/task.model'
 import './index.css'
 
 import {importOTTTasks} from "zedd-platform/out/src";
 import {FILE_DATE_FORMAT, getLatestFileInDir, mkdirIfNotExists} from './util'
 
-export interface ClarityTask extends ZeddClarityTask {
+export interface PlatformTask extends ZeddPlatformTask {
   projectName: string
-  projectIntId: number
+  projectIntId: string
 }
 
-export enum ClarityActionType {
+export enum PlatformActionType {
   SubmitTimesheet,
   ImportTasks,
 }
@@ -35,9 +30,9 @@ export class PlatformState {
   public chromeHeadless: boolean
 
   /**
-   * The name of the "clarity resource" you are filling out
+   * The name of the "platform resource" you are filling out
    * timesheets for, i.e. yourself. this is only required
-   * if you have the right ins clarity to fill timesheets for
+   * if you have the right ins platform to fill timesheets for
    * others.
    */
   public resourceName: string | undefined
@@ -49,7 +44,7 @@ export class PlatformState {
   public success = false
 
   @observable
-  public actionType: ClarityActionType
+  public actionType: PlatformActionType
 
   @observable
   private _currentlyImportingTasks = false
@@ -58,12 +53,12 @@ export class PlatformState {
   private _currentlyExportingTasks = false
 
   @observable
-  private _tasks: ClarityTask[] = []
+  private _tasks: PlatformTask[] = []
 
   @observable
   private _tasksLastUpdated: Date | undefined
 
-  public constructor(public clarityDir: string) {
+  public constructor(public platformDir: string) {
     makeObservable(this)
   }
 
@@ -75,12 +70,12 @@ export class PlatformState {
     return this._currentlyExportingTasks
   }
 
-  get tasks(): ClarityTask[] {
+  get tasks(): PlatformTask[] {
     return this._tasks
   }
 
   @computed
-  get intIdTaskMap(): Map<number, ClarityTask> {
+  get intIdTaskMap(): Map<number, PlatformTask> {
     return this._tasks.reduce((map, task) => map.set(task.intId, task), new Map())
   }
 
@@ -98,18 +93,18 @@ export class PlatformState {
   }
 
   public async init(): Promise<void> {
-    await mkdirIfNotExists(this.clarityDir)
+    await mkdirIfNotExists(this.platformDir)
   }
 
   public async export(
-    clarityExport: PlatformExportFormat,
+    platformExport: PlatformExportFormat,
     submitTimesheets: boolean,
   ): Promise<void> {
-    this.actionType = ClarityActionType.SubmitTimesheet
-    console.log('exporting timesheets', clarityExport)
+    this.actionType = PlatformActionType.SubmitTimesheet
+    console.log('exporting timesheets', platformExport)
     try {
-      this.clearClarityState(false)
-      await fillClarity(this.nikuLink, clarityExport, submitTimesheets, this.resourceName, {
+      this.clearPlatformState(false)
+      await fillClarity(this.nikuLink, platformExport, submitTimesheets, this.resourceName, {
         headless: this.chromeHeadless,
         chromeExe: this.chromeExe,
         chromedriverExe: this.chromedriverExe,
@@ -120,55 +115,18 @@ export class PlatformState {
     }
   }
 
-  public async importAndSaveClarityTasks(
-    excludedProjects: string[],
-    toImport: string[] | 'ALL' | 'NEW',
-    infoNotify?: (info: string) => void,
-  ): Promise<ClarityTask[]> {
-    // TODO import data
-    //const res = await ipcRenderer.invoke('scrape-data', this.nikuLink);
+  public async importAndSavePlatformTasks(): Promise<PlatformTask[]> {
 
-    await importOTTTasks(this.nikuLink)
-
-    const importProject = (projectName: string) => {
-      if (toImport === 'ALL') {
-        return true
-      } else if (toImport === 'NEW') {
-        return !this.projectNames.includes(projectName)
-      } else {
-        return toImport.includes(projectName)
-      }
-    }
-    // await this.importClarityTasks(
-    //   (projectName) => excludedProjects.includes(projectName) || !importProject(projectName),
-    //   (project) => {
-    //     infoNotify &&
-    //       infoNotify(
-    //         'Imported ' + project.tasks.length + ' tasks from project ' + project.name + '.',
-    //       )
-    //     const tasksToKeep = this._tasks.filter(
-    //       ({ projectName }) =>
-    //         !excludedProjects.includes(projectName) && projectName !== project.name,
-    //     )
-    //     this._tasks = [
-    //       ...tasksToKeep,
-    //       ...project.tasks.map((t) => ({
-    //         ...t,
-    //         projectName: project.name,
-    //         projectIntId: project.intId,
-    //       })),
-    //     ]
-    //   },
-    // )
-    // await this.saveClarityTasksToFile(this._tasks)
+    this._tasks = await this.importPlatformTasks()
+    await this.savePlatformTasksToFile(this._tasks)
     return this._tasks
   }
 
   public async loadStateFromFile(): Promise<void> {
-    ;[this._tasksLastUpdated, this._tasks] = await this.loadClarityTasksFromFile()
+    ;[this._tasksLastUpdated, this._tasks] = await this.loadPlatformTasksFromFile()
   }
 
-  public resolveTask(intId: number | undefined): undefined | ZeddClarityTask {
+  public resolveTask(intId: number | undefined): undefined | ZeddPlatformTask {
     return intId === undefined ? undefined : this.intIdTaskMap.get(intId)
   }
 
@@ -176,75 +134,58 @@ export class PlatformState {
     return this.resolveTask(intId) !== undefined
   }
 
-  private clearClarityState(importing: boolean) {
+  public killSelenium(): void {
+    webDriverQuit()
+  }
+
+  private clearPlatformState(importing: boolean) {
     this._currentlyImportingTasks = importing
     this._currentlyExportingTasks = !importing
     this.error = ''
     this.success = false
   }
 
-  private async importClarityTasks(
-    excludeProject: (projectName: string) => boolean,
-    notifyProject?: (p: ZeddClarityProject) => void,
-  ): Promise<ClarityTask[]> {
-    this.actionType = ClarityActionType.ImportTasks
+  private async importPlatformTasks(): Promise<PlatformTask[]> {
+    this.actionType = PlatformActionType.ImportTasks
     if (this._currentlyImportingTasks) {
       throw new Error('Already importing')
     }
     try {
-      this.clearClarityState(true)
+      this.clearPlatformState(true)
       this._currentlyExportingTasks = false
-      const projectInfos = await getProjectInfo(
-        this.nikuLink,
-        {
-          downloadDir: path.join(this.clarityDir, 'dl'),
-          chromeExe: this.chromeExe,
-          chromedriverExe: this.chromedriverExe,
-          headless: this.chromeHeadless,
-        },
-        excludeProject,
-        notifyProject,
-      )
+      const tasks = await importOTTTasks(this.nikuLink)
+
       this.success = true
-      return projectInfos.flatMap(({ tasks, name: projectName, intId: projectIntId }) =>
-        tasks.map((task) =>
-          Object.assign(
-            task,
-            {
-              projectName,
-              projectIntId,
-            },
-            task as unknown as ClarityTask,
-          ),
+      return tasks.map((task) =>
+        Object.assign(
+          task,
+          task as unknown as PlatformTask,
         ),
       )
+
     } finally {
       this._currentlyImportingTasks = false
     }
   }
 
-  private async saveClarityTasksToFile(tasks: ClarityTask[]) {
+  private async savePlatformTasksToFile(tasks: PlatformTask[]) {
     const json = JSON.stringify(tasks, undefined, '  ')
     const newFile = 'tasks_' + formatDate(new Date(), FILE_DATE_FORMAT) + '.json'
-    await fsp.writeFile(path.join(this.clarityDir, newFile), json)
-    const filesToDelete = (await fsp.readdir(this.clarityDir, { withFileTypes: true })).filter(
+    await fsp.writeFile(path.join(this.platformDir, newFile), json)
+    const filesToDelete = (await fsp.readdir(this.platformDir, { withFileTypes: true })).filter(
       (f) => f.isFile() && f.name !== newFile,
     )
-    await Promise.all(filesToDelete.map((f) => fsp.unlink(path.join(this.clarityDir, f.name))))
+    await Promise.all(filesToDelete.map((f) => fsp.unlink(path.join(this.platformDir, f.name))))
   }
 
-  private async loadClarityTasksFromFile(): Promise<[Date, ClarityTask[]]> {
-    const [file, date] = await getLatestFileInDir(this.clarityDir, /^tasks_(.*)\.json$/)
-    const content = await fsp.readFile(path.join(this.clarityDir, file), {
+  private async loadPlatformTasksFromFile(): Promise<[Date, PlatformTask[]]> {
+    const [file, date] = await getLatestFileInDir(this.platformDir, /^tasks_(.*)\.json$/)
+    const content = await fsp.readFile(path.join(this.platformDir, file), {
       encoding: 'utf8',
     })
-    const tasks: ClarityTask[] = JSON.parse(content, (key, value) =>
+    const tasks: PlatformTask[] = JSON.parse(content, (key, value) =>
       'end' === key || 'start' === key ? parseISO(value) : value,
     )
     return [date, tasks]
-  }
-
-  public killSelenium(): void {
-    webDriverQuit()
   }
 }
