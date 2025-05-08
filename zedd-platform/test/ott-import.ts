@@ -1,3 +1,3 @@
 import {importOTTTasks} from '../src';
 
-importOTTTasks('')
+importOTTTasks('', {headless: false })

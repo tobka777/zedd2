@@ -171,7 +171,11 @@ export class PlatformState {
     try {
       this.clearPlatformState(true)
       this._currentlyExportingTasks = false
-      const tasks = await importOTTTasks(this.ottLink, notifyTasks)
+      const tasks = await importOTTTasks(this.ottLink,
+          {
+            headless: this.chromeHeadless
+          },
+          notifyTasks)
 
       this.success = true
       return tasks.map((task) => Object.assign(task, task as unknown as PlatformTask))

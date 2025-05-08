@@ -1,11 +1,12 @@
 import puppeteer, {Browser, ElementHandle, Page} from 'puppeteer'
 import {Task} from './model/task.model'
+import {PlatformOptions} from "./model/platform.options.model";
 
 let browser: Browser
 let page: Page
 
-export async function importOTTTasks(nikuLink: string, notifyTasks?: (p: Task[]) => void): Promise<Task[]> {
-  browser = await puppeteer.launch({ headless: false })
+export async function importOTTTasks(nikuLink: string, options: PlatformOptions, notifyTasks?: (p: Task[]) => void): Promise<Task[]> {
+  browser = await puppeteer.launch({ headless: options.headless })
   page = await browser.newPage()
 
   await page.goto(nikuLink)
