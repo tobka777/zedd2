@@ -9,7 +9,7 @@ import { format as formatDate, formatDistance } from 'date-fns'
 import { observer } from 'mobx-react-lite'
 import * as React from 'react'
 import { useCallback, useRef, useState } from 'react'
-import { NikuUrlInvalidError } from 'zedd-platform/out/src/index'
+import { NikuUrlInvalidError } from 'zedd-platform'
 
 import { AppState, Task } from '../AppState'
 import { PlatformActionType, PlatformState } from '../PlatformState'
@@ -40,7 +40,9 @@ export const TaskEditor = observer(
     const importPlatformTasks = useCallback(
       (which: string) =>
         platformState
-          .importAndSavePlatformTasks((info) => state.addMessage(info, 'info', 2000))
+          .importAndSavePlatformTasks('OTT' === which ? 'OTT' : 'ALL', (info) =>
+            state.addMessage(info, 'info', 2000),
+          )
           .catch((e) => {
             platformState.error = e.message
             state.addMessage(
@@ -108,7 +110,7 @@ export const TaskEditor = observer(
         </Grid>
         <Grid item xs={6} lg={9}>
           <PlatformTaskSelect
-            value={value}
+            value={value.platformTaskIntId}
             disabled={value === state.getUndefinedTask()}
             label={`Account for Task ${value && value.name}`}
             fullWidth
@@ -177,12 +179,12 @@ export const TaskEditor = observer(
             <MenuItem
               onClick={() => {
                 setPopperOpen(false)
-                importPlatformTasks('NEW')
+                importPlatformTasks('OTT')
               }}
             >
-              NEW
+              OTT
             </MenuItem>
-            {platformState.projectNames.map((pn) => (
+            {/*platformState.projectNames.map((pn) => (
               <MenuItem
                 key={pn}
                 onClick={() => {
@@ -192,7 +194,7 @@ export const TaskEditor = observer(
               >
                 {pn}
               </MenuItem>
-            ))}
+            ))*/}
           </Menu>
         </Grid>
         <Grid item xs={2} lg={1}>
@@ -200,7 +202,7 @@ export const TaskEditor = observer(
             variant='text'
             style={{ width: '100%' }}
             disabled={!platformState.currentlyImportingTasks}
-            onClick={() => platformState.sileniumKill()}
+            onClick={() => platformState.killSelenium()}
           >
             Cancel
           </Button>

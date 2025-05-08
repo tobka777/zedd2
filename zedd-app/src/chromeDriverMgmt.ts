@@ -52,7 +52,7 @@ export const installChromeDriver = async (
 ) => {
   if (!targetDir) targetDir = dirname(await getEnvPathChromePath())
   let folder
-  let zipname
+  let zipname: string
   if (isWin) {
     folder = 'win64'
     zipname = 'chromedriver-win64'

@@ -47,7 +47,6 @@ const userConfigFile = path.join(saveDir, 'zeddconfig.json')
 
 const d = (...x: any[]) => console.log('renderer.ts', ...x)
 
-const isMac = process.platform === 'darwin'
 const isWin = process.platform === 'win32'
 
 // class Todo {

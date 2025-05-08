@@ -65,6 +65,7 @@ import {
 } from './util'
 import { ZeddSettings } from './ZeddSettings'
 import { Undoer } from './Undoer'
+import { PlatformType } from 'zedd-platform'
 
 export const MIN_GAP_TIME_MIN = 5
 
@@ -102,7 +103,7 @@ export class Task {
 
   @serializable
   @observable
-  public platformType: 'CLARITY' | 'OTT' | 'REPLICON' | undefined
+  public platformType?: PlatformType
 
   /**
    * The internal key for JIRA-Issues.
@@ -118,8 +119,8 @@ export class Task {
 
   constructor(
     name: string = '',
-    platformType: 'CLARITY' | 'OTT' | 'REPLICON' | undefined,
-    platformTaskIntId?: number | undefined,
+    platformType?: PlatformType,
+    platformTaskIntId?: number,
     key?: string,
     platformTaskComment?: string,
   ) {
@@ -803,7 +804,6 @@ export class AppState {
           return prev
         }, undefined as TimeSlice | undefined) ?? this.lastTimedSlice
 
-      // console.log('lastSlice', strlastSlice)
       if (differenceInMinutes(now, this.lastUserAction) > minIdleTimeInMin) {
         if (lastSlice) {
           lastSlice.end = startOfNextMinute(this.lastUserAction)
@@ -815,11 +815,8 @@ export class AppState {
         isAfter(this.lastUserAction, prevLastUserAction) &&
         differenceInMinutes(now, prevLastUserAction) > minIdleTimeInMin
       ) {
-        // console.log('user is back', timeSliceStr(lastSlice))
-
         if (lastSlice) {
           lastSlice.end = startOfNextMinute(prevLastUserAction)
-          // console.log('lastSlice', timeSliceStr(lastSlice))
           lastSlice = undefined
         }
         try {
@@ -837,8 +834,6 @@ export class AppState {
       if (!lastSlice) {
         const start = startOfMinute(now)
         const newSlice: TimeSlice = new TimeSlice(start, addMinutes(start, 1), this.currentTask)
-        // console.log('ADDING SLICE', newSlice)
-
         this.lastTimedSlice = this.addSlice(newSlice)
       } else {
         if (

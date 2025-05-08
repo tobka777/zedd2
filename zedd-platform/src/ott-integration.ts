@@ -69,12 +69,11 @@ function getTasksFromJson(jsonResponse: any): Task[] {
     }
     let task: Task = {
       name: assignedIssue.title,
-      strId: projectIndex > -1 ? assoBoardProjectCodes[projectIndex].gfsTaskCode : null,
       intId: assignedIssue.appointmentId,
-      projectName: projectIndex > -1 ? assoBoardProjectCodes[projectIndex].gtmProjectName : null,
-      start: null,
-      end: null,
       projectIntId: projectIndex > -1 ? assoBoardProjectCodes[projectIndex].gfsProjectCode : null,
+      projectName: projectIndex > -1 ? assoBoardProjectCodes[projectIndex].gtmProjectName : null,
+      start: undefined,
+      end: undefined,
       taskCode: projectIndex > -1 ? assoBoardProjectCodes[projectIndex].gfsTaskCode : null,
       typ: 'OTT',
     }

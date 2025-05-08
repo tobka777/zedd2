@@ -278,7 +278,8 @@ const CalendarBase = <T extends Interval>({
         const newDateRounded = roundToNearestMinutes(newDate, {
           nearestTo: e.ctrlKey || e.metaKey ? 5 : 15,
         })
-        const refDate = local.currentlyDragging[0].block[local.currentlyDragging[0].startEnd]
+        const refDate =
+          local.currentlyDragging[0].block[local.currentlyDragging[0].startEnd as 'start' | 'end']
         // sort currentlyDragging so that they don't overlap each other as we change start/end
         // individually, which isn't allowed
         const sorted = orderBy(local.currentlyDragging, [

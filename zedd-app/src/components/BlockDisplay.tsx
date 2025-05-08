@@ -88,7 +88,7 @@ export const BlockDisplay = observer(
       [startDrag, slice],
     )
 
-    const platformTask = platformState.resolveTask(slice.task.platformTaskIntId)
+    const task = platformState.resolveTask(slice.task.platformTaskIntId)
 
     const theme = useTheme()
 
@@ -141,15 +141,15 @@ export const BlockDisplay = observer(
             {format(slice.start, 'HH:mm')} - {format(slice.end, 'HH:mm')}
           </div>
         )}
-        {!platformTask && (
-          <span title='Platform Task is unset/invalid' style={{ cursor: 'help' }}>
+        {!task && (
+          <span title='Task is unset/invalid' style={{ cursor: 'help' }}>
             ⚠️
           </span>
         )}
         {slice.task.name}{' '}
-        {platformTask && (
+        {task && (
           <span style={{ fontFamily: 'Consolas' }}>
-            {platformTask.name}
+            {task.name}
             {slice.task.platformTaskComment && (
               <span style={{ fontStyle: 'italic' }}>{' mK ' + slice.task.platformTaskComment}</span>
             )}

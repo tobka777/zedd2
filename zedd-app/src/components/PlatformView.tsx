@@ -32,7 +32,7 @@ import { groupBy, remove, sortBy, uniqBy } from 'lodash'
 import { observer } from 'mobx-react-lite'
 import * as React from 'react'
 import { useState } from 'react'
-import { PlatformExportFormat } from 'zedd-platform/out/src/model/platform-export-format.model'
+import { PlatformExportFormat } from 'zedd-platform'
 
 import { TimeSlice, validDate } from '../AppState'
 import { PlatformActionType, PlatformState } from '../PlatformState'
@@ -89,7 +89,7 @@ export interface PlatformViewProps {
   errorHandler: (e: Error) => void
 }
 
-const styles = (theme) => ({
+const styles = (theme: any) => ({
   table: {
     padding: 0,
     borderSpacing: 0,
@@ -421,53 +421,9 @@ export const PlatformView = observer((props: PlatformViewProps) => {
           Cancel
         </Button>
         <Button
-          disabled={platformState.currentlyExportingTasks || platformState.currentlyImportingTasks}
-          variant='contained'
-          onClick={() =>
-            platformState
-              .export(
-                omap(platformExport, (workEntries) =>
-                  workEntries.filter((entry) => -1 !== entry.taskIntId),
-                ),
-                submitTimesheets,
-              )
-              .catch(errorHandler)
+          disabled={
+            true || platformState.currentlyExportingTasks || platformState.currentlyImportingTasks
           }
-          endIcon={
-            <>
-              {!platformState.currentlyExportingTasks && <SendIcon />}
-              {platformState.actionType === PlatformActionType.SubmitTimesheet && (
-                <LoadingSpinner
-                  loading={platformState.currentlyExportingTasks}
-                  error={platformState.error !== ''}
-                  success={platformState.success}
-                />
-              )}
-            </>
-          }
-        >
-          Clarity!
-        </Button>{' '}
-        <FormControlLabel
-          control={
-            <Checkbox
-              checked={submitTimesheets}
-              onChange={(_, checked) => onChangeSubmitTimesheets(!!checked)}
-            />
-          }
-          title='Autosubmit timesheets or just save them'
-          label='Autosubmit'
-        />
-      </CardActions>
-      <CardActions style={{ flexDirection: 'row-reverse' }}>
-        <Button
-          disabled={!platformState.currentlyExportingTasks}
-          onClick={() => platformState.killSelenium()}
-        >
-          Cancel
-        </Button>
-        <Button
-          disabled={platformState.currentlyExportingTasks || platformState.currentlyImportingTasks}
           variant='contained'
           onClick={() =>
             platformState

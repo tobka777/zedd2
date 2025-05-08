@@ -31,7 +31,6 @@ import { ZeddSettings } from '../ZeddSettings'
 import { TitleBar } from './TitleBar'
 import { AppBody } from './AppBody'
 import changelog from '../../../CHANGELOG.md'
-import { useClasses } from '../util'
 
 export interface AppGuiProps {
   state: AppState
@@ -43,10 +42,6 @@ export interface AppGuiProps {
   showContextMenu: () => void
   taskSelectRef?: (r: HTMLInputElement) => void
   getLinksFromString: (s: string) => [string, string][]
-}
-
-const styles = {
-  '@global #react-root': {},
 }
 
 export const AppGui = observer(
@@ -83,8 +78,6 @@ export const AppGui = observer(
 
     const { config } = state
     const currentFocusedTask = state.focused?.task ?? state.currentTask
-
-    const classes = useClasses(styles)
 
     const message = !state.hoverMode && state.messages.length ? state.messages[0] : undefined
 

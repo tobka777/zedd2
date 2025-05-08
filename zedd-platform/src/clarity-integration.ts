@@ -268,8 +268,10 @@ async function getProjectTasks(
           sortNo: +row['PSP-Sortierung'],
           name: name,
           strId: row['ID'],
+          taskCode: row['ID'],
           intId: +intIdStr,
           projectName: pName,
+          projectIntId: projectIntId,
           start: parseDate(row['Anfang'], 'dd.MM.yy', new Date()),
           end: parseDate(row['Ende'], 'dd.MM.yy', new Date()),
           openForTimeEntry: row['Für Zeiteintrag geöffnet'] == 'Ja',
@@ -325,7 +327,7 @@ async function getProjectInfoInternal(
 
 async function addTasks(
   ctx: Context,
-  tasks: Pick<Task, 'projectName' | 'intId' | 'name' | 'taskCode'>[],
+  tasks: Pick<Task, 'projectName' | 'intId' | 'name' | 'strId'>[],
 ) {
   const [$, $$, driver] = ctx
 
@@ -352,8 +354,8 @@ async function addTasks(
     const applyFilterButton = await $('button[name=applyFilter]')
     const task = tasks[i]
     await projectNameInput.sendKeys(Key.chord(CONTROL_KEY, 'a'), task.projectName)
-    if (task.taskCode) {
-      await taskIdInput.sendKeys(Key.chord(CONTROL_KEY, 'a'), task.taskCode)
+    if (task.strId) {
+      await taskIdInput.sendKeys(Key.chord(CONTROL_KEY, 'a'), task.strId)
       await taskNameInput.sendKeys(Key.chord(CONTROL_KEY, 'a'), Key.BACK_SPACE)
     } else {
       await taskIdInput.sendKeys(Key.chord(CONTROL_KEY, 'a'), Key.BACK_SPACE)
@@ -689,7 +691,6 @@ async function exportToPlatform(
         name: taskName,
         intId: taskIntId,
         projectName,
-        taskCode: undefined,
       })),
     )
     const rowInfos = await getRowInfos(true)
