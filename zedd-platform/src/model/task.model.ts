@@ -9,5 +9,5 @@ export interface Task {
   openForTimeEntry?: boolean //deprecated
   projectIntId?: string //deprecated
   taskCode?: string //deprecated
-  typ?: 'CLARITY' | 'OTT' | 'REPLICON' //deprecated
+  typ: 'CLARITY' | 'OTT' | 'REPLICON' //deprecated
 }

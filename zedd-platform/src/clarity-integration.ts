@@ -273,6 +273,7 @@ async function getProjectTasks(
           start: parseDate(row['Anfang'], 'dd.MM.yy', new Date()),
           end: parseDate(row['Ende'], 'dd.MM.yy', new Date()),
           openForTimeEntry: row['Für Zeiteintrag geöffnet'] == 'Ja',
+          typ: 'CLARITY'
         })
       })
       .on('error', reject)

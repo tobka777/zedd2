@@ -100,6 +100,10 @@ export class Task {
   @observable
   public platformTaskIntId: number | undefined
 
+  @serializable
+  @observable
+  public platformType: 'CLARITY' | 'OTT' | 'REPLICON' | undefined
+
   /**
    * The internal key for JIRA-Issues.
    * Used to prevent multiple tasks being created for the same issue.
@@ -114,6 +118,7 @@ export class Task {
 
   constructor(
     name: string = '',
+    platformType: 'CLARITY' | 'OTT' | 'REPLICON' | undefined,
     platformTaskIntId?: number | undefined,
     key?: string,
     platformTaskComment?: string,
@@ -123,6 +128,7 @@ export class Task {
     this.platformTaskIntId = platformTaskIntId
     this.key = key
     this.platformTaskComment = platformTaskComment || ''
+    this.platformType = platformType
   }
 
   public static same(a: Task, b: Task): boolean {
@@ -637,7 +643,7 @@ export class AppState {
   public getUndefinedTask(): Task {
     return (
       this.tasks.find((t) => 'UNDEFINED' === t.name) ||
-      new Task('UNDEFINED', undefined, 'UNDEFINED')
+      new Task('UNDEFINED', undefined, undefined, 'UNDEFINED')
     )
   }
 
@@ -699,7 +705,7 @@ export class AppState {
     return (
       this.tasks.find((t) => taskNameLC === t.name.toLowerCase()) ||
       this.assignedIssueTasks.find((t) => taskNameLC === t.name.toLowerCase()) ||
-      new Task(taskName)
+      new Task(taskName, undefined)
     )
   }
 
