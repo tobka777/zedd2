@@ -110,7 +110,7 @@ const issueInfoToTask = async (platformTasks: PlatformTask[], i: any): Promise<T
     const platformTask = platformTasks
       .filter((t) => t.name === platformTaskFieldValue)
       .sort((a, b) => compareDesc(a.start, b.start))[0]
-    platformTaskId = platformTask?.intId;
+    platformTaskId = platformTask?.intId
     platformType = platformTask?.typ
     if (!platformTaskId || !platformType) {
       console.warn(
@@ -121,7 +121,7 @@ const issueInfoToTask = async (platformTasks: PlatformTask[], i: any): Promise<T
     const platformTask = platformTasks
       .filter((t) => t.name.includes(externalKey))
       .sort((a, b) => compareDesc(a.start, b.start))[0]
-    platformTaskId = platformTask?.intId;
+    platformTaskId = platformTask?.intId
     platformType = platformTask?.typ
     if (!platformTaskId || !platformType) {
       console.warn("No platform-account found for external JIRA-Key '" + externalKey + "'")

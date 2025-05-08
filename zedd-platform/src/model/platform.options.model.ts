@@ -1,3 +1,3 @@
 export interface PlatformOptions {
-    headless?: boolean
+  headless?: boolean
 }

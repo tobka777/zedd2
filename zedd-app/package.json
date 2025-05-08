@@ -72,7 +72,7 @@
                 }
               ]
             },
-            "loggerPort": "9001"
+            "loggerPort": "3000"
           }
         }
       ],

@@ -1,11 +1,15 @@
-import puppeteer, {Browser, ElementHandle, Page} from 'puppeteer'
-import {Task} from './model/task.model'
-import {PlatformOptions} from "./model/platform.options.model";
+import puppeteer, { Browser, ElementHandle, Page } from 'puppeteer'
+import { Task } from './model/task.model'
+import { PlatformOptions } from './model/platform.options.model'
 
 let browser: Browser
 let page: Page
 
-export async function importOTTTasks(nikuLink: string, options: PlatformOptions, notifyTasks?: (p: Task[]) => void): Promise<Task[]> {
+export async function importOTTTasks(
+  nikuLink: string,
+  options: PlatformOptions,
+  notifyTasks?: (p: Task[]) => void,
+): Promise<Task[]> {
   browser = await puppeteer.launch({ headless: options.headless })
   page = await browser.newPage()
 
@@ -15,15 +19,14 @@ export async function importOTTTasks(nikuLink: string, options: PlatformOptions,
 
   await page.setRequestInterception(true)
 
-
   const [dropdownNode] = await page.$x(
-      "//div[@role='button' and contains(text(), 'Started & ended in selected period')]"
-  );
+    "//div[@role='button' and contains(text(), 'Started & ended in selected period')]",
+  )
 
-  const dropdown = dropdownNode as unknown as ElementHandle<Element>;
-  await dropdown.click();
+  const dropdown = dropdownNode as unknown as ElementHandle<Element>
+  await dropdown.click()
 
-  const dropdownOptions = await page.waitForSelector('ul[role="listbox"]');
+  const dropdownOptions = await page.waitForSelector('ul[role="listbox"]')
 
   const allAssigned = await dropdownOptions?.waitForSelector('li[data-value="All"]')
   await allAssigned!.click()

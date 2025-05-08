@@ -1,6 +1,6 @@
-import {promises as fsp} from 'fs'
-import {makeObservable, observable} from 'mobx'
-import {custom, deserialize, raw, serializable, serialize} from 'serializr'
+import { promises as fsp } from 'fs'
+import { makeObservable, observable } from 'mobx'
+import { custom, deserialize, raw, serializable, serialize } from 'serializr'
 
 export class ZeddSettings {
   constructor(fromFile?: string) {
