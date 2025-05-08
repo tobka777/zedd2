@@ -34,10 +34,10 @@ Enter what you are currently working on in the field `Currently Timing`. This do
 account.
 If JIRA is configured, tickets from Jira will be suggested.
 
-Enter the Platform account for the task in `Platform-Account for Task ...`. This can also be done later/Friday and is
+Enter the Platform account for the task in `Account for Task ...`. This can also be done later/Friday and is
 retroactive.
 
-Optionally, add a comment in `Platform-Account Comment for This Task`. The tag is automatically calculated and entered
+Optionally, add a comment in `Account Comment for This Task`. The tag is automatically calculated and entered
 in Platform beforehand.
 
 At the bottom, you can see what will be exported to Replicon/OTT. What is currently displayed will always be exported.

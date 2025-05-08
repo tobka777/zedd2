@@ -108,9 +108,9 @@ export const TaskEditor = observer(
         </Grid>
         <Grid item xs={6} lg={9}>
           <PlatformTaskSelect
-            value={value.platformTaskIntId}
+            value={value}
             disabled={value === state.getUndefinedTask()}
-            label={`Platform-Account for Task ${value && value.name}`}
+            label={`Account for Task ${value && value.name}`}
             fullWidth
             style={{ flex: '1 1 auto' }}
             onChange={(newIntId) => (value.platformTaskIntId = newIntId)}
@@ -208,7 +208,7 @@ export const TaskEditor = observer(
         <Grid item xs={10} lg={11}>
           <TextField
             value={value.platformTaskComment}
-            label='Platform-Account Comment for This Task'
+            label='Account Comment for This Task'
             disabled={value === state.getUndefinedTask()}
             onChange={(e) => (value.platformTaskComment = e.target.value)}
             fullWidth

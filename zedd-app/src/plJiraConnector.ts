@@ -113,9 +113,7 @@ const issueInfoToTask = async (platformTasks: PlatformTask[], i: any): Promise<T
     platformTaskId = platformTask?.intId
     platformType = platformTask?.typ
     if (!platformTaskId || !platformType) {
-      console.warn(
-        "No platform-account found for JIRA Platform-Task Field '" + platformTaskFieldValue + "'",
-      )
+      console.warn("No account found for JIRA Platform-Task Field '" + platformTaskFieldValue + "'")
     }
   } else if (externalKey) {
     const platformTask = platformTasks
@@ -124,7 +122,7 @@ const issueInfoToTask = async (platformTasks: PlatformTask[], i: any): Promise<T
     platformTaskId = platformTask?.intId
     platformType = platformTask?.typ
     if (!platformTaskId || !platformType) {
-      console.warn("No platform-account found for external JIRA-Key '" + externalKey + "'")
+      console.warn("No account found for external JIRA-Key '" + externalKey + "'")
     }
   }
   console.log(
