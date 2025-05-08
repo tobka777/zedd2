@@ -144,7 +144,8 @@ function transform({ slices, showing, platformState }: PlatformViewProps): Platf
       throw e
     }
     const task =
-      (slice.task.platformTaskIntId && platformState.resolveTask(+slice.task.platformTaskIntId)) ||
+      (slice.task.platformTaskIntId &&
+        platformState.resolveTask(+slice.task.platformTaskIntId, slice.task.platformType)) ||
       placeholderPlatformTask
     // fix start/end of b, as part of the interval may be outside showInterval
     const bStartFixed = dateMax([slice.start, showInterval.start])
@@ -157,6 +158,7 @@ function transform({ slices, showing, platformState }: PlatformViewProps): Platf
       const dayHourss = dayMap[dayKey]
       let dayHours = dayHourss.find(
         (d) =>
+          d.platformType === slice.task.platformType &&
           d.taskIntId === slice.task.platformTaskIntId &&
           d.comment === slice.task.platformTaskComment,
       )

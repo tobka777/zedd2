@@ -386,6 +386,7 @@ async function addTasks(
 }
 
 interface WorkEntry {
+  platformType: 'CLARITY' | 'OTT' | 'REPLICON' | undefined
   projectName: string
   taskName: string
   taskIntId: number
@@ -576,6 +577,7 @@ async function exportToPlatform(
               projectName: rowInfo.projectName,
               hours,
               comment: dayComment && dayComment.substring(4),
+              platformType: 'CLARITY',
             })
       }
     }

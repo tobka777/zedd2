@@ -3,11 +3,12 @@ import * as React from 'react'
 import { Autocomplete, TextField } from '@mui/material'
 import { StandardTextFieldProps } from '@mui/material/TextField'
 import { PlatformState, PlatformTask } from '../PlatformState'
+import { Task } from '../AppState'
 
 export type PlatformTaskSelectProps = {
   platformState: PlatformState
   onChange: (taskIntId: number | undefined) => void
-  value: number | undefined
+  value: Task
 } & Omit<StandardTextFieldProps, 'onChange' | 'value'>
 
 export const PlatformTaskSelect = observer(
@@ -21,7 +22,10 @@ export const PlatformTaskSelect = observer(
   }: PlatformTaskSelectProps) => {
     const maxEntries = 20
 
-    const resolvedVal = (value !== undefined && platformState.resolveTask(value)) || undefined
+    const resolvedVal =
+      (value !== undefined &&
+        platformState.resolveTask(value.platformTaskIntId, value.platformType)) ||
+      undefined
 
     return (
       <Autocomplete
