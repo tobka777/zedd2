@@ -93,7 +93,8 @@
   },
   "dependencies": {
     "selenium-webdriver": "^4.1.1",
-    "win-ca": "^3.4.5"
+    "win-ca": "^3.4.5",
+    "puppeteer": "^19.0.0"
   },
   "devDependencies": {
     "@babel/core": "^7.17.5",
