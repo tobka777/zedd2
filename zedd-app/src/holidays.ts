@@ -4,7 +4,7 @@ export async function getHolidays(
   stateCode?: string,
 ): Promise<Date[]> {
   if (countryCode !== '') {
-    let url = 'https://date.nager.at/api/v3/publicholidays/' + year + '/' + countryCode
+    const url = 'https://date.nager.at/api/v3/publicholidays/' + year + '/' + countryCode
     const response = await fetch(url)
     const holidays: { counties: string[]; global: boolean; date: string }[] = await response.json()
     let filteredDays = holidays

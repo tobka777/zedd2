@@ -7,5 +7,5 @@ declare module '*.md' {
   export default string
 }
 
-declare var isDev: boolean
-declare var appUserModelId: string
+declare let isDev: boolean
+declare let appUserModelId: string

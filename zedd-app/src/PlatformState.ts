@@ -115,7 +115,7 @@ export class PlatformState {
   }
 
   public async importAndSavePlatformTasks(
-    // @ts-expect-error TS6133
+    // @ts-expect-error TS6133
     toImport: 'ALL' | PlatformType,
     infoNotify?: (info: string) => void,
   ): Promise<Task[]> {

@@ -36,7 +36,7 @@ import { countries, federalStates } from '../holidays'
 export const SettingsDialog = observer(
   ({
     done,
-    // @ts-expect-error TS6133
+    // @ts-expect-error TS6133
     platformState,
     settings,
     checkCgJira,

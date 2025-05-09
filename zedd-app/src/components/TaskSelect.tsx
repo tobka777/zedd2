@@ -10,7 +10,7 @@ export type TaskSelectProps = {
   tasks: Task[]
 
   getTasksForSearchString: (search: string) => Promise<Task[]>
-  onChange: (event: React.ChangeEvent<{}>, value: Task | string | undefined) => void
+  onChange: (event: React.ChangeEvent<object>, value: Task | string | undefined) => void
   value: Task
   handleError: (err: Error) => void
   textFieldStyle?: React.CSSProperties

@@ -15,7 +15,7 @@
     "test": "cross-env TS_NODE_TRANSPILE_ONLY=1 TS_NODE_COMPILER_OPTIONS={\\\"module\\\":\\\"commonjs\\\"} mocha --require ts-node/register src/**/Undoer.test.ts",
     "test:watch": "npm t -- --extension ts,tsx --watch",
     "tslint": "tslint --project .",
-    "lint": "eslint src --ext .ts,.js,.tsx,.jsx",
+    "lint": "eslint src --ext .ts,.js,.tsx,.jsx --fix",
     "typecheck": "tsc --noEmit"
   },
   "keywords": [],

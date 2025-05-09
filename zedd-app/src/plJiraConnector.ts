@@ -44,27 +44,20 @@ const jiraConnectorErrorToMessage = (x: any) => {
   throw new Error(request.method + ' ' + request.uri.href + ' returned ' + body)
 }
 
-export const checkCgJira = (config: ZeddSettings['cgJira']): Promise<any> => {
+export const checkCgJira = async (config: ZeddSettings['cgJira']): Promise<any> => {
   console.log(config.url)
-  return new Promise(async (resolve, reject) => {
-    try {
-      const response = await fetch(config.url + '/rest/api/2/myself', {
-        method: 'GET',
-        headers: {
-          Authorization: 'Bearer ' + config.token,
-        },
-      })
-      if (response.status >= 400) {
-        console.error(response)
-        reject(new Error(response.url + ' returned ' + response.status + ' ' + response.statusText))
-      } else {
-        resolve(response)
-      }
-    } catch (error) {
-      reject(error)
-    }
-    return
+  const response = await fetch(config.url + '/rest/api/2/myself', {
+    method: 'GET',
+    headers: {
+      Authorization: 'Bearer ' + config.token,
+    },
   })
+  if (response.status >= 400) {
+    console.error(response)
+    throw new Error(response.url + ' returned ' + response.status + ' ' + response.statusText)
+  } else {
+    return response
+  }
 }
 
 const callWithJsessionCookie = async <T>(cb: () => Promise<T>) => {
