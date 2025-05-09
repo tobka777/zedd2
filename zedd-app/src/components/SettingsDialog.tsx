@@ -408,7 +408,6 @@ export const SettingsDialog = observer(
             </Grid>
             <Grid item xs={8} style={{ minHeight: '4em' }}>
               <TextField
-                placeholder='http://example.com/niku/nu'
                 style={{ width: '100%' }}
                 value={settings.chromePath}
                 onChange={(e) => {

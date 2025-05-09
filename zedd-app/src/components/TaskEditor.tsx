@@ -9,8 +9,7 @@ import { format as formatDate, formatDistance } from 'date-fns'
 import { observer } from 'mobx-react-lite'
 import * as React from 'react'
 import { useCallback, useRef, useState } from 'react'
-import { NikuUrlInvalidError } from 'zedd-platform'
-
+import { InvalidPlattformUrlException } from 'zedd-platform'
 import { AppState, Task } from '../AppState'
 import { PlatformActionType, PlatformState } from '../PlatformState'
 import { PlatformTaskSelect } from './PlatformTaskSelect'
@@ -47,7 +46,7 @@ export const TaskEditor = observer(
             platformState.error = e.message
             state.addMessage(
               e.message +
-                (e instanceof NikuUrlInvalidError
+                (e instanceof InvalidPlattformUrlException
                   ? 'Check zeddConfig.ottLink and reload config.'
                   : ''),
             )

@@ -1,8 +1,5 @@
 import { compareDesc, differenceInMinutes } from 'date-fns'
 import { Version2Client as JiraClient } from 'jira.js'
-// @ts-ignore
-import * as request from 'request'
-
 import { isEqual } from 'lodash'
 import { Task } from './AppState'
 import { PlatformState } from './PlatformState'
@@ -113,7 +110,7 @@ const issueInfoToTask = async (platformTasks: PlatformTask[], i: any): Promise<T
     platformTaskId = platformTask?.intId
     platformType = platformTask?.typ
     if (!platformTaskId || !platformType) {
-      console.warn("No account found for JIRA Platform-Task Field '" + platformTaskFieldValue + "'")
+      console.warn("No account found for JIRA Task Field '" + platformTaskFieldValue + "'")
     }
   } else if (externalKey) {
     const platformTask = platformTasks

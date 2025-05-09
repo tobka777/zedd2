@@ -706,7 +706,7 @@ export class AppState {
     return (
       this.tasks.find((t) => taskNameLC === t.name.toLowerCase()) ||
       this.assignedIssueTasks.find((t) => taskNameLC === t.name.toLowerCase()) ||
-      new Task(taskName, undefined)
+      new Task(taskName)
     )
   }
 

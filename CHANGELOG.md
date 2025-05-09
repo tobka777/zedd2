@@ -110,8 +110,7 @@
 ## [2.6.0] - 2020-07-17
 
 - Calendar is hidden if the selected interval is larger than 31 days.
-- The "clarity view" groups columns by day/week/month/year, depending on the selected interval. Selecting large
-  intervals is useful to see the total booked time to a particular account.
+- The "clarity view" groups columns by day/week/month/year, depending on the selected interval. Selecting large intervals is useful to see the total booked time to a particular account.
 - Fixed: GUESS-Button: `FOO-11` no longer matches clarity-task containing `FOO-111`.
 
 ## [2.5.0] - 2020-07-12
