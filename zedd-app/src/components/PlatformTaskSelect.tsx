@@ -8,7 +8,7 @@ import { Task } from 'zedd-platform'
 export type PlatformTaskSelectProps = {
   platformState: PlatformState
   onChange: (taskIntId: number | undefined) => void
-  value: number | undefined
+  value: Task
 } & Omit<StandardTextFieldProps, 'onChange' | 'value'>
 
 export const PlatformTaskSelect = observer(
@@ -22,7 +22,7 @@ export const PlatformTaskSelect = observer(
   }: PlatformTaskSelectProps) => {
     const maxEntries = 20
 
-    const resolvedVal = (value !== undefined && platformState.resolveTask(value)) || undefined
+    const resolvedVal = (value !== undefined && platformState.resolveTask(value.platformTaskIntId, value.platformType)) || undefined
 
     return (
       <Autocomplete

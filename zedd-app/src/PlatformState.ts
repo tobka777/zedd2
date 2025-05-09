@@ -132,12 +132,20 @@ export class PlatformState {
     ;[this._tasksLastUpdated, this._tasks] = await this.loadPlatformTasksFromFile()
   }
 
-  public resolveTask(intId: number | undefined): undefined | Task {
-    return intId === undefined ? undefined : this.intIdTaskMap.get(intId)
+  public resolveTask(
+    intId: number | undefined,
+    platformType: 'CLARITY' | 'OTT' | 'REPLICON' | undefined,
+  ): undefined | Task {
+    const task = intId === undefined ? undefined : this.intIdTaskMap.get(intId)
+
+    return task && task.typ === platformType ? task : undefined
   }
 
-  public isValidTaskIntId(intId: number | undefined): boolean {
-    return this.resolveTask(intId) !== undefined
+  public isValidTaskIntIdAndPlatformType(
+    intId: number | undefined,
+    platformType: 'CLARITY' | 'OTT' | 'REPLICON' | undefined,
+  ): boolean {
+    return this.resolveTask(intId, platformType) !== undefined
   }
 
   public killPlatform(): void {

@@ -312,7 +312,7 @@ async function getProjectInfoInternal(
 
 async function addTasks(
   ctx: Context,
-  tasks: Pick<Task, 'projectName' | 'intId' | 'name' | 'strId'>[],
+  tasks: Pick<Task, 'projectName' | 'intId' | 'name' | 'taskCode'>[],
 ) {
   const [$, $$, driver] = ctx
 
@@ -339,8 +339,8 @@ async function addTasks(
     const applyFilterButton = await $('button[name=applyFilter]')
     const task = tasks[i]
     await projectNameInput.sendKeys(Key.chord(CONTROL_KEY, 'a'), task.projectName)
-    if (task.strId) {
-      await taskIdInput.sendKeys(Key.chord(CONTROL_KEY, 'a'), task.strId)
+    if (task.taskCode) {
+      await taskIdInput.sendKeys(Key.chord(CONTROL_KEY, 'a'), task.taskCode)
       await taskNameInput.sendKeys(Key.chord(CONTROL_KEY, 'a'), Key.BACK_SPACE)
     } else {
       await taskIdInput.sendKeys(Key.chord(CONTROL_KEY, 'a'), Key.BACK_SPACE)
@@ -471,9 +471,11 @@ async function exportToClarity(
     const joinedCommentContents = delComments
       .map((c) => c.content.replace('\n', ' ').trim())
       .join(' ')
-    for (const commentFromClarity of joinedCommentContents.split(/(?=\[.{2}\])/).filter((x) => x)) {
-      d(commentFromClarity)
-      const [_, day, comment] = commentFromClarity.match(/\[(.{2})\](.*)/)!
+    for (const commentFromPlatform of joinedCommentContents
+      .split(/(?=\[.{2}\])/)
+      .filter((x) => x)) {
+      d(commentFromPlatform)
+      const [_, day, comment] = commentFromPlatform.match(/\[(.{2})\](.*)/)!
       if (targetComments[day.toUpperCase()] === undefined) {
         // use old comment
         targetComments[day.toUpperCase()] = comment.trim()
@@ -512,12 +514,12 @@ async function exportToClarity(
       await pageLoad(ctx)
     }
 
-    // we add all comments as a single clarity-comment, divided by newlines
-    const clarityCommentToAdd = Object.keys(targetComments)
+    // we add all comments as a single platform-comment, divided by newlines
+    const platformCommentToAdd = Object.keys(targetComments)
       .filter((dayString) => targetComments[dayString])
       .map((dayString) => '[' + dayString + '] ' + targetComments[dayString])
       .join('\n')
-    await addComment(clarityCommentToAdd)
+    await addComment(platformCommentToAdd)
 
     await $('#portlet-timeadmin\\.notesBrowser button[onclick="closeWindow();"]').click()
   }
@@ -550,6 +552,7 @@ async function exportToClarity(
               projectName: rowInfo.projectName,
               hours,
               comment: dayComment && dayComment.substring(4),
+              platformType: 'CLARITY',
             })
       }
     }
@@ -663,6 +666,7 @@ async function exportToClarity(
         name: taskName,
         intId: taskIntId,
         projectName,
+        taskCode: undefined,
       })),
     )
     const rowInfos = await getRowInfos(true)
@@ -705,7 +709,7 @@ async function exportToClarity(
 }
 
 function d(...x: any) {
-  console.log('zedd-clarity', ...x)
+  console.log('zedd-platform', ...x)
 }
 
 export interface SeleniumOptions {
@@ -722,8 +726,8 @@ export async function fillClarity(
   resourceName: string | undefined,
   seleniumOptions: SeleniumOptions,
 ): Promise<void> {
-  return withErrorHandling('fillClarity', nikuLink, seleniumOptions, (ctx) =>
-    exportToClarity(ctx, data, submitTimesheets, resourceName, nikuLink),
+  return withErrorHandling('fillPlatform', nikuLink, seleniumOptions, (ctx) =>
+    exportToPlatform(ctx, data, submitTimesheets, resourceName, nikuLink),
   )
 }
 export async function withErrorHandling<R>(

@@ -144,7 +144,7 @@ function transform({ slices, showing, platformState }: PlatformViewProps): Platf
       throw e
     }
     const task =
-      (slice.task.platformTaskIntId && platformState.resolveTask(+slice.task.platformTaskIntId)) ||
+      (slice.task.platformTaskIntId && platformState.resolveTask(+slice.task.platformTaskIntId, slice.task.platformType)) ||
       placeholderPlatformTask
     // fix start/end of b, as part of the interval may be outside showInterval
     const bStartFixed = dateMax([slice.start, showInterval.start])
@@ -157,6 +157,7 @@ function transform({ slices, showing, platformState }: PlatformViewProps): Platf
       const dayHourss = dayMap[dayKey]
       let dayHours = dayHourss.find(
         (d) =>
+          d.platformType === slice.task.platformType &&
           d.taskIntId === slice.task.platformTaskIntId &&
           d.comment === slice.task.platformTaskComment,
       )
@@ -424,6 +425,52 @@ export const PlatformView = observer((props: PlatformViewProps) => {
           disabled={
             true || platformState.currentlyExportingTasks || platformState.currentlyImportingTasks
           }
+          variant='contained'
+          onClick={() =>
+            platformState
+              .export(
+                omap(platformExport, (workEntries) =>
+                  workEntries.filter((entry) => -1 !== entry.taskIntId),
+                ),
+                submitTimesheets,
+              )
+              .catch(errorHandler)
+          }
+          endIcon={
+            <>
+              {!platformState.currentlyExportingTasks && <SendIcon />}
+              {platformState.actionType === PlatformActionType.SubmitTimesheet && (
+                <LoadingSpinner
+                  loading={platformState.currentlyExportingTasks}
+                  error={platformState.error !== ''}
+                  success={platformState.success}
+                />
+              )}
+            </>
+          }
+        >
+          OTT!
+        </Button>{' '}
+        <FormControlLabel
+          control={
+            <Checkbox
+              checked={submitTimesheets}
+              onChange={(_, checked) => onChangeSubmitTimesheets(!!checked)}
+            />
+          }
+          title='Autosubmit timesheets or just save them'
+          label='Autosubmit'
+        />
+      </CardActions>
+      <CardActions style={{ flexDirection: 'row-reverse' }}>
+        <Button
+          disabled={!platformState.currentlyExportingTasks}
+          onClick={() => platformState.killSelenium()}
+        >
+          Cancel
+        </Button>
+        <Button
+          disabled={platformState.currentlyExportingTasks || platformState.currentlyImportingTasks}
           variant='contained'
           onClick={() =>
             platformState
