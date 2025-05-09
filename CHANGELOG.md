@@ -1,6 +1,6 @@
-## [3.0.0] - 2025-05-07
+## [3.0.0] - 2025-05-09
 
-- Feature: Claritymodul wurde als Platformmodul benannt
+- Feature: Import tasks from OTT
 
 ## [2.12.4] - 2024-09-20
 
@@ -29,8 +29,7 @@
 ## [2.11.0] - 2022-09-15
 
 - Feature: Undoing slice operation also updates element to previous state when it was earlier automatically cutted
-- Feature: Import/export buttons visual aspects changed, added cancel buttons for cancelling these operations during
-  their lifetime
+- Feature: Import/export buttons visual aspects changed, added cancel buttons for cancelling these operations during their lifetime
 - Feature: Dependencies updated
 - Feature: Added minimize window to task bar and close to windows tray function
 - Feature: Added headless mode for Selenium Browser to start in the background (configurable)
@@ -47,11 +46,9 @@
 
 - Feature: Undo (Ctrl+Z) and Redo (Ctrl+Y)
 - Feature: Added a filter for searching projects in the clarity view
-- Feature: Added a new dropdown item 'NEW' in import button menu, to import only projects which have not been imported
-  yet
+- Feature: Added a new dropdown item 'NEW' in import button menu, to import only projects which have not been imported yet
 - Feature: Added the path of chrome and chromedriver in the settings dialog
-- Feature: ERSATZ button now takes into account public holidays. **Configure your location in the settings to enable
-  this**.
+- Feature: ERSATZ button now takes into account public holidays. **Configure your location in the settings to enable this**.
 
 ## [2.9.1] - 2022-02-04
 
@@ -91,8 +88,7 @@
 
 ## [2.7.3] - 2020-11-02
 
-- Tasks which have been rounded to zero time will no longer show up clarity view (and will no longer result in empty
-  comments being exported to clarity).
+- Tasks which have been rounded to zero time will no longer show up clarity view (and will no longer result in empty comments being exported to clarity).
 
 ## [2.7.2] - 2020-10-07
 
@@ -130,11 +126,9 @@
 ## [2.4.0] - 2020-07-03
 
 - You can now right click on slices in the calender to go to that tasks Jira page in your browser.
-- You can now add a second Jira URL, which will be used if Jira keys found in task names do not match a project from the
-  main Jira.
+- You can now add a second Jira URL, which will be used if Jira keys found in task names do not match a project from the main Jira.
 - Task select autocomplete now shows when it is searching for tasks in Jira.
-- Added "GUESS" button, which attempts to auto-fill the clarity task. (Currently it only looks for a Jira key in task
-  names and attempts to match that to a clarity task.)
+- Added "GUESS" button, which attempts to auto-fill the clarity task. (Currently it only looks for a Jira key in task names and attempts to match that to a clarity task.)
 
 ## [2.3.0] - 2020-05-27
 

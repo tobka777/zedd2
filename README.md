@@ -1,11 +1,8 @@
 # Zedd-App
 
-The Zedd-App is a Grindstone-like application that automates booking in Replicon and OTT and simplifies working with
-multiple
-accounts. It operates as an interactive calendar, allowing you to schedule tasks and manage your work time efficiently.
+The Zedd-App is a Grindstone-like application that automates booking in Replicon and OTT and simplifies working with multiple accounts. It operates as an interactive calendar, allowing you to schedule tasks and manage your work time efficiently.
 
-The goal is to make work planning more organized, stress-free and user-friendly. The app is built with Electron,
-TypeScript, React, MobX, and MUI.
+The goal is to make work planning more organized, stress-free and user-friendly. The app is built with Electron, TypeScript, React, MobX, and MUI.
 
 ## Features 📝
 
@@ -27,22 +24,17 @@ TypeScript, React, MobX, and MUI.
 
 ## Usage 🔥
 
-Press the button `IMPORT` and select `ALL` in the dropdown to import Platform accounts. This needs to be repeated when
-new accounts are added to Platform that you want to book on. Usually, importing a single project is enough.
+Press the button `IMPORT` and select `ALL` in the dropdown to import Platform accounts. This needs to be repeated when new accounts are added to Platform that you want to book on. Usually, importing a single project is enough.
 
-Enter what you are currently working on in the field `Currently Timing`. This does not necessarily have to be a Platform
-account.
+Enter what you are currently working on in the field `Currently Timing`. This does not necessarily have to be a Platform account.
 If JIRA is configured, tickets from Jira will be suggested.
 
-Enter the Platform account for the task in `Account for Task ...`. This can also be done later/Friday and is
-retroactive.
+Enter the Platform account for the task in `Account for Task ...`. This can also be done later/Friday and is retroactive.
 
-Optionally, add a comment in `Account Comment for This Task`. The tag is automatically calculated and entered
-in Platform beforehand.
+Optionally, add a comment in `Account Comment for This Task`. The tag is automatically calculated and entered in Platform beforehand.
 
 At the bottom, you can see what will be exported to Replicon/OTT. What is currently displayed will always be exported.
-The
-`Autosubmit` checkbox will submit the timesheets as well.
+The `Autosubmit` checkbox will submit the timesheets as well.
 
 ### Tips and Tricks
 
@@ -79,9 +71,7 @@ The Zedd-App enables an integration of Jira. Thus, the issues can be used as nam
 When searching for tasks, Jira is requested.
 
 In the settings, the url of Jira must be entered under PL Jira.
-The Personal Access Token must be generated in Jira (
-see [Instructions](https://confluence.atlassian.com/enterprise/using-personal-access-tokens-1026032365.html)) and stored
-in the Settings under Token.
+The Personal Access Token must be generated in Jira (see [Instructions](https://confluence.atlassian.com/enterprise/using-personal-access-tokens-1026032365.html)) and stored in the Settings under Token.
 
 ## Download 📥
 
@@ -97,11 +87,9 @@ Download and run the latest release on [Github](https://github.com/tobka777/zedd
 
 ## Contributing 👨‍🔧
 
-Pull requests are welcome. For major changes, please open an [GitHub Issues](https://github.com/tobka777/zedd2/issues)
-first to discuss what you would like to change.
+Pull requests are welcome. For major changes, please open an [GitHub Issues](https://github.com/tobka777/zedd2/issues) first to discuss what you would like to change.
 
-If you want to contribute please read
-our [Contribution Guide](https://github.com/tobka777/zedd2/blob/main/CONTRIBUTING.md).
+If you want to contribute please read our [Contribution Guide](https://github.com/tobka777/zedd2/blob/main/CONTRIBUTING.md).
 
 ## Contact 🙋
 
