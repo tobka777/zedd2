@@ -9,6 +9,7 @@ import {
   PlatformExportFormat,
   Task,
   PlatformType,
+  ottQuit,
 } from 'zedd-platform'
 import './index.css'
 import { FILE_DATE_FORMAT, getLatestFileInDir, mkdirIfNotExists } from './util'
@@ -139,8 +140,9 @@ export class PlatformState {
     return this.resolveTask(intId) !== undefined
   }
 
-  public killSelenium(): void {
+  public killPlatform(): void {
     webDriverQuit()
+    ottQuit()
   }
 
   private clearPlatformState(importing: boolean) {

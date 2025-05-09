@@ -84,3 +84,9 @@ function getTasksFromJson(jsonResponse: any): Task[] {
 
   return tasks
 }
+
+export async function ottQuit() {
+  if (browser) {
+    browser.close()
+  }
+}

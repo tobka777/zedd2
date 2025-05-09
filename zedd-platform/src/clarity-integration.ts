@@ -34,6 +34,7 @@ import { de } from 'date-fns/locale'
 import uniq from 'lodash/uniq'
 import { Project } from './model/projekt.model'
 import { Task } from './model/task.model'
+import { PlatformExportFormat } from './model/platform-export-format.model'
 import { checkPlatformUrl } from './utils'
 
 const CONTROL_KEY: string = process.platform === 'darwin' ? Key.COMMAND : Key.CONTROL
@@ -371,20 +372,9 @@ async function addTasks(
   // await sleep(30000)
 }
 
-interface WorkEntry {
-  projectName: string
-  taskName: string
-  taskIntId: number
-  hours: number
-  comment?: string
-}
-export type ClarityExportFormat = {
-  [day: string]: WorkEntry[]
-}
-
-async function exportToPlatform(
+async function exportToClarity(
   ctx: Context,
-  whatt: ClarityExportFormat,
+  whatt: PlatformExportFormat,
   submitTimesheets: boolean,
   resourceName: string | undefined,
   nikuLink: string,
@@ -481,11 +471,9 @@ async function exportToPlatform(
     const joinedCommentContents = delComments
       .map((c) => c.content.replace('\n', ' ').trim())
       .join(' ')
-    for (const commentFromPlatform of joinedCommentContents
-      .split(/(?=\[.{2}\])/)
-      .filter((x) => x)) {
-      d(commentFromPlatform)
-      const [_, day, comment] = commentFromPlatform.match(/\[(.{2})\](.*)/)!
+    for (const commentFromClarity of joinedCommentContents.split(/(?=\[.{2}\])/).filter((x) => x)) {
+      d(commentFromClarity)
+      const [_, day, comment] = commentFromClarity.match(/\[(.{2})\](.*)/)!
       if (targetComments[day.toUpperCase()] === undefined) {
         // use old comment
         targetComments[day.toUpperCase()] = comment.trim()
@@ -524,12 +512,12 @@ async function exportToPlatform(
       await pageLoad(ctx)
     }
 
-    // we add all comments as a single platform-comment, divided by newlines
-    const platformCommentToAdd = Object.keys(targetComments)
+    // we add all comments as a single clarity-comment, divided by newlines
+    const clarityCommentToAdd = Object.keys(targetComments)
       .filter((dayString) => targetComments[dayString])
       .map((dayString) => '[' + dayString + '] ' + targetComments[dayString])
       .join('\n')
-    await addComment(platformCommentToAdd)
+    await addComment(clarityCommentToAdd)
 
     await $('#portlet-timeadmin\\.notesBrowser button[onclick="closeWindow();"]').click()
   }
@@ -717,7 +705,7 @@ async function exportToPlatform(
 }
 
 function d(...x: any) {
-  console.log('zedd-platform', ...x)
+  console.log('zedd-clarity', ...x)
 }
 
 export interface SeleniumOptions {
@@ -729,13 +717,13 @@ export interface SeleniumOptions {
 
 export async function fillClarity(
   nikuLink: string,
-  data: ClarityExportFormat,
+  data: PlatformExportFormat,
   submitTimesheets: boolean,
   resourceName: string | undefined,
   seleniumOptions: SeleniumOptions,
 ): Promise<void> {
-  return withErrorHandling('fillPlatform', nikuLink, seleniumOptions, (ctx) =>
-    exportToPlatform(ctx, data, submitTimesheets, resourceName, nikuLink),
+  return withErrorHandling('fillClarity', nikuLink, seleniumOptions, (ctx) =>
+    exportToClarity(ctx, data, submitTimesheets, resourceName, nikuLink),
   )
 }
 export async function withErrorHandling<R>(

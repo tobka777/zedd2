@@ -201,7 +201,7 @@ export const TaskEditor = observer(
             variant='text'
             style={{ width: '100%' }}
             disabled={!platformState.currentlyImportingTasks}
-            onClick={() => platformState.killSelenium()}
+            onClick={() => platformState.killPlatform()}
           >
             Cancel
           </Button>

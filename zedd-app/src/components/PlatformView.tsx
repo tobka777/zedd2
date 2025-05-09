@@ -416,7 +416,7 @@ export const PlatformView = observer((props: PlatformViewProps) => {
       <CardActions style={{ flexDirection: 'row-reverse' }}>
         <Button
           disabled={!platformState.currentlyExportingTasks}
-          onClick={() => platformState.killSelenium()}
+          onClick={() => platformState.killPlatform()}
         >
           Cancel
         </Button>

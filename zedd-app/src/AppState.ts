@@ -65,7 +65,7 @@ import {
 } from './util'
 import { ZeddSettings } from './ZeddSettings'
 import { Undoer } from './Undoer'
-import { PlatformType } from 'zedd-platform'
+import type { PlatformType } from 'zedd-platform'
 
 export const MIN_GAP_TIME_MIN = 5
 
