@@ -151,7 +151,7 @@
     "mobx": "^6.4.0",
     "mobx-react-lite": "^3.3.0",
     "mobx-utils": "^6.0.4",
-    "mocha": "^10.0.0",
+    "mocha": "^10.8.2",
     "natural-orderby": "^2.0.3",
     "node-loader": "^2.0.0",
     "nodemon": "^2.0.15",
