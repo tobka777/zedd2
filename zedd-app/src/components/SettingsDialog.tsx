@@ -23,8 +23,6 @@ import { useEffect, useState } from 'react'
 import { dialog } from '@electron/remote'
 import { MoreHoriz as PickFileIcon } from '@mui/icons-material'
 import { observer } from 'mobx-react-lite'
-import { uniq } from 'lodash'
-
 import { PlatformState } from '../PlatformState'
 import { ZeddSettings } from '../ZeddSettings'
 import { useDebouncedCallback } from '../util'
@@ -38,6 +36,7 @@ import { countries, federalStates } from '../holidays'
 export const SettingsDialog = observer(
   ({
     done,
+    // @ts-expect-error TS6133
     platformState,
     settings,
     checkCgJira,
@@ -66,7 +65,7 @@ export const SettingsDialog = observer(
       {} as { error?: any; ok?: true; checking?: true },
     )
 
-    const [textFieldNikuLink, setTextFieldNikuLink] = useState(settings.ottLink)
+    const [textFieldOTTLink, setTextFieldOTTLink] = useState(settings.ottLink)
 
     const theme = useTheme()
 
@@ -96,9 +95,6 @@ export const SettingsDialog = observer(
       [checkCgJira, settings],
       1000,
     )
-
-    const projects = uniq([...platformState.projectNames])
-    projects.sort()
 
     function updateWorkmask(newValueofHours: number) {
       const actualSumOfHours = settings.workmask.reduce(
@@ -241,15 +237,14 @@ export const SettingsDialog = observer(
             </Grid>
 
             <Grid item xs={4}>
-              <FormLabel>Platform URL</FormLabel>
+              <FormLabel>OTT URL</FormLabel>
             </Grid>
             <Grid item xs={8}>
               <TextField
-                placeholder='http://example.com/niku/nu'
                 style={{ width: '100%' }}
-                value={textFieldNikuLink}
+                value={textFieldOTTLink}
                 onChange={(e) => {
-                  setTextFieldNikuLink(e.target.value)
+                  setTextFieldOTTLink(e.target.value)
                   settings.ottLink = e.target.value.trim()
                 }}
               />
@@ -413,7 +408,6 @@ export const SettingsDialog = observer(
             </Grid>
             <Grid item xs={8} style={{ minHeight: '4em' }}>
               <TextField
-                placeholder='http://example.com/niku/nu'
                 style={{ width: '100%' }}
                 value={settings.chromePath}
                 onChange={(e) => {

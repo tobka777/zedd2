@@ -1,19 +1,21 @@
 import puppeteer, { Browser, ElementHandle, Page } from 'puppeteer'
 import { Task } from './model/task.model'
 import { PlatformOptions } from './model/platform.options.model'
+import { checkPlatformUrl } from './utils'
 
 let browser: Browser
 let page: Page
 
 export async function importOTTTasks(
-  nikuLink: string,
+  ottLink: string,
   options: PlatformOptions,
   notifyTasks?: (p: Task[]) => void,
 ): Promise<Task[]> {
+  checkPlatformUrl(ottLink)
   browser = await puppeteer.launch({ headless: options.headless })
   page = await browser.newPage()
 
-  await page.goto(nikuLink)
+  await page.goto(ottLink)
 
   await page.waitForSelector('[role="table"]')
 
@@ -69,12 +71,11 @@ function getTasksFromJson(jsonResponse: any): Task[] {
     }
     let task: Task = {
       name: assignedIssue.title,
-      strId: projectIndex > -1 ? assoBoardProjectCodes[projectIndex].gfsTaskCode : null,
       intId: assignedIssue.appointmentId,
-      projectName: projectIndex > -1 ? assoBoardProjectCodes[projectIndex].gtmProjectName : null,
-      start: null,
-      end: null,
       projectIntId: projectIndex > -1 ? assoBoardProjectCodes[projectIndex].gfsProjectCode : null,
+      projectName: projectIndex > -1 ? assoBoardProjectCodes[projectIndex].gtmProjectName : null,
+      start: undefined,
+      end: undefined,
       taskCode: projectIndex > -1 ? assoBoardProjectCodes[projectIndex].gfsTaskCode : null,
       typ: 'OTT',
     }
@@ -82,4 +83,10 @@ function getTasksFromJson(jsonResponse: any): Task[] {
   }
 
   return tasks
+}
+
+export async function ottQuit() {
+  if (browser) {
+    browser.close()
+  }
 }

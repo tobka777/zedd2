@@ -18,6 +18,7 @@ import { AppState, format, formatInterval, TimeSlice } from './AppState'
 import { PlatformState } from './PlatformState'
 import { AppGui } from './components/AppGui'
 import './index.css'
+import { createRoot } from 'react-dom/client'
 import {
   checkCgJira,
   getLinksFromString,
@@ -47,7 +48,6 @@ const userConfigFile = path.join(saveDir, 'zeddconfig.json')
 
 const d = (...x: any[]) => console.log('renderer.ts', ...x)
 
-const isMac = process.platform === 'darwin'
 const isWin = process.platform === 'win32'
 
 // class Todo {
@@ -510,7 +510,9 @@ async function setup() {
       window.removeEventListener('beforeunload', cleanup)
     }),
     renderDOM: () => {
-      ReactDOM.render(
+      const container = document.getElementById('react-root')
+      const root = createRoot(container!)
+      root.render(
         React.createElement(AppGui, {
           showContextMenu: () => currentMenu.popup(),
           taskSelectRef: (r) => (taskSelectRef = r),
@@ -525,7 +527,6 @@ async function setup() {
             ),
           getLinksFromString,
         }),
-        document.getElementById('react-root'),
       )
     },
   }

@@ -210,7 +210,7 @@ export function useDebouncedCallback<T extends (...args: any[]) => any>(
   deps: DependencyList,
   waitMs: number,
 ): T {
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+  // @ts-expect-error
   return useCallback(debounce(callback, waitMs), deps)
 }
 
@@ -219,14 +219,14 @@ export function getUniqueId(): number {
   return nextUniqueId++
 }
 
-export const useClasses = (stylesElement) => {
+export const useClasses = (stylesElement: any) => {
   const theme = useTheme()
   return useMemo(() => {
     const rawClasses = typeof stylesElement === 'function' ? stylesElement(theme) : stylesElement
-    const prepared = {}
+    const prepared: Record<string, any> = {}
 
     Object.entries(rawClasses).forEach(([key, value = {}]) => {
-      prepared[key] = css(value)
+      prepared[key] = css(value as any)
     })
 
     return prepared

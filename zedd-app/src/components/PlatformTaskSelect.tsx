@@ -2,8 +2,8 @@ import { observer } from 'mobx-react-lite'
 import * as React from 'react'
 import { Autocomplete, TextField } from '@mui/material'
 import { StandardTextFieldProps } from '@mui/material/TextField'
-import { PlatformState, PlatformTask } from '../PlatformState'
-import { Task } from '../AppState'
+import { PlatformState } from '../PlatformState'
+import { Task } from 'zedd-platform'
 
 export type PlatformTaskSelectProps = {
   platformState: PlatformState
@@ -22,10 +22,7 @@ export const PlatformTaskSelect = observer(
   }: PlatformTaskSelectProps) => {
     const maxEntries = 20
 
-    const resolvedVal =
-      (value !== undefined &&
-        platformState.resolveTask(value.platformTaskIntId, value.platformType)) ||
-      undefined
+    const resolvedVal = (value !== undefined && platformState.resolveTask(value.platformTaskIntId, value.platformType)) || undefined
 
     return (
       <Autocomplete
@@ -33,7 +30,7 @@ export const PlatformTaskSelect = observer(
         options={platformState.tasks}
         disabled={disabled}
         style={style}
-        filterOptions={(options: PlatformTask[], state) => {
+        filterOptions={(options: Task[], state) => {
           const result = []
           const inputParts = state.inputValue
             .toLowerCase()
@@ -54,18 +51,16 @@ export const PlatformTaskSelect = observer(
           }
           return result
         }}
-        onChange={(_: unknown, platformTask: PlatformTask | undefined) =>
-          onChange(platformTask?.intId)
-        }
+        onChange={(_: unknown, task: Task | undefined) => onChange(task?.intId)}
         value={resolvedVal}
-        renderOption={(props, option: PlatformTask, _state) => (
+        renderOption={(props, option: Task, _state) => (
           <li {...props}>
             <div style={{ width: '30%' }}>{option.projectName}</div>
             <div style={{ width: '30%' }}>{option.name}</div>
             <div style={{ width: '30%' }}>{option.strId}</div>
           </li>
         )}
-        getOptionLabel={(x: PlatformTask) => (x ? x.projectName + ' / ' + x.name : '')}
+        getOptionLabel={(x: Task) => (x ? x.projectName + ' / ' + x.name : '')}
       />
     )
   },

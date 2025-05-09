@@ -32,7 +32,7 @@ import { groupBy, remove, sortBy, uniqBy } from 'lodash'
 import { observer } from 'mobx-react-lite'
 import * as React from 'react'
 import { useState } from 'react'
-import { PlatformExportFormat } from 'zedd-platform/out/src/model/platform-export-format.model'
+import { PlatformExportFormat } from 'zedd-platform'
 
 import { TimeSlice, validDate } from '../AppState'
 import { PlatformActionType, PlatformState } from '../PlatformState'
@@ -89,7 +89,7 @@ export interface PlatformViewProps {
   errorHandler: (e: Error) => void
 }
 
-const styles = (theme) => ({
+const styles = (theme: any) => ({
   table: {
     padding: 0,
     borderSpacing: 0,
@@ -144,8 +144,7 @@ function transform({ slices, showing, platformState }: PlatformViewProps): Platf
       throw e
     }
     const task =
-      (slice.task.platformTaskIntId &&
-        platformState.resolveTask(+slice.task.platformTaskIntId, slice.task.platformType)) ||
+      (slice.task.platformTaskIntId && platformState.resolveTask(+slice.task.platformTaskIntId, slice.task.platformType)) ||
       placeholderPlatformTask
     // fix start/end of b, as part of the interval may be outside showInterval
     const bStartFixed = dateMax([slice.start, showInterval.start])
@@ -418,12 +417,14 @@ export const PlatformView = observer((props: PlatformViewProps) => {
       <CardActions style={{ flexDirection: 'row-reverse' }}>
         <Button
           disabled={!platformState.currentlyExportingTasks}
-          onClick={() => platformState.killSelenium()}
+          onClick={() => platformState.killPlatform()}
         >
           Cancel
         </Button>
         <Button
-          disabled={platformState.currentlyExportingTasks || platformState.currentlyImportingTasks}
+          disabled={
+            true || platformState.currentlyExportingTasks || platformState.currentlyImportingTasks
+          }
           variant='contained'
           onClick={() =>
             platformState
@@ -448,7 +449,7 @@ export const PlatformView = observer((props: PlatformViewProps) => {
             </>
           }
         >
-          Clarity!
+          OTT!
         </Button>{' '}
         <FormControlLabel
           control={

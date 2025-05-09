@@ -8,9 +8,9 @@
     "test": "echo \"Error: no test specified\" && exit 1",
     "build": "tsc",
     "watch": "tsc --watch",
-    "prettier": "prettier --write src/**/*.{ts,tsx,js,d.ts,json}"
+    "prettier": "prettier --write 'src/**/*.{ts,tsx,js,d.ts,json}'"
   },
-  "types": "out/index.d.ts",
+  "types": "out/src/index.d.ts",
   "keywords": [],
   "author": {
     "name": "Adrian Leonhard",

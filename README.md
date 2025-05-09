@@ -1,8 +1,6 @@
 # Zedd-App
 
-The Zedd-App is a Grindstone-like application that automates booking in Replicon and OTT and simplifies working with
-multiple
-accounts. It operates as an interactive calendar, allowing you to schedule tasks and manage your work time efficiently.
+The Zedd-App is a Grindstone-like application that automates booking in Replicon and OTT and simplifies working with multiple accounts. It operates as an interactive calendar, allowing you to schedule tasks and manage your work time efficiently.
 
 The goal is to make work planning more organized, stress-free and user-friendly. The app is built with Electron,
 TypeScript, React, MobX, and MUI.
@@ -27,22 +25,17 @@ TypeScript, React, MobX, and MUI.
 
 ## Usage 🔥
 
-Press the button `IMPORT` and select `ALL` in the dropdown to import Platform accounts. This needs to be repeated when
-new accounts are added to Platform that you want to book on. Usually, importing a single project is enough.
+Press the button `IMPORT` and select `ALL` in the dropdown to import Platform accounts. This needs to be repeated when new accounts are added to Platform that you want to book on. Usually, importing a single project is enough.
 
-Enter what you are currently working on in the field `Currently Timing`. This does not necessarily have to be a Platform
-account.
+Enter what you are currently working on in the field `Currently Timing`. This does not necessarily have to be a Platform account.
 If JIRA is configured, tickets from Jira will be suggested.
 
-Enter the Platform account for the task in `Account for Task ...`. This can also be done later/Friday and is
-retroactive.
+Enter the Platform account for the task in `Account for Task ...`. This can also be done later/Friday and is retroactive.
 
-Optionally, add a comment in `Account Comment for This Task`. The tag is automatically calculated and entered
-in Platform beforehand.
+Optionally, add a comment in `Account Comment for This Task`. The tag is automatically calculated and entered in Platform beforehand.
 
 At the bottom, you can see what will be exported to Replicon/OTT. What is currently displayed will always be exported.
-The
-`Autosubmit` checkbox will submit the timesheets as well.
+The `Autosubmit` checkbox will submit the timesheets as well.
 
 ### Tips and Tricks
 

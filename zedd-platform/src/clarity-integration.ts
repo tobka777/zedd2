@@ -9,7 +9,6 @@ import {
   WebElementPromise,
 } from 'selenium-webdriver'
 import * as path from 'path'
-import * as url from 'url'
 import * as chrome from 'selenium-webdriver/chrome'
 import partition from 'lodash/partition'
 import uniqBy from 'lodash/uniqBy'
@@ -35,28 +34,14 @@ import { de } from 'date-fns/locale'
 import uniq from 'lodash/uniq'
 import { Project } from './model/projekt.model'
 import { Task } from './model/task.model'
+import { PlatformExportFormat } from './model/platform-export-format.model'
+import { checkPlatformUrl } from './utils'
 
 const CONTROL_KEY: string = process.platform === 'darwin' ? Key.COMMAND : Key.CONTROL
-
-export class NikuUrlInvalidError extends Error {
-  constructor(url: string) {
-    super(`url ${JSON.stringify(url)} is not valid`)
-  }
-}
 
 const logSleep = async (ms: number) => {
   console.warn('sleeping for ' + ((ms / 1000) | 0) + 's')
   await sleep(ms)
-}
-
-function checkNikuUrl(urlToCheck: any) {
-  if (!urlToCheck) {
-    throw new NikuUrlInvalidError(urlToCheck)
-  }
-  const urlParts = url.parse(urlToCheck)
-  if (!urlParts.protocol || !urlParts.host || !urlParts.path) {
-    throw new NikuUrlInvalidError(urlToCheck)
-  }
 }
 
 var chromeDriver: WebDriver
@@ -268,8 +253,10 @@ async function getProjectTasks(
           sortNo: +row['PSP-Sortierung'],
           name: name,
           strId: row['ID'],
+          taskCode: row['ID'],
           intId: +intIdStr,
           projectName: pName,
+          projectIntId: projectIntId,
           start: parseDate(row['Anfang'], 'dd.MM.yy', new Date()),
           end: parseDate(row['Ende'], 'dd.MM.yy', new Date()),
           openForTimeEntry: row['Für Zeiteintrag geöffnet'] == 'Ja',
@@ -385,21 +372,9 @@ async function addTasks(
   // await sleep(30000)
 }
 
-interface WorkEntry {
-  platformType: 'CLARITY' | 'OTT' | 'REPLICON' | undefined
-  projectName: string
-  taskName: string
-  taskIntId: number
-  hours: number
-  comment?: string
-}
-export type ClarityExportFormat = {
-  [day: string]: WorkEntry[]
-}
-
-async function exportToPlatform(
+async function exportToClarity(
   ctx: Context,
-  whatt: ClarityExportFormat,
+  whatt: PlatformExportFormat,
   submitTimesheets: boolean,
   resourceName: string | undefined,
   nikuLink: string,
@@ -746,7 +721,7 @@ export interface SeleniumOptions {
 
 export async function fillClarity(
   nikuLink: string,
-  data: ClarityExportFormat,
+  data: PlatformExportFormat,
   submitTimesheets: boolean,
   resourceName: string | undefined,
   seleniumOptions: SeleniumOptions,
@@ -761,7 +736,7 @@ export async function withErrorHandling<R>(
   seleniumOptions: SeleniumOptions,
   cb: (ctx: Context) => Promise<R>,
 ): Promise<R> {
-  checkNikuUrl(nikuLink)
+  checkPlatformUrl(nikuLink)
   const ctx = await makeContext(seleniumOptions)
   try {
     return await cb(ctx)

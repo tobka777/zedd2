@@ -27,9 +27,7 @@ jobs:
       - name: install app dependencies
         working-directory: ./zedd-app
         run: npm install
-      - name: generate icons
-        working-directory: ./zedd-app
-        run: npm run genicons
+        
       - name: build release
         working-directory: ./zedd-app
         run: npm run make

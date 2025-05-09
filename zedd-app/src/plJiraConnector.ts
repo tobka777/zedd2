@@ -1,15 +1,12 @@
 import { compareDesc, differenceInMinutes } from 'date-fns'
 import { Version2Client as JiraClient } from 'jira.js'
-// @ts-ignore
-import * as request from 'request'
-
 import { isEqual } from 'lodash'
 import { Task } from './AppState'
-import { PlatformState, PlatformTask } from './PlatformState'
+import { PlatformState } from './PlatformState'
+import { PlatformType, Task as PlatformTask } from 'zedd-platform'
 import { ZeddSettings } from './ZeddSettings'
 
 // Initialize
-const jar = request.jar()
 let jiraConfig: ZeddSettings['cgJira']
 let jira: JiraClient
 let saveSettings: () => void
@@ -47,27 +44,20 @@ const jiraConnectorErrorToMessage = (x: any) => {
   throw new Error(request.method + ' ' + request.uri.href + ' returned ' + body)
 }
 
-export const checkCgJira = (config: ZeddSettings['cgJira']): Promise<any> => {
+export const checkCgJira = async (config: ZeddSettings['cgJira']): Promise<any> => {
   console.log(config.url)
-  return new Promise(async (resolve, reject) => {
-    try {
-      const response = await fetch(config.url + '/rest/api/2/myself', {
-        method: 'GET',
-        headers: {
-          Authorization: 'Bearer ' + config.token,
-        },
-      })
-      if (response.status >= 400) {
-        console.error(response)
-        reject(new Error(response.url + ' returned ' + response.status + ' ' + response.statusText))
-      } else {
-        resolve(response)
-      }
-    } catch (error) {
-      reject(error)
-    }
-    return
+  const response = await fetch(config.url + '/rest/api/2/myself', {
+    method: 'GET',
+    headers: {
+      Authorization: 'Bearer ' + config.token,
+    },
   })
+  if (response.status >= 400) {
+    console.error(response)
+    throw new Error(response.url + ' returned ' + response.status + ' ' + response.statusText)
+  } else {
+    return response
+  }
 }
 
 const callWithJsessionCookie = async <T>(cb: () => Promise<T>) => {
@@ -83,7 +73,7 @@ const updateJiraProjectKeys = () =>
   callWithJsessionCookie(async () => {
     const projects = await jira.projects.getAllProjects()
     console.warn(projects)
-    const keys = projects.map((p) => p.key)
+    const keys = projects.map((p) => p.key).filter((key): key is string => key !== undefined)
     if (!isEqual(keys, jiraConfig.keys)) {
       console.log('retrieved project keys: ', keys)
       jiraConfig.keys = keys
@@ -105,20 +95,20 @@ const issueInfoToTask = async (platformTasks: PlatformTask[], i: any): Promise<T
   const externalKey = i.fields[externalJiraField]
   const platformTaskFieldValue = i.fields[platformTaskField]?.[0]?.trim()
   let platformTaskId: number | undefined
-  let platformType: 'CLARITY' | 'OTT' | 'REPLICON' | undefined = undefined
+  let platformType: PlatformType | undefined = undefined
   if (platformTaskFieldValue) {
     const platformTask = platformTasks
       .filter((t) => t.name === platformTaskFieldValue)
-      .sort((a, b) => compareDesc(a.start, b.start))[0]
+      .sort((a, b) => (!a.start || !b.start ? 0 : compareDesc(a.start, b.start)))[0]
     platformTaskId = platformTask?.intId
     platformType = platformTask?.typ
     if (!platformTaskId || !platformType) {
-      console.warn("No account found for JIRA Platform-Task Field '" + platformTaskFieldValue + "'")
+      console.warn("No account found for JIRA Task Field '" + platformTaskFieldValue + "'")
     }
   } else if (externalKey) {
     const platformTask = platformTasks
       .filter((t) => t.name.includes(externalKey))
-      .sort((a, b) => compareDesc(a.start, b.start))[0]
+      .sort((a, b) => (!a.start || !b.start ? 0 : compareDesc(a.start, b.start)))[0]
     platformTaskId = platformTask?.intId
     platformType = platformTask?.typ
     if (!platformTaskId || !platformType) {

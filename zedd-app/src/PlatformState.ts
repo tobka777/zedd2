@@ -2,18 +2,17 @@ import { format as formatDate, parseISO } from 'date-fns'
 import { promises as fsp } from 'fs'
 import { computed, makeObservable, observable } from 'mobx'
 import * as path from 'path'
-import { fillClarity, webDriverQuit } from 'zedd-platform/out/src/clarity-integration'
-import { PlatformExportFormat } from 'zedd-platform/out/src/model/platform-export-format.model'
-import { Task as ZeddPlatformTask } from 'zedd-platform/src/model/task.model'
+import {
+  fillClarity,
+  webDriverQuit,
+  importOTTTasks,
+  PlatformExportFormat,
+  Task,
+  PlatformType,
+  ottQuit,
+} from 'zedd-platform'
 import './index.css'
-
-import { importOTTTasks } from 'zedd-platform/out/src'
 import { FILE_DATE_FORMAT, getLatestFileInDir, mkdirIfNotExists } from './util'
-
-export interface PlatformTask extends ZeddPlatformTask {
-  projectName: string
-  projectIntId: string
-}
 
 export enum PlatformActionType {
   SubmitTimesheet,
@@ -53,7 +52,7 @@ export class PlatformState {
   private _currentlyExportingTasks = false
 
   @observable
-  private _tasks: PlatformTask[] = []
+  private _tasks: Task[] = []
 
   @observable
   private _tasksLastUpdated: Date | undefined
@@ -70,12 +69,12 @@ export class PlatformState {
     return this._currentlyExportingTasks
   }
 
-  get tasks(): PlatformTask[] {
+  get tasks(): Task[] {
     return this._tasks
   }
 
   @computed
-  get intIdTaskMap(): Map<number, PlatformTask> {
+  get intIdTaskMap(): Map<number, Task> {
     return this._tasks.reduce((map, task) => map.set(task.intId, task), new Map())
   }
 
@@ -116,21 +115,14 @@ export class PlatformState {
   }
 
   public async importAndSavePlatformTasks(
+    // @ts-expect-error TS6133
+    toImport: 'ALL' | PlatformType,
     infoNotify?: (info: string) => void,
-  ): Promise<PlatformTask[]> {
+  ): Promise<Task[]> {
     this._tasks = await this.importPlatformTasks((tasks) => {
-      infoNotify && infoNotify('Imported ' + tasks.length + '.')
+      infoNotify && infoNotify('Imported ' + tasks.length + ' tasks from OTT.')
 
-      this._tasks = [
-        ...tasks.map(
-          (t) =>
-            ({
-              ...t,
-              projectName: t.projectName,
-              projectIntId: t.projectIntId,
-            } as PlatformTask),
-        ),
-      ]
+      this._tasks = [...tasks]
     })
     await this.savePlatformTasksToFile(this._tasks)
     return this._tasks
@@ -143,7 +135,7 @@ export class PlatformState {
   public resolveTask(
     intId: number | undefined,
     platformType: 'CLARITY' | 'OTT' | 'REPLICON' | undefined,
-  ): undefined | ZeddPlatformTask {
+  ): undefined | Task {
     const task = intId === undefined ? undefined : this.intIdTaskMap.get(intId)
 
     return task && task.typ === platformType ? task : undefined
@@ -156,8 +148,9 @@ export class PlatformState {
     return this.resolveTask(intId, platformType) !== undefined
   }
 
-  public killSelenium(): void {
+  public killPlatform(): void {
     webDriverQuit()
+    ottQuit()
   }
 
   private clearPlatformState(importing: boolean) {
@@ -167,9 +160,7 @@ export class PlatformState {
     this.success = false
   }
 
-  private async importPlatformTasks(
-    notifyTasks?: (p: ZeddPlatformTask[]) => void,
-  ): Promise<PlatformTask[]> {
+  private async importPlatformTasks(notifyTasks?: (p: Task[]) => void): Promise<Task[]> {
     this.actionType = PlatformActionType.ImportTasks
     if (this._currentlyImportingTasks) {
       throw new Error('Already importing')
@@ -186,13 +177,13 @@ export class PlatformState {
       )
 
       this.success = true
-      return tasks.map((task) => Object.assign(task, task as unknown as PlatformTask))
+      return tasks
     } finally {
       this._currentlyImportingTasks = false
     }
   }
 
-  private async savePlatformTasksToFile(tasks: PlatformTask[]) {
+  private async savePlatformTasksToFile(tasks: Task[]) {
     const json = JSON.stringify(tasks, undefined, '  ')
     const newFile = 'tasks_' + formatDate(new Date(), FILE_DATE_FORMAT) + '.json'
     await fsp.writeFile(path.join(this.platformDir, newFile), json)
@@ -202,12 +193,12 @@ export class PlatformState {
     await Promise.all(filesToDelete.map((f) => fsp.unlink(path.join(this.platformDir, f.name))))
   }
 
-  private async loadPlatformTasksFromFile(): Promise<[Date, PlatformTask[]]> {
+  private async loadPlatformTasksFromFile(): Promise<[Date, Task[]]> {
     const [file, date] = await getLatestFileInDir(this.platformDir, /^tasks_(.*)\.json$/)
     const content = await fsp.readFile(path.join(this.platformDir, file), {
       encoding: 'utf8',
     })
-    const tasks: PlatformTask[] = JSON.parse(content, (key, value) =>
+    const tasks: Task[] = JSON.parse(content, (key, value) =>
       'end' === key || 'start' === key ? parseISO(value) : value,
     )
     return [date, tasks]

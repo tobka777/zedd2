@@ -47,7 +47,7 @@ import { DateRangePicker } from './DateRangePicker'
 import { ZeddSettings } from '../ZeddSettings'
 import { getHolidays } from '../holidays'
 
-const styles = (theme) => ({
+const styles = (theme: any) => ({
   contentRoot: {
     overflowY: 'scroll',
     '& > *': { margin: theme.spacing(2) },

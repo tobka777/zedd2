@@ -1,13 +1,27 @@
+import { PlatformType } from './platform-type.model'
+
 export interface Task {
-  sortNo?: number //deprecated
   name: string
-  strId?: string //deprecated
-  projectName: string
   intId: number
-  start: Date | null
-  end: Date | null
-  openForTimeEntry?: boolean //deprecated
-  projectIntId?: string //deprecated
-  taskCode?: string //deprecated
-  typ: 'CLARITY' | 'OTT' | 'REPLICON' //deprecated
+  projectIntId: number
+  projectName: string
+  start?: Date
+  end?: Date
+  taskCode: string
+  typ: PlatformType
+
+  /**
+   * @deprecated only needed for clarity
+   */
+  sortNo?: number
+
+  /**
+   * @deprecated only needed for clarity
+   */
+  strId?: string
+
+  /**
+   * @deprecated only needed for clarity
+   */
+  openForTimeEntry?: boolean
 }

@@ -139,7 +139,7 @@ const CalendarBase = <T extends Interval>({
       block: T
       startEnd: 'start' | 'end' | 'complete'
       currentDragPosition: Interval | undefined
-      offsetDragDate: Number
+      offsetDragDate: number
     }[],
     fixedShowInterval: undefined as { start: number; end: number } | undefined,
     virtualSlice: undefined as T | undefined,
@@ -278,7 +278,8 @@ const CalendarBase = <T extends Interval>({
         const newDateRounded = roundToNearestMinutes(newDate, {
           nearestTo: e.ctrlKey || e.metaKey ? 5 : 15,
         })
-        const refDate = local.currentlyDragging[0].block[local.currentlyDragging[0].startEnd]
+        const refDate =
+          local.currentlyDragging[0].block[local.currentlyDragging[0].startEnd as 'start' | 'end']
         // sort currentlyDragging so that they don't overlap each other as we change start/end
         // individually, which isn't allowed
         const sorted = orderBy(local.currentlyDragging, [
@@ -288,7 +289,7 @@ const CalendarBase = <T extends Interval>({
         transaction(() => {
           sorted.forEach((cd) => {
             let newPos
-            let { startEnd, block } = cd
+            const { startEnd, block } = cd
             if (startEnd === 'start') {
               cd.currentDragPosition = { start: newDateRounded, end: block.end }
               newPos = correctSlicePositionStart(block, newDateRounded)
@@ -349,7 +350,7 @@ const CalendarBase = <T extends Interval>({
   const dragStart: SliceDragStartHandler<T> = useCallback(
     (clickedSlice, e, pos) => {
       const newDate = viewportXYToTime(e.clientX, e.clientY)
-      let offsetDrag = differenceInMinutes(newDate as Date, clickedSlice.start)
+      const offsetDrag = differenceInMinutes(newDate as Date, clickedSlice.start)
       if ('end' === pos || 'start' === pos) {
         local.currentlyDragging.push({
           block: clickedSlice,

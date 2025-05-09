@@ -1,6 +1,6 @@
-## [3.0.0] - 2025-05-07
+## [3.0.0] - 2025-05-09
 
-- Feature: Claritymodul wurde als Platformmodul benannt
+- Feature: Import tasks from OTT
 
 ## [2.12.4] - 2024-09-20
 
