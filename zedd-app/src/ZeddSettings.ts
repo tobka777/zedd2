@@ -1,6 +1,6 @@
-import { observable, makeObservable } from 'mobx'
-import { serializable, raw, list, primitive, deserialize, serialize, custom } from 'serializr'
 import { promises as fsp } from 'fs'
+import { makeObservable, observable } from 'mobx'
+import { custom, deserialize, raw, serializable, serialize } from 'serializr'
 
 export class ZeddSettings {
   constructor(fromFile?: string) {
@@ -38,29 +38,19 @@ export class ZeddSettings {
   public startHour = 8
 
   /**
-   * define clarity projects whoses tasks should not be imported
-   * function will be called with project names, returning true
-   * will lead to the project being excluded
-   *
-   */
-  @observable
-  @serializable(list(primitive()))
-  public excludeProjects = [] as string[]
-
-  /**
-   * Name of the ERSATZ Task (not in Clarity!) You can configure the
-   * Clarity-Account in the app.
+   * Name of the ERSATZ Task. You can configure the
+   * Account in the app.
    */
   @observable
   @serializable(raw())
   public ersatzTask = 'ERSATZ'
 
   /**
-   * Link to clarity. Everything before the '#'.
+   * Link to OTT. Everything before the '#'.
    */
   @observable
   @serializable(raw())
-  public nikuLink = ''
+  public ottLink = ''
 
   /**
    * Open Chrome / Selenium in headless mode (background)
@@ -114,10 +104,6 @@ export class ZeddSettings {
   @observable
   @serializable
   public timeFormat: 'hours' | 'bt' = 'hours'
-
-  @observable
-  @serializable
-  public clarityResourceName: string = ''
 
   @observable
   @serializable(raw())

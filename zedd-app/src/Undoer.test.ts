@@ -5,7 +5,7 @@ import { Undoer } from './Undoer'
 
 describe('Undoer', () => {
   describe('makeUndoable', () => {
-    let undoer = new Undoer()
+    const undoer = new Undoer()
     let a = { foo: [] as any[] }
 
     a = makeAutoObservable(a)
@@ -110,8 +110,8 @@ describe('Undoer', () => {
 
       let t = { name: 'TestA' }
       let v = { name: 'TestB' }
-      let b = { name: 'TestC' }
-      let n = { name: 'TestD' }
+      const b = { name: 'TestC' }
+      const n = { name: 'TestD' }
 
       t = makeAutoObservable(t)
       v = makeAutoObservable(v)
@@ -149,8 +149,8 @@ describe('Undoer', () => {
 
       let t = { name: 'TestA' }
       let v = { name: 'TestB' }
-      let b = { name: 'TestC' }
-      let n = { name: 'TestD' }
+      const b = { name: 'TestC' }
+      const n = { name: 'TestD' }
 
       t = makeAutoObservable(t)
       v = makeAutoObservable(v)
@@ -256,7 +256,7 @@ describe('Undoer', () => {
     it('array did change', () => {
       reset()
 
-      let foo = observable([1, 1, 1, 1])
+      const foo = observable([1, 1, 1, 1])
 
       undoer.makeUndoable(foo)
 
@@ -274,7 +274,7 @@ describe('Undoer', () => {
     it('complex array did change', () => {
       reset()
 
-      let foo = observable([{ bar: 1 }, { bar: 1 }, { bar: 1 }])
+      const foo = observable([{ bar: 1 }, { bar: 1 }, { bar: 1 }])
 
       undoer.makeUndoable(foo)
 

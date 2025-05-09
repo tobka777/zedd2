@@ -35,7 +35,7 @@ import * as React from 'react'
 import { useCallback, useEffect, useRef, ReactElement } from 'react'
 
 import { intRange, isoDayStr, min } from '../util'
-import {TimeSlice} from "../AppState";
+import { TimeSlice } from '../AppState'
 
 export type SliceDragStartHandler<T extends Interval> = (
   b: T,
@@ -139,12 +139,12 @@ const CalendarBase = <T extends Interval>({
       block: T
       startEnd: 'start' | 'end' | 'complete'
       currentDragPosition: Interval | undefined
-      offsetDragDate: Number
+      offsetDragDate: number
     }[],
     fixedShowInterval: undefined as { start: number; end: number } | undefined,
     virtualSlice: undefined as T | undefined,
     currentPositionValid: true,
-    lastPointTime: undefined as unknown as number | Date
+    lastPointTime: undefined as unknown as number | Date,
   }))
   const timeBlockDivs: HTMLDivElement[] = useRef([]).current
   timeBlockDivs.length = 0
@@ -193,32 +193,41 @@ const CalendarBase = <T extends Interval>({
     return () => window.removeEventListener('keydown', paste)
   }, [slices])
 
-  const paste = useCallback((e: KeyboardEvent) => {
-    const slice = copiedSlice()
-    if ((e.ctrlKey || e.metaKey) && e.key === 'v' && local.lastPointTime && slice && !slices.some((s) => isWithinInterval(local.lastPointTime, s))) {
-      const minTime = dateMax(slices.map((s) => s.end).filter((s) => s <= local.lastPointTime))
-      const maxTime = dateMin(slices.map((s) => s.start).filter((s) => local.lastPointTime < s))
-      const sliceLength = differenceInMinutes(slice.end, slice.start)
-      const middlePoint = sliceLength / 2
-      let start = roundToNearestMinutes(subMinutes(local.lastPointTime, middlePoint), {nearestTo: 5})
-      let end = addMinutes(start,sliceLength )
-      if (end > maxTime) {
-        end = maxTime
+  const paste = useCallback(
+    (e: KeyboardEvent) => {
+      const slice = copiedSlice()
+      if (
+        (e.ctrlKey || e.metaKey) &&
+        e.key === 'v' &&
+        local.lastPointTime &&
+        slice &&
+        !slices.some((s) => isWithinInterval(local.lastPointTime, s))
+      ) {
+        const minTime = dateMax(slices.map((s) => s.end).filter((s) => s <= local.lastPointTime))
+        const maxTime = dateMin(slices.map((s) => s.start).filter((s) => local.lastPointTime < s))
+        const sliceLength = differenceInMinutes(slice.end, slice.start)
+        const middlePoint = sliceLength / 2
+        let start = roundToNearestMinutes(subMinutes(local.lastPointTime, middlePoint), {
+          nearestTo: 5,
+        })
+        let end = addMinutes(start, sliceLength)
+        if (end > maxTime) {
+          end = maxTime
+        }
+        if (start < minTime) {
+          start = minTime
+        }
+        const newSlice = new TimeSlice(start, end, slice.task)
+        onSliceAdd(newSlice)
       }
-      if (start < minTime) {
-        start = minTime
-      }
-      const newSlice = new TimeSlice(start, end, slice.task);
-      onSliceAdd(newSlice);
-    }
-      },
-      [slices, local.lastPointTime, copiedSlice],
+    },
+    [slices, local.lastPointTime, copiedSlice],
   )
 
   const hoursBlockMouseMove = useCallback(
     (e: React.MouseEvent) => {
       const pointTime = viewportXYToTime(e.clientX, e.clientY)
-      if(pointTime !== undefined){
+      if (pointTime !== undefined) {
         local.lastPointTime = pointTime
       }
       if (
@@ -269,7 +278,8 @@ const CalendarBase = <T extends Interval>({
         const newDateRounded = roundToNearestMinutes(newDate, {
           nearestTo: e.ctrlKey || e.metaKey ? 5 : 15,
         })
-        const refDate = local.currentlyDragging[0].block[local.currentlyDragging[0].startEnd]
+        const refDate =
+          local.currentlyDragging[0].block[local.currentlyDragging[0].startEnd as 'start' | 'end']
         // sort currentlyDragging so that they don't overlap each other as we change start/end
         // individually, which isn't allowed
         const sorted = orderBy(local.currentlyDragging, [
@@ -279,7 +289,7 @@ const CalendarBase = <T extends Interval>({
         transaction(() => {
           sorted.forEach((cd) => {
             let newPos
-            let { startEnd, block } = cd
+            const { startEnd, block } = cd
             if (startEnd === 'start') {
               cd.currentDragPosition = { start: newDateRounded, end: block.end }
               newPos = correctSlicePositionStart(block, newDateRounded)
@@ -340,7 +350,7 @@ const CalendarBase = <T extends Interval>({
   const dragStart: SliceDragStartHandler<T> = useCallback(
     (clickedSlice, e, pos) => {
       const newDate = viewportXYToTime(e.clientX, e.clientY)
-      let offsetDrag = differenceInMinutes(newDate as Date, clickedSlice.start)
+      const offsetDrag = differenceInMinutes(newDate as Date, clickedSlice.start)
       if ('end' === pos || 'start' === pos) {
         local.currentlyDragging.push({
           block: clickedSlice,

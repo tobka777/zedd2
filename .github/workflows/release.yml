@@ -8,7 +8,7 @@ jobs:
   publish:
     strategy:
       matrix:
-        os: [windows-latest, macos-latest]
+        os: [ windows-latest, macos-latest ]
     runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v2
@@ -17,11 +17,11 @@ jobs:
           node-version: 14
           architecture: 'x64' 
 
-      - name: install clarity dependencies
-        working-directory: ./zedd-clarity
+      - name: install platform dependencies
+        working-directory: ./zedd-platform
         run: npm install
-      - name: build clarity
-        working-directory: ./zedd-clarity
+      - name: build platform
+        working-directory: ./zedd-platform
         run: npm run build
 
       - name: install app dependencies

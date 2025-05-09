@@ -6,7 +6,7 @@
 git clone https://github.com/tobka777/zedd2.git
 cd zedd
 
-cd zedd-clarity
+cd zedd-platform
 npm install
 npm run build
 

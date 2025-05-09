@@ -1,5 +1,4 @@
 import { Send as SendIcon } from '@mui/icons-material'
-import { TextField } from '@mui/material'
 import {
   Box,
   Button,
@@ -8,6 +7,7 @@ import {
   CardContent,
   Checkbox,
   FormControlLabel,
+  TextField,
   Tooltip,
   Typography,
 } from '@mui/material'
@@ -32,10 +32,10 @@ import { groupBy, remove, sortBy, uniqBy } from 'lodash'
 import { observer } from 'mobx-react-lite'
 import * as React from 'react'
 import { useState } from 'react'
-import { ClarityExportFormat } from 'zedd-clarity'
+import { PlatformExportFormat } from 'zedd-platform'
 
 import { TimeSlice, validDate } from '../AppState'
-import { ClarityState, ClarityActionType } from '../ClarityState'
+import { PlatformActionType, PlatformState } from '../PlatformState'
 import { LoadingSpinner } from './LoadingSpinner'
 
 import { isoDayStr, omap, splitIntervalIntoCalendarDays, sum, useClasses } from '../util'
@@ -79,17 +79,17 @@ export function smartRound<T>(arr: T[], f: (t: T) => number, toNearest: number):
   return result
 }
 
-export interface ClarityViewProps {
+export interface PlatformViewProps {
   showing: Interval
   calculateTargetHours: (interval: Interval) => number
   slices: TimeSlice[]
-  clarityState: ClarityState
+  platformState: PlatformState
   submitTimesheets: boolean
   onChangeSubmitTimesheets: (x: boolean) => void
   errorHandler: (e: Error) => void
 }
 
-const styles = (theme) => ({
+const styles = (theme: any) => ({
   table: {
     padding: 0,
     borderSpacing: 0,
@@ -112,20 +112,20 @@ const styles = (theme) => ({
 const formatHours = (h: number) =>
   h ? h.toLocaleString('de-DE', { minimumFractionDigits: 2 }) : '-'
 
-const placeholderClarityTask = {
+const placeholderPlatformTask = {
   projectName: 'UNDEFINED',
   intId: -1,
   name: 'UNDEFINED',
 }
 
-function transform({ slices, showing, clarityState }: ClarityViewProps): ClarityExportFormat {
+function transform({ slices, showing, platformState }: PlatformViewProps): PlatformExportFormat {
   // add 1 to the end of showing, because we want the interval to go to the end of the
   // not just the begining
   const showInterval = { start: showing.start, end: addDays(showing.end, 1) }
 
-  // in the first step, create a ClarityExportFormat with an entry for each
+  // in the first step, create a PlatformExportFormat with an entry for each
   // task/comment combination
-  const dayMap: ClarityExportFormat = {}
+  const dayMap: PlatformExportFormat = {}
   // init dayMap so that days without slices are also included
   for (const day of eachDayOfInterval(showing)) {
     dayMap[isoDayStr(day)] = []
@@ -144,8 +144,8 @@ function transform({ slices, showing, clarityState }: ClarityViewProps): Clarity
       throw e
     }
     const task =
-      (slice.task.clarityTaskIntId && clarityState.resolveTask(+slice.task.clarityTaskIntId)) ||
-      placeholderClarityTask
+      (slice.task.platformTaskIntId && platformState.resolveTask(+slice.task.platformTaskIntId)) ||
+      placeholderPlatformTask
     // fix start/end of b, as part of the interval may be outside showInterval
     const bStartFixed = dateMax([slice.start, showInterval.start])
     const bEndFixed = dateMin([slice.end, showInterval.end])
@@ -157,8 +157,8 @@ function transform({ slices, showing, clarityState }: ClarityViewProps): Clarity
       const dayHourss = dayMap[dayKey]
       let dayHours = dayHourss.find(
         (d) =>
-          d.taskIntId === slice.task.clarityTaskIntId &&
-          d.comment === slice.task.clarityTaskComment,
+          d.taskIntId === slice.task.platformTaskIntId &&
+          d.comment === slice.task.platformTaskComment,
       )
       if (!dayHours) {
         dayHours = {
@@ -166,7 +166,7 @@ function transform({ slices, showing, clarityState }: ClarityViewProps): Clarity
           projectName: task.projectName,
           taskIntId: task.intId,
           taskName: task.name,
-          comment: slice.task.clarityTaskComment,
+          comment: slice.task.platformTaskComment,
         }
         dayHourss.push(dayHours)
       }
@@ -241,16 +241,16 @@ const DiffHoursTooltip = ({
   )
 }
 
-export const ClarityView = observer((props: ClarityViewProps) => {
+export const PlatformView = observer((props: PlatformViewProps) => {
   const {
     showing,
     submitTimesheets,
     onChangeSubmitTimesheets,
     errorHandler,
-    clarityState,
+    platformState,
     calculateTargetHours,
   } = props
-  const [clarityViewFilterProject, setclarityViewFilterProject] = useState('')
+  const [platformViewFilterProject, setPlatformViewFilterProject] = useState('')
   const noOfDays = differenceInDays(showing.end, showing.start)
   const groupBy = noOfDays > 366 ? 'year' : noOfDays > 64 ? 'month' : noOfDays > 21 ? 'week' : 'day'
   const untrimmedIntervals =
@@ -285,8 +285,8 @@ export const ClarityView = observer((props: ClarityViewProps) => {
       : 'week' === groupBy
       ? "'Wk' RRRR / I"
       : 'EEEEEE, dd.MM'
-  const clarityExport = transform(props)
-  const allWorkEntries = Object.values(clarityExport).flatMap((x) => x)
+  const platformExport = transform(props)
+  const allWorkEntries = Object.values(platformExport).flatMap((x) => x)
   const tasksToShow = sortBy(
     uniqBy(allWorkEntries, (we) => we.taskIntId),
     (x) => +(-1 === x.taskIntId), // placeholder task last
@@ -294,8 +294,8 @@ export const ClarityView = observer((props: ClarityViewProps) => {
     (x) => x.taskName,
   ).filter((taskToShow) => {
     return (
-      taskToShow.projectName.toLowerCase().includes(clarityViewFilterProject.toLowerCase()) ||
-      taskToShow.taskName.toLowerCase().includes(clarityViewFilterProject.toLowerCase())
+      taskToShow.projectName.toLowerCase().includes(platformViewFilterProject.toLowerCase()) ||
+      taskToShow.taskName.toLowerCase().includes(platformViewFilterProject.toLowerCase())
     )
   })
   const theme = useTheme()
@@ -306,14 +306,14 @@ export const ClarityView = observer((props: ClarityViewProps) => {
   const getWorkedHours = (interval: Interval) => {
     return sum(
       eachDayOfInterval(interval).map((d) =>
-        sum(clarityExport[isoDayStr(d)]?.map((we) => we.hours) ?? []),
+        sum(platformExport[isoDayStr(d)]?.map((we) => we.hours) ?? []),
       ),
     )
   }
 
-  if (clarityState.actionType === ClarityActionType.SubmitTimesheet) {
+  if (platformState.actionType === PlatformActionType.SubmitTimesheet) {
     setTimeout(() => {
-      clarityState.success = false
+      platformState.success = false
     }, 60000)
   }
 
@@ -329,9 +329,9 @@ export const ClarityView = observer((props: ClarityViewProps) => {
             <th className='textHeader'>
               <TextField
                 placeholder='Project / Task'
-                value={clarityViewFilterProject}
+                value={platformViewFilterProject}
                 fullWidth
-                onChange={(newFilter) => setclarityViewFilterProject(newFilter.target.value)}
+                onChange={(newFilter) => setPlatformViewFilterProject(newFilter.target.value)}
               />
             </th>
             {intervals.map((w) => (
@@ -355,7 +355,7 @@ export const ClarityView = observer((props: ClarityViewProps) => {
               </td>
               {intervals.map((w) => {
                 const workEntries = eachDayOfInterval(w)
-                  .flatMap((d) => clarityExport[isoDayStr(d)] ?? [])
+                  .flatMap((d) => platformExport[isoDayStr(d)] ?? [])
                   ?.filter((we) => we.taskIntId === taskToShow.taskIntId)
                 return (
                   <td
@@ -415,18 +415,20 @@ export const ClarityView = observer((props: ClarityViewProps) => {
       </CardContent>
       <CardActions style={{ flexDirection: 'row-reverse' }}>
         <Button
-          disabled={!clarityState.currentlyExportingTasks}
-          onClick={() => clarityState.killSelenium()}
+          disabled={!platformState.currentlyExportingTasks}
+          onClick={() => platformState.killPlatform()}
         >
           Cancel
         </Button>
         <Button
-          disabled={clarityState.currentlyExportingTasks || clarityState.currentlyImportingTasks}
+          disabled={
+            true || platformState.currentlyExportingTasks || platformState.currentlyImportingTasks
+          }
           variant='contained'
           onClick={() =>
-            clarityState
+            platformState
               .export(
-                omap(clarityExport, (workEntries) =>
+                omap(platformExport, (workEntries) =>
                   workEntries.filter((entry) => -1 !== entry.taskIntId),
                 ),
                 submitTimesheets,
@@ -435,18 +437,18 @@ export const ClarityView = observer((props: ClarityViewProps) => {
           }
           endIcon={
             <>
-              {!clarityState.currentlyExportingTasks && <SendIcon />}
-              {clarityState.actionType === ClarityActionType.SubmitTimesheet && (
+              {!platformState.currentlyExportingTasks && <SendIcon />}
+              {platformState.actionType === PlatformActionType.SubmitTimesheet && (
                 <LoadingSpinner
-                  loading={clarityState.currentlyExportingTasks}
-                  error={clarityState.error !== ''}
-                  success={clarityState.success}
+                  loading={platformState.currentlyExportingTasks}
+                  error={platformState.error !== ''}
+                  success={platformState.success}
                 />
               )}
             </>
           }
         >
-          Clarity!
+          OTT!
         </Button>{' '}
         <FormControlLabel
           control={

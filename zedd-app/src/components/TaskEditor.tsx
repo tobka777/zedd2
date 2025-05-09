@@ -1,26 +1,25 @@
-import { Button, Grid, TextField, Tooltip, MenuItem, Menu } from '@mui/material'
+import { Button, Grid, Menu, MenuItem, TextField, Tooltip } from '@mui/material'
 import {
+  ContentCopy as CopyIcon,
   Edit as EditIcon,
   GetApp as ImportIcon,
   SentimentSatisfiedAlt,
-  ContentCopy as CopyIcon,
 } from '@mui/icons-material'
 import { format as formatDate, formatDistance } from 'date-fns'
 import { observer } from 'mobx-react-lite'
 import * as React from 'react'
-import { useCallback, useState, useRef } from 'react'
-import { NikuUrlInvalidError } from 'zedd-clarity'
-
+import { useCallback, useRef, useState } from 'react'
+import { InvalidPlattformUrlException } from 'zedd-platform'
 import { AppState, Task } from '../AppState'
-import { ClarityState, ClarityActionType } from '../ClarityState'
-import { ClarityTaskSelect } from './ClarityTaskSelect'
+import { PlatformActionType, PlatformState } from '../PlatformState'
+import { PlatformTaskSelect } from './PlatformTaskSelect'
 import { LoadingSpinner } from './LoadingSpinner'
 import { TaskSelect } from './TaskSelect'
 
 interface TaskEditorProps {
   state: AppState
   value: Task
-  clarityState: ClarityState
+  platformState: PlatformState
   getTasksForSearchString: (s: string) => Promise<Task[]>
   onTaskSelectChange: (t: Task) => void
   style?: React.CSSProperties
@@ -30,48 +29,46 @@ interface TaskEditorProps {
 export const TaskEditor = observer(
   ({
     state,
-    clarityState,
+    platformState,
     onTaskSelectChange,
     value,
     getTasksForSearchString,
     style,
     taskSelectRef,
   }: TaskEditorProps) => {
-    const importClarityTasks = useCallback(
+    const importPlatformTasks = useCallback(
       (which: string) =>
-        clarityState
-          .importAndSaveClarityTasks(
-            state.config.excludeProjects,
-            'ALL' === which ? 'ALL' : 'NEW' === which ? 'NEW' : [which],
-            (info) => state.addMessage(info, 'info', 2000),
+        platformState
+          .importAndSavePlatformTasks('OTT' === which ? 'OTT' : 'ALL', (info) =>
+            state.addMessage(info, 'info', 2000),
           )
           .catch((e) => {
-            clarityState.error = e.message
+            platformState.error = e.message
             state.addMessage(
               e.message +
-                (e instanceof NikuUrlInvalidError
-                  ? 'Check zeddConfig.nikuLink and reload config.'
+                (e instanceof InvalidPlattformUrlException
+                  ? 'Check zeddConfig.ottLink and reload config.'
                   : ''),
             )
           }),
-      [clarityState, state],
+      [platformState, state],
     )
 
     const [popperOpen, setPopperOpen] = useState(false)
     const anchorRef = useRef(null)
 
-    let guessClarityIntId: number | undefined = undefined
-    if (value.clarityTaskIntId === undefined) {
+    let guessPlatformIntId: number | undefined = undefined
+    if (value.platformTaskIntId === undefined) {
       const keys = value.name.match(/[A-Z]+-\d+/g) ?? []
       const keyRegexes = keys.map((key) => new RegExp(key + '(?!\\d)'))
-      guessClarityIntId = clarityState.tasks.find((ct) =>
+      guessPlatformIntId = platformState.tasks.find((ct) =>
         keyRegexes.some((regex) => ct.name.match(regex)),
       )?.intId
     }
 
-    if (clarityState.actionType === ClarityActionType.ImportTasks) {
+    if (platformState.actionType === PlatformActionType.ImportTasks) {
       setTimeout(() => {
-        clarityState.success = false
+        platformState.success = false
       }, 60000)
     }
 
@@ -111,20 +108,20 @@ export const TaskEditor = observer(
           </Button>
         </Grid>
         <Grid item xs={6} lg={9}>
-          <ClarityTaskSelect
-            value={value.clarityTaskIntId}
+          <PlatformTaskSelect
+            value={value.platformTaskIntId}
             disabled={value === state.getUndefinedTask()}
-            label={`Clarity-Account for Task ${value && value.name}`}
+            label={`Account for Task ${value && value.name}`}
             fullWidth
             style={{ flex: '1 1 auto' }}
-            onChange={(newIntId) => (value.clarityTaskIntId = newIntId)}
-            clarityState={clarityState}
+            onChange={(newIntId) => (value.platformTaskIntId = newIntId)}
+            platformState={platformState}
           />
         </Grid>
         <Grid item xs={2} lg={1}>
           <Button
-            disabled={undefined === guessClarityIntId}
-            onClick={(_) => (value.clarityTaskIntId = guessClarityIntId)}
+            disabled={undefined === guessPlatformIntId}
+            onClick={(_) => (value.platformTaskIntId = guessPlatformIntId)}
             style={{ width: '100%' }}
             endIcon={<SentimentSatisfiedAlt />}
           >
@@ -133,28 +130,28 @@ export const TaskEditor = observer(
         </Grid>
         <Grid item xs={2} lg={1}>
           <Tooltip
-            title={`imported ${clarityState.tasks.length} tasks ${
-              clarityState.tasksLastUpdated
-                ? formatDistance(clarityState.tasksLastUpdated, new Date())
+            title={`imported ${platformState.tasks.length} tasks ${
+              platformState.tasksLastUpdated
+                ? formatDistance(platformState.tasksLastUpdated, new Date())
                 : 'never'
             } ago`}
           >
             <Button
               variant='text'
-              onClick={() => !clarityState.currentlyImportingTasks && setPopperOpen(!popperOpen)}
+              onClick={() => !platformState.currentlyImportingTasks && setPopperOpen(!popperOpen)}
               disabled={
-                clarityState.currentlyImportingTasks || clarityState.currentlyExportingTasks
+                platformState.currentlyImportingTasks || platformState.currentlyExportingTasks
               }
               style={{ width: '100%' }}
               ref={anchorRef}
               endIcon={
                 <>
-                  {clarityState.currentlyImportingTasks === false && <ImportIcon />}
-                  {clarityState.actionType === ClarityActionType.ImportTasks && (
+                  {platformState.currentlyImportingTasks === false && <ImportIcon />}
+                  {platformState.actionType === PlatformActionType.ImportTasks && (
                     <LoadingSpinner
-                      loading={clarityState.currentlyImportingTasks}
-                      error={clarityState.error !== ''}
-                      success={clarityState.success}
+                      loading={platformState.currentlyImportingTasks}
+                      error={platformState.error !== ''}
+                      success={platformState.success}
                     />
                   )}
                 </>
@@ -173,7 +170,7 @@ export const TaskEditor = observer(
             <MenuItem
               onClick={() => {
                 setPopperOpen(false)
-                importClarityTasks('ALL')
+                importPlatformTasks('ALL')
               }}
             >
               ALL
@@ -181,40 +178,40 @@ export const TaskEditor = observer(
             <MenuItem
               onClick={() => {
                 setPopperOpen(false)
-                importClarityTasks('NEW')
+                importPlatformTasks('OTT')
               }}
             >
-              NEW
+              OTT
             </MenuItem>
-            {clarityState.projectNames.map((pn) => (
+            {/*platformState.projectNames.map((pn) => (
               <MenuItem
                 key={pn}
                 onClick={() => {
                   setPopperOpen(false)
-                  importClarityTasks(pn)
+                  importPlatformTasks(pn)
                 }}
               >
                 {pn}
               </MenuItem>
-            ))}
+            ))*/}
           </Menu>
         </Grid>
         <Grid item xs={2} lg={1}>
           <Button
             variant='text'
             style={{ width: '100%' }}
-            disabled={!clarityState.currentlyImportingTasks}
-            onClick={() => clarityState.sileniumKill()}
+            disabled={!platformState.currentlyImportingTasks}
+            onClick={() => platformState.killPlatform()}
           >
             Cancel
           </Button>
         </Grid>
         <Grid item xs={10} lg={11}>
           <TextField
-            value={value.clarityTaskComment}
-            label='Clarity-Account Comment for This Task'
+            value={value.platformTaskComment}
+            label='Account Comment for This Task'
             disabled={value === state.getUndefinedTask()}
-            onChange={(e) => (value.clarityTaskComment = e.target.value)}
+            onChange={(e) => (value.platformTaskComment = e.target.value)}
             fullWidth
           />
         </Grid>
@@ -222,7 +219,7 @@ export const TaskEditor = observer(
           <Tooltip title='Copy task name to task comment'>
             <Button
               disabled={!value || value === state.getUndefinedTask()}
-              onClick={() => (value.clarityTaskComment = value.name)}
+              onClick={() => (value.platformTaskComment = value.name)}
               fullWidth
               endIcon={<CopyIcon />}
             >

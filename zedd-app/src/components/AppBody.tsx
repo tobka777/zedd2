@@ -1,23 +1,23 @@
 import { Button, ButtonGroup, Paper, Tooltip } from '@mui/material'
 import { useTheme } from '@mui/material/styles'
 import {
-    addMinutes,
-    addMonths,
-    addWeeks,
-    max as dateMax,
-    min as dateMin,
-    startOfDay,
-    differenceInDays,
-    isMonday,
-    addDays,
-    startOfMonth,
-    isSameDay,
-    endOfMonth,
-    subMinutes as sub,
-    differenceInMinutes,
-    startOfYear,
-    addYears,
-    endOfYear,
+  addDays,
+  addMinutes,
+  addMonths,
+  addWeeks,
+  addYears,
+  differenceInDays,
+  differenceInMinutes,
+  endOfMonth,
+  endOfYear,
+  isMonday,
+  isSameDay,
+  max as dateMax,
+  min as dateMin,
+  startOfDay,
+  startOfMonth,
+  startOfYear,
+  subMinutes as sub,
 } from 'date-fns'
 import { MenuItemConstructorOptions } from 'electron'
 import { Menu, shell } from '@electron/remote'
@@ -27,19 +27,19 @@ import { useCallback, useEffect, useState } from 'react'
 
 import { ErrorBoundary } from './ErrorBoundary'
 import { AppState, Task, TimeSlice } from '../AppState'
-import { ClarityState } from '../ClarityState'
+import { PlatformState } from '../PlatformState'
 import {
-    businessWeekInterval,
-    isoWeekInterval,
-    monthInterval,
-    omap,
-    startOfNextDay,
-    useClasses,
-    yearInterval,
+  businessWeekInterval,
+  isoWeekInterval,
+  monthInterval,
+  omap,
+  startOfNextDay,
+  useClasses,
+  yearInterval,
 } from '../util'
 import { BlockDisplay } from './BlockDisplay'
 import { Calendar } from './Calendar'
-import { ClarityView } from './ClarityView'
+import { PlatformView } from './PlatformView'
 import { TaskEditor } from './TaskEditor'
 import { ArrowBack, ArrowForward, Delete as DeleteIcon } from '@mui/icons-material'
 import { suggestedTaskMenuItems } from '../menuUtil'
@@ -47,26 +47,25 @@ import { DateRangePicker } from './DateRangePicker'
 import { ZeddSettings } from '../ZeddSettings'
 import { getHolidays } from '../holidays'
 
-
-const styles = (theme) => ({
+const styles = (theme: any) => ({
   contentRoot: {
     overflowY: 'scroll',
-    '& > *': {margin: theme.spacing(2)},
+    '& > *': { margin: theme.spacing(2) },
   },
   controlBar: {
     margin: theme.spacing(-1),
     display: 'flex',
     flexWrap: 'wrap',
     alignItems: 'center',
-    '& > *': {margin: theme.spacing(1), flexGrow: 1},
-    '& .MuiButtonGroup-root > *': {flexGrow: 1},
-    '& input[type="date"]::-webkit-clear-button': {display: 'none'},
+    '& > *': { margin: theme.spacing(1), flexGrow: 1 },
+    '& .MuiButtonGroup-root > *': { flexGrow: 1 },
+    '& input[type="date"]::-webkit-clear-button': { display: 'none' },
   },
 })
 
 export interface AppBodyProps {
   state: AppState
-  clarityState: ClarityState
+  platformState: PlatformState
   getTasksForSearchString: (s: string) => Promise<Task[]>
   getLinksFromString: (s: string) => [string, string][]
   display: boolean
@@ -75,18 +74,18 @@ export interface AppBodyProps {
 }
 
 export const AppBody = observer(
-    ({
-       state,
-       clarityState,
-       getTasksForSearchString,
-       display,
-       taskSelectRef,
-       getLinksFromString,
-       settings,
-     }: AppBodyProps) => {
-      const classes = useClasses(styles)
+  ({
+    state,
+    platformState,
+    getTasksForSearchString,
+    display,
+    taskSelectRef,
+    getLinksFromString,
+    settings,
+  }: AppBodyProps) => {
+    const classes = useClasses(styles)
 
-      const theme = useTheme()
+    const theme = useTheme()
     const onAltRightClick = useCallback(
       (_: React.MouseEvent, slice: TimeSlice) => {
         if (state.getTasksForMenu().length !== 0) {
@@ -99,7 +98,12 @@ export const AppBody = observer(
     const onBlockClick = useCallback(
       (_: React.MouseEvent, slice: TimeSlice) => {
         Menu.buildFromTemplate([
-          ...suggestedTaskMenuItems(state, clarityState, slice.task, (task) => (slice.task = task)),
+          ...suggestedTaskMenuItems(
+            state,
+            platformState,
+            slice.task,
+            (task) => (slice.task = task),
+          ),
           {
             type: 'normal',
             label: 'Other...',
@@ -153,7 +157,7 @@ export const AppBody = observer(
           },
         ]).popup()
       },
-      [clarityState, state],
+      [platformState, state],
     )
 
     const arrowClick = useCallback(
@@ -197,7 +201,7 @@ export const AppBody = observer(
     }, [state.showing, settings.location, settings.federalState])
 
     const onMarkingBlock = useCallback(
-      ( slice: TimeSlice) => {
+      (slice: TimeSlice) => {
         state.markSlice(slice)
       },
       [state],
@@ -205,8 +209,8 @@ export const AppBody = observer(
 
     useEffect(() => {
       const copy = (e: KeyboardEvent) => {
-        if ((e.ctrlKey || e.metaKey) && e.key === 'c' && state.lastClickedSlice !== undefined ) {
-            state.copiedSlice = state.lastClickedSlice
+        if ((e.ctrlKey || e.metaKey) && e.key === 'c' && state.lastClickedSlice !== undefined) {
+          state.copiedSlice = state.lastClickedSlice
         }
       }
 
@@ -219,7 +223,7 @@ export const AppBody = observer(
         <div>
           <TaskEditor
             state={state}
-            clarityState={clarityState}
+            platformState={platformState}
             onTaskSelectChange={(t) => {
               state.currentTask = t
               state.notifyTaskInteraction(t)
@@ -440,7 +444,7 @@ export const AppBody = observer(
                 return (
                   <BlockDisplay
                     {...attributes}
-                    clarityState={clarityState}
+                    platformState={platformState}
                     onContextMenu={onBlockClick}
                     onAltRightClick={onAltRightClick}
                     onMarkingBlock={onMarkingBlock}
@@ -453,14 +457,14 @@ export const AppBody = observer(
           </Paper>
         )}
         <ErrorBoundary>
-          <ClarityView
+          <PlatformView
             showing={state.showing}
             slices={state.showingSlices}
-            clarityState={clarityState}
+            platformState={platformState}
             submitTimesheets={state.submitTimesheets}
             onChangeSubmitTimesheets={(x) => (state.submitTimesheets = x)}
             errorHandler={(error) => {
-              clarityState.error = error.message
+              platformState.error = error.message
               state.addMessage(error.message)
             }}
             calculateTargetHours={(interval) => state.calcTargetHours(interval)}

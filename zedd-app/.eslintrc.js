@@ -10,10 +10,9 @@ module.exports = {
     'plugin:@typescript-eslint/eslint-recommended',
     'plugin:@typescript-eslint/recommended',
     'plugin:react/recommended',
-    'prettier/@typescript-eslint',
+    'prettier',
   ],
   rules: {
-    'yoda': ['warn', 'always', { 'onlyEquality': true }],
     'react-hooks/rules-of-hooks': 'error',
     'react/no-unescaped-entities': 'off',
     'react-hooks/exhaustive-deps': ['warn', { additionalHooks: '^useDebouncedCallback$' }],

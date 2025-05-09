@@ -85,7 +85,7 @@ export class Undoer {
 
   public undo(): void {
     if (this.undoPosition >= 0) {
-      let action = this.undoStack[this.undoPosition]
+      const action = this.undoStack[this.undoPosition]
       this.undoPosition--
       try {
         this.trackUndoEvents = false
@@ -109,7 +109,7 @@ export class Undoer {
   public redo(): void {
     if (this.undoPosition < this.undoStack.length - 1) {
       this.undoPosition++
-      let action = this.undoStack[this.undoPosition]
+      const action = this.undoStack[this.undoPosition]
       try {
         this.trackUndoEvents = false
         if (action.type === 'splice') {

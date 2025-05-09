@@ -1,38 +1,38 @@
-import { ipcRenderer, BrowserWindow, MenuItemConstructorOptions, Rectangle } from 'electron'
 import {
-  Tray,
-  Menu,
-  getCurrentWindow,
   app,
-  shell,
-  screen as electronScreen,
-  powerMonitor,
   autoUpdater,
+  getCurrentWindow,
+  Menu,
+  powerMonitor,
+  screen as electronScreen,
+  shell,
+  Tray,
 } from '@electron/remote'
+import { BrowserWindow, ipcRenderer, MenuItemConstructorOptions, Rectangle } from 'electron'
 import { autorun, computed, configure as configureMobx } from 'mobx'
 import * as path from 'path'
 import * as React from 'react'
 import * as ReactDOM from 'react-dom'
 import 'win-ca' // use windows root certificates
-
-import { format, AppState, TimeSlice, formatInterval } from './AppState'
-import { ClarityState } from './ClarityState'
+import { AppState, format, formatInterval, TimeSlice } from './AppState'
+import { PlatformState } from './PlatformState'
 import { AppGui } from './components/AppGui'
 import './index.css'
+import { createRoot } from 'react-dom/client'
 import {
+  checkCgJira,
+  getLinksFromString,
   getTasksForSearchString,
   getTasksFromAssignedJiraIssues,
   initJiraClient,
-  checkCgJira,
-  getLinksFromString,
 } from './plJiraConnector'
-import { fileExists, formatHoursBT, formatHoursHHmm, mkdirIfNotExists, floor } from './util'
+import { fileExists, floor, formatHoursBT, formatHoursHHmm, mkdirIfNotExists } from './util'
 import { ZeddSettings } from './ZeddSettings'
 import {
-  getNonEnvPathChromePath,
+  getChromeDriverVersion,
   getChromeVersion,
   getLatestChromeDriverVersion,
-  getChromeDriverVersion,
+  getNonEnvPathChromePath,
   installChromeDriver,
 } from './chromeDriverMgmt'
 import { suggestedTaskMenuItems } from './menuUtil'
@@ -42,13 +42,12 @@ configureMobx({ enforceActions: 'never' })
 const currentWindow = getCurrentWindow()
 const saveDir = path.join(app.getPath('home'), 'zedd')
 
-const clarityDir = path.join(saveDir, 'clarity')
+const platformDir = path.join(saveDir, 'platform')
 
 const userConfigFile = path.join(saveDir, 'zeddconfig.json')
 
 const d = (...x: any[]) => console.log('renderer.ts', ...x)
 
-const isMac = process.platform === 'darwin'
 const isWin = process.platform === 'win32'
 
 // class Todo {
@@ -123,31 +122,30 @@ const getMenuItems = (state: AppState) => [
 async function setup() {
   await mkdirIfNotExists(saveDir)
 
-  const clarityState = new ClarityState(clarityDir)
+  const platformState = new PlatformState(platformDir)
 
   const config = (await fileExists(userConfigFile))
     ? await ZeddSettings.readFromFile(userConfigFile)
     : new ZeddSettings(userConfigFile)
 
-  d('clarityDir=' + clarityDir)
-  clarityState.init()
+  d('platformDir=' + platformDir)
+  platformState.init()
   autorun(() => {
-    clarityState.nikuLink = config.nikuLink
-    clarityState.chromeHeadless = config.chromeHeadless
-    clarityState.resourceName = config.clarityResourceName
+    platformState.ottLink = config.ottLink
+    platformState.chromeHeadless = config.chromeHeadless
   })
 
   // await sleep(5000);
   // importAndSaveClarityTasks();
   try {
-    await clarityState.loadStateFromFile()
+    await platformState.loadStateFromFile()
   } catch (e) {
     console.error('Could not load clarity tasks')
     console.error(e)
   }
 
   try {
-    initJiraClient(config.cgJira, clarityState, () => config.saveToFile(), config.jira2.url)
+    initJiraClient(config.cgJira, platformState, () => config.saveToFile(), config.jira2.url)
   } catch (e) {
     console.error('Could not init JiraClient')
     console.error(e)
@@ -222,7 +220,7 @@ async function setup() {
   state.whatsNewDialogOpen = app.getVersion() !== state.whatsNewDialogLastOpenedForVersion
   state.whatsNewDialogLastOpenedForVersion = app.getVersion()
 
-  getTasksFromAssignedJiraIssues(clarityState.tasks)
+  getTasksFromAssignedJiraIssues(platformState.tasks)
     .then((e) => (state.assignedIssueTasks = e.map((t) => state.normalizeTask(t))))
     .catch((error) => state.addMessage(error.message))
 
@@ -250,7 +248,9 @@ async function setup() {
     console.log('current chrome version', chromeVersion)
     if (parseInt(chromeVersion.split('.')[0]) < 115) {
       // Requirement Check if Chrome newer than 115
-      throw new Error(`Chrome ${chromeVersion} is not supported. Update Chrome to version 115 or newer!`)
+      throw new Error(
+        `Chrome ${chromeVersion} is not supported. Update Chrome to version 115 or newer!`,
+      )
     }
 
     const requiredChromeDriverVersion = await getLatestChromeDriverVersion(chromeVersion)
@@ -268,8 +268,8 @@ async function setup() {
       console.log('chromedriver missing or has wrong version')
       installChromeDriver(requiredChromeDriverVersion, chromeDriverDir, false)
     }
-    clarityState.chromeExe = state.config.chromePath
-    clarityState.chromedriverExe = chromeDriverPath
+    platformState.chromeExe = state.config.chromePath
+    platformState.chromedriverExe = chromeDriverPath
     return { chromeVersion, chromeDriverVersion: requiredChromeDriverVersion }
   }
   checkChromePath().catch((error) => state.addMessage(error.message))
@@ -377,7 +377,7 @@ async function setup() {
 
         ...suggestedTaskMenuItems(
           state,
-          clarityState,
+          platformState,
           state.currentTask,
           (task) => (state.currentTask = task),
         ),
@@ -445,7 +445,7 @@ async function setup() {
         config.keepHovering &&
         !state.hoverMode &&
         !state.dialogOpen() &&
-        !clarityState.currentlyImportingTasks &&
+        !platformState.currentlyImportingTasks &&
         !state.windowFocused
       ) {
         state.hoverMode = true
@@ -510,14 +510,16 @@ async function setup() {
       window.removeEventListener('beforeunload', cleanup)
     }),
     renderDOM: () => {
-      ReactDOM.render(
+      const container = document.getElementById('react-root')
+      const root = createRoot(container!)
+      root.render(
         React.createElement(AppGui, {
           showContextMenu: () => currentMenu.popup(),
           taskSelectRef: (r) => (taskSelectRef = r),
           state,
           checkCgJira,
           checkChromePath,
-          clarityState,
+          platformState: platformState,
           menuItems: getMenuItems(state),
           getTasksForSearchString: (s) =>
             getTasksForSearchString(s).then((ts) =>
@@ -525,7 +527,6 @@ async function setup() {
             ),
           getLinksFromString,
         }),
-        document.getElementById('react-root'),
       )
     },
   }

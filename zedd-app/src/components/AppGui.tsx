@@ -1,17 +1,17 @@
 import {
-  CssBaseline,
-  Snackbar,
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogActions,
-  Button,
   Alert,
+  Button,
+  CssBaseline,
+  Dialog,
+  DialogActions,
+  DialogContent,
+  DialogTitle,
+  Snackbar,
 } from '@mui/material'
 import {
-  ThemeProvider as MuiThemeProvider,
-  StyledEngineProvider,
   createTheme,
+  StyledEngineProvider,
+  ThemeProvider as MuiThemeProvider,
 } from '@mui/material/styles'
 import { ThemeProvider } from '@emotion/react'
 import useMediaQuery from '@mui/material/useMediaQuery'
@@ -23,7 +23,7 @@ import ReactMarkdown from 'react-markdown'
 
 import { ErrorBoundary } from './ErrorBoundary'
 import { AppState, Task } from '../AppState'
-import { ClarityState } from '../ClarityState'
+import { PlatformState } from '../PlatformState'
 import { ChangeSliceTaskDialog } from './ChangeSliceTaskDialog'
 import { RenameTaskDialog } from './RenameTaskDialog'
 import { SettingsDialog } from './SettingsDialog'
@@ -31,11 +31,10 @@ import { ZeddSettings } from '../ZeddSettings'
 import { TitleBar } from './TitleBar'
 import { AppBody } from './AppBody'
 import changelog from '../../../CHANGELOG.md'
-import { useClasses } from '../util'
 
 export interface AppGuiProps {
   state: AppState
-  clarityState: ClarityState
+  platformState: PlatformState
   getTasksForSearchString: (s: string) => Promise<Task[]>
   menuItems: { label: string; click: () => void }[]
   checkCgJira: (cg: ZeddSettings['cgJira']) => Promise<any>
@@ -45,14 +44,10 @@ export interface AppGuiProps {
   getLinksFromString: (s: string) => [string, string][]
 }
 
-const styles = {
-  '@global #react-root': {},
-}
-
 export const AppGui = observer(
   ({
     state,
-    clarityState,
+    platformState,
     getTasksForSearchString,
     checkCgJira,
     menuItems,
@@ -83,8 +78,6 @@ export const AppGui = observer(
 
     const { config } = state
     const currentFocusedTask = state.focused?.task ?? state.currentTask
-
-    const classes = useClasses(styles)
 
     const message = !state.hoverMode && state.messages.length ? state.messages[0] : undefined
 
@@ -134,7 +127,7 @@ export const AppGui = observer(
               <Dialog open={true} onClose={() => (state.whatsNewDialogOpen = false)}>
                 <DialogTitle>What's New</DialogTitle>
                 <DialogContent>
-                  <ReactMarkdown children={changelog} />
+                  <ReactMarkdown>{changelog}</ReactMarkdown>
                 </DialogContent>
                 <DialogActions>
                   <Button onClick={() => autoUpdater.checkForUpdates()}>Check for updates</Button>
@@ -154,7 +147,7 @@ export const AppGui = observer(
                 checkCgJira={checkCgJira}
                 checkChromePath={checkChromePath}
                 settings={state.config}
-                clarityState={clarityState}
+                platformState={platformState}
               />
             )}
             {state.renamingTask ? (
@@ -167,7 +160,7 @@ export const AppGui = observer(
             ) : (
               state.changingSliceTask && (
                 <ChangeSliceTaskDialog
-                  clarityState={clarityState}
+                  platformState={platformState}
                   slice={state.changingSliceTask}
                   getTasksForSearchString={getTasksForSearchString}
                   done={(newTask) => {
@@ -194,7 +187,7 @@ export const AppGui = observer(
             <ErrorBoundary>
               <AppBody
                 state={state}
-                clarityState={clarityState}
+                platformState={platformState}
                 getTasksForSearchString={getTasksForSearchString}
                 display={!state.hoverMode}
                 taskSelectRef={taskSelectRef}

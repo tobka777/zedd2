@@ -6,38 +6,40 @@ import {
   differenceInDays,
   differenceInHours,
   differenceInMinutes,
+  differenceInMonths,
   eachDayOfInterval,
+  eachYearOfInterval,
   endOfDay,
   format as formatDate,
   getDay,
   getISODay,
+  getYear,
   isAfter,
   isBefore,
   isSameDay,
   isValid,
   max as dateMax,
   min as dateMin,
+  parse as dateParse,
   parseISO,
   set as dateSet,
   startOfDay,
   startOfMinute,
-  parse as dateParse,
   subSeconds,
-  eachYearOfInterval,
-  getYear,
-  differenceInMonths,
 } from 'date-fns'
 import { promises as fsp } from 'fs'
 import { sum } from 'lodash'
-import { computed, observable, transaction, intercept, action, makeObservable } from 'mobx'
 import type { IObservableArray } from 'mobx'
+import { action, computed, intercept, makeObservable, observable, transaction } from 'mobx'
 import { createTransformer, ObservableGroupMap } from 'mobx-utils'
 import * as path from 'path'
 import * as chroma from 'chroma.ts'
 import {
+  createSimpleSchema,
   custom,
   date,
   deserialize,
+  getDefaultModelSchema,
   identifier,
   list,
   object,
@@ -45,26 +47,25 @@ import {
   serializable,
   serialize,
   SKIP,
-  getDefaultModelSchema,
-  createSimpleSchema,
 } from 'serializr'
 
 import {
   abs,
+  FILE_DATE_FORMAT,
+  formatHoursBT,
+  formatHoursHHmm,
+  getUniqueId,
   isoWeekInterval,
   mkdirIfNotExists,
+  readFilesWithDate,
   startOfNextMinute,
   stringHashColor,
   tryWithFilesInDir,
   uniqCustom,
-  FILE_DATE_FORMAT,
-  readFilesWithDate,
-  formatHoursBT,
-  formatHoursHHmm,
-  getUniqueId,
 } from './util'
 import { ZeddSettings } from './ZeddSettings'
 import { Undoer } from './Undoer'
+import type { PlatformType } from 'zedd-platform'
 
 export const MIN_GAP_TIME_MIN = 5
 
@@ -98,7 +99,11 @@ export class Task {
 
   @serializable
   @observable
-  public clarityTaskIntId: number | undefined
+  public platformTaskIntId: number | undefined
+
+  @serializable
+  @observable
+  public platformType?: PlatformType
 
   /**
    * The internal key for JIRA-Issues.
@@ -110,19 +115,21 @@ export class Task {
 
   @serializable
   @observable
-  public clarityTaskComment: string = ''
+  public platformTaskComment: string = ''
 
   constructor(
     name: string = '',
-    clarityTaskIntId?: number | undefined,
+    platformType?: PlatformType,
+    platformTaskIntId?: number,
     key?: string,
-    clarityTaskComment?: string,
+    platformTaskComment?: string,
   ) {
     makeObservable(this)
     this.name = name
-    this.clarityTaskIntId = clarityTaskIntId
+    this.platformTaskIntId = platformTaskIntId
     this.key = key
-    this.clarityTaskComment = clarityTaskComment || ''
+    this.platformTaskComment = platformTaskComment || ''
+    this.platformType = platformType
   }
 
   public static same(a: Task, b: Task): boolean {
@@ -637,7 +644,7 @@ export class AppState {
   public getUndefinedTask(): Task {
     return (
       this.tasks.find((t) => 'UNDEFINED' === t.name) ||
-      new Task('UNDEFINED', undefined, 'UNDEFINED')
+      new Task('UNDEFINED', undefined, undefined, 'UNDEFINED')
     )
   }
 
@@ -752,7 +759,7 @@ export class AppState {
   public clearMarking(): void {
     this.markedSlices.clear()
     this.slicesMarked = false
-    this.copiedSlice = undefined;
+    this.copiedSlice = undefined
   }
 
   public startInterval(getUserIdleTime: () => number): void {
@@ -797,7 +804,6 @@ export class AppState {
           return prev
         }, undefined as TimeSlice | undefined) ?? this.lastTimedSlice
 
-      // console.log('lastSlice', strlastSlice)
       if (differenceInMinutes(now, this.lastUserAction) > minIdleTimeInMin) {
         if (lastSlice) {
           lastSlice.end = startOfNextMinute(this.lastUserAction)
@@ -809,11 +815,8 @@ export class AppState {
         isAfter(this.lastUserAction, prevLastUserAction) &&
         differenceInMinutes(now, prevLastUserAction) > minIdleTimeInMin
       ) {
-        // console.log('user is back', timeSliceStr(lastSlice))
-
         if (lastSlice) {
           lastSlice.end = startOfNextMinute(prevLastUserAction)
-          // console.log('lastSlice', timeSliceStr(lastSlice))
           lastSlice = undefined
         }
         try {
@@ -831,8 +834,6 @@ export class AppState {
       if (!lastSlice) {
         const start = startOfMinute(now)
         const newSlice: TimeSlice = new TimeSlice(start, addMinutes(start, 1), this.currentTask)
-        // console.log('ADDING SLICE', newSlice)
-
         this.lastTimedSlice = this.addSlice(newSlice)
       } else {
         if (

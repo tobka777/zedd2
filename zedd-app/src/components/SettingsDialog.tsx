@@ -1,34 +1,31 @@
 import {
+  Autocomplete,
+  Button,
+  CircularProgress,
   Dialog,
   DialogActions,
   DialogContent,
   DialogTitle,
-  TextField,
-  FormLabel,
-  CircularProgress,
-  Grid,
-  InputAdornment,
-  Checkbox,
   FormControlLabel,
-  Tooltip,
-  Button,
+  FormLabel,
+  Grid,
   IconButton,
-  Switch,
-  RadioGroup,
+  InputAdornment,
   Radio,
-  Autocomplete,
+  RadioGroup,
+  Switch,
+  TextField,
+  Tooltip,
 } from '@mui/material'
 import { useTheme } from '@mui/material/styles'
 import * as React from 'react'
-import { useState, useEffect } from 'react'
+import { useEffect, useState } from 'react'
 import { dialog } from '@electron/remote'
 import { MoreHoriz as PickFileIcon } from '@mui/icons-material'
 import { observer } from 'mobx-react-lite'
-import { uniq } from 'lodash'
-
-import { ClarityState } from '../ClarityState'
+import { PlatformState } from '../PlatformState'
 import { ZeddSettings } from '../ZeddSettings'
-import { toggle, useDebouncedCallback } from '../util'
+import { useDebouncedCallback } from '../util'
 import { countries, federalStates } from '../holidays'
 
 // const _inExternal = (e: React.MouseEvent<HTMLAnchorElement>) => {
@@ -39,13 +36,14 @@ import { countries, federalStates } from '../holidays'
 export const SettingsDialog = observer(
   ({
     done,
-    clarityState,
+    // @ts-expect-error TS6133
+    platformState,
     settings,
     checkCgJira,
     checkChromePath,
   }: {
     done: () => void
-    clarityState: ClarityState
+    platformState: PlatformState
     settings: ZeddSettings
     checkCgJira: (cgJira: ZeddSettings['cgJira']) => Promise<any>
     checkChromePath: () => Promise<{
@@ -67,7 +65,7 @@ export const SettingsDialog = observer(
       {} as { error?: any; ok?: true; checking?: true },
     )
 
-    const [textFieldNikuLink, setTextFieldNikuLink] = useState(settings.nikuLink)
+    const [textFieldOTTLink, setTextFieldOTTLink] = useState(settings.ottLink)
 
     const theme = useTheme()
 
@@ -97,9 +95,6 @@ export const SettingsDialog = observer(
       [checkCgJira, settings],
       1000,
     )
-
-    const projects = uniq([...clarityState.projectNames, ...settings.excludeProjects])
-    projects.sort()
 
     function updateWorkmask(newValueofHours: number) {
       const actualSumOfHours = settings.workmask.reduce(
@@ -242,16 +237,15 @@ export const SettingsDialog = observer(
             </Grid>
 
             <Grid item xs={4}>
-              <FormLabel>Clarity URL</FormLabel>
+              <FormLabel>OTT URL</FormLabel>
             </Grid>
             <Grid item xs={8}>
               <TextField
-                placeholder='http://example.com/niku/nu'
                 style={{ width: '100%' }}
-                value={textFieldNikuLink}
+                value={textFieldOTTLink}
                 onChange={(e) => {
-                  setTextFieldNikuLink(e.target.value)
-                  settings.nikuLink = e.target.value.trim()
+                  setTextFieldOTTLink(e.target.value)
+                  settings.ottLink = e.target.value.trim()
                 }}
               />
             </Grid>
@@ -341,40 +335,6 @@ export const SettingsDialog = observer(
             </Grid>
 
             <Grid item xs={4}>
-              <FormLabel>Clarity Projects To Ignore</FormLabel>
-              <div style={{ fontSize: 'small' }}>
-                Define clarity projects whoses tasks should not be imported.
-              </div>
-            </Grid>
-            <Grid item xs={8}>
-              {projects.map((x) => (
-                <FormControlLabel
-                  key={x}
-                  style={{ display: 'block' }}
-                  control={
-                    <Checkbox
-                      checked={settings.excludeProjects.includes(x)}
-                      value={x}
-                      onChange={(e) => toggle(settings.excludeProjects, e.target.value)}
-                    />
-                  }
-                  label={x}
-                />
-              ))}
-            </Grid>
-
-            <Grid item xs={4}>
-              <FormLabel>Clarity Ressource Name</FormLabel>
-              <div style={{ fontSize: 'small' }}>Leave this empty.</div>
-            </Grid>
-            <Grid item xs={8}>
-              <TextField
-                value={settings.clarityResourceName}
-                onChange={(e) => (settings.clarityResourceName = e.target.value)}
-              />
-            </Grid>
-
-            <Grid item xs={4}>
               <FormLabel>PL JIRA</FormLabel>
               <div style={{ fontSize: 'small' }}>
                 Leave blank if not relevant. If necessary, add required root certificates to the
@@ -448,7 +408,6 @@ export const SettingsDialog = observer(
             </Grid>
             <Grid item xs={8} style={{ minHeight: '4em' }}>
               <TextField
-                placeholder='http://example.com/niku/nu'
                 style={{ width: '100%' }}
                 value={settings.chromePath}
                 onChange={(e) => {

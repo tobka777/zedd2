@@ -5,7 +5,7 @@ import { useCallback } from 'react'
 
 import { useTheme } from '@mui/material/styles'
 import { TimeSlice } from '../AppState'
-import { ClarityState } from '../ClarityState'
+import { PlatformState } from '../PlatformState'
 import { SliceDragStartHandler, SliceSplitHandler } from './Calendar'
 
 export type BlockProps = {
@@ -15,8 +15,8 @@ export type BlockProps = {
   onSplit?: SliceSplitHandler<TimeSlice>
   onContextMenu: (e: React.MouseEvent, block: TimeSlice) => void
   onAltRightClick: (e: React.MouseEvent, block: TimeSlice) => void
-  onMarkingBlock: ( block: TimeSlice) => void
-  clarityState: ClarityState
+  onMarkingBlock: (block: TimeSlice) => void
+  platformState: PlatformState
   slicesMarked: boolean
 } & Omit<React.HTMLAttributes<HTMLDivElement>, 'onContextMenu'>
 
@@ -29,20 +29,20 @@ export const BlockDisplay = observer(
     onContextMenu,
     onAltRightClick,
     onMarkingBlock,
-    clarityState,
+    platformState,
     style,
     className,
     ...attributes
   }: BlockProps) => {
     const blockClickHandler = useCallback(
       (e: React.MouseEvent) => {
-          if ((e.ctrlKey || e.metaKey) && onSplit) onSplit(slice, e)
-          if (1 === e.button) onContextMenu(e, slice)
-          if (0 === e.button) {
-              setMarking((current) => !current)
-              onMarkingBlock(slice)
-              if (e.altKey === true) onAltRightClick(e, slice)
-          }
+        if ((e.ctrlKey || e.metaKey) && onSplit) onSplit(slice, e)
+        if (1 === e.button) onContextMenu(e, slice)
+        if (0 === e.button) {
+          setMarking((current) => !current)
+          onMarkingBlock(slice)
+          if (e.altKey === true) onAltRightClick(e, slice)
+        }
       },
       [slice, onSplit, onContextMenu],
     )
@@ -88,7 +88,7 @@ export const BlockDisplay = observer(
       [startDrag, slice],
     )
 
-    const clarityTask = clarityState.resolveTask(slice.task.clarityTaskIntId)
+    const task = platformState.resolveTask(slice.task.platformTaskIntId)
 
     const theme = useTheme()
 
@@ -141,17 +141,17 @@ export const BlockDisplay = observer(
             {format(slice.start, 'HH:mm')} - {format(slice.end, 'HH:mm')}
           </div>
         )}
-        {!clarityTask && (
-          <span title='Clarity Task is unset/invalid' style={{ cursor: 'help' }}>
+        {!task && (
+          <span title='Task is unset/invalid' style={{ cursor: 'help' }}>
             ⚠️
           </span>
         )}
         {slice.task.name}{' '}
-        {clarityTask && (
+        {task && (
           <span style={{ fontFamily: 'Consolas' }}>
-            {clarityTask.name}
-            {slice.task.clarityTaskComment && (
-              <span style={{ fontStyle: 'italic' }}>{' mK ' + slice.task.clarityTaskComment}</span>
+            {task.name}
+            {slice.task.platformTaskComment && (
+              <span style={{ fontStyle: 'italic' }}>{' mK ' + slice.task.platformTaskComment}</span>
             )}
           </span>
         )}

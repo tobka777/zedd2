@@ -1,5 +1,6 @@
-import { app, ipcMain, session, BrowserWindow } from 'electron'
 import * as remoteMain from '@electron/remote/main'
+import { app, BrowserWindow, ipcMain, session } from 'electron'
+
 remoteMain.initialize()
 
 global.isDev = process.argv.includes('--dev')

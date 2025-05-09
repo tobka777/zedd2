@@ -1,30 +1,27 @@
 import { compareDesc, differenceInMinutes } from 'date-fns'
 import { Version2Client as JiraClient } from 'jira.js'
-// @ts-ignore
-import * as request from 'request'
-
-import { Task } from './AppState'
-import { ClarityTask, ClarityState } from './ClarityState'
-import { ZeddSettings } from './ZeddSettings'
 import { isEqual } from 'lodash'
+import { Task } from './AppState'
+import { PlatformState } from './PlatformState'
+import { PlatformType, Task as PlatformTask } from 'zedd-platform'
+import { ZeddSettings } from './ZeddSettings'
 
 // Initialize
-const jar = request.jar()
 let jiraConfig: ZeddSettings['cgJira']
 let jira: JiraClient
 let saveSettings: () => void
 
 let lastJiraCall: Date | undefined = undefined
-let clarityState: ClarityState
+let platformState: PlatformState
 let jira2url: string = ''
 
 export function initJiraClient(
   jc: ZeddSettings['cgJira'],
-  newClarityState: ClarityState,
+  newPlatformState: PlatformState,
   newSaveSettings: () => void,
   newJira2url: string,
 ): void {
-  clarityState = newClarityState
+  platformState = newPlatformState
   jiraConfig = jc
   saveSettings = newSaveSettings
   jira2url = newJira2url
@@ -33,13 +30,13 @@ export function initJiraClient(
     host: url.toString(),
     telemetry: false,
     authentication: {
-        personalAccessToken: jc.token,
+      personalAccessToken: jc.token,
     },
   })
 }
 
 const externalJiraField = 'customfield_10216'
-const clarityTaskField = 'customfield_10301'
+const platformTaskField = 'customfield_10301'
 
 const jiraConnectorErrorToMessage = (x: any) => {
   console.error(x)
@@ -47,37 +44,20 @@ const jiraConnectorErrorToMessage = (x: any) => {
   throw new Error(request.method + ' ' + request.uri.href + ' returned ' + body)
 }
 
-export const checkCgJira = (config: ZeddSettings['cgJira']): Promise<any> => {
-    console.log(config.url)
-  return new Promise(async (resolve, reject) => {
-          try {
-              const response = await fetch(config.url + '/rest/api/2/myself', {
-                  method: 'GET',
-                  headers: {
-                      "Authorization": 'Bearer ' + config.token
-                  }
-              })
-              if (response.status >= 400) {
-                  console.error(response)
-                  reject(
-                      new Error(
-                          response.url +
-                          ' returned ' +
-                          response.status +
-                          ' ' +
-                          response.statusText,
-                      ),
-                  )
-              }
-              else {
-                resolve(response)
-              }
-          } catch (error) {
-              reject(error)
-          }
-          return
-      }
-  )
+export const checkCgJira = async (config: ZeddSettings['cgJira']): Promise<any> => {
+  console.log(config.url)
+  const response = await fetch(config.url + '/rest/api/2/myself', {
+    method: 'GET',
+    headers: {
+      Authorization: 'Bearer ' + config.token,
+    },
+  })
+  if (response.status >= 400) {
+    console.error(response)
+    throw new Error(response.url + ' returned ' + response.status + ' ' + response.statusText)
+  } else {
+    return response
+  }
 }
 
 const callWithJsessionCookie = async <T>(cb: () => Promise<T>) => {
@@ -93,14 +73,14 @@ const updateJiraProjectKeys = () =>
   callWithJsessionCookie(async () => {
     const projects = await jira.projects.getAllProjects()
     console.warn(projects)
-    const keys = projects.map((p) => p.key)
+    const keys = projects.map((p) => p.key).filter((key): key is string => key !== undefined)
     if (!isEqual(keys, jiraConfig.keys)) {
       console.log('retrieved project keys: ', keys)
       jiraConfig.keys = keys
       saveSettings()
     }
   })
-const issueInfoToTask = async (clarityTasks: ClarityTask[], i: any): Promise<Task> => {
+const issueInfoToTask = async (platformTasks: PlatformTask[], i: any): Promise<Task> => {
   if (i.fields.parent) {
     const result = await callWithJsessionCookie(() =>
       jira.issueSearch
@@ -109,45 +89,49 @@ const issueInfoToTask = async (clarityTasks: ClarityTask[], i: any): Promise<Tas
         })
         .catch(jiraConnectorErrorToMessage),
     )
-    return issueInfoToTask(clarityTasks, result.issues?.[0])
+    return issueInfoToTask(platformTasks, result.issues?.[0])
   }
 
   const externalKey = i.fields[externalJiraField]
-  const clarityTaskFieldValue = i.fields[clarityTaskField]?.[0]?.trim()
-  let clarityTaskId: number | undefined
-  if (clarityTaskFieldValue) {
-    clarityTaskId = clarityTasks
-      .filter((t) => t.name === clarityTaskFieldValue)
-      .sort((a, b) => compareDesc(a.start, b.start))[0]?.intId
-    if (!clarityTaskId) {
-      console.warn(
-        "No clarity-account found for JIRA Clarity-Task Field '" + clarityTaskFieldValue + "'",
-      )
+  const platformTaskFieldValue = i.fields[platformTaskField]?.[0]?.trim()
+  let platformTaskId: number | undefined
+  let platformType: PlatformType | undefined = undefined
+  if (platformTaskFieldValue) {
+    const platformTask = platformTasks
+      .filter((t) => t.name === platformTaskFieldValue)
+      .sort((a, b) => (!a.start || !b.start ? 0 : compareDesc(a.start, b.start)))[0]
+    platformTaskId = platformTask?.intId
+    platformType = platformTask?.typ
+    if (!platformTaskId || !platformType) {
+      console.warn("No account found for JIRA Task Field '" + platformTaskFieldValue + "'")
     }
   } else if (externalKey) {
-    clarityTaskId = clarityTasks
+    const platformTask = platformTasks
       .filter((t) => t.name.includes(externalKey))
-      .sort((a, b) => compareDesc(a.start, b.start))[0]?.intId
-    if (!clarityTaskId) {
-      console.warn("No clarity-account found for external JIRA-Key '" + externalKey + "'")
+      .sort((a, b) => (!a.start || !b.start ? 0 : compareDesc(a.start, b.start)))[0]
+    platformTaskId = platformTask?.intId
+    platformType = platformTask?.typ
+    if (!platformTaskId || !platformType) {
+      console.warn("No account found for external JIRA-Key '" + externalKey + "'")
     }
   }
   console.log(
     'resolved ',
     i.fields.summary,
-    clarityTaskId,
-    clarityTasks.find((t) => t.intId === clarityTaskId),
+    platformTaskId,
+    platformTasks.find((t) => t.intId === platformTaskId),
   )
   return new Task(
     (externalKey ? externalKey + '/' : '') +
       i.key +
       ': ' +
       i.fields.summary.replace(new RegExp('^' + externalKey + ':? ?'), ''),
-    clarityTaskId,
+    platformType,
+    platformTaskId,
   )
 }
 
-export const getTasksFromAssignedJiraIssues = (clarityTasks: ClarityTask[]): Promise<Task[]> =>
+export const getTasksFromAssignedJiraIssues = (platformTasks: PlatformTask[]): Promise<Task[]> =>
   callWithJsessionCookie(async () => {
     const result = await jira.issueSearch
       .searchForIssuesUsingJqlPost({
@@ -158,7 +142,7 @@ export const getTasksFromAssignedJiraIssues = (clarityTasks: ClarityTask[]): Pro
 
     await updateJiraProjectKeys()
 
-    return Promise.all(result.issues?.map((i) => issueInfoToTask(clarityTasks, i)) || [])
+    return Promise.all(result.issues?.map((i) => issueInfoToTask(platformTasks, i)) || [])
   })
 
 export const getTasksForSearchString = async (s: string): Promise<Task[]> =>
@@ -172,7 +156,7 @@ export const getTasksForSearchString = async (s: string): Promise<Task[]> =>
         jql,
       })
       .catch(jiraConnectorErrorToMessage)
-    return Promise.all(result.issues?.map((i) => issueInfoToTask(clarityState.tasks, i)) || [])
+    return Promise.all(result.issues?.map((i) => issueInfoToTask(platformState.tasks, i)) || [])
   })
 
 /** Extracts keys matching projects in connected jira and returns issue links from them. */

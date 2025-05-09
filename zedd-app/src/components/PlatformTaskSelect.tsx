@@ -1,35 +1,36 @@
 import { observer } from 'mobx-react-lite'
 import * as React from 'react'
-import { TextField, Autocomplete } from '@mui/material'
+import { Autocomplete, TextField } from '@mui/material'
 import { StandardTextFieldProps } from '@mui/material/TextField'
-import { ClarityState, ClarityTask } from '../ClarityState'
+import { PlatformState } from '../PlatformState'
+import { Task } from 'zedd-platform'
 
-export type ClarityTaskSelectProps = {
-  clarityState: ClarityState
+export type PlatformTaskSelectProps = {
+  platformState: PlatformState
   onChange: (taskIntId: number | undefined) => void
   value: number | undefined
 } & Omit<StandardTextFieldProps, 'onChange' | 'value'>
 
-export const ClarityTaskSelect = observer(
+export const PlatformTaskSelect = observer(
   ({
-    clarityState,
+    platformState,
     onChange,
     value,
     style,
     disabled,
     ...textFieldProps
-  }: ClarityTaskSelectProps) => {
+  }: PlatformTaskSelectProps) => {
     const maxEntries = 20
 
-    const resolvedVal = (value !== undefined && clarityState.resolveTask(value)) || undefined
+    const resolvedVal = (value !== undefined && platformState.resolveTask(value)) || undefined
 
     return (
       <Autocomplete
         renderInput={(params) => <TextField {...params} {...textFieldProps} />}
-        options={clarityState.tasks}
+        options={platformState.tasks}
         disabled={disabled}
         style={style}
-        filterOptions={(options: ClarityTask[], state) => {
+        filterOptions={(options: Task[], state) => {
           const result = []
           const inputParts = state.inputValue
             .toLowerCase()
@@ -50,18 +51,16 @@ export const ClarityTaskSelect = observer(
           }
           return result
         }}
-        onChange={(_: unknown, clarityTask: ClarityTask | undefined) =>
-          onChange(clarityTask?.intId)
-        }
+        onChange={(_: unknown, task: Task | undefined) => onChange(task?.intId)}
         value={resolvedVal}
-        renderOption={(props, option: ClarityTask, _state) => (
+        renderOption={(props, option: Task, _state) => (
           <li {...props}>
             <div style={{ width: '30%' }}>{option.projectName}</div>
             <div style={{ width: '30%' }}>{option.name}</div>
             <div style={{ width: '30%' }}>{option.strId}</div>
           </li>
         )}
-        getOptionLabel={(x: ClarityTask) => (x ? x.projectName + ' / ' + x.name : '')}
+        getOptionLabel={(x: Task) => (x ? x.projectName + ' / ' + x.name : '')}
       />
     )
   },

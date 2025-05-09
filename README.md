@@ -1,6 +1,6 @@
 # Zedd-App
 
- The Zedd-App is a Grindstone-like application that automates booking in Clarity and simplifies working with multiple accounts. It operates as an interactive calendar, allowing you to schedule tasks and manage your work time efficiently.
+The Zedd-App is a Grindstone-like application that automates booking in Replicon and OTT and simplifies working with multiple accounts. It operates as an interactive calendar, allowing you to schedule tasks and manage your work time efficiently.
 
 The goal is to make work planning more organized, stress-free and user-friendly. The app is built with Electron, TypeScript, React, MobX, and MUI.
 
@@ -10,10 +10,10 @@ The goal is to make work planning more organized, stress-free and user-friendly.
 - Summary window for working hours
 - Overview of working time and overtime
 - Automatic break of working time when computer is inactive
-- Tasks can be exported to the Clarity system with the option of automatic submission
+- Tasks can be exported to Replicon and OTT with the option of automatic submission
 - Export can also take place in the background
-- Importing tasks from the Clarity system
-- Individual names for tasks that can be assigned to a Clarity task and a comment
+- Importing tasks from Replicon and OTT
+- Individual names for tasks that can be assigned to a OTT/Replicon task and a comment
 - Tasks can be linked to Jira tasks
 - Forecast booking possible with "Ersatz" task
 - Automatic detection of holidays by country and federal state
@@ -24,43 +24,45 @@ The goal is to make work planning more organized, stress-free and user-friendly.
 
 ## Usage 🔥
 
-Press the button `IMPORT` and select `ALL` in the dropdown to import Clarity accounts. This needs to be repeated when new accounts are added to Clarity that you want to book on. Usually, importing a single project is enough.
+Press the button `IMPORT` and select `ALL` in the dropdown to import Platform accounts. This needs to be repeated when new accounts are added to Platform that you want to book on. Usually, importing a single project is enough.
 
-Enter what you are currently working on in the field `Currently Timing`. This does not necessarily have to be a Clarity account.
+Enter what you are currently working on in the field `Currently Timing`. This does not necessarily have to be a Platform account.
 If JIRA is configured, tickets from Jira will be suggested.
 
-Enter the Clarity account for the task in `Clarity-Account for Task ...`. This can also be done later/Friday and is retroactive.
+Enter the Platform account for the task in `Account for Task ...`. This can also be done later/Friday and is retroactive.
 
-Optionally, add a comment in `Clarity-Account Comment for This Task`. The tag is automatically calculated and entered in Clarity beforehand.
+Optionally, add a comment in `Account Comment for This Task`. The tag is automatically calculated and entered in Platform beforehand.
 
-At the bottom, you can see what will be exported to Clarity. What is currently displayed will always be exported. The
-`Autosubmit` checkbox next to the `Clarity` button will submit the timesheets as well.
+At the bottom, you can see what will be exported to Replicon/OTT. What is currently displayed will always be exported.
+The `Autosubmit` checkbox will submit the timesheets as well.
 
 ### Tips and Tricks
 
-| **Command**                                         | **Description**                                 | 
-|-----------------------------------------------------|-------------------------------------------------|
-| **CTRL+Click** on an empty space in the calendar    | Adds a new slice                                |
-| **CTRL+Click** on an existing slice in the calendar | Divides it into two                             |
-| **ALT+Click**                                       | Sets the slice to the last used Clarity account | 
-| **CTRL+Z**                                          | Undoes the last action                          | 
-| **CTRL+Y**                                          | Will redo any previously-undone action          |
-| Pressing the **Clarity button**                     | The current view is booked in Clarity.          | 
-| **CTRL+C** on an existing slice in the calendar     | Copy slice                                      | 
-| **CTRL+V** on an empty space in the calendar        | Paste slice at mouse pointer                    |
+| **Command**                                         | **Description**                         | 
+|-----------------------------------------------------|-----------------------------------------|
+| **CTRL+Click** on an empty space in the calendar    | Adds a new slice                        |
+| **CTRL+Click** on an existing slice in the calendar | Divides it into two                     |
+| **ALT+Click**                                       | Sets the slice to the last used task    |
+| **CTRL+Z**                                          | Undoes the last action                  | 
+| **CTRL+Y**                                          | Will redo any previously-undone action  |
+| Pressing the **Replicon** button                    | The current view is booked in Replicon. | 
+| Pressing the **OTT** button                         | The current view is booked in OTT.      | 
+| **CTRL+C** on an existing slice in the calendar     | Copy slice                              | 
+| **CTRL+V** on an empty space in the calendar        | Paste slice at mouse pointer            |
 
 - To book the forecast:
-    - Click `NEXT MONTH`
-    - Click `ERSATZ`
-    - Right-click on a slice, select `Other...` and choose the replacement account. (This step only needs to be done the first time.)
-    - Press the `CLARITY` button at the bottom.
+  - Click `NEXT MONTH`
+  - Click `ERSATZ`
+  - Right-click on a slice, select `Other...` and choose the replacement account. (This step only needs to be done the
+    first time.)
+  - Press the `PLATFORM` button at the bottom.
     ![img_5.png](screenshots/img_5.png)
 
 - If you want to view the overtime hours of a month:
-    - select the period of the month accordingly, or click `NEXT
+  - select the period of the month accordingly, or click `NEXT
       MONTH`
-    - navigate using the `←` (left) or `→` (right) buttons. 
-    - at the bottom, the summary of all tasks and bookings including overtime/undertime is displayed:
+  - navigate using the `←` (left) or `→` (right) buttons.
+  - at the bottom, the summary of all tasks and bookings including overtime/undertime is displayed:
     ![img_6.png](screenshots/img_6.png)
 
 ### Jira Integration

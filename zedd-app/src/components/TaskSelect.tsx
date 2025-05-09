@@ -10,7 +10,7 @@ export type TaskSelectProps = {
   tasks: Task[]
 
   getTasksForSearchString: (search: string) => Promise<Task[]>
-  onChange: (event: React.ChangeEvent<{}>, value: Task | string | undefined) => void
+  onChange: (event: React.ChangeEvent<object>, value: Task | string | undefined) => void
   value: Task
   handleError: (err: Error) => void
   textFieldStyle?: React.CSSProperties
@@ -18,6 +18,7 @@ export type TaskSelectProps = {
   getHoursForTask: (t: Task) => string
 } & Omit<TextFieldProps, 'value' | 'onChange' | 'variant'>
 
+/*
 type CancellablePromise<T> = Promise<T> & { cancelled: boolean; cancel(): void }
 
 function cancellable<T>(p: Promise<T>): CancellablePromise<T> {
@@ -58,9 +59,9 @@ function cancellingPrevious<T, F extends (...args: any[]) => Promise<T>>(
     lastPromise && lastPromise.cancel()
     return (lastPromise = cancellable(x(...args)))
   }) as any
-}
+}*/
 
-const styles = (theme) => ({
+const styles = (theme: any) => ({
   renderOptionBT: {
     textAlign: 'right',
     width: '90px',
