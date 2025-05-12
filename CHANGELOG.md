@@ -1,3 +1,7 @@
+## [3.0.1] - 2025-05-12
+
+- Fix: Configuration for Chrome Path
+
 ## [3.0.0] - 2025-05-09
 
 - Feature: Import tasks from OTT

@@ -21,7 +21,7 @@ export function LoadingSpinner(props: ILoadingSpinner) {
     <Box sx={{ position: 'relative', display: 'inline-flex' }}>
       {props.loading && (
         <>
-          <CircularProgress color='inherit' size={17} thickness={5} {...props} />
+          <CircularProgress color='inherit' size={17} thickness={5} />
           {props.value && (
             <Box
               sx={{

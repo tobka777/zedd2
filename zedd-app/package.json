@@ -1,7 +1,7 @@
 {
   "name": "zedd-app",
   "productName": "zedd-app",
-  "version": "3.0.0",
+  "version": "3.0.1",
   "description": "Zedd-App Time Tracker",
   "main": ".webpack/main",
   "repository": "github:tobka777/zedd2",
@@ -92,9 +92,9 @@
     }
   },
   "dependencies": {
+    "puppeteer": "^19.11.1",
     "selenium-webdriver": "^4.1.1",
-    "win-ca": "^3.4.5",
-    "puppeteer": "^19.0.0"
+    "win-ca": "^3.4.5"
   },
   "devDependencies": {
     "@babel/core": "^7.17.5",

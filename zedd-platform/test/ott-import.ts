@@ -1,3 +1,3 @@
-import {importOTTTasks} from '../src';
+import { importOTTTasks } from "../src/ott-integration";
 
-importOTTTasks('', {headless: false })
+importOTTTasks('', {headless: false, executablePath: '' })

@@ -4,7 +4,7 @@
   "description": "",
   "main": "out/src/index.js",
   "scripts": {
-    "test:ott-export": "ts-node --compiler-options '{\"module\":\"CommonJS\"}' test/ott-export.ts",
+    "test:ott-import": "ts-node --compiler-options '{\"module\":\"CommonJS\"}' test/ott-import.ts",
     "test": "echo \"Error: no test specified\" && exit 1",
     "build": "tsc",
     "watch": "tsc --watch",
@@ -36,7 +36,7 @@
     "fast-csv": "^4.3.6",
     "jszip": "^3.7.1",
     "lodash": "^4.17.21",
-    "puppeteer": "^19.0.0",
+    "puppeteer": "^19.11.1",
     "selenium-webdriver": "^4.1.1",
     "sleep-promise": "^9.1.0",
     "ts-node": "^10.5.0",

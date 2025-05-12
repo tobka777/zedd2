@@ -164,6 +164,7 @@ export class PlatformState {
         this.ottLink,
         {
           headless: this.chromeHeadless,
+          executablePath: this.chromeExe,
         },
         notifyTasks,
       )

@@ -12,8 +12,17 @@ export async function importOTTTasks(
   notifyTasks?: (p: Task[]) => void,
 ): Promise<Task[]> {
   checkPlatformUrl(ottLink)
-  browser = await puppeteer.launch({ headless: options.headless })
+  browser = await puppeteer.launch({
+    headless: options.headless,
+    executablePath: options.executablePath,
+  })
+  setTimeout(async () => {
+    console.error('Timeout: Browser closed after 10 minutes.')
+    await ottQuit()
+  }, 600_000)
+
   page = await browser.newPage()
+  page.setDefaultTimeout(100_000)
 
   await page.goto(ottLink)
 
