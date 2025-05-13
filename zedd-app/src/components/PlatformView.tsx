@@ -421,9 +421,7 @@ export const PlatformView = observer((props: PlatformViewProps) => {
           Cancel
         </Button>
         <Button
-          disabled={
-            true || platformState.currentlyExportingTasks || platformState.currentlyImportingTasks
-          }
+          disabled={platformState.currentlyExportingTasks || platformState.currentlyImportingTasks}
           variant='contained'
           onClick={() =>
             platformState

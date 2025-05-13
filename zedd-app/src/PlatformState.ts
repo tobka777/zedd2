@@ -3,13 +3,13 @@ import { promises as fsp } from 'fs'
 import { computed, makeObservable, observable } from 'mobx'
 import * as path from 'path'
 import {
-  fillClarity,
   webDriverQuit,
   importOTTTasks,
   PlatformExportFormat,
   Task,
   PlatformType,
   ottQuit,
+  fillOTT,
 } from 'zedd-platform'
 import './index.css'
 import { FILE_DATE_FORMAT, getLatestFileInDir, mkdirIfNotExists } from './util'
@@ -103,11 +103,17 @@ export class PlatformState {
     console.log('exporting timesheets', platformExport)
     try {
       this.clearPlatformState(false)
-      await fillClarity(this.ottLink, platformExport, submitTimesheets, this.resourceName, {
-        headless: this.chromeHeadless,
-        chromeExe: this.chromeExe,
-        chromedriverExe: this.chromedriverExe,
-      })
+      await fillOTT(
+        this.ottLink,
+        platformExport,
+        submitTimesheets,
+        this.resourceName,
+        //     , {
+        //   headless: this.chromeHeadless,
+        //   chromeExe: this.chromeExe,
+        //   chromedriverExe: this.chromedriverExe,
+        // }
+      )
       this.success = true
     } finally {
       this._currentlyExportingTasks = false
