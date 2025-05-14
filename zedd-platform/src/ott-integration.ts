@@ -1,10 +1,10 @@
-import puppeteer, { Browser, ElementHandle, Page } from 'puppeteer'
-import { Task } from './model/task.model'
-import { PlatformOptions } from './model/platform.options.model'
-import { checkPlatformUrl } from './utils'
-import { isAfter, isBefore, isWithinInterval, min as dateMin, parse, parseISO } from 'date-fns'
-import { PlatformExportFormat } from './model'
-import { enGB } from 'date-fns/locale'
+import puppeteer, {Browser, ElementHandle, Page} from 'puppeteer'
+import {Task} from './model/task.model'
+import {PlatformOptions} from './model/platform.options.model'
+import {checkPlatformUrl} from './utils'
+import {isAfter, isBefore, isWithinInterval, min as dateMin, parse, parseISO} from 'date-fns'
+import {PlatformExportFormat} from './model'
+import {enGB} from 'date-fns/locale'
 import partition from 'lodash/partition'
 
 let browser: Browser
@@ -146,6 +146,8 @@ async function addNewTask(page: Page, work: WorkEntry, startWeek: Date, taskDay:
 
   const tdHandles = await rowWithSearchedTaskNode.$$('td.wlbc_bydate')
 
+  await page.mouse.click(0, 0)
+
   await tdHandles[cellDayInRow].click()
   await tdHandles[cellDayInRow].type(String(work.hours))
 
@@ -169,8 +171,8 @@ export async function exportToOTT(
     executablePath: options.executablePath,
     args: [`--window-size=${window.screen.availWidth},${window.screen.availHeight}`],
     defaultViewport: {
-      width: window.screen.availWidth,
-      height: window.screen.availHeight,
+      width: Math.round(window.screen.availWidth),
+      height: Math.round(window.screen.availHeight * 0.9),
     },
   })
 
@@ -184,6 +186,8 @@ export async function exportToOTT(
   }))
 
   await page.waitForSelector('[role="table"]')
+
+  await checkOneWeek(page)
   await clickAllAssigned(page)
 
   while (what.length > 0) {
@@ -229,7 +233,19 @@ export async function exportToOTT(
 
 export async function ottQuit() {
   if (browser) {
-    browser.close()
+    await browser.close()
+  }
+}
+
+async function checkOneWeek(page: Page) {
+  const periodTypeSelect = await clickElementWithContent(page, "//div[contains(@role, 'button') and contains(text(), 'One month')]");
+
+  if (periodTypeSelect) {
+    const dropdownOptions = await page.waitForSelector('ul[role="listbox"]')
+
+    const week = await dropdownOptions?.waitForSelector('li[data-value="week"]')
+    await week!.click()
+    await page.waitForSelector('[role="table"]')
   }
 }
 
