@@ -1,18 +1,10 @@
-import { format as formatDate, parseISO } from 'date-fns'
-import { promises as fsp } from 'fs'
-import { computed, makeObservable, observable } from 'mobx'
+import {format as formatDate, parseISO} from 'date-fns'
+import {promises as fsp} from 'fs'
+import {computed, makeObservable, observable} from 'mobx'
 import * as path from 'path'
-import {
-  webDriverQuit,
-  importOTTTasks,
-  PlatformExportFormat,
-  Task,
-  PlatformType,
-  ottQuit,
-  fillOTT,
-} from 'zedd-platform'
+import {fillOTT, importOTTTasks, ottQuit, PlatformExportFormat, PlatformType, Task, webDriverQuit,} from 'zedd-platform'
 import './index.css'
-import { FILE_DATE_FORMAT, getLatestFileInDir, mkdirIfNotExists } from './util'
+import {FILE_DATE_FORMAT, getLatestFileInDir, mkdirIfNotExists} from './util'
 
 export enum PlatformActionType {
   SubmitTimesheet,
@@ -107,12 +99,10 @@ export class PlatformState {
         this.ottLink,
         platformExport,
         submitTimesheets,
-        this.resourceName,
-        //     , {
-        //   headless: this.chromeHeadless,
-        //   chromeExe: this.chromeExe,
-        //   chromedriverExe: this.chromedriverExe,
-        // }
+        {
+          headless: this.chromeHeadless,
+          executablePath: this.chromeExe,
+        },
       )
       this.success = true
     } finally {

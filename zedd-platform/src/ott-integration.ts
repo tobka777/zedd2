@@ -93,8 +93,9 @@ export async function fillOTT(
   nikuLink: string,
   data: PlatformExportFormat,
   submitTimesheets: boolean,
+  options: PlatformOptions,
 ): Promise<void> {
-  return exportToOTT(data, submitTimesheets, nikuLink)
+  return exportToOTT(data, submitTimesheets, nikuLink, options)
 }
 
 async function clickElementWithContent(page: Page, expression: string) {
@@ -109,39 +110,85 @@ async function clickElementWithContent(page: Page, expression: string) {
   return null
 }
 
+interface What {
+  day: Date
+  work: WorkEntry[]
+}
+
+async function deleteAllTasks(page: Page) {
+  const checkbox = await page.waitForSelector('th.wlh_checkbox input[type="checkbox"]')
+  await checkbox?.click()
+
+  await clickElementWithContent(page, "//button[.//span[contains(text(), 'Delete')]]")
+
+  const timeEntriesDialog = await page.waitForSelector('div[role="dialog"]')
+
+  let reasonDialog = await timeEntriesDialog!.waitForSelector(
+    'textarea[placeholder="Please provide a reason"]',
+  )
+  await reasonDialog?.type('Korrektur')
+  await clickElementWithContent(page, "//button[.//span[text()='Yes, Continue']]")
+  await page.waitForSelector('div[role="dialog"]', { hidden: true })
+}
+
+async function addNewTask(page: Page, work: WorkEntry, startWeek: Date, taskDay: Date) {
+  let addNewTaskInput = await page.waitForSelector("input[placeholder*='Add new task']")
+  await addNewTaskInput!.type(work.taskName)
+
+  await clickElementWithContent(
+    page,
+    "//li[contains(@role, 'option') and contains(text(), '" + work.taskName + "')]",
+  )
+
+  let [rowWithSearchedTaskNode] = await page.$x("//tr[.//div[text()='" + work.taskName + "']]")
+
+  const cellDayInRow = taskDay.getDate() - startWeek.getDate()
+
+  const tdHandles = await rowWithSearchedTaskNode.$$('td.wlbc_bydate')
+
+  await tdHandles[cellDayInRow].click()
+  await tdHandles[cellDayInRow].type(String(work.hours))
+
+  await page.mouse.click(0, 0)
+
+  let [rowWithSearchedTaskNodeUpdated] = await page.$x(
+    "//tr[.//div[text()='" + work.taskName + "']]",
+  )
+
+  await commentTask(work.comment, taskDay, page, rowWithSearchedTaskNodeUpdated)
+}
+
 export async function exportToOTT(
   whatt: PlatformExportFormat,
   submitTimesheets: boolean,
   ottLink: string,
+  options: PlatformOptions,
 ) {
-  let what = Object.keys(whatt).map((dateString: string) => ({
-    day: parseISO(dateString),
-    work: whatt[dateString],
-  }))
-
   const browser = await puppeteer.launch({
-    headless: false,
+    headless: options.headless,
+    executablePath: options.executablePath,
     args: [`--window-size=${window.screen.availWidth},${window.screen.availHeight}`],
     defaultViewport: {
       width: window.screen.availWidth,
       height: window.screen.availHeight,
     },
   })
+
   const page = await browser.newPage()
 
   await page.goto(ottLink)
 
+  let what: What[] = Object.keys(whatt).map((dateString: string) => ({
+    day: parseISO(dateString),
+    work: whatt[dateString],
+  }))
+
   while (what.length > 0) {
     await page.waitForSelector('[role="table"]')
 
-    const minDate = dateMin(what.map((w) => w.day))
+    await chooseDateFromCalendar(page, what)
 
-    const minDateAlsMonthYear = new Intl.DateTimeFormat('en-US', {
-      month: 'long',
-      year: 'numeric',
-    }).format(minDate)
-
-    await chooseDateFromCalendar(page, minDateAlsMonthYear, minDate)
+    await deleteAllTasks(page)
 
     const timerange = await page.evaluate(() => {
       const spans = Array.from(document.querySelectorAll('span.MuiButton-label'))
@@ -150,14 +197,7 @@ export async function exportToOTT(
       return range!.textContent!.trim()
     })
 
-    const finaliseBtnHandleNode = await page.waitForXPath(
-      "//button[.//span[contains(text(), 'Finalise')]]",
-    )
-    const finaliseBtnHandle = finaliseBtnHandleNode as unknown as HTMLButtonElement
-    const isDisabled = await page.evaluate((el) => el.disabled, finaliseBtnHandle)
-    if (isDisabled) {
-      throw new Error('Finalise button is disabled in period ' + timerange)
-    }
+    await checkFinilisedButton(page, timerange)
 
     await clickAllAssigned(page)
 
@@ -172,75 +212,16 @@ export async function exportToOTT(
 
     const [relevant, others] = partition(what, (w) => isWithinInterval(w.day, { start, end }))
 
-    let addNewTaskInput = await page.waitForSelector("input[placeholder*='Add new task']")
-
     for (let i = 0; i < relevant.length; i++) {
       for (let j = 0; j < relevant[i].work.length; j++) {
-        addNewTaskInput = await page.waitForSelector("input[placeholder*='Add new task']")
-        await addNewTaskInput!.type(relevant[i].work[j].taskName)
-
-        await clickElementWithContent(
-          page,
-          "//li[contains(@role, 'option') and contains(text(), '" +
-            relevant[i].work[j].taskName +
-            "')]",
-        )
-
-        const [rowWithSearchedTaskNode] = await page.$x(
-          "//tr[.//div[text()='" + relevant[i].work[j].taskName + "']]",
-        )
-
-        const cellDayInRow = relevant[i].day.getDate() - start.getDate()
-
-        const tdHandles = await rowWithSearchedTaskNode.$$('td.wlbc_bydate')
-
-        await tdHandles[cellDayInRow].click()
-        await tdHandles[cellDayInRow].type(String(relevant[i].work[j].hours))
-
-        await page.mouse.click(0, 0)
-
-        if (relevant[i].work[j].comment) {
-          const day = relevant[i].day
-          const dayNumber = String(day.getDate()).padStart(2, '0')
-          const weekday = day.toLocaleString('en-US', { weekday: 'short' })
-
-          const dayInHeader = await clickElementWithContent(
-            page,
-            `//th[@role='columnheader' and contains(@class, 'wlh_date') and .//div[text()='${dayNumber}'] and .//div[text()='${weekday}']]`,
-          )
-
-          const commentTextBox = await page.waitForSelector('textarea[placeholder="Comment"]')
-          commentTextBox?.type(relevant[i].work[j].comment as string)
-          await dayInHeader?.click()
-        }
+        await addNewTask(page, relevant[i].work[j], start, relevant[i].day)
       }
     }
 
     what = others
-
-    const checkbox = await page.waitForSelector('th.wlh_checkbox input[type="checkbox"]')
-    await checkbox?.click()
-
-    await clickElementWithContent(page, "//button[.//span[contains(text(), 'Delete')]]")
-
-    const timeEntriesDialog = await page.waitForSelector('div[role="dialog"]')
-
-    let reasonDialog = await timeEntriesDialog!.waitForSelector(
-      'textarea[placeholder="Please provide a reason"]',
-    )
-    await reasonDialog?.type('Korrektur')
-    await clickElementWithContent(page, "//button[.//span[text()='Yes, Continue']]")
-    await page.waitForSelector('div[role="dialog"]', { hidden: true })
   }
 
-  if (submitTimesheets) {
-    await clickElementWithContent(page, "//button[.//span[contains(text(), 'Finalise')]]")
-    await page.waitForXPath("//div[contains(text(), 'FINALISING YOUR TIMESHEET')]")
-    await clickElementWithContent(page, "//button[.//span[text()='Yes, Continue']]")
-    await page.waitForXPath("//div[contains(text(), 'FINALISING YOUR TIMESHEET')]", {
-      hidden: true,
-    })
-  }
+  await finaliseTimesheet(submitTimesheets, page)
 }
 
 export async function ottQuit() {
@@ -265,7 +246,14 @@ async function clickAllAssigned(page: Page) {
   }
 }
 
-async function chooseDateFromCalendar(page: Page, minDateAlsMonthYear: string, minDate: Date) {
+async function chooseDateFromCalendar(page: Page, what: What[]) {
+  const minDate = dateMin(what.map((w) => w.day))
+
+  const minDateAlsMonthYear = new Intl.DateTimeFormat('en-US', {
+    month: 'long',
+    year: 'numeric',
+  }).format(minDate)
+
   const calendarRangeDateNode = await page.evaluateHandle(() => {
     const spans = Array.from(document.querySelectorAll('span.MuiButton-label'))
     const regex = /^[A-Z][a-z]{2,8} \d{2} \d{4} - [A-Z][a-z]{2,8} \d{2} \d{4}$/
@@ -313,4 +301,49 @@ async function chooseDateFromCalendar(page: Page, minDateAlsMonthYear: string, m
 
   await page.mouse.click(0, 0)
   await page.waitForSelector('.DayPicker-wrapper', { hidden: true })
+}
+
+async function checkFinilisedButton(page: Page, timerange: string) {
+  const finaliseBtnHandleNode = await page.waitForXPath(
+    "//button[.//span[contains(text(), 'Finalise')]]",
+  )
+  const finaliseBtnHandle = finaliseBtnHandleNode as unknown as HTMLButtonElement
+  const isDisabled = await page.evaluate((el) => el.disabled, finaliseBtnHandle)
+  if (isDisabled) {
+    throw new Error('Finalise button is disabled in period ' + timerange)
+  }
+}
+
+async function commentTask(
+  comment: string | undefined,
+  day: Date,
+  page: Page,
+  rowWithSearchedTaskNode: ElementHandle<Node>,
+) {
+  if (comment) {
+    const dayNumber = String(day.getDate()).padStart(2, '0')
+    const weekday = day.toLocaleString('en-US', { weekday: 'short' })
+
+    const dayInHeader = await clickElementWithContent(
+      page,
+      `//th[@role='columnheader' and contains(@class, 'wlh_date') and .//div[text()='${dayNumber}'] and .//div[text()='${weekday}']]`,
+    )
+
+    const commentTextBox = await rowWithSearchedTaskNode.waitForSelector(
+      'textarea[placeholder="Comment"]',
+    )
+    commentTextBox?.type(comment as string)
+    await dayInHeader?.click()
+  }
+}
+
+async function finaliseTimesheet(submitTimesheets: boolean, page: Page) {
+  if (submitTimesheets) {
+    await clickElementWithContent(page, "//button[.//span[contains(text(), 'Finalise')]]")
+    await page.waitForXPath("//div[contains(text(), 'FINALISING YOUR TIMESHEET')]")
+    await clickElementWithContent(page, "//button[.//span[text()='Yes, Continue']]")
+    await page.waitForXPath("//div[contains(text(), 'FINALISING YOUR TIMESHEET')]", {
+      hidden: true,
+    })
+  }
 }
