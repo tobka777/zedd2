@@ -4,8 +4,8 @@ import { PlatformOptions } from './model/platform.options.model'
 import { checkPlatformUrl } from './utils'
 import { isAfter, isBefore, isWithinInterval, min as dateMin, parse, parseISO } from 'date-fns'
 import { PlatformExportFormat } from './model'
-import partition from 'lodash/partition'
 import { enGB } from 'date-fns/locale'
+import partition from 'lodash/partition'
 
 let browser: Browser
 let page: Page
@@ -183,6 +183,9 @@ export async function exportToOTT(
     work: whatt[dateString],
   }))
 
+  await page.waitForSelector('[role="table"]')
+  await clickAllAssigned(page)
+
   while (what.length > 0) {
     await page.waitForSelector('[role="table"]')
 
@@ -231,12 +234,22 @@ export async function ottQuit() {
 }
 
 async function clickAllAssigned(page: Page) {
-  const isClickable = await clickElementWithContent(
-    page,
-    "//div[@role='button' and contains(text(), 'Started & ended in selected period')]",
-  )
+  const [issueFilterElement] = await page.$x("//*[contains(text(), 'Issue Filter')]")
 
-  if (isClickable) {
+  const issueFilterSelect = (await issueFilterElement.evaluateHandle((el) => {
+    let parent: Element | null = el as unknown as Element
+    while (parent) {
+      const buttonDiv = parent.querySelector('div[role="button"]')
+      if (buttonDiv) {
+        return buttonDiv
+      }
+      parent = parent.parentElement
+    }
+    return null
+  })) as ElementHandle<Element>
+
+  if (issueFilterSelect) {
+    await issueFilterSelect.click()
     const dropdownOptions = await page.waitForSelector('ul[role="listbox"]')
 
     const allAssigned = await dropdownOptions?.waitForSelector('li[data-value="All"]')
