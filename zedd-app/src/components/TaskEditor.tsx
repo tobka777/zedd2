@@ -39,9 +39,7 @@ export const TaskEditor = observer(
     const importPlatformTasks = useCallback(
       (which: string) =>
         platformState
-          .importAndSavePlatformTasks('OTT' === which ? 'OTT' : 'ALL', (info) =>
-            state.addMessage(info, 'info', 2000),
-          )
+          .importAndSavePlatformTasks((info) => state.addMessage(info, 'info', 2000))
           .catch((e) => {
             platformState.error = e.message
             state.addMessage(
@@ -58,12 +56,15 @@ export const TaskEditor = observer(
     const anchorRef = useRef(null)
 
     let guessPlatformIntId: number | undefined = undefined
-    if (value.platformTaskIntId === undefined) {
+    let guessPlatformType: 'CLARITY' | 'OTT' | 'REPLICON' | undefined = undefined
+    if (value.platformTaskIntId === undefined || value.platformType === undefined) {
       const keys = value.name.match(/[A-Z]+-\d+/g) ?? []
       const keyRegexes = keys.map((key) => new RegExp(key + '(?!\\d)'))
-      guessPlatformIntId = platformState.tasks.find((ct) =>
+      const guessPlatform = platformState.tasks.find((ct) =>
         keyRegexes.some((regex) => ct.name.match(regex)),
-      )?.intId
+      )
+      guessPlatformIntId = guessPlatform?.intId
+      guessPlatformType = guessPlatform?.typ
     }
 
     if (platformState.actionType === PlatformActionType.ImportTasks) {
@@ -109,7 +110,7 @@ export const TaskEditor = observer(
         </Grid>
         <Grid item xs={6} lg={9}>
           <PlatformTaskSelect
-            value={value.platformTaskIntId}
+            value={value}
             disabled={value === state.getUndefinedTask()}
             label={`Account for Task ${value && value.name}`}
             fullWidth
@@ -120,8 +121,15 @@ export const TaskEditor = observer(
         </Grid>
         <Grid item xs={2} lg={1}>
           <Button
-            disabled={undefined === guessPlatformIntId}
-            onClick={(_) => (value.platformTaskIntId = guessPlatformIntId)}
+            disabled={undefined === guessPlatformIntId || undefined === guessPlatformType}
+            onClick={(_) => {
+              if (guessPlatformIntId === undefined) {
+                value.platformTaskIntId = guessPlatformIntId
+              }
+              if (guessPlatformType === undefined) {
+                value.platformType = guessPlatformType
+              }
+            }}
             style={{ width: '100%' }}
             endIcon={<SentimentSatisfiedAlt />}
           >
