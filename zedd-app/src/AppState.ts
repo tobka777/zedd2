@@ -99,11 +99,27 @@ export class Task {
 
   @serializable
   @observable
-  public platformTaskIntId: number | undefined
+  public intId: number | string | undefined
 
   @serializable
   @observable
-  public platformType?: PlatformType
+  public projectIntId: number | undefined
+
+  @serializable
+  @observable
+  public taskIntId: number | undefined
+
+  @serializable
+  @observable
+  public taskActivityUri: string | undefined
+
+  @serializable
+  @observable
+  public taskActivityName: string | undefined
+
+  @serializable
+  @observable
+  public platformType: PlatformType | undefined
 
   /**
    * The internal key for JIRA-Issues.
@@ -120,16 +136,24 @@ export class Task {
   constructor(
     name: string = '',
     platformType?: PlatformType,
-    platformTaskIntId?: number,
+    taskActivityUri?: string,
+    taskActivityName?: string,
+    intId?: number,
+    projectIntId?: number,
+    taskIntId?: number,
     key?: string,
     platformTaskComment?: string,
   ) {
     makeObservable(this)
     this.name = name
-    this.platformTaskIntId = platformTaskIntId
+    this.intId = intId
+    this.projectIntId = projectIntId
+    this.taskIntId = taskIntId
     this.key = key
     this.platformTaskComment = platformTaskComment || ''
     this.platformType = platformType
+    this.taskActivityUri = taskActivityUri
+    this.taskActivityName = taskActivityName
   }
 
   public static same(a: Task, b: Task): boolean {
@@ -643,7 +667,7 @@ export class AppState {
 
   public getUndefinedTask(): Task {
     return (
-      this.tasks.find((t) => 'UNDEFINED' === t.name) ||
+      this.tasks.find((t) => 'UNDEFINED' === t.name || '' === t.name) ||
       new Task('UNDEFINED', undefined, undefined, 'UNDEFINED')
     )
   }

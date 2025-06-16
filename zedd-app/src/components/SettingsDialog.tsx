@@ -66,6 +66,7 @@ export const SettingsDialog = observer(
     )
 
     const [textFieldOTTLink, setTextFieldOTTLink] = useState(settings.ottLink)
+    const [textFieldRepliconLink, setTextFieldRepliconLink] = useState(settings.repliconLink)
 
     const theme = useTheme()
 
@@ -246,6 +247,20 @@ export const SettingsDialog = observer(
                 onChange={(e) => {
                   setTextFieldOTTLink(e.target.value)
                   settings.ottLink = e.target.value.trim()
+                }}
+              />
+            </Grid>
+
+            <Grid item xs={4}>
+              <FormLabel>Replicon URL</FormLabel>
+            </Grid>
+            <Grid item xs={8}>
+              <TextField
+                style={{ width: '100%' }}
+                value={textFieldRepliconLink}
+                onChange={(e) => {
+                  setTextFieldRepliconLink(e.target.value)
+                  settings.repliconLink = e.target.value.trim()
                 }}
               />
             </Grid>

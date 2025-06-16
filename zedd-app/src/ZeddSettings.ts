@@ -53,6 +53,13 @@ export class ZeddSettings {
   public ottLink = ''
 
   /**
+   * Link to Replicon. Everything before the '#'.
+   */
+  @observable
+  @serializable(raw())
+  public repliconLink = ''
+
+  /**
    * Open Chrome / Selenium in headless mode (background)
    */
   @observable

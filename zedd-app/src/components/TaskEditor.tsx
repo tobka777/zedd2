@@ -9,12 +9,18 @@ import { format as formatDate, formatDistance } from 'date-fns'
 import { observer } from 'mobx-react-lite'
 import * as React from 'react'
 import { useCallback, useRef, useState } from 'react'
-import { InvalidPlattformUrlException } from 'zedd-platform'
+import {
+  InvalidPlattformUrlException,
+  PlatformIntegration,
+  PlatformIntegrationFactory,
+  PlatformType,
+} from 'zedd-platform'
 import { AppState, Task } from '../AppState'
 import { PlatformActionType, PlatformState } from '../PlatformState'
 import { PlatformTaskSelect } from './PlatformTaskSelect'
 import { LoadingSpinner } from './LoadingSpinner'
 import { TaskSelect } from './TaskSelect'
+import { TaskActivitySelect } from './TaskActivitySelect'
 
 interface TaskEditorProps {
   state: AppState
@@ -24,6 +30,21 @@ interface TaskEditorProps {
   onTaskSelectChange: (t: Task) => void
   style?: React.CSSProperties
   taskSelectRef?: (r: HTMLInputElement) => void
+}
+
+async function getPlatformIntegrations(
+  platform: 'ALL' | PlatformType,
+  platformState: PlatformState,
+): Promise<PlatformIntegration> {
+  return await new PlatformIntegrationFactory().create(
+    platform,
+    platformState.ottLink,
+    platformState.repliconLink,
+    {
+      headless: platformState.chromeHeadless,
+      executablePath: platformState.chromeExe,
+    },
+  )
 }
 
 export const TaskEditor = observer(
@@ -37,39 +58,60 @@ export const TaskEditor = observer(
     taskSelectRef,
   }: TaskEditorProps) => {
     const importPlatformTasks = useCallback(
-      (which: string) =>
-        platformState
-          .importAndSavePlatformTasks('OTT' === which ? 'OTT' : 'ALL', (info) =>
-            state.addMessage(info, 'info', 2000),
-          )
-          .catch((e) => {
-            platformState.error = e.message
-            state.addMessage(
-              e.message +
-                (e instanceof InvalidPlattformUrlException
-                  ? 'Check zeddConfig.ottLink and reload config.'
-                  : ''),
+      async (which: string) => {
+        const platformType = 'OTT' === which ? 'OTT' : 'REPLICON' === which ? 'REPLICON' : 'ALL'
+
+        try {
+          const platformIntegration = await getPlatformIntegrations(platformType, platformState)
+          setSelectedPlatform(platformIntegration)
+
+          await platformState
+            .importAndSavePlatformTasks(platformIntegration, platformType, (info) =>
+              state.addMessage(info, 'info', 2000),
             )
-          }),
+            .catch((e) => {
+              platformState.error = e.message
+              state.addMessage(
+                e.message +
+                  (e instanceof InvalidPlattformUrlException
+                    ? 'Check zeddConfig.ottLink or zeddConfig.repliconLink and reload config.'
+                    : ''),
+                'error',
+              )
+            })
+        } catch (e: any) {
+          state.addMessage('Failed to fetch platform integrations: ' + e.message, 'error', 4000)
+        }
+      },
       [platformState, state],
     )
 
     const [popperOpen, setPopperOpen] = useState(false)
+    const [selectedPlatform, setSelectedPlatform] = useState<PlatformIntegration>(null)
     const anchorRef = useRef(null)
 
-    let guessPlatformIntId: number | undefined = undefined
-    if (value.platformTaskIntId === undefined) {
+    let guessIntId: number | undefined = undefined
+    let guessTaskIntId: number | undefined = undefined
+    let guessProjectIntId: number | undefined = undefined
+    if (value.intId === undefined) {
       const keys = value.name.match(/[A-Z]+-\d+/g) ?? []
       const keyRegexes = keys.map((key) => new RegExp(key + '(?!\\d)'))
-      guessPlatformIntId = platformState.tasks.find((ct) =>
+      const task = platformState.tasks.find((ct) =>
         keyRegexes.some((regex) => ct.name.match(regex)),
-      )?.intId
+      )
+      guessIntId = task?.intId
+      guessProjectIntId = task?.projectIntId
+      guessTaskIntId = task?.taskIntId
     }
 
     if (platformState.actionType === PlatformActionType.ImportTasks) {
       setTimeout(() => {
         platformState.success = false
       }, 60000)
+    }
+
+    function isAccountTaskChosen() {
+      return value.platformType === 'REPLICON' && value.intId && value.intId !== ''
     }
 
     return (
@@ -109,19 +151,33 @@ export const TaskEditor = observer(
         </Grid>
         <Grid item xs={6} lg={9}>
           <PlatformTaskSelect
-            value={value.platformTaskIntId}
+            value={value.intId}
             disabled={value === state.getUndefinedTask()}
             label={`Account for Task ${value && value.name}`}
             fullWidth
             style={{ flex: '1 1 auto' }}
-            onChange={(newIntId) => (value.platformTaskIntId = newIntId)}
+            onChange={(newIntId) => {
+              if (newIntId !== undefined && newIntId !== null) {
+                value.intId = newIntId
+                const task = platformState.resolveTask(value?.intId)
+                value.platformType = task?.typ
+              } else {
+                value.intId = ''
+                value.taskActivityUri = ''
+                value.taskActivityName = ''
+              }
+            }}
             platformState={platformState}
           />
         </Grid>
         <Grid item xs={2} lg={1}>
           <Button
-            disabled={undefined === guessPlatformIntId}
-            onClick={(_) => (value.platformTaskIntId = guessPlatformIntId)}
+            disabled={undefined === guessIntId}
+            onClick={(_) => {
+              value.intId = guessIntId
+              value.taskIntId = guessTaskIntId
+              value.projectIntId = guessProjectIntId
+            }}
             style={{ width: '100%' }}
             endIcon={<SentimentSatisfiedAlt />}
           >
@@ -167,33 +223,17 @@ export const TaskEditor = observer(
             id='split-button-menu'
             onClose={() => setPopperOpen(false)}
           >
-            <MenuItem
-              onClick={() => {
-                setPopperOpen(false)
-                importPlatformTasks('ALL')
-              }}
-            >
-              ALL
-            </MenuItem>
-            <MenuItem
-              onClick={() => {
-                setPopperOpen(false)
-                importPlatformTasks('OTT')
-              }}
-            >
-              OTT
-            </MenuItem>
-            {/*platformState.projectNames.map((pn) => (
+            {(['ALL', 'OTT', 'REPLICON'] as PlatformType[]).map((platform) => (
               <MenuItem
-                key={pn}
-                onClick={() => {
+                key={platform}
+                onClick={async () => {
                   setPopperOpen(false)
-                  importPlatformTasks(pn)
+                  await importPlatformTasks(platform)
                 }}
               >
-                {pn}
+                {platform}
               </MenuItem>
-            ))*/}
+            ))}
           </Menu>
         </Grid>
         <Grid item xs={2} lg={1}>
@@ -201,11 +241,34 @@ export const TaskEditor = observer(
             variant='text'
             style={{ width: '100%' }}
             disabled={!platformState.currentlyImportingTasks}
-            onClick={() => platformState.killPlatform()}
+            onClick={async () => {
+              await platformState.killPlatform()
+            }}
           >
             Cancel
           </Button>
         </Grid>
+
+        {isAccountTaskChosen() && (
+          <Grid item xs={10} lg={11}>
+            <TaskActivitySelect
+              value={value.taskActivityUri}
+              disabled={value === state.getUndefinedTask()}
+              label={`Activity for Task ${value && value.name}`}
+              fullWidth
+              style={{ flex: '1 1 auto' }}
+              onChange={(taskActivity) => {
+                state.slices.forEach((slice) => {
+                  if (slice.task.name === value.name) {
+                    slice.task.taskActivityUri = taskActivity?.uri ?? ''
+                    slice.task.taskActivityName = taskActivity?.name ?? ''
+                  }
+                })
+              }}
+              platformState={platformState}
+            />
+          </Grid>
+        )}
         <Grid item xs={10} lg={11}>
           <TextField
             value={value.platformTaskComment}
