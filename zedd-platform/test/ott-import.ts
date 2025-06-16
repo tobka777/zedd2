@@ -1,3 +1,5 @@
-import { importOTTTasks } from "../src/ott-integration";
+import {PlatformIntegration} from "../src/platform-integration";
+import {OTTIntegration} from "../src";
 
-importOTTTasks('', {headless: false, executablePath: '' })
+const platformIntegration: PlatformIntegration = await OTTIntegration.create('', {headless: false, executablePath: '' })
+

@@ -1,3 +1,5 @@
+export * from './platform-integration-factory'
+export * from './platform-integration'
 export * from './clarity-integration'
 export * from './ott-integration'
 export * from './model'
