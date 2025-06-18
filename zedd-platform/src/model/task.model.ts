@@ -4,6 +4,7 @@ export interface Task {
   name: string
   intId: number
   projectIntId: number
+  taskIntId: number
   projectName: string
   start?: Date
   end?: Date

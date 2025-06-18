@@ -7,8 +7,8 @@ import { Task } from 'zedd-platform'
 
 export type PlatformTaskSelectProps = {
   platformState: PlatformState
-  onChange: (taskIntId: number | undefined) => void
-  value: number | undefined
+  onChange: (taskIntId: number | undefined | string) => void
+  value: number | undefined | string
 } & Omit<StandardTextFieldProps, 'onChange' | 'value'>
 
 export const PlatformTaskSelect = observer(
@@ -20,7 +20,7 @@ export const PlatformTaskSelect = observer(
     disabled,
     ...textFieldProps
   }: PlatformTaskSelectProps) => {
-    const maxEntries = 20
+    const maxEntries = 60
 
     const resolvedVal = (value !== undefined && platformState.resolveTask(value)) || undefined
 
@@ -43,7 +43,8 @@ export const PlatformTaskSelect = observer(
               inputParts.every(
                 (ip) =>
                   task.name.toLowerCase().includes(ip) ||
-                  task.projectName.toLowerCase().includes(ip),
+                  task.projectName.toLowerCase().includes(ip) ||
+                  task.projectIntId.toLocaleString().includes(ip),
               )
             ) {
               result.push(task)
@@ -54,10 +55,16 @@ export const PlatformTaskSelect = observer(
         onChange={(_: unknown, task: Task | undefined) => onChange(task?.intId)}
         value={resolvedVal}
         renderOption={(props, option: Task, _state) => (
-          <li {...props}>
-            <div style={{ width: '30%' }}>{option.projectName}</div>
-            <div style={{ width: '30%' }}>{option.name}</div>
-            <div style={{ width: '30%' }}>{option.strId}</div>
+          <li
+            {...props}
+            className={`${props.className ?? ''} ${
+              option.typ === 'REPLICON' ? 'replicon-task' : 'ott-task'
+            }`.trim()}
+          >
+            <div style={{ width: '25%' }}>{option.projectName}</div>
+            <div style={{ width: '25%' }}>{option.name}</div>
+            <div style={{ width: '25%' }}>{option.taskCode}</div>
+            <div style={{ width: '25%' }}>{option.typ}</div>
           </li>
         )}
         getOptionLabel={(x: Task) => (x ? x.projectName + ' / ' + x.name : '')}

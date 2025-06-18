@@ -15,7 +15,7 @@ export const suggestedTaskMenuItems = (
         // U+2007 = FIGURE SPACE (space the width of a number)
         state.formatHours(state.getTaskHours(t)).padStart(6, '\u2007') +
         ((x) => (x ? '   ' + x.projectName + ' / ' + x.name : ''))(
-          platformState.resolveTask(t.platformTaskIntId),
+          platformState.resolveTask(t.intId),
         ),
       type: 'checkbox',
       checked: checked === t,
