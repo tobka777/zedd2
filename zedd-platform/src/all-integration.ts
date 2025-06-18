@@ -1,8 +1,8 @@
-import { PlatformExportFormat, Task } from './model'
-import { PlatformOptions } from './model/platform.options.model'
-import { PlatformIntegration } from './platform-integration'
-import { OTTIntegration } from './ott-integration'
-import { RepliconIntegration } from './replicon-integration'
+import {PlatformExportFormat, Task} from './model'
+import {PlatformOptions} from './model/platform.options.model'
+import {PlatformIntegration} from './platform-integration'
+import {OTTIntegration} from './ott-integration'
+import {RepliconIntegration} from './replicon-integration'
 
 export class AllIntegration extends PlatformIntegration {
   private static ottLink: string
@@ -39,6 +39,7 @@ export class AllIntegration extends PlatformIntegration {
     )
     let ottTasks = await this.ottIntegration.importTasks()
     let repliconTasks = await this.repliconIntegration.importTasks()
+    this.taskActivities = this.repliconIntegration.getActivityOptions()
     const tasks = ottTasks
       .concat(repliconTasks)
       .sort((t1, t2) => t1.projectName.localeCompare(t2.projectName))
