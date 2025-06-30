@@ -106,8 +106,6 @@ const formatHours = (h: number) =>
 const placeholderPlatformTask = {
   projectName: 'UNDEFINED',
   intId: -1,
-  projectIntId: -1,
-  taskIntId: -1,
   name: 'UNDEFINED',
   taskCode: 'UNDEFINED',
   typ: 'UNDEFINED',
@@ -139,7 +137,8 @@ function transform({ slices, showing, platformState }: PlatformViewProps): Platf
       throw e
     }
     const task =
-      (slice.task.intId && platformState.resolveTask(slice.task.intId)) || placeholderPlatformTask
+      (slice.task.platformTaskIntId && platformState.resolveTask(slice.task.platformTaskIntId)) ||
+      placeholderPlatformTask
     // fix start/end of b, as part of the interval may be outside showInterval
     const bStartFixed = dateMax([slice.start, showInterval.start])
     const bEndFixed = dateMin([slice.end, showInterval.end])
@@ -150,14 +149,15 @@ function transform({ slices, showing, platformState }: PlatformViewProps): Platf
       const dayKey = isoDayStr(daySlice.start)
       const dayHourss = dayMap[dayKey]
       let dayHours = dayHourss.find(
-        (d) => d.taskIntId === slice.task.intId && d.comment === slice.task.platformTaskComment,
+        (d) =>
+          d.taskIntId === slice.task.platformTaskIntId &&
+          d.comment === slice.task.platformTaskComment,
       )
       if (!dayHours) {
         dayHours = {
           hours: 0,
           projectName: task.projectName,
-          taskIntId: task.taskIntId,
-          projectIntId: task.projectIntId,
+          taskIntId: task.intId,
           taskName: task.name,
           platformType: task.typ,
           taskCode: task.taskCode,
@@ -192,7 +192,6 @@ function transform({ slices, showing, platformState }: PlatformViewProps): Platf
         hours: sum(workEntries.map((we) => we.hours)),
         projectName: workEntries[0].projectName,
         taskIntId: workEntries[0].taskIntId,
-        projectIntId: workEntries[0].projectIntId,
         taskName: workEntries[0].taskName,
         platformType: workEntries[0].platformType,
         taskCode: workEntries[0].taskCode,
@@ -336,7 +335,7 @@ export const PlatformView = observer((props: PlatformViewProps) => {
     Record<PlatformType | 'Alle Platformen', WorkEntry[]>
   >((acc, entry) => {
     const platform = entry.platformType as PlatformType
-    const projectKey = String(entry.projectIntId)
+    const projectKey = String(entry.taskIntId)
     const taskCode = entry.taskCode
 
     const platformMap = projectCodeMap.get(projectKey)
@@ -410,7 +409,7 @@ export const PlatformView = observer((props: PlatformViewProps) => {
           </TableRow>
         </TableHead>
         <TableBody>
-          {Object.entries(platformTasksToShow).map(([platform, tasksToShow], i) => (
+          {Object.entries(platformTasksToShow).map(([platform, tasksToShow]) => (
             <Row
               key={platform}
               platformType={platform}

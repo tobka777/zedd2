@@ -131,7 +131,6 @@ export class OTTIntegration extends PlatformIntegration {
         start: undefined,
         end: undefined,
         taskCode: projectIndex > -1 ? assoBoardProjectCodes[projectIndex].gfsTaskCode : null,
-        taskIntId: assignedIssue.appointmentId,
         typ: 'OTT',
       }
       tasks.push(task)

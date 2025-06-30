@@ -289,8 +289,7 @@ export class RepliconIntegration extends PlatformIntegration {
         let task: Task = {
           name: project.name,
           intId: project.code,
-          taskIntId: taskJsonResponse.results[j].task.uri.split(':task:')[1],
-          projectIntId: project.code,
+          projectIntId: taskJsonResponse.results[j].task.uri.split(':task:')[1],
           projectName: project.name,
           start: undefined,
           end: undefined,
@@ -382,7 +381,7 @@ export class RepliconIntegration extends PlatformIntegration {
     taskSearchButton: ElementHandle<Element> | null,
   ) {
     if (!row) {
-      await taskSearchButton!.type(String(work.projectIntId))
+      await taskSearchButton!.type(String(work.taskIntId))
       await taskSearchButton!.click()
       await this.chooseTaskFromOptions(
         work.projectName + ' - ',
@@ -411,7 +410,7 @@ export class RepliconIntegration extends PlatformIntegration {
           return tbody && tbody.innerHTML.includes(projectIntId)
         },
         { timeout: 5000 },
-        String(work.projectIntId),
+        String(work.taskIntId),
       )
       row = await this.getRowTaskFromTable(work)
     }

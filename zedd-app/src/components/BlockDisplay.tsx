@@ -88,7 +88,7 @@ export const BlockDisplay = observer(
       [startDrag, slice],
     )
 
-    const task = platformState.resolveTask(slice.task.intId)
+    const task = platformState.resolveTask(slice.task.platformTaskIntId)
 
     const theme = useTheme()
 

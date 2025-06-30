@@ -90,28 +90,20 @@ export const TaskEditor = observer(
     const [selectedPlatform, setSelectedPlatform] = useState<PlatformIntegration>(null)
     const anchorRef = useRef(null)
 
-    let guessIntId: number | undefined = undefined
-    let guessTaskIntId: number | undefined = undefined
-    let guessProjectIntId: number | undefined = undefined
-    if (value.intId === undefined) {
+    let guessPlatformIntId: number | undefined = undefined
+    if (value.platformTaskIntId === undefined) {
       const keys = value.name.match(/[A-Z]+-\d+/g) ?? []
       const keyRegexes = keys.map((key) => new RegExp(key + '(?!\\d)'))
       const task = platformState.tasks.find((ct) =>
         keyRegexes.some((regex) => ct.name.match(regex)),
       )
-      guessIntId = task?.intId
-      guessProjectIntId = task?.projectIntId
-      guessTaskIntId = task?.taskIntId
+      guessPlatformIntId = task?.intId
     }
 
     if (platformState.actionType === PlatformActionType.ImportTasks) {
       setTimeout(() => {
         platformState.success = false
       }, 60000)
-    }
-
-    function isAccountTaskChosen() {
-      return value.platformType === 'REPLICON' && value.intId && value.intId !== ''
     }
 
     return (
@@ -151,18 +143,18 @@ export const TaskEditor = observer(
         </Grid>
         <Grid item xs={6} lg={9}>
           <PlatformTaskSelect
-            value={value.intId}
+            value={value.platformTaskIntId}
             disabled={value === state.getUndefinedTask()}
             label={`Account for Task ${value && value.name}`}
             fullWidth
             style={{ flex: '1 1 auto' }}
             onChange={(newIntId) => {
               if (newIntId !== undefined && newIntId !== null) {
-                value.intId = newIntId
-                const task = platformState.resolveTask(value?.intId)
+                value.platformTaskIntId = newIntId
+                const task = platformState.resolveTask(value?.platformTaskIntId)
                 value.platformType = task?.typ
               } else {
-                value.intId = ''
+                value.platformTaskIntId = ''
                 value.taskActivityUri = ''
                 value.taskActivityName = ''
               }
@@ -172,11 +164,9 @@ export const TaskEditor = observer(
         </Grid>
         <Grid item xs={2} lg={1}>
           <Button
-            disabled={undefined === guessIntId}
+            disabled={undefined === guessPlatformIntId}
             onClick={(_) => {
-              value.intId = guessIntId
-              value.taskIntId = guessTaskIntId
-              value.projectIntId = guessProjectIntId
+              value.platformTaskIntId = guessPlatformIntId
             }}
             style={{ width: '100%' }}
             endIcon={<SentimentSatisfiedAlt />}
@@ -241,34 +231,34 @@ export const TaskEditor = observer(
             variant='text'
             style={{ width: '100%' }}
             disabled={!platformState.currentlyImportingTasks}
-            onClick={async () => {
-              await platformState.killPlatform()
-            }}
+            onClick={() => platformState.killPlatform()}
           >
             Cancel
           </Button>
         </Grid>
 
-        {isAccountTaskChosen() && (
-          <Grid item xs={10} lg={11}>
-            <TaskActivitySelect
-              value={value.taskActivityUri}
-              disabled={value === state.getUndefinedTask()}
-              label={`Activity for Task ${value && value.name}`}
-              fullWidth
-              style={{ flex: '1 1 auto' }}
-              onChange={(taskActivity) => {
-                state.slices.forEach((slice) => {
-                  if (slice.task.name === value.name) {
-                    slice.task.taskActivityUri = taskActivity?.uri ?? ''
-                    slice.task.taskActivityName = taskActivity?.name ?? ''
-                  }
-                })
-              }}
-              platformState={platformState}
-            />
-          </Grid>
-        )}
+        {value.platformType === 'REPLICON' &&
+          value.platformTaskIntId &&
+          value.platformTaskIntId !== '' && (
+            <Grid item xs={10} lg={11}>
+              <TaskActivitySelect
+                value={value.taskActivityUri}
+                disabled={value === state.getUndefinedTask()}
+                label={`Activity for Task ${value && value.name}`}
+                fullWidth
+                style={{ flex: '1 1 auto' }}
+                onChange={(taskActivity) => {
+                  state.slices.find((slice) => {
+                    if (slice.task.name === value.name) {
+                      slice.task.taskActiviFvtyUri = taskActivity?.uri ?? ''
+                      slice.task.taskActivityName = taskActivity?.name ?? ''
+                    }
+                  })
+                }}
+                platformState={platformState}
+              />
+            </Grid>
+          )}
         <Grid item xs={10} lg={11}>
           <TextField
             value={value.platformTaskComment}

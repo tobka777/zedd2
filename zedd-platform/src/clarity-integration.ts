@@ -258,7 +258,6 @@ async function getProjectTasks(
           intId: +intIdStr,
           projectName: pName,
           projectIntId: projectIntId,
-          taskIntId: projectIntId,
           start: parseDate(row['Anfang'], 'dd.MM.yy', new Date()),
           end: parseDate(row['Ende'], 'dd.MM.yy', new Date()),
           openForTimeEntry: row['Für Zeiteintrag geöffnet'] == 'Ja',
@@ -543,16 +542,18 @@ async function exportToClarity(
         const columnIndex = 13 + differenceInCalendarDays(day, timesheetStartDate)
         const hoursStr = await $(rowInfo.tr, `td[column="${columnIndex}"]`).getText()
         const hours = +hoursStr.replace(',', '.')
-        //if (hours != 0)
-        // daysInfo
-        //   .find((di) => di.day == day)!
-        //   .work.push({
-        //     taskIntId: rowInfo.taskIntId,
-        //     taskName: rowInfo.taskName,
-        //     projectName: rowInfo.projectName,
-        //     hours,
-        //     comment: dayComment && dayComment.substring(4),
-        //   })
+        if (hours != 0)
+          daysInfo
+            .find((di) => di.day == day)!
+            .work.push({
+              taskIntId: rowInfo.taskIntId,
+              taskName: rowInfo.taskName,
+              projectName: rowInfo.projectName,
+              hours,
+              comment: dayComment && dayComment.substring(4),
+              taskCode: '',
+              platformType: 'REPLICON',
+            })
       }
     }
     return daysInfo
@@ -767,8 +768,8 @@ export async function withErrorHandling<R>(
   }
 }
 
-export async function webDriverQuit() {
+export function webDriverQuit() {
   if (chromeDriver) {
-    await chromeDriver.quit()
+    chromeDriver.quit()
   }
 }

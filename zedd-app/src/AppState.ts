@@ -99,15 +99,7 @@ export class Task {
 
   @serializable
   @observable
-  public intId: number | string | undefined
-
-  @serializable
-  @observable
-  public projectIntId: number | undefined
-
-  @serializable
-  @observable
-  public taskIntId: number | undefined
+  public platformTaskIntId: number | string | undefined
 
   @serializable
   @observable
@@ -139,16 +131,12 @@ export class Task {
     taskActivityUri?: string,
     taskActivityName?: string,
     intId?: number,
-    projectIntId?: number,
-    taskIntId?: number,
     key?: string,
     platformTaskComment?: string,
   ) {
     makeObservable(this)
     this.name = name
-    this.intId = intId
-    this.projectIntId = projectIntId
-    this.taskIntId = taskIntId
+    this.platformTaskIntId = intId
     this.key = key
     this.platformTaskComment = platformTaskComment || ''
     this.platformType = platformType

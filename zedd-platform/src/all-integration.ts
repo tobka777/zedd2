@@ -1,8 +1,8 @@
-import {PlatformExportFormat, Task} from './model'
-import {PlatformOptions} from './model/platform.options.model'
-import {PlatformIntegration} from './platform-integration'
-import {OTTIntegration} from './ott-integration'
-import {RepliconIntegration} from './replicon-integration'
+import { PlatformExportFormat, Task } from './model'
+import { PlatformOptions } from './model/platform.options.model'
+import { PlatformIntegration } from './platform-integration'
+import { OTTIntegration } from './ott-integration'
+import { RepliconIntegration } from './replicon-integration'
 
 export class AllIntegration extends PlatformIntegration {
   private static ottLink: string

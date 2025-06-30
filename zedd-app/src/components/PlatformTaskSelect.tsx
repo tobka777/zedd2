@@ -59,7 +59,7 @@ export const PlatformTaskSelect = observer(
             {...props}
             className={`${props.className ?? ''} ${
               option.typ === 'REPLICON' ? 'replicon-task' : 'ott-task'
-            }`.trim()}
+            }`}
           >
             <div style={{ width: '25%' }}>{option.projectName}</div>
             <div style={{ width: '25%' }}>{option.name}</div>
