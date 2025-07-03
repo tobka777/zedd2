@@ -1,29 +1,20 @@
 import { PlatformIntegration } from './platform-integration'
 import { PlatformOptions } from './model/platform.options.model'
-import { PlatformExportFormat, Task } from './model'
+import { PlatformExportFormat, Task, TaskActivity } from './model'
 import { ElementHandle, HTTPRequest } from 'puppeteer'
 import { What } from './model/what.model'
 import { isWithinInterval, min as dateMin, parse, parseISO } from 'date-fns'
 import { enGB } from 'date-fns/locale'
 import partition from 'lodash/partition'
 import { WorkEntry } from './model/work-entry.model'
-import { TaskActivity } from './model/task-activity.model'
 
 export class RepliconIntegration extends PlatformIntegration {
-  private constructor() {
-    super()
-  }
-
-  static async create(
-    platformLink: string,
-    options: PlatformOptions,
-  ): Promise<RepliconIntegration> {
-    const instance = new RepliconIntegration()
-    await instance.init(platformLink, options)
-    return instance
+  public constructor(platformLink: string, options: PlatformOptions) {
+    super(platformLink, options)
   }
 
   async importTasks(notifyTasks?: (p: Task[]) => void): Promise<Task[]> {
+    await this.init()
     await this.goToTheTimesheet(true)
     await this.page.waitForSelector('table.dataGrid > tbody[sectiontype="actions"]')
     let taskTable = await this.page.waitForSelector('table.dataGrid')
@@ -56,28 +47,6 @@ export class RepliconIntegration extends PlatformIntegration {
 
     const url = await urlTaskPromise
 
-    let activitySelect = await this.page.waitForSelector('td.activity > span')
-    await activitySelect?.click()
-
-    this.taskActivities = await new Promise<TaskActivity[]>((resolve, reject) => {
-      this.page.on('response', async (res) => {
-        try {
-          if ((await res.text()).includes(':activity:')) {
-            const jsonResponse = await res.json()
-
-            if (jsonResponse && Array.isArray(jsonResponse.d)) {
-              const activityOptions = jsonResponse.d.map((option: TaskActivity) => option)
-              resolve(activityOptions)
-            }
-          }
-        } catch (error) {
-          console.error('Error parsing JSON:', error)
-          await this.browser.close()
-          reject(error)
-        }
-      })
-    })
-
     const [tenant, timesheet] = this.extractTenantAndTimesheet(url)
 
     const projectJsonResponse = await this.page.evaluate(async (url) => {
@@ -98,7 +67,52 @@ export class RepliconIntegration extends PlatformIntegration {
     return tasks
   }
 
+  async importTaskActivities(
+    work: WorkEntry,
+    notifyTaskActivities?: (p: TaskActivity[]) => void,
+  ): Promise<TaskActivity[]> {
+    await this.init()
+    await this.goToTheTimesheet(true)
+    await this.page.waitForSelector('table.dataGrid > tbody[sectiontype="actions"]')
+    await this.addRow()
+    await this.page.waitForTimeout(300)
+    const taskSearchButton = await this.clickElementWithContent(
+      '//span[contains(@class, "taskSelectorSearchByCategoryContainer")]//span[contains(@class, "placeholder") and contains(text(), "Select Project")]',
+    )
+    const row = await this.chooseTaskFromDropdown(null, taskSearchButton, work)
+
+    const [activitySelectNode] = await row.$x(".//a[contains(., 'Select an Activity')]")
+    let activitySelect = activitySelectNode as unknown as ElementHandle<Element>
+    if (activitySelect) {
+      await activitySelect?.click()
+      await this.page.waitForSelector('td.activity > span')
+
+      const taskActivities = await new Promise<TaskActivity[]>((resolve, reject) => {
+        this.page.on('response', async (res) => {
+          try {
+            if ((await res.text()).includes(':activity:')) {
+              const jsonResponse = await res.json()
+
+              if (jsonResponse && Array.isArray(jsonResponse.d)) {
+                const activityOptions = jsonResponse.d.map((option: TaskActivity) => option)
+                resolve(activityOptions)
+              }
+            }
+          } catch (error) {
+            console.error('Error parsing JSON:', error)
+            await this.browser.close()
+            reject(error)
+          }
+        })
+      })
+      notifyTaskActivities && notifyTaskActivities(taskActivities)
+      return taskActivities
+    }
+    throw new Error('No task activities found')
+  }
+
   async exportTasks(whatt: PlatformExportFormat, submitTimesheets: boolean): Promise<void> {
+    await this.init()
     await this.goToTheTimesheet(false)
 
     let what: What[] = Object.keys(whatt).map((dateString: string) => ({
@@ -380,6 +394,36 @@ export class RepliconIntegration extends PlatformIntegration {
     taskDay: Date,
     taskSearchButton: ElementHandle<Element> | null,
   ) {
+    row = await this.chooseTaskFromDropdown(row, taskSearchButton, work)
+
+    const [activitySelectNode] = await row.$x(".//a[contains(., 'Select an Activity')]")
+    const activitySelect = activitySelectNode as unknown as ElementHandle<Element>
+    if (activitySelect) {
+      await activitySelect.click()
+
+      await this.page.waitForXPath(
+        "//ul[contains(@class, 'divDropdownList')]//a[contains(text(), '" +
+          work.taskActivity +
+          "')]",
+        { visible: true },
+      )
+      await this.clickElementWithContent(
+        "//ul[contains(@class, 'divDropdownList')]//a[contains(text(), '" +
+          work.taskActivity +
+          "')]",
+      )
+    }
+
+    await this.fillTaskDay(row, work, taskDay)
+    await this.page.keyboard.down('Enter')
+    await this.page.keyboard.up('Enter')
+  }
+
+  private async chooseTaskFromDropdown(
+    row: ElementHandle<Element> | null,
+    taskSearchButton: ElementHandle<Element> | null,
+    work: WorkEntry,
+  ) {
     if (!row) {
       await taskSearchButton!.type(String(work.taskIntId))
       await taskSearchButton!.click()
@@ -418,28 +462,7 @@ export class RepliconIntegration extends PlatformIntegration {
     if (!row) {
       throw new Error('No row found')
     }
-
-    const [activitySelectNode] = await row.$x(".//a[contains(., 'Select an Activity')]")
-    const activitySelect = activitySelectNode as unknown as ElementHandle<Element>
-    if (activitySelect) {
-      await activitySelect.click()
-
-      await this.page.waitForXPath(
-        "//ul[contains(@class, 'divDropdownList')]//a[contains(text(), '" +
-          work.taskActivity +
-          "')]",
-        { visible: true },
-      )
-      await this.clickElementWithContent(
-        "//ul[contains(@class, 'divDropdownList')]//a[contains(text(), '" +
-          work.taskActivity +
-          "')]",
-      )
-    }
-
-    await this.fillTaskDay(row, work, taskDay)
-    await this.page.keyboard.down('Enter')
-    await this.page.keyboard.up('Enter')
+    return row
   }
 
   private async chooseTaskFromOptions(searchedText: string, expression: string) {

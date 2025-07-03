@@ -4,10 +4,12 @@ import { Autocomplete, TextField } from '@mui/material'
 import * as React from 'react'
 import { PlatformState } from '../PlatformState'
 import { TaskActivity } from 'zedd-platform/out/src/model/task-activity.model'
+import { Task } from 'zedd-platform'
 
 export type TaskActivitySelectProps = {
   platformState: PlatformState
   onChange: (taskActivity: TaskActivity | undefined) => void
+  platformTask: Task | undefined
   value: string | undefined
 } & Omit<StandardTextFieldProps, 'onChange' | 'value'>
 
@@ -16,6 +18,7 @@ export const TaskActivitySelect = observer(
     platformState,
     onChange,
     value,
+    platformTask,
     style,
     disabled,
     ...textFieldProps
@@ -27,7 +30,7 @@ export const TaskActivitySelect = observer(
     return (
       <Autocomplete
         renderInput={(params) => <TextField {...params} {...textFieldProps} />}
-        options={platformState?.taskActivities ?? []}
+        options={platformTask?.taskActivities ?? []}
         disabled={disabled}
         style={style}
         filterOptions={(options: TaskActivity[], state) => {

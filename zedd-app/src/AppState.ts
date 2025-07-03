@@ -111,6 +111,10 @@ export class Task {
 
   @serializable
   @observable
+  public taskActivities: string[] = []
+
+  @serializable
+  @observable
   public platformType: PlatformType | undefined
 
   /**
@@ -127,6 +131,7 @@ export class Task {
 
   constructor(
     name: string = '',
+    taskActivities: string[],
     platformType?: PlatformType,
     taskActivityUri?: string,
     taskActivityName?: string,
@@ -142,6 +147,7 @@ export class Task {
     this.platformType = platformType
     this.taskActivityUri = taskActivityUri
     this.taskActivityName = taskActivityName
+    this.taskActivities = taskActivities
   }
 
   public static same(a: Task, b: Task): boolean {
@@ -656,7 +662,7 @@ export class AppState {
   public getUndefinedTask(): Task {
     return (
       this.tasks.find((t) => 'UNDEFINED' === t.name || '' === t.name) ||
-      new Task('UNDEFINED', undefined, undefined, 'UNDEFINED')
+      new Task('UNDEFINED', [], undefined, undefined, 'UNDEFINED')
     )
   }
 
@@ -718,7 +724,7 @@ export class AppState {
     return (
       this.tasks.find((t) => taskNameLC === t.name.toLowerCase()) ||
       this.assignedIssueTasks.find((t) => taskNameLC === t.name.toLowerCase()) ||
-      new Task(taskName)
+      new Task(taskName, [])
     )
   }
 
