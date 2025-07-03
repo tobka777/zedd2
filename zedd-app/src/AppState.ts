@@ -109,9 +109,8 @@ export class Task {
   @observable
   public taskActivityName: string | undefined
 
-  @serializable
   @observable
-  public taskActivities: string[] = []
+  public taskActivities: string[]
 
   @serializable
   @observable

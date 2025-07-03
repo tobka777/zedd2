@@ -1,12 +1,12 @@
-import { PlatformIntegration } from './platform-integration'
-import { PlatformOptions } from './model/platform.options.model'
-import { PlatformExportFormat, Task, TaskActivity } from './model'
-import { ElementHandle, HTTPRequest } from 'puppeteer'
-import { What } from './model/what.model'
-import { isWithinInterval, min as dateMin, parse, parseISO } from 'date-fns'
-import { enGB } from 'date-fns/locale'
+import {PlatformIntegration} from './platform-integration'
+import {PlatformOptions} from './model/platform.options.model'
+import {PlatformExportFormat, Task, TaskActivity} from './model'
+import {ElementHandle, HTTPRequest} from 'puppeteer'
+import {What} from './model/what.model'
+import {isWithinInterval, min as dateMin, parse, parseISO} from 'date-fns'
+import {enGB} from 'date-fns/locale'
 import partition from 'lodash/partition'
-import { WorkEntry } from './model/work-entry.model'
+import {WorkEntry} from './model/work-entry.model'
 
 export class RepliconIntegration extends PlatformIntegration {
   public constructor(platformLink: string, options: PlatformOptions) {
@@ -95,6 +95,7 @@ export class RepliconIntegration extends PlatformIntegration {
 
               if (jsonResponse && Array.isArray(jsonResponse.d)) {
                 const activityOptions = jsonResponse.d.map((option: TaskActivity) => option)
+                await this.browser.close()
                 resolve(activityOptions)
               }
             }

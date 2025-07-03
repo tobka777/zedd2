@@ -197,7 +197,7 @@ export class PlatformState {
       }
 
       if (!notSave) {
-        await this.savePlatformObjectsToFile(this._tasks, 'tasks')
+        await this.savePlatformTasksToFile(this._tasks)
       }
     } catch (error) {
       this.platformIntegration?.quitBrowser()
@@ -234,16 +234,7 @@ export class PlatformState {
   }
 
   public async loadStateFromFile(): Promise<void> {
-    ;[this._tasksLastUpdated, this._tasks] = (await this.loadPlatformTasksFromFile(
-      'tasks',
-      /^tasks_(.*)\.json$/,
-    )) as [Date, Task[]]
-    if (this._tasks.length > 0) {
-      this._taskActivities = (await this.loadPlatformTasksFromFile(
-        'activities',
-        /^activities_(.*)\.json$/,
-      )) as TaskActivity[]
-    }
+    ;[this._tasksLastUpdated, this._tasks] = await this.loadPlatformTasksFromFile()
   }
 
   public resolveTask(intId: number | undefined): undefined | Task {
@@ -292,33 +283,24 @@ export class PlatformState {
     }
   }
 
-  private async savePlatformObjectsToFile(objects: Task[] | TaskActivity[], subPackage: string) {
-    const objectsPlatformDir = path.join(this.platformDir, subPackage)
-    const json = JSON.stringify(objects, undefined, '  ')
-    const newFile = subPackage + '_' + formatDate(new Date(), FILE_DATE_FORMAT) + '.json'
-    await fsp.writeFile(path.join(objectsPlatformDir, newFile), json)
-    const filesToDelete = (await fsp.readdir(objectsPlatformDir, { withFileTypes: true })).filter(
+  private async savePlatformTasksToFile(tasks: Task[]) {
+    const json = JSON.stringify(tasks, undefined, '  ')
+    const newFile = 'tasks_' + formatDate(new Date(), FILE_DATE_FORMAT) + '.json'
+    await fsp.writeFile(path.join(this.platformDir, newFile), json)
+    const filesToDelete = (await fsp.readdir(this.platformDir, { withFileTypes: true })).filter(
       (f) => f.isFile() && f.name !== newFile,
     )
-    await Promise.all(filesToDelete.map((f) => fsp.unlink(path.join(objectsPlatformDir, f.name))))
+    await Promise.all(filesToDelete.map((f) => fsp.unlink(path.join(this.platformDir, f.name))))
   }
 
-  private async loadPlatformTasksFromFile(
-    subPackage: string,
-    pattern: RegExp,
-  ): Promise<TaskActivity[] | [Date, Task[]]> {
-    const objectsPlatformDir = path.join(this.platformDir, subPackage)
-    const [file, date] = await getLatestFileInDir(objectsPlatformDir, pattern)
-    const content = await fsp.readFile(path.join(objectsPlatformDir, file), {
+  private async loadPlatformTasksFromFile(): Promise<[Date, Task[]]> {
+    const [file, date] = await getLatestFileInDir(this.platformDir, /^tasks_(.*)\.json$/)
+    const content = await fsp.readFile(path.join(this.platformDir, file), {
       encoding: 'utf8',
     })
-
-    if (subPackage === 'tasks') {
-      const tasks: Task[] = JSON.parse(content, (key, value) =>
-        'end' === key || 'start' === key ? parseISO(value) : value,
-      )
-      return [date, tasks]
-    }
-    return JSON.parse(content)
+    const tasks: Task[] = JSON.parse(content, (key, value) =>
+      'end' === key || 'start' === key ? parseISO(value) : value,
+    )
+    return [date, tasks]
   }
 }

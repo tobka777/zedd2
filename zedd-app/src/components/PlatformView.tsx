@@ -301,7 +301,11 @@ export const PlatformView = observer((props: PlatformViewProps) => {
     )
   })
 
-  const showingTotal = sum(tasksToShow.map((we) => we.hours))
+  const showingTotal = sum(
+    Object.values(platformExport)
+      .flat()
+      .map((we) => we.hours),
+  )
 
   const projectCodeMap = new Map<string, Map<PlatformType, Set<string>>>()
 
@@ -380,7 +384,9 @@ export const PlatformView = observer((props: PlatformViewProps) => {
 
         const taskInGivenPeriod = platformExport?.[isoDate] ?? []
 
-        dayTasks[isoDate] = platformTasks.filter((task) => taskInGivenPeriod.includes(task))
+        dayTasks[isoDate] = taskInGivenPeriod.filter((task) =>
+          platformTasks.some((t) => t.taskIntId === task.taskIntId),
+        )
       }
     }
 
@@ -550,7 +556,11 @@ function Row({
     )
   }
 
-  const showingTotal = sum(tasksToShow.map((we) => we.hours))
+  const showingTotal = sum(
+    Object.values(platformExport)
+      .flat()
+      .map((we) => we.hours),
+  )
 
   return (
     <>
@@ -639,7 +649,8 @@ function Row({
               >
                 {formatHours(
                   sum(
-                    tasksToShow
+                    Object.values(platformExport)
+                      .flat()
                       .filter((we) => we.taskIntId === taskToShow.taskIntId)
                       .map((we) => we.hours),
                   ),
