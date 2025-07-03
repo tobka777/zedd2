@@ -126,6 +126,7 @@ const issueInfoToTask = async (platformTasks: PlatformTask[], i: any): Promise<T
       i.key +
       ': ' +
       i.fields.summary.replace(new RegExp('^' + externalKey + ':? ?'), ''),
+    [],
     platformType,
     platformTaskId,
   )

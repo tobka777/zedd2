@@ -9,12 +9,13 @@ import { format as formatDate, formatDistance } from 'date-fns'
 import { observer } from 'mobx-react-lite'
 import * as React from 'react'
 import { useCallback, useRef, useState } from 'react'
-import { InvalidPlattformUrlException } from 'zedd-platform'
+import { InvalidPlattformUrlException, PlatformType } from 'zedd-platform'
 import { AppState, Task } from '../AppState'
 import { PlatformActionType, PlatformState } from '../PlatformState'
 import { PlatformTaskSelect } from './PlatformTaskSelect'
 import { LoadingSpinner } from './LoadingSpinner'
 import { TaskSelect } from './TaskSelect'
+import { TaskActivitySelect } from './TaskActivitySelect'
 
 interface TaskEditorProps {
   state: AppState
@@ -37,9 +38,35 @@ export const TaskEditor = observer(
     taskSelectRef,
   }: TaskEditorProps) => {
     const importPlatformTasks = useCallback(
-      (which: string) =>
-        platformState
-          .importAndSavePlatformTasks('OTT' === which ? 'OTT' : 'ALL', (info) =>
+      async (which: string) => {
+        const platformType = 'OTT' === which ? 'OTT' : 'REPLICON' === which ? 'REPLICON' : 'ALL'
+
+        try {
+          await platformState
+            .importAndSavePlatformTasks(platformType, (info) =>
+              state.addMessage(info, 'info', 2000),
+            )
+            .catch((e) => {
+              platformState.error = e.message
+              state.addMessage(
+                e.message +
+                  (e instanceof InvalidPlattformUrlException
+                    ? 'Check zeddConfig.ottLink or zeddConfig.repliconLink and reload config.'
+                    : ''),
+                'error',
+              )
+            })
+        } catch (e: any) {
+          state.addMessage('Failed to fetch platform integrations: ' + e.message, 'error', 4000)
+        }
+      },
+      [platformState, state],
+    )
+
+    const importRepliconTaskActivities = useCallback(async () => {
+      try {
+        await platformState
+          .importRepliconTaskActivities(state.currentTask.platformTaskIntId, (info) =>
             state.addMessage(info, 'info', 2000),
           )
           .catch((e) => {
@@ -47,12 +74,15 @@ export const TaskEditor = observer(
             state.addMessage(
               e.message +
                 (e instanceof InvalidPlattformUrlException
-                  ? 'Check zeddConfig.ottLink and reload config.'
+                  ? 'Check zeddConfig.ottLink or zeddConfig.repliconLink and reload config.'
                   : ''),
+              'error',
             )
-          }),
-      [platformState, state],
-    )
+          })
+      } catch (e: any) {
+        state.addMessage('Failed to fetch platform integrations: ' + e.message, 'error', 4000)
+      }
+    }, [platformState, state])
 
     const [popperOpen, setPopperOpen] = useState(false)
     const anchorRef = useRef(null)
@@ -61,9 +91,10 @@ export const TaskEditor = observer(
     if (value.platformTaskIntId === undefined) {
       const keys = value.name.match(/[A-Z]+-\d+/g) ?? []
       const keyRegexes = keys.map((key) => new RegExp(key + '(?!\\d)'))
-      guessPlatformIntId = platformState.tasks.find((ct) =>
+      const task = platformState.tasks.find((ct) =>
         keyRegexes.some((regex) => ct.name.match(regex)),
-      )?.intId
+      )
+      guessPlatformIntId = task?.intId
     }
 
     if (platformState.actionType === PlatformActionType.ImportTasks) {
@@ -114,14 +145,26 @@ export const TaskEditor = observer(
             label={`Account for Task ${value && value.name}`}
             fullWidth
             style={{ flex: '1 1 auto' }}
-            onChange={(newIntId) => (value.platformTaskIntId = newIntId)}
+            onChange={(newIntId) => {
+              if (newIntId !== undefined && newIntId !== null) {
+                value.platformTaskIntId = newIntId
+                const task = platformState.resolveTask(value?.platformTaskIntId)
+                value.platformType = task?.typ
+              } else {
+                value.platformTaskIntId = ''
+                value.taskActivityUri = ''
+                value.taskActivityName = ''
+              }
+            }}
             platformState={platformState}
           />
         </Grid>
         <Grid item xs={2} lg={1}>
           <Button
             disabled={undefined === guessPlatformIntId}
-            onClick={(_) => (value.platformTaskIntId = guessPlatformIntId)}
+            onClick={(_) => {
+              value.platformTaskIntId = guessPlatformIntId
+            }}
             style={{ width: '100%' }}
             endIcon={<SentimentSatisfiedAlt />}
           >
@@ -167,33 +210,17 @@ export const TaskEditor = observer(
             id='split-button-menu'
             onClose={() => setPopperOpen(false)}
           >
-            <MenuItem
-              onClick={() => {
-                setPopperOpen(false)
-                importPlatformTasks('ALL')
-              }}
-            >
-              ALL
-            </MenuItem>
-            <MenuItem
-              onClick={() => {
-                setPopperOpen(false)
-                importPlatformTasks('OTT')
-              }}
-            >
-              OTT
-            </MenuItem>
-            {/*platformState.projectNames.map((pn) => (
+            {(['ALL', 'OTT', 'REPLICON'] as PlatformType[]).map((platform) => (
               <MenuItem
-                key={pn}
-                onClick={() => {
+                key={platform}
+                onClick={async () => {
                   setPopperOpen(false)
-                  importPlatformTasks(pn)
+                  await importPlatformTasks(platform)
                 }}
               >
-                {pn}
+                {platform}
               </MenuItem>
-            ))*/}
+            ))}
           </Menu>
         </Grid>
         <Grid item xs={2} lg={1}>
@@ -206,6 +233,41 @@ export const TaskEditor = observer(
             Cancel
           </Button>
         </Grid>
+
+        {value.platformType === 'REPLICON' &&
+          value.platformTaskIntId &&
+          value.platformTaskIntId !== '' && (
+            <>
+              <Grid item xs={10} lg={11}>
+                <TaskActivitySelect
+                  value={value.taskActivityUri}
+                  platformTask={platformState.resolveTask(value.platformTaskIntId as number)}
+                  disabled={value === state.getUndefinedTask()}
+                  label={`Activity for Task ${value && value.name}`}
+                  fullWidth
+                  style={{ flex: '1 1 auto' }}
+                  onChange={(taskActivity) => {
+                    state.slices.find((slice) => {
+                      if (slice.task.name === value.name) {
+                        slice.task.taskActivityUri = taskActivity?.uri ?? ''
+                        slice.task.taskActivityName = taskActivity?.name ?? ''
+                      }
+                    })
+                  }}
+                  platformState={platformState}
+                />
+              </Grid>
+              <Grid item xs={2} lg={1}>
+                <Button
+                  disabled={!value || value === state.getUndefinedTask()}
+                  onClick={async () => await importRepliconTaskActivities()}
+                  endIcon={<ImportIcon />}
+                >
+                  Import
+                </Button>
+              </Grid>
+            </>
+          )}
         <Grid item xs={10} lg={11}>
           <TextField
             value={value.platformTaskComment}

@@ -1,4 +1,5 @@
 import { PlatformType } from './platform-type.model'
+import { TaskActivity } from './task-activity.model'
 
 export interface Task {
   name: string
@@ -9,6 +10,10 @@ export interface Task {
   end?: Date
   taskCode: string
   typ: PlatformType
+  /**
+   * TaskActivities for Replicon tasks
+   */
+  taskActivities?: TaskActivity[]
 
   /**
    * @deprecated only needed for clarity

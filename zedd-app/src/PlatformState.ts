@@ -3,16 +3,19 @@ import { promises as fsp } from 'fs'
 import { computed, makeObservable, observable } from 'mobx'
 import * as path from 'path'
 import {
-  fillClarity,
-  webDriverQuit,
-  importOTTTasks,
+  OTTIntegration,
   PlatformExportFormat,
-  Task,
+  PlatformIntegration,
   PlatformType,
-  ottQuit,
+  Task,
+  TaskActivity,
+  webDriverQuit,
 } from 'zedd-platform'
 import './index.css'
 import { FILE_DATE_FORMAT, getLatestFileInDir, mkdirIfNotExists } from './util'
+import { RepliconIntegration } from 'zedd-platform/out/src/replicon-integration'
+import { PlatformOptions } from 'zedd-platform/out/src/model/platform.options.model'
+import { WorkEntry } from 'zedd-platform/out/src/model/work-entry.model'
 
 export enum PlatformActionType {
   SubmitTimesheet,
@@ -21,6 +24,8 @@ export enum PlatformActionType {
 
 export class PlatformState {
   public ottLink: string
+
+  public repliconLink: string
 
   public chromeExe: string
 
@@ -55,7 +60,14 @@ export class PlatformState {
   private _tasks: Task[] = []
 
   @observable
+  private _taskActivities: TaskActivity[] = []
+
+  private platformIntegration: PlatformIntegration
+
+  @observable
   private _tasksLastUpdated: Date | undefined
+
+  private integrationMap: Record<string, PlatformIntegration>
 
   public constructor(public platformDir: string) {
     makeObservable(this)
@@ -79,12 +91,33 @@ export class PlatformState {
   }
 
   @computed
+  get uriTaskActivitiesMap(): Map<string, TaskActivity> {
+    return this._taskActivities.reduce(
+      (map, taskActivity) => map.set(taskActivity.uri, taskActivity),
+      new Map(),
+    )
+  }
+
+  @computed
   get projectNames(): string[] {
     const projectNames = Array.from(
       this._tasks.reduce((set, task) => (set.add(task.projectName), set), new Set<string>()),
     )
     projectNames.sort()
     return projectNames
+  }
+
+  public allRepliconTasksHaveActivity(platformExport: PlatformExportFormat): boolean {
+    return (
+      Object.values(platformExport)
+        .flat()
+        .filter((workEntry) => workEntry.platformType === 'REPLICON')
+        .find(
+          (workEntry) =>
+            workEntry.platformType === 'REPLICON' &&
+            (!workEntry.taskActivity || (workEntry.taskActivity && workEntry.taskActivity === '')),
+        ) !== undefined
+    )
   }
 
   public get tasksLastUpdated(): Date | undefined {
@@ -95,7 +128,19 @@ export class PlatformState {
     await mkdirIfNotExists(this.platformDir)
   }
 
+  public async setIntegrationMap(): Promise<void> {
+    const options: PlatformOptions = {
+      headless: this.chromeHeadless,
+      executablePath: this.chromeExe,
+    }
+    this.integrationMap = {
+      REPLICON: new RepliconIntegration(this.repliconLink, options),
+      OTT: new OTTIntegration(this.ottLink, options),
+    }
+  }
+
   public async export(
+    platform: 'ALL' | PlatformType,
     platformExport: PlatformExportFormat,
     submitTimesheets: boolean,
   ): Promise<void> {
@@ -103,29 +148,89 @@ export class PlatformState {
     console.log('exporting timesheets', platformExport)
     try {
       this.clearPlatformState(false)
-      await fillClarity(this.ottLink, platformExport, submitTimesheets, this.resourceName, {
-        headless: this.chromeHeadless,
-        chromeExe: this.chromeExe,
-        chromedriverExe: this.chromedriverExe,
-      })
+      if (platform === 'ALL') {
+        for (const [key] of Object.entries(this.integrationMap)) {
+          await this.export(key as PlatformType, platformExport, submitTimesheets)
+        }
+      } else {
+        this.platformIntegration = this.integrationMap[platform]
+
+        await this.platformIntegration.exportTasks(platformExport, submitTimesheets)
+      }
+
       this.success = true
+    } catch (ex) {
+      await this.platformIntegration?.quitBrowser()
     } finally {
       this._currentlyExportingTasks = false
     }
   }
 
   public async importAndSavePlatformTasks(
-    // @ts-expect-error TS6133
     toImport: 'ALL' | PlatformType,
     infoNotify?: (info: string) => void,
+    notSave?: boolean,
   ): Promise<Task[]> {
-    this._tasks = await this.importPlatformTasks((tasks) => {
-      infoNotify && infoNotify('Imported ' + tasks.length + ' tasks from OTT.')
+    try {
+      if (toImport === 'ALL') {
+        const results: Task[] = []
+        for (const [key] of Object.entries(this.integrationMap)) {
+          const tasks = await this.importAndSavePlatformTasks(key as PlatformType, infoNotify, true)
+          results.push(...tasks)
+        }
 
-      this._tasks = [...tasks]
-    })
-    await this.savePlatformTasksToFile(this._tasks)
+        const existingExternalIds = new Set(this._tasks.map((task) => task.projectIntId))
+        const uniqueTasks = results
+          .flat()
+          .filter((task) => !existingExternalIds.has(task.projectIntId))
+        this._tasks.push(...uniqueTasks)
+        infoNotify &&
+          infoNotify('Imported ' + existingExternalIds.size + ' tasks from ' + toImport + '.')
+      } else {
+        this.platformIntegration = this.integrationMap[toImport]
+
+        this._tasks = await this.importPlatformTasks(this.platformIntegration, (tasks) => {
+          infoNotify && infoNotify('Imported ' + tasks.length + ' tasks from ' + toImport + '.')
+
+          this._tasks = [...tasks]
+        })
+      }
+
+      if (!notSave) {
+        await this.savePlatformTasksToFile(this._tasks)
+      }
+    } catch (error) {
+      this.platformIntegration?.quitBrowser()
+    }
     return this._tasks
+  }
+
+  public async importRepliconTaskActivities(
+    platformTaskIntId: string | number | undefined,
+    infoNotify?: (info: string) => void,
+  ) {
+    const task: Task = (platformTaskIntId && this.resolveTask(platformTaskIntId as number)) as Task
+
+    if (!task) {
+      throw new Error('No task found')
+    }
+
+    const workEntry: WorkEntry = {
+      taskIntId: task.intId,
+      projectName: task.projectName,
+      taskCode: task.taskCode,
+      taskName: task.name,
+      hours: 0,
+      platformType: 'REPLICON',
+    }
+    const repliconIntegration = this.integrationMap['REPLICON'] as RepliconIntegration
+    task.taskActivities = await repliconIntegration.importTaskActivities(
+      workEntry,
+      (taskActivities) => {
+        infoNotify &&
+          infoNotify('Imported ' + taskActivities.length + ' task activities from REPLICON.')
+      },
+    )
   }
 
   public async loadStateFromFile(): Promise<void> {
@@ -136,13 +241,19 @@ export class PlatformState {
     return intId === undefined ? undefined : this.intIdTaskMap.get(intId)
   }
 
+  public resolveActivity(value: string) {
+    return value === undefined ? undefined : this.uriTaskActivitiesMap.get(value)
+  }
+
   public isValidTaskIntId(intId: number | undefined): boolean {
     return this.resolveTask(intId) !== undefined
   }
 
-  public killPlatform(): void {
+  public killPlatform() {
+    this._currentlyExportingTasks = false
+    this._currentlyImportingTasks = false
     webDriverQuit()
-    ottQuit()
+    this.platformIntegration?.quitBrowser()
   }
 
   private clearPlatformState(importing: boolean) {
@@ -152,7 +263,10 @@ export class PlatformState {
     this.success = false
   }
 
-  private async importPlatformTasks(notifyTasks?: (p: Task[]) => void): Promise<Task[]> {
+  private async importPlatformTasks(
+    platformIntegration: PlatformIntegration,
+    notifyTasks?: (p: Task[]) => void,
+  ): Promise<Task[]> {
     this.actionType = PlatformActionType.ImportTasks
     if (this._currentlyImportingTasks) {
       throw new Error('Already importing')
@@ -160,14 +274,7 @@ export class PlatformState {
     try {
       this.clearPlatformState(true)
       this._currentlyExportingTasks = false
-      const tasks = await importOTTTasks(
-        this.ottLink,
-        {
-          headless: this.chromeHeadless,
-          executablePath: this.chromeExe,
-        },
-        notifyTasks,
-      )
+      const tasks = await platformIntegration.importTasks(notifyTasks)
 
       this.success = true
       return tasks
