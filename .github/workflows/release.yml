@@ -15,7 +15,7 @@ jobs:
       - uses: actions/setup-node@master
         with:
           node-version: 14
-          architecture: 'x64' 
+          architecture: 'x64'
 
       - name: install platform dependencies
         working-directory: ./zedd-platform

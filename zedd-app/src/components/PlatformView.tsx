@@ -8,6 +8,7 @@ import {
   Menu,
   MenuItem,
   Paper,
+  Card,
   Table,
   TableBody,
   TableCell,
@@ -40,13 +41,14 @@ import { groupBy, remove, sortBy, uniqBy } from 'lodash'
 import { observer } from 'mobx-react-lite'
 import * as React from 'react'
 import { useRef, useState } from 'react'
-import { PlatformExportFormat, PlatformType } from 'zedd-platform'
+import { PlatformExportFormat, PlatformType, Task } from 'zedd-platform'
+import { useTheme } from '@mui/material/styles'
 
 import { TimeSlice, validDate } from '../AppState'
 import { PlatformActionType, PlatformState } from '../PlatformState'
 import { LoadingSpinner } from './LoadingSpinner'
 
-import { isoDayStr, omap, splitIntervalIntoCalendarDays, sum } from '../util'
+import { isoDayStr, omap, splitIntervalIntoCalendarDays, sum, useClasses } from '../util'
 import KeyboardArrowDownIcon from '@mui/icons-material/KeyboardArrowDown'
 import KeyboardArrowUpIcon from '@mui/icons-material/KeyboardArrowUp'
 import { WorkEntry } from 'zedd-platform/out/src/model/work-entry.model'
@@ -99,6 +101,26 @@ export interface PlatformViewProps {
   onChangeSubmitTimesheets: (x: boolean) => void
   errorHandler: (e: Error) => void
 }
+
+const styles = (theme: any) => ({
+  table: {
+    padding: 0,
+    borderSpacing: 0,
+    '& .textHeader': { textAlign: 'left' },
+    '& .numberCell, .numberHeader': {
+      textAlign: 'right',
+    },
+    '& th': { padding: theme.spacing(1, 2) },
+    '& td': {
+      borderTop: '1px solid',
+      borderColor: theme.palette.divider,
+      padding: theme.spacing(0.5, 2),
+    },
+    '& tbody tr:hover, tfoot tr:hover': {
+      backgroundColor: theme.palette.grey[500],
+    },
+  },
+})
 
 const formatHours = (h: number) =>
   h ? h.toLocaleString('de-DE', { minimumFractionDigits: 2 }) : '-'
@@ -301,9 +323,104 @@ export const PlatformView = observer((props: PlatformViewProps) => {
     )
   })
 
+  const theme = useTheme()
+  const classes = useClasses(styles)
+
   const showingTotal = sum(tasksToShow.map((we) => we.hours))
 
-  const projectCodeMap = new Map<string, Map<PlatformType, Set<string>>>()
+  
+  console.log("tasksToShow", tasksToShow)
+
+  /*const projectTasksView = new Map<string, {data?: Task, tasks: WorkEntry[]}>();
+  for(let task of tasksToShow.filter(t => t.platformType === 'OTT')) {
+    const projectKey = task.projectName + '|' + task.taskCode;
+    if (!projectTasksView.has(projectKey)) {
+      let projectData = platformState.tasks.find(project => project.typ === 'REPLICON' && project.projectName === task.projectName && project.taskCode && task.taskCode);
+      projectTasksView.set(projectKey, {data: projectData, tasks: []})
+    }
+    let projectTask = projectTasksView.get(projectKey)
+    projectTask?.tasks.push(task);
+    //projectTasksView.set(projectKey)
+  }*/
+
+  //const projectTasksView = new Map<string, PlatformExportFormat>();
+
+  let projectTasksViewItems: PlatformExportFormat = {};
+
+  //console.log("HAS", projectTasksView.entries())
+
+  console.log("HASLOS", intervals)
+
+  
+  for(let w of intervals) {
+    const workEntries = eachDayOfInterval(w)
+      .flatMap((d) => platformExport[isoDayStr(d)] ?? [])
+      ?.filter(t => t.platformType === 'OTT')
+
+    for(let task of workEntries) {
+      //const projectKey = task.projectName + '|' + task.taskCode;
+      let projectData = platformState.tasks.find(project => project.typ === 'REPLICON' && project.projectName === task.projectName && project.taskCode && task.taskCode);
+      if(projectData) {
+        let groupTask: WorkEntry = {
+          hours: 0,
+          projectName: projectData.projectName,
+          taskIntId: projectData.intId,
+          taskName: projectData.name,
+          platformType: projectData.typ,
+          taskCode: projectData.taskCode,
+          comment: "",
+          taskActivity: "", // TODO default activity
+        }
+        let projectItems = projectTasksViewItems[isoDayStr(w.start)];
+        let projectItem = projectItems?.find(item => item.projectName === projectData.projectName && item.taskCode === projectData.taskCode);
+        if(projectItem) {
+          projectItem.hours += task.hours;
+        }
+        else {
+          groupTask.hours = task.hours;
+          if(projectItems) {
+            projectTasksViewItems[isoDayStr(w.start)].push(groupTask)
+          }
+          else {
+            projectTasksViewItems[isoDayStr(w.start)] = [groupTask]
+          }
+        }
+      }
+/*
+      if (!projectTasksView.has(projectKey)) {
+        
+        projectTasksView.set(projectKey, {[isoDayStr(w.start)]: })
+      }
+      let projectTask = projectTasksView.get(projectKey)
+      projectTask?.tasks.push(task);*/
+    }
+
+     //console.log("workEntries",workEntries)
+  }
+
+  const projectTasksView = sortBy(
+    uniqBy(Object.values(projectTasksViewItems).flatMap((x) => x), (we) => we.taskIntId),
+    (x) => +(-1 === x.taskIntId), // placeholder task last
+    (x) => x.projectName,
+    (x) => x.taskName,
+  )
+
+  console.log("GAS", projectTasksView)
+  console.log("GASsd", projectTasksViewItems)
+
+
+
+  /*tasksToShow.filter(task => task.platformType === 'OTT').map(task => {
+    let childTasks: WorkEntry[] = [];
+
+    return {data: task, task: []}
+  })*/
+
+  //console.log(platformState.tasks.find(task => task.typ === 'REPLICON' && task.projectIntId == ))
+
+
+
+  /*const projectCodeMap = new Map<string, Map<PlatformType, Set<string>>>()
 
   platformState.tasks.forEach((entry) => {
     const projectKey = String(entry.projectIntId)
@@ -321,7 +438,9 @@ export const PlatformView = observer((props: PlatformViewProps) => {
     }
 
     platformMap.get(platform)!.add(taskCode)
-  })
+  })*/
+
+  //tasksToShow
 
   const getWorkedHours = (interval: Interval) => {
     return sum(
@@ -331,6 +450,7 @@ export const PlatformView = observer((props: PlatformViewProps) => {
     )
   }
 
+  /*
   const platformTasksToShow = tasksToShow.reduce<
     Record<PlatformType | 'Alle Platformen', WorkEntry[]>
   >((acc, entry) => {
@@ -360,8 +480,9 @@ export const PlatformView = observer((props: PlatformViewProps) => {
 
     return acc
   }, {} as Record<PlatformType | 'Alle Platformen', WorkEntry[]>)
+  */
 
-  const platformTasksToShowPlatformExport: Record<
+  /*const platformTasksToShowPlatformExport: Record<
     PlatformType | 'Alle Platformen',
     Record<string, WorkEntry[]>
   > = {}
@@ -385,10 +506,10 @@ export const PlatformView = observer((props: PlatformViewProps) => {
     }
 
     platformTasksToShowPlatformExport[platform] = dayTasks
-  }
+  }*/
 
   return (
-    <TableContainer component={Paper} style={{ width: '97%' }}>
+    <TableContainer component={Table} style={{ width: '97%', color: theme.palette.text.primary }} className={classes.table}>
       <Table aria-label='collapsible table'>
         <TableHead>
           <TableRow>
@@ -401,47 +522,43 @@ export const PlatformView = observer((props: PlatformViewProps) => {
               />
             </TableCell>
             {intervals.map((w) => (
-              <TableCell key={isoDayStr(w.start)} sx={{ fontWeight: 'bold' }}>
+              <TableCell key={isoDayStr(w.start)} sx={{ fontWeight: 'bold' }} className='numberHeader'>
                 {formatDate(w.start, headerFormat)}
               </TableCell>
             ))}
-            <TableCell sx={{ fontWeight: 'bold' }}>Total</TableCell>
+            <TableCell sx={{ fontWeight: 'bold' }} className='numberCell'>Total</TableCell>
           </TableRow>
         </TableHead>
         <TableBody>
-          {Object.entries(platformTasksToShow).map(([platform, tasksToShow]) => (
+          {/*Object.entries(projectTasksView).map(([projectIntId, tasksToShow]) => (
             <Row
-              key={platform}
-              platformType={platform}
+              key={projectIntId}
               tasksToShow={tasksToShow}
               intervals={intervals}
-              platformTasksToShowPlatformExport={platformTasksToShowPlatformExport}
             />
-          ))}
-        </TableBody>
-        <TableFooter>
+          ))*/}
           <TableRow>
-            <TableCell colSpan={2} />
+            <TableCell colSpan={2} style={{textAlign: 'right'}}><b>Summe</b></TableCell>
             {intervals.map((w, i) => (
-              <TableCell key={i} style={{ textAlign: 'right', textDecoration: 'underline dotted' }}>
+              <TableCell key={i} style={{ textDecoration: 'underline dotted' }} className='numberCell'>
                 <DiffHoursTooltip
                   targetHours={calculateTargetHours(w)}
                   workedHours={getWorkedHours(w)}
                 >
-                  <span>{formatHours(getWorkedHours(w))}</span>
+                  <b>{formatHours(getWorkedHours(w))}</b>
                 </DiffHoursTooltip>
               </TableCell>
             ))}
-            <TableCell style={{ textAlign: 'right', textDecoration: 'underline dotted' }}>
+            <TableCell style={{ textDecoration: 'underline dotted' }} className='numberCell'>
               <DiffHoursTooltip
                 targetHours={calculateTargetHours(showing)}
                 workedHours={showingTotal}
               >
-                <span>{formatHours(showingTotal)}</span>
+                <b>{formatHours(showingTotal)}</b>
               </DiffHoursTooltip>
             </TableCell>
           </TableRow>
-        </TableFooter>
+        </TableBody>
       </Table>
       <CardActions style={{ flexDirection: 'row-reverse' }}>
         <Button
@@ -520,21 +637,18 @@ export const PlatformView = observer((props: PlatformViewProps) => {
   )
 })
 
+/*
 function Row({
   platformType,
   tasksToShow,
   intervals,
-  platformTasksToShowPlatformExport,
 }: {
   key: string
   platformType: string
   tasksToShow: WorkEntry[]
   intervals: Interval[]
-  platformTasksToShowPlatformExport: Record<
-    PlatformType | 'Alle Platformen',
-    Record<string, WorkEntry[]>
-  >
 }) {
+  const theme = useTheme()
   const [open, setOpen] = React.useState(true)
   const platformExport =
     platformTasksToShowPlatformExport[platformType as PlatformType | 'Alle Platformen']
@@ -551,22 +665,26 @@ function Row({
   }
 
   const showingTotal = sum(tasksToShow.map((we) => we.hours))
+  const notAssignedTask = (platformType === 'UNDEFINED' ? { color: theme.palette.error.main } : {})
 
   return (
     <>
-      <TableRow>
+      <TableRow onClick={() => setOpen(!open)}>
         <TableCell>
-          <IconButton aria-label='expand row' size='small' onClick={() => setOpen(!open)}>
+          <IconButton aria-label='expand row' size='small'>
             {open ? <KeyboardArrowUpIcon /> : <KeyboardArrowDownIcon />}
           </IconButton>
         </TableCell>
-        <TableCell style={{ color: platformType === 'UNDEFINED' ? 'red' : 'black' }}>
-          {platformType}
+        <TableCell style={notAssignedTask}>
+          <b>{platformType}</b>
         </TableCell>
         {intervals.map((w, i) => (
           <TableCell
             key={i}
-            style={{ textAlign: 'right', color: platformType === 'UNDEFINED' ? 'red' : 'black' }}
+            style={{
+              textAlign: 'right',
+              ...notAssignedTask
+            }}
           >
             {formatHours(getWorkedHours(w))}
           </TableCell>
@@ -574,7 +692,7 @@ function Row({
         <TableCell
           style={{
             textAlign: 'right',
-            color: platformType === 'UNDEFINED' ? 'red' : 'black',
+            ...notAssignedTask
           }}
         >
           {formatHours(showingTotal)}
@@ -586,19 +704,13 @@ function Row({
           {tasksToShow.map((taskToShow) => (
             <TableRow
               key={taskToShow.taskIntId}
-              className={
-                taskToShow.platformType === 'REPLICON'
-                  ? 'replicon-task-basic'
-                  : taskToShow.platformType === 'OTT'
-                  ? 'ott-task-basic'
-                  : 'white'
-              }
+              className='white'
             >
               {platformType === 'Alle Platformen' && (
                 <TableCell>{taskToShow.platformType}</TableCell>
               )}
               {platformType !== 'Alle Platformen' && <TableCell />}
-              <TableCell style={{ color: platformType === 'UNDEFINED' ? 'red' : 'black' }}>
+              <TableCell style={notAssignedTask}>
                 {taskToShow.projectName} / {taskToShow.taskName} / {taskToShow.taskCode}
               </TableCell>
               {intervals.map((w) => {
@@ -611,17 +723,17 @@ function Row({
                     key={taskToShow.taskIntId + '-' + isoDayStr(w.start)}
                     title={workEntries.map((we) => we.comment).join('\n')}
                     style={{
-                      color: platformType === 'UNDEFINED' ? 'red' : 'black',
                       textAlign: 'right',
                       cursor: workEntries.some((we) => we.comment) ? 'help' : 'default',
+                      ...notAssignedTask
                     }}
                     className='numberCell'
                   >
                     {workEntries.some((we) => we.comment) && (
                       <span
                         style={{
-                          color: platformType === 'UNDEFINED' ? 'red' : 'black',
                           fontSize: 'xx-small',
+                          ...notAssignedTask
                         }}
                       >
                         m/K{' '}
@@ -634,7 +746,7 @@ function Row({
               <TableCell
                 style={{
                   textAlign: 'right',
-                  color: platformType === 'UNDEFINED' ? 'red' : 'black',
+                  ...notAssignedTask
                 }}
               >
                 {formatHours(
@@ -651,4 +763,4 @@ function Row({
       )}
     </>
   )
-}
+}*/

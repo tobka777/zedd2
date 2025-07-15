@@ -1,6 +1,6 @@
 import { observer } from 'mobx-react-lite'
 import * as React from 'react'
-import { Autocomplete, TextField } from '@mui/material'
+import { Autocomplete, TextField, Chip } from '@mui/material'
 import { StandardTextFieldProps } from '@mui/material/TextField'
 import { PlatformState } from '../PlatformState'
 import { Task } from 'zedd-platform'
@@ -61,10 +61,16 @@ export const PlatformTaskSelect = observer(
               option.typ === 'REPLICON' ? 'replicon-task' : 'ott-task'
             }`}
           >
-            <div style={{ width: '25%' }}>{option.projectName}</div>
-            <div style={{ width: '25%' }}>{option.name}</div>
+            {option.projectName === option.name ? (
+              <div style={{ width: '50%' }}>{option.projectName}</div>
+            ): (
+              <>
+                <div style={{ width: '25%' }}>{option.projectName}</div>
+                <div style={{ width: '25%' }}>{option.name}</div>
+              </>
+            )}
             <div style={{ width: '25%' }}>{option.taskCode}</div>
-            <div style={{ width: '25%' }}>{option.typ}</div>
+            <div style={{ width: '25%' }}><Chip label={option.typ} color={option.typ === 'REPLICON' ? 'primary' : 'secondary'} size="small" /></div>
           </li>
         )}
         getOptionLabel={(x: Task) => (x ? x.projectName + ' / ' + x.name : '')}
