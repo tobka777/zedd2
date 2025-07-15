@@ -133,6 +133,7 @@ async function setup() {
     platformState.ottLink = config.ottLink
     platformState.repliconLink = config.repliconLink
     platformState.chromeHeadless = config.chromeHeadless
+    platformState.setIntegrationMap()
   })
 
   // await sleep(5000);

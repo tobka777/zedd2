@@ -3,9 +3,9 @@ import { promises as fsp } from 'fs'
 import { computed, makeObservable, observable } from 'mobx'
 import * as path from 'path'
 import {
+  OTTIntegration,
   PlatformExportFormat,
   PlatformIntegration,
-  PlatformIntegrationFactory,
   PlatformType,
   Task,
   TaskActivity,
@@ -13,6 +13,9 @@ import {
 } from 'zedd-platform'
 import './index.css'
 import { FILE_DATE_FORMAT, getLatestFileInDir, mkdirIfNotExists } from './util'
+import { RepliconIntegration } from 'zedd-platform/out/src/replicon-integration'
+import { PlatformOptions } from 'zedd-platform/out/src/model/platform.options.model'
+import { WorkEntry } from 'zedd-platform/out/src/model/work-entry.model'
 
 export enum PlatformActionType {
   SubmitTimesheet,
@@ -63,6 +66,8 @@ export class PlatformState {
 
   @observable
   private _tasksLastUpdated: Date | undefined
+
+  private integrationMap: Record<string, PlatformIntegration>
 
   public constructor(public platformDir: string) {
     makeObservable(this)
@@ -123,6 +128,17 @@ export class PlatformState {
     await mkdirIfNotExists(this.platformDir)
   }
 
+  public async setIntegrationMap(): Promise<void> {
+    const options: PlatformOptions = {
+      headless: this.chromeHeadless,
+      executablePath: this.chromeExe,
+    }
+    this.integrationMap = {
+      REPLICON: new RepliconIntegration(this.repliconLink, options),
+      OTT: new OTTIntegration(this.ottLink, options),
+    }
+  }
+
   public async export(
     platform: 'ALL' | PlatformType,
     platformExport: PlatformExportFormat,
@@ -132,17 +148,15 @@ export class PlatformState {
     console.log('exporting timesheets', platformExport)
     try {
       this.clearPlatformState(false)
-      this.platformIntegration = await new PlatformIntegrationFactory().create(
-        platform,
-        this.ottLink,
-        this.repliconLink,
-        {
-          headless: this.chromeHeadless,
-          executablePath: this.chromeExe,
-        },
-      )
+      if (platform === 'ALL') {
+        for (const [key] of Object.entries(this.integrationMap)) {
+          await this.export(key as PlatformType, platformExport, submitTimesheets)
+        }
+      } else {
+        this.platformIntegration = this.integrationMap[platform]
 
-      await this.platformIntegration.exportTasks(platformExport, submitTimesheets)
+        await this.platformIntegration.exportTasks(platformExport, submitTimesheets)
+      }
 
       this.success = true
     } catch (ex) {
@@ -153,37 +167,74 @@ export class PlatformState {
   }
 
   public async importAndSavePlatformTasks(
-    platformIntegration: PlatformIntegration,
     toImport: 'ALL' | PlatformType,
     infoNotify?: (info: string) => void,
+    notSave?: boolean,
   ): Promise<Task[]> {
     try {
-      this.platformIntegration = platformIntegration
-      this._tasks = await this.importPlatformTasks(platformIntegration, (tasks) => {
-        infoNotify && infoNotify('Imported ' + tasks.length + ' tasks from ' + toImport + '.')
-        this._taskActivities = platformIntegration.getActivityOptions()
+      if (toImport === 'ALL') {
+        const results: Task[] = []
+        for (const [key] of Object.entries(this.integrationMap)) {
+          const tasks = await this.importAndSavePlatformTasks(key as PlatformType, infoNotify, true)
+          results.push(...tasks)
+        }
 
-        this._tasks = [...tasks]
-      })
-      await this.savePlatformObjectsToFile(this._tasks, 'tasks')
-      await this.savePlatformObjectsToFile(this._tasks, 'activities')
-    } catch (ex) {
-      await platformIntegration.quitBrowser()
+        const existingExternalIds = new Set(this._tasks.map((task) => task.projectIntId))
+        const uniqueTasks = results
+          .flat()
+          .filter((task) => !existingExternalIds.has(task.projectIntId))
+        this._tasks.push(...uniqueTasks)
+        infoNotify &&
+          infoNotify('Imported ' + existingExternalIds.size + ' tasks from ' + toImport + '.')
+      } else {
+        this.platformIntegration = this.integrationMap[toImport]
+
+        this._tasks = await this.importPlatformTasks(this.platformIntegration, (tasks) => {
+          infoNotify && infoNotify('Imported ' + tasks.length + ' tasks from ' + toImport + '.')
+
+          this._tasks = [...tasks]
+        })
+      }
+
+      if (!notSave) {
+        await this.savePlatformTasksToFile(this._tasks)
+      }
+    } catch (error) {
+      this.platformIntegration?.quitBrowser()
     }
     return this._tasks
   }
 
-  public async loadStateFromFile(): Promise<void> {
-    ;[this._tasksLastUpdated, this._tasks] = (await this.loadPlatformTasksFromFile(
-      'tasks',
-      /^tasks_(.*)\.json$/,
-    )) as [Date, Task[]]
-    if (this._tasks.length > 0) {
-      this._taskActivities = (await this.loadPlatformTasksFromFile(
-        'activities',
-        /^activities_(.*)\.json$/,
-      )) as TaskActivity[]
+  public async importRepliconTaskActivities(
+    platformTaskIntId: string | number | undefined,
+    infoNotify?: (info: string) => void,
+  ) {
+    const task: Task = (platformTaskIntId && this.resolveTask(platformTaskIntId as number)) as Task
+
+    if (!task) {
+      throw new Error('No task found')
     }
+
+    const workEntry: WorkEntry = {
+      taskIntId: task.intId,
+      projectName: task.projectName,
+      taskCode: task.taskCode,
+      taskName: task.name,
+      hours: 0,
+      platformType: 'REPLICON',
+    }
+    const repliconIntegration = this.integrationMap['REPLICON'] as RepliconIntegration
+    task.taskActivities = await repliconIntegration.importTaskActivities(
+      workEntry,
+      (taskActivities) => {
+        infoNotify &&
+          infoNotify('Imported ' + taskActivities.length + ' task activities from REPLICON.')
+      },
+    )
+  }
+
+  public async loadStateFromFile(): Promise<void> {
+    ;[this._tasksLastUpdated, this._tasks] = await this.loadPlatformTasksFromFile()
   }
 
   public resolveTask(intId: number | undefined): undefined | Task {
@@ -232,33 +283,24 @@ export class PlatformState {
     }
   }
 
-  private async savePlatformObjectsToFile(objects: Task[] | TaskActivity[], subPackage: string) {
-    const objectsPlatformDir = path.join(this.platformDir, subPackage)
-    const json = JSON.stringify(objects, undefined, '  ')
-    const newFile = subPackage + '_' + formatDate(new Date(), FILE_DATE_FORMAT) + '.json'
-    await fsp.writeFile(path.join(objectsPlatformDir, newFile), json)
-    const filesToDelete = (await fsp.readdir(objectsPlatformDir, { withFileTypes: true })).filter(
+  private async savePlatformTasksToFile(tasks: Task[]) {
+    const json = JSON.stringify(tasks, undefined, '  ')
+    const newFile = 'tasks_' + formatDate(new Date(), FILE_DATE_FORMAT) + '.json'
+    await fsp.writeFile(path.join(this.platformDir, newFile), json)
+    const filesToDelete = (await fsp.readdir(this.platformDir, { withFileTypes: true })).filter(
       (f) => f.isFile() && f.name !== newFile,
     )
-    await Promise.all(filesToDelete.map((f) => fsp.unlink(path.join(objectsPlatformDir, f.name))))
+    await Promise.all(filesToDelete.map((f) => fsp.unlink(path.join(this.platformDir, f.name))))
   }
 
-  private async loadPlatformTasksFromFile(
-    subPackage: string,
-    pattern: RegExp,
-  ): Promise<TaskActivity[] | [Date, Task[]]> {
-    const objectsPlatformDir = path.join(this.platformDir, subPackage)
-    const [file, date] = await getLatestFileInDir(objectsPlatformDir, pattern)
-    const content = await fsp.readFile(path.join(objectsPlatformDir, file), {
+  private async loadPlatformTasksFromFile(): Promise<[Date, Task[]]> {
+    const [file, date] = await getLatestFileInDir(this.platformDir, /^tasks_(.*)\.json$/)
+    const content = await fsp.readFile(path.join(this.platformDir, file), {
       encoding: 'utf8',
     })
-
-    if (subPackage === 'tasks') {
-      const tasks: Task[] = JSON.parse(content, (key, value) =>
-        'end' === key || 'start' === key ? parseISO(value) : value,
-      )
-      return [date, tasks]
-    }
-    return JSON.parse(content)
+    const tasks: Task[] = JSON.parse(content, (key, value) =>
+      'end' === key || 'start' === key ? parseISO(value) : value,
+    )
+    return [date, tasks]
   }
 }

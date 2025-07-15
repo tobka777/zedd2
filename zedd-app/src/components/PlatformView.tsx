@@ -327,8 +327,12 @@ export const PlatformView = observer((props: PlatformViewProps) => {
   const classes = useClasses(styles)
 
   const showingTotal = sum(tasksToShow.map((we) => we.hours))
+  /*const showingTotal = sum(
+    Object.values(platformExport)
+      .flat()
+      .map((we) => we.hours),
+  )*/
 
-  
   console.log("tasksToShow", tasksToShow)
 
   /*const projectTasksView = new Map<string, {data?: Task, tasks: WorkEntry[]}>();
@@ -351,7 +355,7 @@ export const PlatformView = observer((props: PlatformViewProps) => {
 
   console.log("HASLOS", intervals)
 
-  
+
   for(let w of intervals) {
     const workEntries = eachDayOfInterval(w)
       .flatMap((d) => platformExport[isoDayStr(d)] ?? [])
@@ -388,7 +392,7 @@ export const PlatformView = observer((props: PlatformViewProps) => {
       }
 /*
       if (!projectTasksView.has(projectKey)) {
-        
+
         projectTasksView.set(projectKey, {[isoDayStr(w.start)]: })
       }
       let projectTask = projectTasksView.get(projectKey)
@@ -501,7 +505,9 @@ export const PlatformView = observer((props: PlatformViewProps) => {
 
         const taskInGivenPeriod = platformExport?.[isoDate] ?? []
 
-        dayTasks[isoDate] = platformTasks.filter((task) => taskInGivenPeriod.includes(task))
+        dayTasks[isoDate] = taskInGivenPeriod.filter((task) =>
+          platformTasks.some((t) => t.taskIntId === task.taskIntId),
+        )
       }
     }
 
@@ -664,7 +670,11 @@ function Row({
     )
   }
 
-  const showingTotal = sum(tasksToShow.map((we) => we.hours))
+  const showingTotal = sum(
+    Object.values(platformExport)
+      .flat()
+      .map((we) => we.hours),
+  )
   const notAssignedTask = (platformType === 'UNDEFINED' ? { color: theme.palette.error.main } : {})
 
   return (
@@ -751,7 +761,8 @@ function Row({
               >
                 {formatHours(
                   sum(
-                    tasksToShow
+                    Object.values(platformExport)
+                      .flat()
                       .filter((we) => we.taskIntId === taskToShow.taskIntId)
                       .map((we) => we.hours),
                   ),

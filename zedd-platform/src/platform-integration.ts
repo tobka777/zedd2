@@ -2,20 +2,23 @@ import { PlatformExportFormat, Task } from './model'
 import { PlatformOptions } from './model/platform.options.model'
 import { checkPlatformUrl } from './utils'
 import puppeteer, { Browser, ElementHandle, Page } from 'puppeteer'
-import { TaskActivity } from './model/task-activity.model'
 
 export abstract class PlatformIntegration {
   protected browser!: Browser
   protected page!: Page
-  protected taskActivities: TaskActivity[] = []
+  protected platformLink: string
+  protected options: PlatformOptions
 
-  protected constructor() {}
+  protected constructor(platformLink: string, options: PlatformOptions) {
+    this.platformLink = platformLink
+    this.options = options
+  }
 
-  async init(platformLink: string, options: PlatformOptions) {
-    checkPlatformUrl(platformLink)
+  async init() {
+    checkPlatformUrl(this.platformLink)
     this.browser = await puppeteer.launch({
-      headless: options.headless,
-      executablePath: options.executablePath,
+      headless: this.options.headless,
+      executablePath: this.options.executablePath,
       args: [`--window-size=${window.screen.availWidth},${window.screen.availHeight}`],
       defaultViewport: {
         width: Math.round(window.screen.availWidth),
@@ -30,7 +33,7 @@ export abstract class PlatformIntegration {
     this.page = await this.browser.newPage()
     this.page.setDefaultTimeout(100_000)
 
-    await this.page.goto(platformLink)
+    await this.page.goto(this.platformLink)
   }
 
   abstract importTasks(notifyTasks?: (p: Task[]) => void): Promise<Task[]>
@@ -49,9 +52,5 @@ export abstract class PlatformIntegration {
     }
 
     return null
-  }
-
-  public getActivityOptions() {
-    return this.taskActivities
   }
 }

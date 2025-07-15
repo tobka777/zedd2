@@ -9,17 +9,12 @@ import { What } from './model/what.model'
 import { WorkEntry } from './model/work-entry.model'
 
 export class OTTIntegration extends PlatformIntegration {
-  private constructor() {
-    super()
-  }
-
-  static async create(platformLink: string, options: PlatformOptions): Promise<OTTIntegration> {
-    const instance = new OTTIntegration()
-    await instance.init(platformLink, options)
-    return instance
+  public constructor(platformLink: string, options: PlatformOptions) {
+    super(platformLink, options)
   }
 
   async importTasks(notifyTasks?: (p: Task[]) => void): Promise<Task[]> {
+    await this.init()
     await this.page.waitForSelector('[role="table"]')
 
     await this.page.setRequestInterception(true)
@@ -61,6 +56,7 @@ export class OTTIntegration extends PlatformIntegration {
   }
 
   async exportTasks(whatt: PlatformExportFormat, submitTimesheets: boolean): Promise<void> {
+    await this.init()
     let what: What[] = Object.keys(whatt).map((dateString: string) => ({
       day: parseISO(dateString),
       work: whatt[dateString],
