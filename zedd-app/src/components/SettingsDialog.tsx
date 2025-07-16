@@ -36,7 +36,6 @@ import { countries, federalStates } from '../holidays'
 export const SettingsDialog = observer(
   ({
     done,
-    // @ts-expect-error TS6133
     platformState,
     settings,
     checkCgJira,
@@ -263,6 +262,32 @@ export const SettingsDialog = observer(
                   settings.repliconLink = e.target.value.trim()
                 }}
               />
+            </Grid>
+
+            <Grid item xs={4}>
+              <FormLabel>Default Replicon Activity</FormLabel>
+            </Grid>
+            <Grid item xs={8}>
+              <Autocomplete
+                options={platformState.taskActivities}
+                value={settings.repliconActivity}
+                isOptionEqualToValue={(option, value) => option.name === value.name}
+                onChange={(_, newState) => {
+                  settings.repliconActivity = newState
+                }}
+                renderOption={(props, option) => (
+                  <li {...props}>{option.displayText}</li>
+                )}
+                renderInput={(params) => (
+                  <TextField
+                    {...params}
+                    label='Choose activity for Replicon'
+                    inputProps={{
+                      ...params.inputProps,
+                    }}
+                  />
+                )}
+              ></Autocomplete>
             </Grid>
 
             <Grid item xs={4}>

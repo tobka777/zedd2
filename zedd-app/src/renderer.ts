@@ -132,6 +132,7 @@ async function setup() {
   autorun(() => {
     platformState.ottLink = config.ottLink
     platformState.repliconLink = config.repliconLink
+    platformState.repliconActivity = config.repliconActivity
     platformState.chromeHeadless = config.chromeHeadless
     platformState.setIntegrationMap()
   })

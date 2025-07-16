@@ -60,6 +60,13 @@ export class ZeddSettings {
   public repliconLink = ''
 
   /**
+   * Default Activity for Replicon. Used for OTT to Replicon Mapping.
+   */
+  @observable
+  @serializable(raw())
+  public repliconActivity = ''
+
+  /**
    * Open Chrome / Selenium in headless mode (background)
    */
   @observable

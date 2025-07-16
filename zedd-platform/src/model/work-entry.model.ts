@@ -7,4 +7,5 @@ export interface WorkEntry {
   platformType: string
   comment?: string
   taskActivity?: string
+  child?: WorkEntry[]
 }

@@ -27,6 +27,8 @@ export class PlatformState {
 
   public repliconLink: string
 
+  public repliconActivity: string
+
   public chromeExe: string
 
   public chromedriverExe: string
@@ -83,6 +85,10 @@ export class PlatformState {
 
   get tasks(): Task[] {
     return this._tasks
+  }
+
+  get taskActivities(): TaskActivity[] {
+    return this._taskActivities
   }
 
   @computed

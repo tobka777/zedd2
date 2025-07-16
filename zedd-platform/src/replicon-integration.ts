@@ -303,8 +303,8 @@ export class RepliconIntegration extends PlatformIntegration {
       for (let j = 0; j < taskJsonResponse.results.length; j++) {
         let task: Task = {
           name: project.name,
-          intId: project.code,
-          projectIntId: taskJsonResponse.results[j].task.uri.split(':task:')[1],
+          intId: taskJsonResponse.results[j].task.uri.split(':task:')[1],
+          projectIntId: project.code,
           projectName: project.name,
           start: undefined,
           end: undefined,

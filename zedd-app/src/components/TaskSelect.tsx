@@ -8,7 +8,7 @@ import { useClasses, useDebouncedCallback } from '../util'
 
 export type TaskSelectProps = {
   tasks: Task[]
-
+  
   getTasksForSearchString: (search: string) => Promise<Task[]>
   onChange: (event: React.ChangeEvent<object>, value: Task | string | undefined) => void
   value: Task
@@ -17,49 +17,6 @@ export type TaskSelectProps = {
   hoverMode?: boolean
   getHoursForTask: (t: Task) => string
 } & Omit<TextFieldProps, 'value' | 'onChange' | 'variant'>
-
-/*
-type CancellablePromise<T> = Promise<T> & { cancelled: boolean; cancel(): void }
-
-function cancellable<T>(p: Promise<T>): CancellablePromise<T> {
-  return {
-    p,
-    cancelled: false,
-    then(onfulfilled) {
-      return cancellable(p.then((x) => !this.cancelled && onfulfilled && onfulfilled(x)))
-    },
-    finally(onfinally) {
-      return cancellable(p.finally(() => !this.cancelled && onfinally && onfinally()))
-    },
-    catch(onrejected) {
-      return cancellable(p.catch((x) => !this.cancelled && onrejected && onrejected(x)))
-    },
-    cancel() {
-      this.cancelled = true
-    },
-    get [Symbol.toStringTag]() {
-      return p[Symbol.toStringTag]
-    },
-  } as CancellablePromise<T>
-  // let cancel: () => void
-  // const result: CancellablePromise<T> = new Promise((resolve, reject) => {
-  //   let cancelled = false
-  //   p.then(x => !cancelled && resolve(x)).catch(x => !cancelled && reject(x))
-  //   cancel = () => (cancelled = true)
-  // }) as any
-  // result.cancel = cancel!
-  // return result
-}
-
-function cancellingPrevious<T, F extends (...args: any[]) => Promise<T>>(
-  x: F,
-): (...args: Parameters<F>) => CancellablePromise<T> {
-  let lastPromise: CancellablePromise<any> | undefined = undefined
-  return ((...args: any[]) => {
-    lastPromise && lastPromise.cancel()
-    return (lastPromise = cancellable(x(...args)))
-  }) as any
-}*/
 
 const styles = (theme: any) => ({
   renderOptionBT: {
