@@ -426,7 +426,7 @@ export class RepliconIntegration extends PlatformIntegration {
     work: WorkEntry,
   ) {
     if (!row) {
-      await taskSearchButton!.type(String(work.taskIntId))
+      await taskSearchButton!.type(String(work.projectIntId))
       await taskSearchButton!.click()
       await this.chooseTaskFromOptions(
         work.projectName + ' - ',
@@ -455,7 +455,7 @@ export class RepliconIntegration extends PlatformIntegration {
           return tbody && tbody.innerHTML.includes(projectIntId)
         },
         { timeout: 5000 },
-        String(work.taskIntId),
+        String(work.projectIntId),
       )
       row = await this.getRowTaskFromTable(work)
     }

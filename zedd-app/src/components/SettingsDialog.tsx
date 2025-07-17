@@ -269,14 +269,14 @@ export const SettingsDialog = observer(
             </Grid>
             <Grid item xs={8}>
               <Autocomplete
-                options={platformState.taskActivities}
+                options={platformState.taskActivities.map(a => a.name)}
                 value={settings.repliconActivity}
-                isOptionEqualToValue={(option, value) => option.name === value.name}
+                isOptionEqualToValue={(option, value) => option === value}
                 onChange={(_, newState) => {
-                  settings.repliconActivity = newState
+                  settings.repliconActivity = newState || ''
                 }}
                 renderOption={(props, option) => (
-                  <li {...props}>{option.displayText}</li>
+                  <li {...props}>{option}</li>
                 )}
                 renderInput={(params) => (
                   <TextField

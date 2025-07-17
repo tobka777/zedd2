@@ -122,8 +122,9 @@ const styles = (theme: any) => ({
 const formatHours = (h: number) =>
   h ? h.toLocaleString('de-DE', { minimumFractionDigits: 2 }) : '-'
 
-const placeholderPlatformTask = {
+const placeholderPlatformTask: Task = {
   projectName: 'UNDEFINED',
+  projectIntId: -1,
   intId: -1,
   name: 'UNDEFINED',
   taskCode: 'UNDEFINED',
@@ -176,6 +177,7 @@ function transform({ slices, showing, platformState }: PlatformViewProps): Platf
         dayHours = {
           hours: 0,
           projectName: task.projectName,
+          projectIntId: task.projectIntId,
           taskIntId: task.intId,
           taskName: task.name,
           platformType: task.typ,
@@ -210,6 +212,7 @@ function transform({ slices, showing, platformState }: PlatformViewProps): Platf
       (workEntries) => ({
         hours: sum(workEntries.map((we) => we.hours)),
         projectName: workEntries[0].projectName,
+        projectIntId: workEntries[0].projectIntId,
         taskIntId: workEntries[0].taskIntId,
         taskName: workEntries[0].taskName,
         platformType: workEntries[0].platformType,
@@ -346,6 +349,7 @@ export const PlatformView = observer((props: PlatformViewProps) => {
         let groupTask: WorkEntry = {
           hours: 0,
           projectName: projectData.projectName,
+          projectIntId: projectData.projectIntId,
           taskIntId: projectData.intId,
           taskName: projectData.name,
           platformType: projectData.typ,
@@ -564,7 +568,11 @@ function ProjectRow({
           }
         </TableCell>
         <TableCell style={taskColor}>
-          <b>{projectTask.projectName}{projectTask.taskName != projectTask.projectName ?  " / " + projectTask.taskName : ""} ({projectTask.taskCode})</b>
+          <b>
+            {projectTask.projectName}{projectTask.taskName != projectTask.projectName ?  " / " + projectTask.taskName : ""} 
+            <small>
+              ({projectTask.taskCode}/<span style={!projectTask.taskActivity ? { color: theme.palette.error.main } : {}}>{projectTask.taskActivity || 'UNDEFINED'}</span>)</small>
+          </b>
         </TableCell>
         {intervals.map((w, i) => (
           <TableCell
@@ -595,7 +603,7 @@ function ProjectRow({
             >
               <TableCell />
               <TableCell>
-                {task.projectName} / {task.taskName} ({task.taskCode})
+                {task.projectName} / {task.taskName} <small>({task.taskCode})</small>
               </TableCell>
               {intervals.map((w) => {
                 const workEntries = getWorkEntries(w, task)

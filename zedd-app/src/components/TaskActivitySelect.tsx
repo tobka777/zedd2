@@ -30,7 +30,8 @@ export const TaskActivitySelect = observer(
     return (
       <Autocomplete
         renderInput={(params) => <TextField {...params} {...textFieldProps} />}
-        options={platformTask?.taskActivities ?? []}
+        //options={platformTask?.taskActivities ?? []}
+        options={platformState.taskActivities ?? []}
         disabled={disabled}
         style={style}
         filterOptions={(options: TaskActivity[], state) => {

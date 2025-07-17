@@ -1,1 +1,1 @@
-export type PlatformType = 'CLARITY' | 'OTT' | 'REPLICON'
+export type PlatformType = 'CLARITY' | 'OTT' | 'REPLICON' | 'UNDEFINED'

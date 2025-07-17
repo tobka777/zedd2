@@ -548,11 +548,12 @@ async function exportToClarity(
             .work.push({
               taskIntId: rowInfo.taskIntId,
               taskName: rowInfo.taskName,
+              projectIntId: rowInfo.taskIntId,
               projectName: rowInfo.projectName,
               hours,
               comment: dayComment && dayComment.substring(4),
               taskCode: '',
-              platformType: 'REPLICON',
+              platformType: 'CLARITY',
             })
       }
     }

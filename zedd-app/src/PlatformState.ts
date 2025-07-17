@@ -116,9 +116,7 @@ export class PlatformState {
   public allRepliconTasksHaveActivity(platformExport: PlatformExportFormat): boolean {
     return (
       Object.values(platformExport)
-        .flat()
-        .filter((workEntry) => workEntry.platformType === 'REPLICON')
-        .find(
+        .flat().find(
           (workEntry) =>
             workEntry.platformType === 'REPLICON' &&
             (!workEntry.taskActivity || (workEntry.taskActivity && workEntry.taskActivity === '')),
@@ -224,23 +222,27 @@ export class PlatformState {
     const workEntry: WorkEntry = {
       taskIntId: task.intId,
       projectName: task.projectName,
+      projectIntId: task.projectIntId,
       taskCode: task.taskCode,
       taskName: task.name,
       hours: 0,
       platformType: 'REPLICON',
     }
     const repliconIntegration = this.integrationMap['REPLICON'] as RepliconIntegration
-    task.taskActivities = await repliconIntegration.importTaskActivities(
+    // TODO save taskActivities to each Task (task.taskActivities)
+    this._taskActivities = await repliconIntegration.importTaskActivities(
       workEntry,
       (taskActivities) => {
         infoNotify &&
           infoNotify('Imported ' + taskActivities.length + ' task activities from REPLICON.')
       },
     )
+    this.saveTaskActivitiesToFile(this._taskActivities)
   }
 
   public async loadStateFromFile(): Promise<void> {
     ;[this._tasksLastUpdated, this._tasks] = await this.loadPlatformTasksFromFile()
+    ;[, this._taskActivities] = await this.loadTaskActivitiesFromFile()
   }
 
   public resolveTask(intId: number | undefined): undefined | Task {
@@ -289,24 +291,43 @@ export class PlatformState {
     }
   }
 
+  private async saveTaskActivitiesToFile(tasks: TaskActivity[]) {
+    const json = JSON.stringify(tasks, undefined, '  ')
+    this.saveToFile(json, "activities")
+  }
+
+  private async loadTaskActivitiesFromFile(): Promise<[Date, TaskActivity[]]> {
+    const [date, content] = await this.loadFromFile("activities")
+    return [date, JSON.parse(content)]
+  }
+
   private async savePlatformTasksToFile(tasks: Task[]) {
     const json = JSON.stringify(tasks, undefined, '  ')
-    const newFile = 'tasks_' + formatDate(new Date(), FILE_DATE_FORMAT) + '.json'
-    await fsp.writeFile(path.join(this.platformDir, newFile), json)
-    const filesToDelete = (await fsp.readdir(this.platformDir, { withFileTypes: true })).filter(
-      (f) => f.isFile() && f.name !== newFile,
-    )
-    await Promise.all(filesToDelete.map((f) => fsp.unlink(path.join(this.platformDir, f.name))))
+    this.saveToFile(json, "tasks")
   }
 
   private async loadPlatformTasksFromFile(): Promise<[Date, Task[]]> {
-    const [file, date] = await getLatestFileInDir(this.platformDir, /^tasks_(.*)\.json$/)
-    const content = await fsp.readFile(path.join(this.platformDir, file), {
-      encoding: 'utf8',
-    })
+    const [date, content] = await this.loadFromFile("tasks")
     const tasks: Task[] = JSON.parse(content, (key, value) =>
       'end' === key || 'start' === key ? parseISO(value) : value,
     )
     return [date, tasks]
+  }
+
+  private async saveToFile(json: string, name: string) {
+    const newFile = name + '_' + formatDate(new Date(), FILE_DATE_FORMAT) + '.json'
+    await fsp.writeFile(path.join(this.platformDir, newFile), json)
+    const filesToDelete = (await fsp.readdir(this.platformDir, { withFileTypes: true })).filter(
+      (f) => f.isFile() && f.name !== newFile && f.name.includes(name + '_'),
+    )
+    await Promise.all(filesToDelete.map((f) => fsp.unlink(path.join(this.platformDir, f.name))))
+  }
+
+  private async loadFromFile(name: string): Promise<[Date, string]> {
+    const [file, date] = await getLatestFileInDir(this.platformDir, new RegExp(`^${name}_(.*)\.json$`))
+    const content = await fsp.readFile(path.join(this.platformDir, file), {
+      encoding: 'utf8',
+    })
+    return [date, content]
   }
 }
