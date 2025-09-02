@@ -158,14 +158,17 @@ export class PlatformState {
         }
       } else {
         this.platformIntegration = this.integrationMap[platform]
+        const exportTasksForPlatform = Object.fromEntries(
+          Object.entries(platformExport)
+            .map(([day, entries]) => [day, entries.filter(e => e.platformType === platform)])
+            .filter(([_, entries]) => entries.length > 0)
+        );
 
-        await this.platformIntegration.exportTasks(platformExport, submitTimesheets)
+        await this.platformIntegration.exportTasks(exportTasksForPlatform, submitTimesheets)
       }
-
       this.success = true
-    } catch (ex) {
-      await this.platformIntegration?.quitBrowser()
     } finally {
+      await this.platformIntegration?.quitBrowser()
       this._currentlyExportingTasks = false
     }
   }

@@ -7,6 +7,7 @@ import { enGB } from 'date-fns/locale'
 import partition from 'lodash/partition'
 import { What } from './model/what.model'
 import { WorkEntry } from './model/work-entry.model'
+import { clearInput } from './utils'
 
 export class OTTIntegration extends PlatformIntegration {
   public constructor(platformLink: string, options: PlatformOptions) {
@@ -65,6 +66,9 @@ export class OTTIntegration extends PlatformIntegration {
     await this.page.waitForSelector('[role="table"]')
 
     await this.checkOneWeek()
+
+    await this.clickAllEngagements()
+    
     await this.clickAllAssigned()
 
     while (what.length > 0) {
@@ -153,11 +157,11 @@ export class OTTIntegration extends PlatformIntegration {
 
   private async addNewTask(work: WorkEntry, startWeek: Date, taskDay: Date) {
     if (work.platformType === 'REPLICON') return
-    let addNewTaskInput = await this.page.waitForSelector("input[placeholder*='Add new task']")
+    let addNewTaskInput = await this.page.waitForSelector("input[placeholder*='Add task name']")
     await addNewTaskInput!.type(String(work.taskName))
 
     await this.clickElementWithContent(
-      "//li[contains(@role, 'option') and contains(text(), '" + work.taskName + "')]",
+      "//li[contains(@role, 'option')]/p[contains(text(), '" + work.taskName + "')]",
     )
 
     let [rowWithSearchedTaskNode] = await this.page.$x(
@@ -165,21 +169,12 @@ export class OTTIntegration extends PlatformIntegration {
     )
 
     const cellDayInRow = taskDay.getDate() - startWeek.getDate()
-
     const tdHandles = await rowWithSearchedTaskNode.$$('td.wlbc_bydate')
+    const colWithWeekday = tdHandles[cellDayInRow]
 
     await this.page.mouse.click(0, 0)
 
-    await tdHandles[cellDayInRow].click()
-    await tdHandles[cellDayInRow].type(String(work.hours))
-
-    await this.page.mouse.click(0, 0)
-
-    let [rowWithSearchedTaskNodeUpdated] = await this.page.$x(
-      "//tr[.//div[text()='" + work.taskName + "']]",
-    )
-
-    await this.commentTask(work.comment, taskDay, rowWithSearchedTaskNodeUpdated)
+    await this.addTimesAndCommentToTask(work, taskDay, colWithWeekday)
   }
 
   private async clickAllAssigned() {
@@ -202,6 +197,32 @@ export class OTTIntegration extends PlatformIntegration {
       const dropdownOptions = await this.page.waitForSelector('ul[role="listbox"]')
 
       const allAssigned = await dropdownOptions?.waitForSelector('li[data-value="All"]')
+      await allAssigned!.click()
+
+      await this.page.waitForSelector('[role="table"]')
+    }
+  }
+
+  private async clickAllEngagements() {
+    const [engagementElement] = await this.page.$x("//*[text() = 'Engagement']")
+
+    const engagementSelect = (await engagementElement.evaluateHandle((el) => {
+      let parent: Element | null = el as unknown as Element
+      while (parent) {
+        const buttonDiv = parent.querySelector('div[role="button"]')
+        if (buttonDiv) {
+          return buttonDiv
+        }
+        parent = parent.parentElement
+      }
+      return null
+    })) as ElementHandle<Element>
+
+    if (engagementSelect) {
+      await engagementSelect.click()
+      const dropdownOptions = await this.page.waitForSelector('ul[role="listbox"]')
+
+      const allAssigned = await dropdownOptions?.waitForSelector('li[title="All"]')
       await allAssigned!.click()
 
       await this.page.waitForSelector('[role="table"]')
@@ -280,34 +301,48 @@ export class OTTIntegration extends PlatformIntegration {
 
   private async checkFinilisedButton(timerange: string) {
     const finaliseBtnHandleNode = await this.page.waitForXPath(
-      "//button[.//span[contains(text(), 'Finalise')]]",
+      "//button[.//span[contains(text(), 'Finalize')]]",
     )
     const finaliseBtnHandle = finaliseBtnHandleNode as unknown as HTMLButtonElement
     const isDisabled = await this.page.evaluate((el) => el.disabled, finaliseBtnHandle)
     if (isDisabled) {
-      throw new Error('Finalise button is disabled in period ' + timerange)
+      throw new Error('Finalize button is disabled in period ' + timerange)
     }
   }
 
-  private async commentTask(
-    comment: string | undefined,
+  private async addTimesAndCommentToTask(
+    work: WorkEntry,
     day: Date,
-    rowWithSearchedTaskNode: ElementHandle<Node>,
+    colWithWeekday: ElementHandle<HTMLTableCellElement>,
   ) {
+    const dayNumber = String(day.getDate()).padStart(2, '0')
+    const weekday = day.toLocaleString('en-US', { weekday: 'short' })
+     
+    const dayInHeader = await this.clickElementWithContent(
+      `//th[@role='columnheader' and contains(@class, 'wlh_date') and .//div[text()='${dayNumber}'] and .//div[text()='${weekday}']]`,
+    )
+
+    await colWithWeekday?.click()
+    const inputWeekday = await colWithWeekday.$('input')
+    await clearInput(inputWeekday)
+    await inputWeekday?.type(String(work.hours))
+
+    await this.page.mouse.click(0, 0)
+
+    let [rowWithSearchedTaskNodeUpdated] = await this.page.$x(
+      "//tr[.//div[text()='" + work.taskName + "']]",
+    )
+
+    let comment = work.comment;
+
     if (comment) {
-      const dayNumber = String(day.getDate()).padStart(2, '0')
-      const weekday = day.toLocaleString('en-US', { weekday: 'short' })
-
-      const dayInHeader = await this.clickElementWithContent(
-        `//th[@role='columnheader' and contains(@class, 'wlh_date') and .//div[text()='${dayNumber}'] and .//div[text()='${weekday}']]`,
-      )
-
-      const commentTextBox = await rowWithSearchedTaskNode.waitForSelector(
+      const commentTextBox = await rowWithSearchedTaskNodeUpdated.waitForSelector(
         'textarea[placeholder="Comment"]',
       )
-      commentTextBox?.type(comment as string)
-      await dayInHeader?.click()
+      await clearInput(commentTextBox)
+      await commentTextBox?.type(comment as string)
     }
+    await dayInHeader?.click()
   }
 
   private async finaliseTimesheet(submitTimesheets: boolean) {
