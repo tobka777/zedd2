@@ -135,7 +135,7 @@
     "babel-plugin-import": "^1.13.3",
     "browser-request": "^0.3.3",
     "chroma.ts": "^1.0.10",
-    "convert-svg-to-png": "^0.6.4",
+    "convert-svg-to-png": "^0.7.1",
     "cross-env": "^7.0.3",
     "css-loader": "^6.6.0",
     "date-fns": "^2.28.0",
