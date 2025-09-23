@@ -55,6 +55,6 @@ export abstract class PlatformIntegration {
   }
 
   protected async sleep(seconds: number) {
-    await new Promise(f => setTimeout(f, seconds*1000));
+    await new Promise((f) => setTimeout(f, seconds * 1000))
   }
 }

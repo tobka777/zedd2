@@ -92,7 +92,7 @@ export class PlatformState {
   }
 
   @computed
-  get intIdTaskMap(): Map<number, Task> {
+  get intIdTaskMap(): Map<number | string, Task> {
     return this._tasks.reduce((map, task) => map.set(task.intId, task), new Map())
   }
 
@@ -116,7 +116,8 @@ export class PlatformState {
   public allRepliconTasksHaveActivity(platformExport: PlatformExportFormat): boolean {
     return (
       Object.values(platformExport)
-        .flat().find(
+        .flat()
+        .find(
           (workEntry) =>
             workEntry.platformType === 'REPLICON' &&
             (!workEntry.taskActivity || (workEntry.taskActivity && workEntry.taskActivity === '')),
@@ -160,9 +161,9 @@ export class PlatformState {
         this.platformIntegration = this.integrationMap[platform]
         const exportTasksForPlatform = Object.fromEntries(
           Object.entries(platformExport)
-            .map(([day, entries]) => [day, entries.filter(e => e.platformType === platform)])
-            .filter(([_, entries]) => entries.length > 0)
-        );
+            .map(([day, entries]) => [day, entries.filter((e) => e.platformType === platform)])
+            .filter(([_, entries]) => entries.length > 0),
+        )
 
         await this.platformIntegration.exportTasks(exportTasksForPlatform, submitTimesheets)
       }
@@ -188,7 +189,7 @@ export class PlatformState {
         const importedTasks = await this.importPlatformTasks(this.platformIntegration, (tasks) => {
           infoNotify && infoNotify('Imported ' + tasks.length + ' tasks from ' + toImport + '.')
         })
-        const otherTasks = this._tasks.filter(task => task.typ != toImport)
+        const otherTasks = this._tasks.filter((task) => task.typ !== toImport)
         this._tasks = [...otherTasks, ...importedTasks]
       }
 
@@ -236,7 +237,7 @@ export class PlatformState {
     ;[, this._taskActivities] = await this.loadTaskActivitiesFromFile()
   }
 
-  public resolveTask(intId: number | undefined): undefined | Task {
+  public resolveTask(intId: number | string | undefined): undefined | Task {
     return intId === undefined ? undefined : this.intIdTaskMap.get(intId)
   }
 
@@ -284,21 +285,21 @@ export class PlatformState {
 
   private async saveTaskActivitiesToFile(tasks: TaskActivity[]) {
     const json = JSON.stringify(tasks, undefined, '  ')
-    this.saveToFile(json, "activities")
+    this.saveToFile(json, 'activities')
   }
 
   private async loadTaskActivitiesFromFile(): Promise<[Date, TaskActivity[]]> {
-    const [date, content] = await this.loadFromFile("activities")
+    const [date, content] = await this.loadFromFile('activities')
     return [date, JSON.parse(content)]
   }
 
   private async savePlatformTasksToFile(tasks: Task[]) {
     const json = JSON.stringify(tasks, undefined, '  ')
-    this.saveToFile(json, "tasks")
+    this.saveToFile(json, 'tasks')
   }
 
   private async loadPlatformTasksFromFile(): Promise<[Date, Task[]]> {
-    const [date, content] = await this.loadFromFile("tasks")
+    const [date, content] = await this.loadFromFile('tasks')
     const tasks: Task[] = JSON.parse(content, (key, value) =>
       'end' === key || 'start' === key ? parseISO(value) : value,
     )
@@ -315,7 +316,10 @@ export class PlatformState {
   }
 
   private async loadFromFile(name: string): Promise<[Date, string]> {
-    const [file, date] = await getLatestFileInDir(this.platformDir, new RegExp(`^${name}_(.*)\.json$`))
+    const [file, date] = await getLatestFileInDir(
+      this.platformDir,
+      new RegExp(`^${name}_(.*).json$`),
+    )
     const content = await fsp.readFile(path.join(this.platformDir, file), {
       encoding: 'utf8',
     })

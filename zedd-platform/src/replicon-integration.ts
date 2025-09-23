@@ -1,12 +1,12 @@
-import {PlatformIntegration} from './platform-integration'
-import {PlatformOptions} from './model/platform.options.model'
-import {PlatformExportFormat, Task, TaskActivity} from './model'
-import {ElementHandle, HTTPRequest} from 'puppeteer'
-import {What} from './model/what.model'
-import {isWithinInterval, min as dateMin, parse, parseISO, isValid} from 'date-fns'
-import {enGB} from 'date-fns/locale'
+import { PlatformIntegration } from './platform-integration'
+import { PlatformOptions } from './model/platform.options.model'
+import { PlatformExportFormat, Task, TaskActivity } from './model'
+import { ElementHandle, HTTPRequest } from 'puppeteer'
+import { What } from './model/what.model'
+import { isWithinInterval, min as dateMin, parse, parseISO, isValid } from 'date-fns'
+import { enGB } from 'date-fns/locale'
 import partition from 'lodash/partition'
-import {WorkEntry} from './model/work-entry.model'
+import { WorkEntry } from './model/work-entry.model'
 
 export class RepliconIntegration extends PlatformIntegration {
   public constructor(platformLink: string, options: PlatformOptions) {
@@ -139,7 +139,11 @@ export class RepliconIntegration extends PlatformIntegration {
         .map((ds) => parse(ds.trim(), 'dd/MM/yyyy', new Date(), { locale: enGB }))
 
       if (!isValid(start) || !isValid(end)) {
-        throw new Error("Datum '" + timerange + "' entspricht nicht dem Format dd/MM/yyyy. Dies kann in den Settings von Replicon angepasst werden.")
+        throw new Error(
+          "Datum '" +
+            timerange +
+            "' entspricht nicht dem Format dd/MM/yyyy. Dies kann in den Settings von Replicon angepasst werden.",
+        )
       }
 
       const [relevant, others] = partition(what, (w) => isWithinInterval(w.day, { start, end }))

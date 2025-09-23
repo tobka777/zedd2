@@ -8,7 +8,7 @@ import { useClasses, useDebouncedCallback } from '../util'
 
 export type TaskSelectProps = {
   tasks: Task[]
-  
+
   getTasksForSearchString: (search: string) => Promise<Task[]>
   onChange: (event: React.ChangeEvent<object>, value: Task | string | undefined) => void
   value: Task

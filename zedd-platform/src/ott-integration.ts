@@ -77,7 +77,7 @@ export class OTTIntegration extends PlatformIntegration {
       await this.chooseDateFromCalendar(what)
 
       await this.deleteAllTasks()
-    
+
       await this.clickAllAssigned()
 
       const timerange = await this.page.evaluate(() => {
@@ -136,13 +136,15 @@ export class OTTIntegration extends PlatformIntegration {
   }
 
   private async deleteAllTasks() {
-    await this.clickAllAssigned("bookedInPeriod")
+    await this.clickAllAssigned('bookedInPeriod')
     const checkbox = await this.page.waitForSelector('th.wlh_checkbox input[type="checkbox"]')
     await checkbox?.click()
 
-    const deleteButton = await this.clickElementWithContent("//button[.//span[contains(text(), 'Delete')] and not(@disabled)]")
+    const deleteButton = await this.clickElementWithContent(
+      "//button[.//span[contains(text(), 'Delete')] and not(@disabled)]",
+    )
 
-    if(deleteButton) {
+    if (deleteButton) {
       const timeEntriesDialog = await this.page.waitForSelector('div[role="dialog"]')
 
       let reasonDialog = await timeEntriesDialog!.waitForSelector(
@@ -151,16 +153,16 @@ export class OTTIntegration extends PlatformIntegration {
       await reasonDialog?.type('Korrektur')
       await this.clickElementWithContent("//button[.//span[text()='Yes, Continue']]")
       await this.page.waitForSelector('div[role="dialog"]', { hidden: true })
-    }   
+    }
   }
 
   private async addNewTask(work: WorkEntry, startWeek: Date, taskDay: Date) {
     if (work.platformType === 'REPLICON') return
     let addNewTaskInput = await this.page.waitForSelector("input[placeholder*='Search task']")
     const [clearButton] = await this.page.$x(
-      "//input[contains(@placeholder, 'Search task')]/../div/button[contains(@title, 'Clear')]"
+      "//input[contains(@placeholder, 'Search task')]/../div/button[contains(@title, 'Clear')]",
     )
-    await (clearButton as ElementHandle<Element>)!.click();
+    await (clearButton as ElementHandle<Element>)!.click()
 
     await addNewTaskInput!.type(String(work.taskName))
 
@@ -168,8 +170,8 @@ export class OTTIntegration extends PlatformIntegration {
       "//tr[.//div[text()='" + work.taskName + "']]",
     )
 
-    if(!rowWithSearchedTaskNode) {
-      throw new Error("Task " + work.taskName + " konnte nicht gefunden werden.")
+    if (!rowWithSearchedTaskNode) {
+      throw new Error('Task ' + work.taskName + ' konnte nicht gefunden werden.')
       return
     }
 
@@ -182,9 +184,11 @@ export class OTTIntegration extends PlatformIntegration {
     await this.addTimesAndCommentToTask(work, taskDay, colWithWeekday)
   }
 
-  private async clickAllAssigned(value:string = 'All') {
-    await this.sleep(2);
-    const [issueFilterElement] = await this.page.$x("//*[contains(text(), 'Issue Filter')]/../../div/div[@role='button']") as [ElementHandle<Element>]
+  private async clickAllAssigned(value: string = 'All') {
+    await this.sleep(2)
+    const [issueFilterElement] = (await this.page.$x(
+      "//*[contains(text(), 'Issue Filter')]/../../div/div[@role='button']",
+    )) as [ElementHandle<Element>]
 
     if (issueFilterElement) {
       await issueFilterElement.click()
@@ -311,7 +315,7 @@ export class OTTIntegration extends PlatformIntegration {
   ) {
     const dayNumber = String(day.getDate()).padStart(2, '0')
     const weekday = day.toLocaleString('en-US', { weekday: 'short' })
-     
+
     const dayInHeader = await this.clickElementWithContent(
       `//th[@role='columnheader' and contains(@class, 'wlh_date') and .//div[text()='${dayNumber}'] and .//div[text()='${weekday}']]`,
     )
@@ -327,7 +331,7 @@ export class OTTIntegration extends PlatformIntegration {
       "//tr[.//div[text()='" + work.taskName + "']]",
     )
 
-    let comment = work.comment;
+    let comment = work.comment
 
     if (comment) {
       const commentTextBox = await rowWithSearchedTaskNodeUpdated.waitForSelector(

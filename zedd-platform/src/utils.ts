@@ -13,6 +13,6 @@ export function checkPlatformUrl(urlToCheck: any) {
 }
 
 export async function clearInput(input: ElementHandle<any> | null) {
-    await input?.click({clickCount: 3});
-    await input?.press('Backspace');
+  await input?.click({ clickCount: 3 })
+  await input?.press('Backspace')
 }

@@ -1,4 +1,4 @@
-import { PlatformType } from "./platform-type.model"
+import { PlatformType } from './platform-type.model'
 
 export interface WorkEntry {
   projectName: string

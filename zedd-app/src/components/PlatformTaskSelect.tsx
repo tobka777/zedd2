@@ -63,17 +63,29 @@ export const PlatformTaskSelect = observer(
           >
             {option.projectName === option.name ? (
               <div style={{ width: '50%' }}>{option.projectName}</div>
-            ): (
+            ) : (
               <>
                 <div style={{ width: '25%' }}>{option.projectName}</div>
                 <div style={{ width: '25%' }}>{option.name}</div>
               </>
             )}
             <div style={{ width: '25%' }}>{option.taskCode}</div>
-            <div style={{ width: '25%' }}><Chip label={option.typ} color={option.typ === 'REPLICON' ? 'primary' : 'secondary'} size="small" /></div>
+            <div style={{ width: '25%' }}>
+              <Chip
+                label={option.typ}
+                color={option.typ === 'REPLICON' ? 'primary' : 'secondary'}
+                size='small'
+              />
+            </div>
           </li>
         )}
-        getOptionLabel={(x: Task) => (x ? ((x.projectName === x.name) ?  x.projectName : x.projectName + ' / ' + x.name) + ' / ' + x.taskCode : '')}
+        getOptionLabel={(x: Task) =>
+          x
+            ? (x.projectName === x.name ? x.projectName : x.projectName + ' / ' + x.name) +
+              ' / ' +
+              x.taskCode
+            : ''
+        }
       />
     )
   },
