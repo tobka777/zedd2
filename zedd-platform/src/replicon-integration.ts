@@ -3,7 +3,7 @@ import {PlatformOptions} from './model/platform.options.model'
 import {PlatformExportFormat, Task, TaskActivity} from './model'
 import {ElementHandle, HTTPRequest} from 'puppeteer'
 import {What} from './model/what.model'
-import {isWithinInterval, min as dateMin, parse, parseISO} from 'date-fns'
+import {isWithinInterval, min as dateMin, parse, parseISO, isValid} from 'date-fns'
 import {enGB} from 'date-fns/locale'
 import partition from 'lodash/partition'
 import {WorkEntry} from './model/work-entry.model'
@@ -136,11 +136,16 @@ export class RepliconIntegration extends PlatformIntegration {
       )
       const [start, end] = timerange
         .split(' - ')
-        .map((ds) => parse(ds.trim(), 'MMMM dd, yyyy', new Date(), { locale: enGB }))
+        .map((ds) => parse(ds.trim(), 'dd/MM/yyyy', new Date(), { locale: enGB }))
+
+      if (!isValid(start) || !isValid(end)) {
+        throw new Error("Datum '" + timerange + "' entspricht nicht dem Format dd/MM/yyyy. Dies kann in den Settings von Replicon angepasst werden.")
+      }
 
       const [relevant, others] = partition(what, (w) => isWithinInterval(w.day, { start, end }))
       await this.clearAllTasks()
-      await this.page.waitForTimeout(3000)
+      await this.sleep(3)
+
       for (let i = 0; i < relevant.length; i++) {
         for (let j = 0; j < relevant[i].work.length; j++) {
           let work = relevant[i].work[j]
@@ -159,6 +164,7 @@ export class RepliconIntegration extends PlatformIntegration {
       }
 
       what = others
+      await this.sleep(2)
       await this.finaliseTimesheet(submitTimesheets)
     }
   }
@@ -301,11 +307,12 @@ export class RepliconIntegration extends PlatformIntegration {
         return response.json()
       }, url)
       for (let j = 0; j < taskJsonResponse.results.length; j++) {
+        const projectName = project.name.replace(/^"|"$/g, '')
         let task: Task = {
-          name: project.name,
+          name: projectName,
           intId: taskJsonResponse.results[j].task.uri.split(':task:')[1],
           projectIntId: project.code,
-          projectName: project.name,
+          projectName: projectName,
           start: undefined,
           end: undefined,
           taskCode: taskJsonResponse.results[j].task.name,
