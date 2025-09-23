@@ -3,6 +3,7 @@ import {
   Button,
   CardActions,
   Checkbox,
+  Chip,
   FormControlLabel,
   IconButton,
   Menu,
@@ -153,7 +154,7 @@ function transform({ slices, showing, platformState }: PlatformViewProps): Platf
         continue
       }
     } catch (e) {
-      console.error(slice, showInterval)
+      error(slice, showInterval)
       throw e
     }
     const task =
@@ -583,6 +584,7 @@ function ProjectRow({
             <small>
               ({projectTask.taskCode}/<span style={!projectTask.taskActivity ? { color: theme.palette.error.main } : {}}>{projectTask.taskActivity || 'UNDEFINED'}</span>)</small>
           </b>
+          &nbsp;<Chip label={projectTask.platformType} color={projectTask.platformType === 'REPLICON' ? 'primary' : 'secondary'} size="small" />
         </TableCell>
         {intervals.map((w, i) => (
           <TableCell
@@ -614,6 +616,7 @@ function ProjectRow({
               <TableCell />
               <TableCell>
                 {task.projectName} / {task.taskName} <small>({task.taskCode})</small>
+                &nbsp;<Chip label={task.platformType} color={task.platformType === 'REPLICON' ? 'primary' : 'secondary'} size="small" />
               </TableCell>
               {intervals.map((w) => {
                 const workEntries = getWorkEntries(w, task)
