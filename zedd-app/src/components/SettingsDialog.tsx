@@ -36,7 +36,6 @@ import { countries, federalStates } from '../holidays'
 export const SettingsDialog = observer(
   ({
     done,
-    // @ts-expect-error TS6133
     platformState,
     settings,
     checkCgJira,
@@ -66,6 +65,7 @@ export const SettingsDialog = observer(
     )
 
     const [textFieldOTTLink, setTextFieldOTTLink] = useState(settings.ottLink)
+    const [textFieldRepliconLink, setTextFieldRepliconLink] = useState(settings.repliconLink)
 
     const theme = useTheme()
 
@@ -248,6 +248,46 @@ export const SettingsDialog = observer(
                   settings.ottLink = e.target.value.trim()
                 }}
               />
+            </Grid>
+
+            <Grid item xs={4}>
+              <FormLabel>Replicon URL</FormLabel>
+            </Grid>
+            <Grid item xs={8}>
+              <TextField
+                style={{ width: '100%' }}
+                value={textFieldRepliconLink}
+                onChange={(e) => {
+                  setTextFieldRepliconLink(e.target.value)
+                  settings.repliconLink = e.target.value.trim()
+                }}
+              />
+            </Grid>
+
+            <Grid item xs={4}>
+              <FormLabel>Default Replicon Activity</FormLabel>
+            </Grid>
+            <Grid item xs={8}>
+              <Autocomplete
+                options={platformState.taskActivities.map(a => a.name)}
+                value={settings.repliconActivity}
+                isOptionEqualToValue={(option, value) => option === value}
+                onChange={(_, newState) => {
+                  settings.repliconActivity = newState || ''
+                }}
+                renderOption={(props, option) => (
+                  <li {...props}>{option}</li>
+                )}
+                renderInput={(params) => (
+                  <TextField
+                    {...params}
+                    label='Choose activity for Replicon'
+                    inputProps={{
+                      ...params.inputProps,
+                    }}
+                  />
+                )}
+              ></Autocomplete>
             </Grid>
 
             <Grid item xs={4}>

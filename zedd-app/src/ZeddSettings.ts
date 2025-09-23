@@ -53,6 +53,20 @@ export class ZeddSettings {
   public ottLink = ''
 
   /**
+   * Link to Replicon. Everything before the '#'.
+   */
+  @observable
+  @serializable(raw())
+  public repliconLink = ''
+
+  /**
+   * Default Activity for Replicon. Used for OTT to Replicon Mapping.
+   */
+  @observable
+  @serializable(raw())
+  public repliconActivity = ''
+
+  /**
    * Open Chrome / Selenium in headless mode (background)
    */
   @observable

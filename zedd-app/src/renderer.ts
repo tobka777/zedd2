@@ -12,7 +12,6 @@ import { BrowserWindow, ipcRenderer, MenuItemConstructorOptions, Rectangle } fro
 import { autorun, computed, configure as configureMobx } from 'mobx'
 import * as path from 'path'
 import * as React from 'react'
-import * as ReactDOM from 'react-dom'
 import 'win-ca' // use windows root certificates
 import { AppState, format, formatInterval, TimeSlice } from './AppState'
 import { PlatformState } from './PlatformState'
@@ -132,7 +131,10 @@ async function setup() {
   platformState.init()
   autorun(() => {
     platformState.ottLink = config.ottLink
+    platformState.repliconLink = config.repliconLink
+    platformState.repliconActivity = config.repliconActivity
     platformState.chromeHeadless = config.chromeHeadless
+    platformState.setIntegrationMap()
   })
 
   // await sleep(5000);

@@ -1,7 +1,7 @@
 {
   "name": "zedd-app",
   "productName": "zedd-app",
-  "version": "3.0.1",
+  "version": "3.0.2",
   "description": "Zedd-App Time Tracker",
   "main": ".webpack/main",
   "repository": "github:tobka777/zedd2",
@@ -129,7 +129,7 @@
     "@types/webpack-node-externals": "^2.5.3",
     "@typescript-eslint/eslint-plugin": "^5.12.0",
     "@typescript-eslint/parser": "^5.12.0",
-    "@vercel/webpack-asset-relocator-loader": "^1.7.0",
+    "@vercel/webpack-asset-relocator-loader": "1.7.0",
     "async-which": "^1.0.3",
     "babel-loader": "^8.2.3",
     "babel-plugin-import": "^1.13.3",

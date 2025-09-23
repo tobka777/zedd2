@@ -36,6 +36,7 @@ import { Project } from './model/projekt.model'
 import { Task } from './model/task.model'
 import { PlatformExportFormat } from './model/platform-export-format.model'
 import { checkPlatformUrl } from './utils'
+import { WorkEntry } from './model/work-entry.model'
 
 const CONTROL_KEY: string = process.platform === 'darwin' ? Key.COMMAND : Key.CONTROL
 
@@ -547,9 +548,12 @@ async function exportToClarity(
             .work.push({
               taskIntId: rowInfo.taskIntId,
               taskName: rowInfo.taskName,
+              projectIntId: rowInfo.taskIntId,
               projectName: rowInfo.projectName,
               hours,
               comment: dayComment && dayComment.substring(4),
+              taskCode: '',
+              platformType: 'CLARITY',
             })
       }
     }
@@ -765,7 +769,7 @@ export async function withErrorHandling<R>(
   }
 }
 
-export async function webDriverQuit() {
+export function webDriverQuit() {
   if (chromeDriver) {
     chromeDriver.quit()
   }
