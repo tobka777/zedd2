@@ -14,7 +14,6 @@ cd ..
 
 cd zedd-app
 npm install
-npm run genicons
 npm run start
 ```
 

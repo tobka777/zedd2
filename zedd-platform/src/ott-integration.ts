@@ -68,15 +68,17 @@ export class OTTIntegration extends PlatformIntegration {
     await this.checkOneWeek()
 
     await this.clickAllEngagements()
-    
-    await this.clickAllAssigned()
 
     while (what.length > 0) {
       await this.page.waitForSelector('[role="table"]')
 
+      await this.sleep(1)
+
       await this.chooseDateFromCalendar(what)
 
       await this.deleteAllTasks()
+    
+      await this.clickAllAssigned()
 
       const timerange = await this.page.evaluate(() => {
         const spans = Array.from(document.querySelectorAll('span.MuiButton-label'))
@@ -86,12 +88,6 @@ export class OTTIntegration extends PlatformIntegration {
       })
 
       await this.checkFinilisedButton(timerange)
-
-      await this.clickAllAssigned()
-
-      await this.clickElementWithContent(
-        "//span[contains(@class, 'MuiButton-label') and contains(text(), 'Collapse all')]",
-      )
 
       const [start, end] = timerange
         .split(' - ')
@@ -140,33 +136,42 @@ export class OTTIntegration extends PlatformIntegration {
   }
 
   private async deleteAllTasks() {
+    await this.clickAllAssigned("bookedInPeriod")
     const checkbox = await this.page.waitForSelector('th.wlh_checkbox input[type="checkbox"]')
     await checkbox?.click()
 
-    await this.clickElementWithContent("//button[.//span[contains(text(), 'Delete')]]")
+    const deleteButton = await this.clickElementWithContent("//button[.//span[contains(text(), 'Delete')] and not(@disabled)]")
 
-    const timeEntriesDialog = await this.page.waitForSelector('div[role="dialog"]')
+    if(deleteButton) {
+      const timeEntriesDialog = await this.page.waitForSelector('div[role="dialog"]')
 
-    let reasonDialog = await timeEntriesDialog!.waitForSelector(
-      'textarea[placeholder="Please provide a reason"]',
-    )
-    await reasonDialog?.type('Korrektur')
-    await this.clickElementWithContent("//button[.//span[text()='Yes, Continue']]")
-    await this.page.waitForSelector('div[role="dialog"]', { hidden: true })
+      let reasonDialog = await timeEntriesDialog!.waitForSelector(
+        'textarea[placeholder="Please provide a reason"]',
+      )
+      await reasonDialog?.type('Korrektur')
+      await this.clickElementWithContent("//button[.//span[text()='Yes, Continue']]")
+      await this.page.waitForSelector('div[role="dialog"]', { hidden: true })
+    }   
   }
 
   private async addNewTask(work: WorkEntry, startWeek: Date, taskDay: Date) {
     if (work.platformType === 'REPLICON') return
-    let addNewTaskInput = await this.page.waitForSelector("input[placeholder*='Add task name']")
+    let addNewTaskInput = await this.page.waitForSelector("input[placeholder*='Search task']")
+    const [clearButton] = await this.page.$x(
+      "//input[contains(@placeholder, 'Search task')]/../div/button[contains(@title, 'Clear')]"
+    )
+    await (clearButton as ElementHandle<Element>)!.click();
+
     await addNewTaskInput!.type(String(work.taskName))
 
-    await this.clickElementWithContent(
-      "//li[contains(@role, 'option')]/p[contains(text(), '" + work.taskName + "')]",
-    )
-
-    let [rowWithSearchedTaskNode] = await this.page.$x(
+    let rowWithSearchedTaskNode = await this.page.waitForXPath(
       "//tr[.//div[text()='" + work.taskName + "']]",
     )
+
+    if(!rowWithSearchedTaskNode) {
+      throw new Error("Task " + work.taskName + " konnte nicht gefunden werden.")
+      return
+    }
 
     const cellDayInRow = taskDay.getDate() - startWeek.getDate()
     const tdHandles = await rowWithSearchedTaskNode.$$('td.wlbc_bydate')
@@ -177,26 +182,15 @@ export class OTTIntegration extends PlatformIntegration {
     await this.addTimesAndCommentToTask(work, taskDay, colWithWeekday)
   }
 
-  private async clickAllAssigned() {
-    const [issueFilterElement] = await this.page.$x("//*[contains(text(), 'Issue Filter')]")
+  private async clickAllAssigned(value:string = 'All') {
+    await this.sleep(2);
+    const [issueFilterElement] = await this.page.$x("//*[contains(text(), 'Issue Filter')]/../../div/div[@role='button']") as [ElementHandle<Element>]
 
-    const issueFilterSelect = (await issueFilterElement.evaluateHandle((el) => {
-      let parent: Element | null = el as unknown as Element
-      while (parent) {
-        const buttonDiv = parent.querySelector('div[role="button"]')
-        if (buttonDiv) {
-          return buttonDiv
-        }
-        parent = parent.parentElement
-      }
-      return null
-    })) as ElementHandle<Element>
-
-    if (issueFilterSelect) {
-      await issueFilterSelect.click()
+    if (issueFilterElement) {
+      await issueFilterElement.click()
       const dropdownOptions = await this.page.waitForSelector('ul[role="listbox"]')
 
-      const allAssigned = await dropdownOptions?.waitForSelector('li[data-value="All"]')
+      const allAssigned = await dropdownOptions?.waitForSelector('li[data-value="' + value + '"]')
       await allAssigned!.click()
 
       await this.page.waitForSelector('[role="table"]')

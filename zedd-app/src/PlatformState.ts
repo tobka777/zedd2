@@ -177,30 +177,19 @@ export class PlatformState {
     toImport: 'ALL' | PlatformType,
     infoNotify?: (info: string) => void,
     notSave?: boolean,
-  ): Promise<Task[]> {
+  ) {
     try {
       if (toImport === 'ALL') {
-        const results: Task[] = []
         for (const [key] of Object.entries(this.integrationMap)) {
-          const tasks = await this.importAndSavePlatformTasks(key as PlatformType, infoNotify, true)
-          results.push(...tasks)
+          await this.importAndSavePlatformTasks(key as PlatformType, infoNotify, true)
         }
-
-        const existingExternalIds = new Set(this._tasks.map((task) => task.projectIntId))
-        const uniqueTasks = results
-          .flat()
-          .filter((task) => !existingExternalIds.has(task.projectIntId))
-        this._tasks.push(...uniqueTasks)
-        infoNotify &&
-          infoNotify('Imported ' + existingExternalIds.size + ' tasks from ' + toImport + '.')
       } else {
         this.platformIntegration = this.integrationMap[toImport]
-
-        this._tasks = await this.importPlatformTasks(this.platformIntegration, (tasks) => {
+        const importedTasks = await this.importPlatformTasks(this.platformIntegration, (tasks) => {
           infoNotify && infoNotify('Imported ' + tasks.length + ' tasks from ' + toImport + '.')
-
-          this._tasks = [...tasks]
         })
+        const otherTasks = this._tasks.filter(task => task.typ != toImport)
+        this._tasks = [...otherTasks, ...importedTasks]
       }
 
       if (!notSave) {
@@ -209,7 +198,6 @@ export class PlatformState {
     } catch (error) {
       this.platformIntegration?.quitBrowser()
     }
-    return this._tasks
   }
 
   public async importRepliconTaskActivities(

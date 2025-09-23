@@ -382,8 +382,18 @@ export const PlatformView = observer((props: PlatformViewProps) => {
     }
   }
 
+  const allProjectTasks = Object.values(projectTasksViewItems).flatMap(x => x);
+  const mergedProjectTasks = uniqBy(allProjectTasks, (task) => task.taskIntId).map((task) => {
+    const matchingTasks = allProjectTasks.filter((t) => t.taskIntId === task.taskIntId);
+    const allChilds = matchingTasks.flatMap((t) => t.child ?? []);
+    return {
+      ...task,
+      child: uniqBy(allChilds, (child) => child.taskIntId),
+    };
+  });
+
   const projectTasks = sortBy(
-    uniqBy(Object.values(projectTasksViewItems).flatMap((x) => x), (we) => we.taskIntId),
+    mergedProjectTasks,
     (x) => +(-1 === x.taskIntId), // placeholder task last
     (x) => x.projectName,
     (x) => x.taskName,

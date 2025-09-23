@@ -73,7 +73,7 @@ export const PlatformTaskSelect = observer(
             <div style={{ width: '25%' }}><Chip label={option.typ} color={option.typ === 'REPLICON' ? 'primary' : 'secondary'} size="small" /></div>
           </li>
         )}
-        getOptionLabel={(x: Task) => (x ? x.projectName + ' / ' + x.name : '')}
+        getOptionLabel={(x: Task) => (x ? ((x.projectName === x.name) ?  x.projectName : x.projectName + ' / ' + x.name) + ' / ' + x.taskCode : '')}
       />
     )
   },
