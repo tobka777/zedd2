@@ -1,3 +1,10 @@
+## [3.0.2] - 2025-09-23
+
+- Feature: Import tasks from Replicon
+- Feature: Export Timesheet to Replicon and OTT
+- Feature: Include activity in app and export (Replicon)
+- Feature: Clearer table of the hourly overview for OTT and Replicon
+
 ## [3.0.1] - 2025-05-12
 
 - Fix: Configuration for Chrome Path

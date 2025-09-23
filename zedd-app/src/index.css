@@ -64,11 +64,3 @@ div:hover > .block-handle {
 .no-drop * {
   cursor: no-drop !important;
 }
-
-/*.replicon-task, .replicon-task-basic {
-  background-color: #f6b8a894;
-}
-
-.ott-task, .ott-task-basic{
-  background-color: #b1d6f8;
-}*/
