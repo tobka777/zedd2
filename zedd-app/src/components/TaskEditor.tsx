@@ -257,6 +257,7 @@ export const TaskEditor = observer(
               </Grid>
               <Grid item xs={2} lg={1}>
                 <Button
+                  style={{ width: '100%' }}
                   disabled={!value || value === state.getUndefinedTask()}
                   onClick={async () => await importRepliconTaskActivities()}
                   endIcon={<ImportIcon />}

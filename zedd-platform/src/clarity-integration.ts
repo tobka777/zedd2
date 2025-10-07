@@ -546,6 +546,7 @@ async function exportToClarity(
           daysInfo
             .find((di) => di.day == day)!
             .work.push({
+              id: String(rowInfo.taskIntId),
               taskIntId: rowInfo.taskIntId,
               taskName: rowInfo.taskName,
               projectIntId: rowInfo.taskIntId,
