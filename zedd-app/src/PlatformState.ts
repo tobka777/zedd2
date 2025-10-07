@@ -97,9 +97,9 @@ export class PlatformState {
   }
 
   @computed
-  get uriTaskActivitiesMap(): Map<string, TaskActivity> {
+  get taskActivitiesMap(): Map<string, TaskActivity> {
     return this._taskActivities.reduce(
-      (map, taskActivity) => map.set(taskActivity.uri, taskActivity),
+      (map, taskActivity) => map.set(taskActivity.name, taskActivity),
       new Map(),
     )
   }
@@ -242,7 +242,7 @@ export class PlatformState {
   }
 
   public resolveActivity(value: string) {
-    return value === undefined ? undefined : this.uriTaskActivitiesMap.get(value)
+    return value === undefined ? undefined : this.taskActivitiesMap.get(value)
   }
 
   public isValidTaskIntId(intId: number | undefined): boolean {

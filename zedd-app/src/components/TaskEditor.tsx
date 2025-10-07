@@ -152,9 +152,8 @@ export const TaskEditor = observer(
                 value.platformType = task?.typ
               } else {
                 value.platformTaskIntId = ''
-                value.taskActivityUri = ''
-                value.taskActivityName = ''
               }
+              value.taskActivityName = value.taskActivityName || state.config.repliconActivity;
             }}
             platformState={platformState}
           />
@@ -240,7 +239,7 @@ export const TaskEditor = observer(
             <>
               <Grid item xs={10} lg={11}>
                 <TaskActivitySelect
-                  value={value.taskActivityUri}
+                  value={value.taskActivityName}
                   platformTask={platformState.resolveTask(value.platformTaskIntId as number)}
                   disabled={value === state.getUndefinedTask()}
                   label={`Activity for Task ${value && value.name}`}
@@ -249,7 +248,6 @@ export const TaskEditor = observer(
                   onChange={(taskActivity) => {
                     state.slices.find((slice) => {
                       if (slice.task.name === value.name) {
-                        slice.task.taskActivityUri = taskActivity?.uri ?? ''
                         slice.task.taskActivityName = taskActivity?.name ?? ''
                       }
                     })
@@ -279,14 +277,16 @@ export const TaskEditor = observer(
         </Grid>
         <Grid item xs={2} lg={1}>
           <Tooltip title='Copy task name to task comment'>
-            <Button
-              disabled={!value || value === state.getUndefinedTask()}
-              onClick={() => (value.platformTaskComment = value.name)}
-              fullWidth
-              endIcon={<CopyIcon />}
-            >
-              Copy
-            </Button>
+            <span>
+              <Button
+                disabled={!value || value === state.getUndefinedTask()}
+                onClick={() => (value.platformTaskComment = value.name)}
+                fullWidth
+                endIcon={<CopyIcon />}
+              >
+                Copy
+              </Button>
+            </span>
           </Tooltip>
         </Grid>
       </Grid>
