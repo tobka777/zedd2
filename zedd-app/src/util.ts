@@ -232,3 +232,17 @@ export const useClasses = (stylesElement: any) => {
     return prepared
   }, [stylesElement, theme])
 }
+
+/**
+ * Converts a string into a deterministic integer hash.
+ * 
+ * @param str - Input string to hash.
+ * @returns A positive integer hash (same string → same number).
+ */
+export const hashStringToInt = (str: string): number => {
+  let hash = 0;
+  for (let i = 0; i < str.length; i++) {
+    hash = (hash * 31 + str.charCodeAt(i)) | 0;
+  }
+  return Math.abs(hash);
+}

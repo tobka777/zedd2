@@ -44,7 +44,8 @@ export const PlatformTaskSelect = observer(
                 (ip) =>
                   task.name.toLowerCase().includes(ip) ||
                   task.projectName.toLowerCase().includes(ip) ||
-                  task.projectIntId.toLocaleString().includes(ip),
+                  task.projectIntId.toLocaleString().includes(ip) ||
+                  task.taskCode.toLowerCase().includes(ip),
               )
             ) {
               result.push(task)
@@ -53,7 +54,7 @@ export const PlatformTaskSelect = observer(
           return result
         }}
         onChange={(_: unknown, task: Task | undefined) => onChange(task?.intId)}
-        value={resolvedVal}
+        value={resolvedVal ?? null}
         renderOption={(props, option: Task, _state) => (
           <li
             {...props}

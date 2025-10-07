@@ -103,10 +103,6 @@ export class Task {
 
   @serializable
   @observable
-  public taskActivityUri: string | undefined
-
-  @serializable
-  @observable
   public taskActivityName: string | undefined
 
   @observable
@@ -132,7 +128,6 @@ export class Task {
     name: string = '',
     taskActivities: string[],
     platformType?: PlatformType,
-    taskActivityUri?: string,
     taskActivityName?: string,
     intId?: number,
     key?: string,
@@ -144,7 +139,6 @@ export class Task {
     this.key = key
     this.platformTaskComment = platformTaskComment || ''
     this.platformType = platformType
-    this.taskActivityUri = taskActivityUri
     this.taskActivityName = taskActivityName
     this.taskActivities = taskActivities
   }
@@ -661,7 +655,7 @@ export class AppState {
   public getUndefinedTask(): Task {
     return (
       this.tasks.find((t) => 'UNDEFINED' === t.name || '' === t.name) ||
-      new Task('UNDEFINED', [], undefined, undefined, 'UNDEFINED')
+      new Task('UNDEFINED', [], undefined, 'UNDEFINED')
     )
   }
 
