@@ -15,7 +15,6 @@ import './index.css'
 import { FILE_DATE_FORMAT, getLatestFileInDir, mkdirIfNotExists } from './util'
 import { RepliconIntegration } from 'zedd-platform/out/src/replicon-integration'
 import { PlatformOptions } from 'zedd-platform/out/src/model/platform.options.model'
-import { WorkEntry } from 'zedd-platform/out/src/model/work-entry.model'
 
 export enum PlatformActionType {
   SubmitTimesheet,
@@ -211,19 +210,8 @@ export class PlatformState {
       throw new Error('No task found')
     }
 
-    const workEntry: WorkEntry = {
-      taskIntId: task.intId,
-      projectName: task.projectName,
-      projectIntId: task.projectIntId,
-      taskCode: task.taskCode,
-      taskName: task.name,
-      hours: 0,
-      platformType: 'REPLICON',
-    }
     const repliconIntegration = this.integrationMap['REPLICON'] as RepliconIntegration
-    // TODO save taskActivities to each Task (task.taskActivities)
     this._taskActivities = await repliconIntegration.importTaskActivities(
-      workEntry,
       (taskActivities) => {
         infoNotify &&
           infoNotify('Imported ' + taskActivities.length + ' task activities from REPLICON.')

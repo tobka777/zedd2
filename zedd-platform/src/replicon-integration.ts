@@ -68,20 +68,18 @@ export class RepliconIntegration extends PlatformIntegration {
   }
 
   async importTaskActivities(
-    work: WorkEntry,
     notifyTaskActivities?: (p: TaskActivity[]) => void,
   ): Promise<TaskActivity[]> {
     await this.init()
     await this.goToTheTimesheet(true)
-    await this.page.waitForSelector('table.dataGrid > tbody[sectiontype="actions"]')
+
     await this.addRow()
     await this.page.waitForTimeout(300)
     const taskSearchButton = await this.clickElementWithContent(
-      '//span[contains(@class, "taskSelectorSearchByCategoryContainer")]//span[contains(@class, "placeholder") and contains(text(), "Select Project")]',
+      '//td[.//span[contains(@class, "taskSelectorSearchByCategoryContainer")]//span[contains(@class, "placeholder") and contains(text(), "Select Project")]]'
     )
-    const row = await this.chooseTaskFromDropdown(null, taskSearchButton, work)
 
-    const [activitySelectNode] = await row.$x(".//a[contains(., 'Select an Activity')]")
+    const [activitySelectNode] = await this.page.$x("//a[contains(., 'Select an Activity')]")
     let activitySelect = activitySelectNode as unknown as ElementHandle<Element>
     if (activitySelect) {
       await activitySelect?.click()
@@ -176,12 +174,7 @@ export class RepliconIntegration extends PlatformIntegration {
   private async addRow() {
     const prevRows = await this.page.$x('//tbody[@sectiontype="rows"]/tr')
 
-    await this.page.focus('body')
-    await this.page.keyboard.down('Control')
-    await this.page.keyboard.down('Alt')
-    await this.page.keyboard.press('t')
-    await this.page.keyboard.up('Alt')
-    await this.page.keyboard.up('Control')
+    await this.page.click('table.dataGrid > tbody[sectiontype="actions"] a#add-new-timeline')
 
     await this.page.waitForFunction(
       (selector, count) => document.querySelectorAll(selector).length > count,
@@ -256,7 +249,7 @@ export class RepliconIntegration extends PlatformIntegration {
     }
   }
 
-  private async forceGetTargetSite(searchedPartInLink: string, timeout = 30000) {
+  private async forceGetTargetSite(searchedPartInLink: string, timeout = 60000) {
     const start = Date.now()
 
     while (true) {

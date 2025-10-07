@@ -123,6 +123,8 @@ const styles = (theme: any) => ({
 const formatHours = (h: number) =>
   h ? h.toLocaleString('de-DE', { minimumFractionDigits: 2 }) : '-'
 
+const generateId = (intId: number, taskActivityName?: string): string => String(intId + (taskActivityName ? '_' + taskActivityName : ''))
+
 const placeholderPlatformTask = (name: string): Task => ({
   projectName: 'UNDEFINED',
   projectIntId: -1,
@@ -172,11 +174,13 @@ function transform({ slices, showing, platformState }: PlatformViewProps): Platf
       let dayHours = dayHourss.find(
         (d) =>
           d.taskIntId === slice.task.platformTaskIntId &&
+          d.taskActivity === slice.task.taskActivityName &&
           d.comment === slice.task.platformTaskComment,
       )
       if (!dayHours) {
         dayHours = {
           hours: 0,
+          id: generateId(task.intId, slice.task.taskActivityName),
           projectName: task.projectName,
           projectIntId: task.projectIntId,
           taskIntId: task.intId,
@@ -209,8 +213,9 @@ function transform({ slices, showing, platformState }: PlatformViewProps): Platf
   }
   // group entries with same task (but different comment)
   for (const dayStr of Object.keys(dayMap)) {
-    dayMap[dayStr] = Object.values(groupBy(dayMap[dayStr], (we) => we.taskIntId)).map(
+    dayMap[dayStr] = Object.values(groupBy(dayMap[dayStr], (we) => we.id)).map(
       (workEntries) => ({
+        id: workEntries[0].id,
         hours: sum(workEntries.map((we) => we.hours)),
         projectName: workEntries[0].projectName,
         projectIntId: workEntries[0].projectIntId,
@@ -325,7 +330,7 @@ export const PlatformView = observer((props: PlatformViewProps) => {
   const platformExport = transform(props)
   const allWorkEntries = Object.values(platformExport).flatMap((x) => x)
   const tasksToShow = sortBy(
-    uniqBy(allWorkEntries, (we) => we.taskIntId),
+    uniqBy(allWorkEntries, (we) => we.id),
     (x) => +(-1 === x.taskIntId), // placeholder task last
     (x) => x.projectName,
     (x) => x.taskName,
@@ -353,6 +358,7 @@ export const PlatformView = observer((props: PlatformViewProps) => {
       if (projectData) {
         const groupTask: WorkEntry = {
           hours: 0,
+          id: generateId(projectData.intId, platformState.repliconActivity),
           projectName: projectData.projectName,
           projectIntId: projectData.projectIntId,
           taskIntId: projectData.intId,
@@ -388,12 +394,12 @@ export const PlatformView = observer((props: PlatformViewProps) => {
   }
 
   const allProjectTasks = Object.values(projectTasksViewItems).flatMap((x) => x)
-  const mergedProjectTasks = uniqBy(allProjectTasks, (task) => task.taskIntId).map((task) => {
-    const matchingTasks = allProjectTasks.filter((t) => t.taskIntId === task.taskIntId)
+  const mergedProjectTasks = uniqBy(allProjectTasks, (task) => task.id).map((task) => {
+    const matchingTasks = allProjectTasks.filter((t) => t.id === task.id)
     const allChilds = matchingTasks.flatMap((t) => t.child ?? [])
     return {
       ...task,
-      child: uniqBy(allChilds, (child) => child.taskIntId),
+      child: uniqBy(allChilds, (child) => child.id),
     }
   })
 
@@ -409,7 +415,7 @@ export const PlatformView = observer((props: PlatformViewProps) => {
     ...tasksToShow.filter(
       (task) =>
         task.platformType !== 'OTT' ||
-        ottTaskMissingRepliconTask.find((t) => t.taskIntId === task.taskIntId),
+        ottTaskMissingRepliconTask.find((t) => t.id === task.id),
     ),
   ]
   const mergedPlatformExport = mergeExports(platformExport, projectTasksViewItems)
@@ -588,7 +594,7 @@ function ProjectRow({
   const getWorkEntries = (interval: Interval, task: WorkEntry) =>
     eachDayOfInterval(interval)
       .flatMap((d) => tasksItems[isoDayStr(d)] ?? [])
-      .filter((we) => we.taskIntId === task.taskIntId)
+      .filter((we) => we.id === task.id)
 
   const getWorkedHours = (interval: Interval, task: WorkEntry) =>
     sum(getWorkEntries(interval, task).map((we) => we.hours))
@@ -651,7 +657,7 @@ function ProjectRow({
       {open && (
         <>
           {projectTask.child?.map((task) => (
-            <TableRow key={task.taskIntId} className='white'>
+            <TableRow key={task.id} className='white'>
               <TableCell />
               <TableCell>
                 {task.projectName} / {task.taskName} <small>({task.taskCode})</small>
@@ -666,7 +672,7 @@ function ProjectRow({
                 const workEntries = getWorkEntries(w, task)
                 return (
                   <TableCell
-                    key={task.taskIntId + '-' + isoDayStr(w.start)}
+                    key={task.id + '-' + isoDayStr(w.start)}
                     title={workEntries.map((we) => we.comment).join('\n')}
                     style={{
                       textAlign: 'right',

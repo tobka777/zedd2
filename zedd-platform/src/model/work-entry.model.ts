@@ -1,6 +1,7 @@
 import { PlatformType } from './platform-type.model'
 
 export interface WorkEntry {
+  id: string
   projectName: string
   projectIntId: number
   taskName: string

@@ -7,7 +7,7 @@ import { Task } from 'zedd-platform'
 
 export type PlatformTaskSelectProps = {
   platformState: PlatformState
-  onChange: (taskIntId: number | undefined | string) => void
+  onChange: (taskIntId: number | undefined) => void
   value: number | undefined | string
 } & Omit<StandardTextFieldProps, 'onChange' | 'value'>
 
