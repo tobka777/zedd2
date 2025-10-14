@@ -1,3 +1,12 @@
+## [3.0.3] - 2025-10-14
+- Feature: use default activity
+- Feature: custom tasks
+- Fix: filter table and task
+- Fix: different task in table for different activity
+- Fix: import activity
+- Fix: export Replicon and OTT with month break
+- Fix: smooth insert of comment in OTT
+
 ## [3.0.2] - 2025-09-23
 
 - Feature: Import tasks from Replicon
