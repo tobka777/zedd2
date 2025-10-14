@@ -69,6 +69,8 @@ export class OTTIntegration extends PlatformIntegration {
 
     await this.clickAllEngagements()
 
+    // nächstes Zeitformular ausfüllen, obwohl ein vorheriges Zeitformular aktuell finalized ist
+    let deferredAlreadyFinalizedError: unknown = null;
     while (what.length > 0) {
       await this.page.waitForSelector('[role="table"]')
 
@@ -86,14 +88,20 @@ export class OTTIntegration extends PlatformIntegration {
         const range = spans.find((span) => regex.test(span.textContent?.trim() || ''))
         return range!.textContent!.trim()
       })
-
-      await this.checkFinilisedButton(timerange)
-
+      
       const [start, end] = timerange
         .split(' - ')
         .map((ds) => parse(ds.trim(), 'MMM dd yyyy', new Date(), { locale: enGB }))
 
       const [relevant, others] = partition(what, (w) => isWithinInterval(w.day, { start, end }))
+
+      try {
+        await this.checkFinilisedButton(timerange)
+      } catch (err) {
+        deferredAlreadyFinalizedError = err;
+        what = others
+        continue;
+      }
 
       for (let i = 0; i < relevant.length; i++) {
         for (let j = 0; j < relevant[i].work.length; j++) {
@@ -104,6 +112,8 @@ export class OTTIntegration extends PlatformIntegration {
       what = others
     }
 
+    if (deferredAlreadyFinalizedError) throw deferredAlreadyFinalizedError;
+    
     await this.finaliseTimesheet(submitTimesheets)
   }
 
@@ -337,10 +347,39 @@ export class OTTIntegration extends PlatformIntegration {
       const commentTextBox = await rowWithSearchedTaskNodeUpdated.waitForSelector(
         'textarea[placeholder="Comment"]',
       )
-      await clearInput(commentTextBox)
-      await commentTextBox?.type(comment as string)
+      await this.fillTextarea(commentTextBox, String(comment))
+      //await commentTextBox?.type(String(comment)) // instabil bei längeren Kommentaren
     }
     await dayInHeader?.click()
+  }
+
+  /**
+   * AI-generated function to handle textarea onchange events.
+   * Alternative for page.type(string) because it is instable for long text i.e. missing characters.
+   */
+  private async fillTextarea(element: ElementHandle | null, value: string) {
+    await element?.evaluate((el, val) => {
+      const textarea = el as HTMLTextAreaElement;
+      textarea.focus();
+
+      // React-safe native setter (relevant für kontrollierte Komponenten)
+      const proto = Object.getPrototypeOf(textarea);
+      const desc = Object.getOwnPropertyDescriptor(proto, 'value') ||
+                  Object.getOwnPropertyDescriptor(HTMLTextAreaElement.prototype, 'value');
+      if (desc && desc.set) {
+        desc.set!.call(textarea, val);
+      } else {
+        textarea.value = val;
+      }
+
+      // Feuere ein InputEvent (mit inputType, hilft bei libs die auf InputEvent prüfen)
+      const inputEvt = new InputEvent('input', { bubbles: true, cancelable: true, composed: true, data: val, inputType: 'insertText' });
+      textarea.dispatchEvent(inputEvt);
+
+      // Manche Frameworks reagieren auf 'change' / 'blur' / keyboard events
+      textarea.dispatchEvent(new Event('change', { bubbles: true }));
+      textarea.dispatchEvent(new Event('blur', { bubbles: true }));
+    }, value);
   }
 
   private async finaliseTimesheet(submitTimesheets: boolean) {
