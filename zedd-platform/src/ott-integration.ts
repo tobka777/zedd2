@@ -70,7 +70,7 @@ export class OTTIntegration extends PlatformIntegration {
     await this.clickAllEngagements()
 
     // nächstes Zeitformular ausfüllen, obwohl ein vorheriges Zeitformular aktuell finalized ist
-    let deferredAlreadyFinalizedError: unknown = null;
+    let deferredAlreadyFinalizedError: unknown = null
     while (what.length > 0) {
       await this.page.waitForSelector('[role="table"]')
 
@@ -88,7 +88,7 @@ export class OTTIntegration extends PlatformIntegration {
         const range = spans.find((span) => regex.test(span.textContent?.trim() || ''))
         return range!.textContent!.trim()
       })
-      
+
       const [start, end] = timerange
         .split(' - ')
         .map((ds) => parse(ds.trim(), 'MMM dd yyyy', new Date(), { locale: enGB }))
@@ -98,9 +98,9 @@ export class OTTIntegration extends PlatformIntegration {
       try {
         await this.checkFinilisedButton(timerange)
       } catch (err) {
-        deferredAlreadyFinalizedError = err;
+        deferredAlreadyFinalizedError = err
         what = others
-        continue;
+        continue
       }
 
       for (let i = 0; i < relevant.length; i++) {
@@ -112,8 +112,8 @@ export class OTTIntegration extends PlatformIntegration {
       what = others
     }
 
-    if (deferredAlreadyFinalizedError) throw deferredAlreadyFinalizedError;
-    
+    if (deferredAlreadyFinalizedError) throw deferredAlreadyFinalizedError
+
     await this.finaliseTimesheet(submitTimesheets)
   }
 
@@ -359,27 +359,34 @@ export class OTTIntegration extends PlatformIntegration {
    */
   private async fillTextarea(element: ElementHandle | null, value: string) {
     await element?.evaluate((el, val) => {
-      const textarea = el as HTMLTextAreaElement;
-      textarea.focus();
+      const textarea = el as HTMLTextAreaElement
+      textarea.focus()
 
       // React-safe native setter (relevant für kontrollierte Komponenten)
-      const proto = Object.getPrototypeOf(textarea);
-      const desc = Object.getOwnPropertyDescriptor(proto, 'value') ||
-                  Object.getOwnPropertyDescriptor(HTMLTextAreaElement.prototype, 'value');
+      const proto = Object.getPrototypeOf(textarea)
+      const desc =
+        Object.getOwnPropertyDescriptor(proto, 'value') ||
+        Object.getOwnPropertyDescriptor(HTMLTextAreaElement.prototype, 'value')
       if (desc && desc.set) {
-        desc.set!.call(textarea, val);
+        desc.set!.call(textarea, val)
       } else {
-        textarea.value = val;
+        textarea.value = val
       }
 
       // Feuere ein InputEvent (mit inputType, hilft bei libs die auf InputEvent prüfen)
-      const inputEvt = new InputEvent('input', { bubbles: true, cancelable: true, composed: true, data: val, inputType: 'insertText' });
-      textarea.dispatchEvent(inputEvt);
+      const inputEvt = new InputEvent('input', {
+        bubbles: true,
+        cancelable: true,
+        composed: true,
+        data: val,
+        inputType: 'insertText',
+      })
+      textarea.dispatchEvent(inputEvt)
 
       // Manche Frameworks reagieren auf 'change' / 'blur' / keyboard events
-      textarea.dispatchEvent(new Event('change', { bubbles: true }));
-      textarea.dispatchEvent(new Event('blur', { bubbles: true }));
-    }, value);
+      textarea.dispatchEvent(new Event('change', { bubbles: true }))
+      textarea.dispatchEvent(new Event('blur', { bubbles: true }))
+    }, value)
   }
 
   private async finaliseTimesheet(submitTimesheets: boolean) {

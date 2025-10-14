@@ -3,7 +3,14 @@ import { PlatformOptions } from './model/platform.options.model'
 import { PlatformExportFormat, Task, TaskActivity } from './model'
 import { ElementHandle, HTTPRequest } from 'puppeteer'
 import { What } from './model/what.model'
-import { isWithinInterval, min as dateMin, parse, parseISO, isValid, differenceInDays } from 'date-fns'
+import {
+  isWithinInterval,
+  min as dateMin,
+  parse,
+  parseISO,
+  isValid,
+  differenceInDays,
+} from 'date-fns'
 import { enGB } from 'date-fns/locale'
 import partition from 'lodash/partition'
 import { WorkEntry } from './model/work-entry.model'
@@ -76,7 +83,7 @@ export class RepliconIntegration extends PlatformIntegration {
     await this.addRow()
     await this.page.waitForTimeout(300)
     const taskSearchButton = await this.clickElementWithContent(
-      '//td[.//span[contains(@class, "taskSelectorSearchByCategoryContainer")]//span[contains(@class, "placeholder") and contains(text(), "Select Project")]]'
+      '//td[.//span[contains(@class, "taskSelectorSearchByCategoryContainer")]//span[contains(@class, "placeholder") and contains(text(), "Select Project")]]',
     )
 
     const [activitySelectNode] = await this.page.$x("//a[contains(., 'Select an Activity')]")
@@ -145,9 +152,9 @@ export class RepliconIntegration extends PlatformIntegration {
       }
 
       const [relevant, others] = partition(what, (w) => isWithinInterval(w.day, { start, end }))
-      
+
       await this.reopenTimesheet()
-      if(differenceInDays(end, start) < 7) {
+      if (differenceInDays(end, start) < 7) {
         // clean only if only one week, not clean on month end
         // TODO intelligent cleanup
         await this.clearAllTasks()
@@ -163,7 +170,7 @@ export class RepliconIntegration extends PlatformIntegration {
             await this.addRow()
             await this.page.waitForTimeout(300)
             taskSearchButton = await this.clickElementWithContent(
-              '//td[.//span[contains(@class, "taskSelectorSearchByCategoryContainer")]//span[contains(@class, "placeholder") and contains(text(), "Select Project")]]'
+              '//td[.//span[contains(@class, "taskSelectorSearchByCategoryContainer")]//span[contains(@class, "placeholder") and contains(text(), "Select Project")]]',
             )
           }
           await this.sleep(1)
@@ -560,12 +567,11 @@ export class RepliconIntegration extends PlatformIntegration {
 
       const activityCell = await row.$('.activity')
       if (!activityCell) continue
-      const isSameActivity = await activityCell.evaluate(
-        (el, taskActivity) => {
-          return el?.textContent?.trim() == taskActivity || el?.textContent?.trim() == "Select an Activity"
-        },
-        work.taskActivity
-      )
+      const isSameActivity = await activityCell.evaluate((el, taskActivity) => {
+        return (
+          el?.textContent?.trim() == taskActivity || el?.textContent?.trim() == 'Select an Activity'
+        )
+      }, work.taskActivity)
 
       if (isMatch && isSameActivity) {
         return row
@@ -623,7 +629,7 @@ export class RepliconIntegration extends PlatformIntegration {
   }
 
   private async finaliseTimesheet(submitTimesheets: boolean) {
-    await this.page.keyboard.press('Tab');
+    await this.page.keyboard.press('Tab')
     if (submitTimesheets) {
       let submit = await this.clickElementWithContent(
         "//button[contains(text(), 'Submit for Approval')]",

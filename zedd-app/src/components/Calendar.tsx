@@ -456,7 +456,7 @@ const CalendarBase = <T extends Interval>({
             width: percent(1 / days.length),
             backgroundColor: getDayColor(d),
             textAlign: 'center',
-            color: grey[800]
+            color: grey[800],
           }}
         >
           {format(d, 'E, do MMM')}
