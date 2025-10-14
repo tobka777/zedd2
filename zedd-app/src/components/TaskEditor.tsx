@@ -153,7 +153,7 @@ export const TaskEditor = observer(
               } else {
                 value.platformTaskIntId = ''
               }
-              value.taskActivityName = value.taskActivityName || state.config.repliconActivity;
+              value.taskActivityName = value.taskActivityName || state.config.repliconActivity
             }}
             platformState={platformState}
           />

@@ -211,12 +211,10 @@ export class PlatformState {
     }
 
     const repliconIntegration = this.integrationMap['REPLICON'] as RepliconIntegration
-    this._taskActivities = await repliconIntegration.importTaskActivities(
-      (taskActivities) => {
-        infoNotify &&
-          infoNotify('Imported ' + taskActivities.length + ' task activities from REPLICON.')
-      },
-    )
+    this._taskActivities = await repliconIntegration.importTaskActivities((taskActivities) => {
+      infoNotify &&
+        infoNotify('Imported ' + taskActivities.length + ' task activities from REPLICON.')
+    })
     this.saveTaskActivitiesToFile(this._taskActivities)
   }
 
