@@ -3,7 +3,7 @@ import { PlatformOptions } from './model/platform.options.model'
 import { PlatformExportFormat, Task, TaskActivity } from './model'
 import { ElementHandle, HTTPRequest } from 'puppeteer'
 import { What } from './model/what.model'
-import { isWithinInterval, min as dateMin, parse, parseISO, isValid } from 'date-fns'
+import { isWithinInterval, min as dateMin, parse, parseISO, isValid, differenceInDays } from 'date-fns'
 import { enGB } from 'date-fns/locale'
 import partition from 'lodash/partition'
 import { WorkEntry } from './model/work-entry.model'
@@ -145,8 +145,14 @@ export class RepliconIntegration extends PlatformIntegration {
       }
 
       const [relevant, others] = partition(what, (w) => isWithinInterval(w.day, { start, end }))
-      await this.clearAllTasks()
-      await this.sleep(3)
+      
+      await this.reopenTimesheet()
+      if(differenceInDays(end, start) < 7) {
+        // clean only if only one week, not clean on month end
+        // TODO intelligent cleanup
+        await this.clearAllTasks()
+        await this.sleep(2)
+      }
 
       for (let i = 0; i < relevant.length; i++) {
         for (let j = 0; j < relevant[i].work.length; j++) {
@@ -157,10 +163,10 @@ export class RepliconIntegration extends PlatformIntegration {
             await this.addRow()
             await this.page.waitForTimeout(300)
             taskSearchButton = await this.clickElementWithContent(
-              '//span[contains(@class, "taskSelectorSearchByCategoryContainer")]//span[contains(@class, "placeholder") and contains(text(), "Select Project")]',
+              '//td[.//span[contains(@class, "taskSelectorSearchByCategoryContainer")]//span[contains(@class, "placeholder") and contains(text(), "Select Project")]]'
             )
           }
-
+          await this.sleep(1)
           await this.addNewTask(row, work, relevant[i].day, taskSearchButton)
         }
       }
@@ -426,12 +432,12 @@ export class RepliconIntegration extends PlatformIntegration {
 
   private async chooseTaskFromDropdown(
     row: ElementHandle<Element> | null,
-    taskSearchButton: ElementHandle<Element> | null,
+    taskdropdown: ElementHandle<Element> | null,
     work: WorkEntry,
   ) {
     if (!row) {
+      const taskSearchButton = await taskdropdown!.$('input[placeholder="Type to search"]')
       await taskSearchButton!.type(String(work.projectIntId))
-      await taskSearchButton!.click()
       await this.chooseTaskFromOptions(
         work.projectName + ' - ',
         'ul.divDropdownList > li.highlighted.hasChild',
@@ -441,7 +447,6 @@ export class RepliconIntegration extends PlatformIntegration {
         timeout: 5000,
       })
       await taskSearchButton!.type(work.taskCode + ' - ' + work.taskCode)
-      await taskSearchButton!.click()
       await this.chooseTaskFromOptions(
         work.taskCode + ' - ' + work.taskCode,
         'ul.divDropdownList > li.highlighted.flatTaskItem',
@@ -553,7 +558,16 @@ export class RepliconIntegration extends PlatformIntegration {
         work.taskCode,
       )
 
-      if (isMatch) {
+      const activityCell = await row.$('.activity')
+      if (!activityCell) continue
+      const isSameActivity = await activityCell.evaluate(
+        (el, taskActivity) => {
+          return el?.textContent?.trim() == taskActivity || el?.textContent?.trim() == "Select an Activity"
+        },
+        work.taskActivity
+      )
+
+      if (isMatch && isSameActivity) {
         return row
       }
     }
@@ -584,7 +598,7 @@ export class RepliconIntegration extends PlatformIntegration {
     }
   }
 
-  private async clearAllTasks() {
+  private async reopenTimesheet() {
     const reopenButton = await this.clickElementWithContent('//input[@value="Reopen"]')
     if (reopenButton) {
       await this.page.waitForXPath('//h1[text()="Reopen Timesheet"]')
@@ -593,7 +607,9 @@ export class RepliconIntegration extends PlatformIntegration {
       )
       await confirmReopenButton?.click()
     }
+  }
 
+  private async clearAllTasks() {
     const clearAllButton = await this.page.waitForSelector('input.clearall')
     await clearAllButton?.click()
     await this.page.waitForSelector('div[aria-label="Clear Timesheet Data"]')
@@ -607,6 +623,7 @@ export class RepliconIntegration extends PlatformIntegration {
   }
 
   private async finaliseTimesheet(submitTimesheets: boolean) {
+    await this.page.keyboard.press('Tab');
     if (submitTimesheets) {
       let submit = await this.clickElementWithContent(
         "//button[contains(text(), 'Submit for Approval')]",
