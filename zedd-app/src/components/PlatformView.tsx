@@ -357,8 +357,7 @@ export const PlatformView = observer((props: PlatformViewProps) => {
         (project) =>
           project.typ === 'REPLICON' &&
           project.projectName === task.projectName &&
-          project.taskCode &&
-          task.taskCode,
+          project.taskCode === task.taskCode
       )
       if (projectData) {
         const taskActivity = task.taskActivity || platformState.repliconActivity
