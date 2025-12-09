@@ -233,9 +233,7 @@ export const TaskEditor = observer(
           </Button>
         </Grid>
 
-        {value.platformType === 'REPLICON' &&
-          value.platformTaskIntId &&
-          value.platformTaskIntId !== '' && (
+        {value.platformTaskIntId && value.platformTaskIntId !== '' && (
             <>
               <Grid item xs={10} lg={11}>
                 <TaskActivitySelect
