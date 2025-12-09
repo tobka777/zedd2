@@ -234,37 +234,37 @@ export const TaskEditor = observer(
         </Grid>
 
         {value.platformTaskIntId && value.platformTaskIntId !== '' && (
-            <>
-              <Grid item xs={10} lg={11}>
-                <TaskActivitySelect
-                  value={value.taskActivityName}
-                  platformTask={platformState.resolveTask(value.platformTaskIntId as number)}
-                  disabled={value === state.getUndefinedTask()}
-                  label={`Activity for Task ${value && value.name}`}
-                  fullWidth
-                  style={{ flex: '1 1 auto' }}
-                  onChange={(taskActivity) => {
-                    state.slices.find((slice) => {
-                      if (slice.task.name === value.name) {
-                        slice.task.taskActivityName = taskActivity?.name ?? ''
-                      }
-                    })
-                  }}
-                  platformState={platformState}
-                />
-              </Grid>
-              <Grid item xs={2} lg={1}>
-                <Button
-                  style={{ width: '100%' }}
-                  disabled={!value || value === state.getUndefinedTask()}
-                  onClick={async () => await importRepliconTaskActivities()}
-                  endIcon={<ImportIcon />}
-                >
-                  Import
-                </Button>
-              </Grid>
-            </>
-          )}
+          <>
+            <Grid item xs={10} lg={11}>
+              <TaskActivitySelect
+                value={value.taskActivityName}
+                platformTask={platformState.resolveTask(value.platformTaskIntId as number)}
+                disabled={value === state.getUndefinedTask()}
+                label={`Activity for Task ${value && value.name}`}
+                fullWidth
+                style={{ flex: '1 1 auto' }}
+                onChange={(taskActivity) => {
+                  state.slices.find((slice) => {
+                    if (slice.task.name === value.name) {
+                      slice.task.taskActivityName = taskActivity?.name ?? ''
+                    }
+                  })
+                }}
+                platformState={platformState}
+              />
+            </Grid>
+            <Grid item xs={2} lg={1}>
+              <Button
+                style={{ width: '100%' }}
+                disabled={!value || value === state.getUndefinedTask()}
+                onClick={async () => await importRepliconTaskActivities()}
+                endIcon={<ImportIcon />}
+              >
+                Import
+              </Button>
+            </Grid>
+          </>
+        )}
         <Grid item xs={10} lg={11}>
           <TextField
             value={value.platformTaskComment}
