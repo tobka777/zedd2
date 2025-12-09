@@ -24,9 +24,9 @@ export const getEnvPathChromePath = async () => {
 export const getChromeVersion = async (chromePath: string) => {
   if (isWin) {
     const { stdout } = await promisify(exec)(
-      `wmic datafile where name=${JSON.stringify(chromePath)} get Version /value`,
+      `powershell -NoProfile -Command "(Get-Item '${chromePath}').VersionInfo.ProductVersion"`,
     )
-    return stdout.trim().replace(/^Version=/, '')
+    return stdout.trim()
   } else {
     const { stdout } = await promisify(exec)(`'${chromePath}' --version`)
     return stdout.substring(stdout.trim().lastIndexOf(' ') + 1).trim()
