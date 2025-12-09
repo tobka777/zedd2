@@ -361,9 +361,10 @@ export const PlatformView = observer((props: PlatformViewProps) => {
           task.taskCode,
       )
       if (projectData) {
+        const taskActivity = task.taskActivity || platformState.repliconActivity
         const groupTask: WorkEntry = {
           hours: 0,
-          id: generateId(projectData.intId, platformState.repliconActivity),
+          id: generateId(projectData.intId, taskActivity),
           projectName: projectData.projectName,
           projectIntId: projectData.projectIntId,
           taskIntId: projectData.intId,
@@ -371,13 +372,13 @@ export const PlatformView = observer((props: PlatformViewProps) => {
           platformType: projectData.typ,
           taskCode: projectData.taskCode,
           comment: '',
-          taskActivity: platformState.repliconActivity,
+          taskActivity: taskActivity,
           child: [],
         }
         const projectItems = projectTasksViewItems[isoDayStr(w.start)]
         const projectItem = projectItems?.find(
           (item) =>
-            item.projectName === projectData.projectName && item.taskCode === projectData.taskCode,
+            item.projectName === projectData.projectName && item.taskCode === projectData.taskCode && item.taskActivity === taskActivity,
         )
 
         if (projectItem) {
