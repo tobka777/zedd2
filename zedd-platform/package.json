@@ -36,12 +36,12 @@
     "fast-csv": "^4.3.6",
     "jszip": "^3.7.1",
     "lodash": "^4.17.21",
-    "puppeteer": "^19.11.1",
+    "puppeteer": "^24.8.2",
     "selenium-webdriver": "^4.1.1",
     "sleep-promise": "^9.1.0",
     "ts-node": "^10.5.0",
     "typescript": "^4.5.5",
-    "ws": "^8.5.0"
+    "ws": "^8.18.2"
   },
   "devDependencies": {
     "prettier": "^2.5.1"
