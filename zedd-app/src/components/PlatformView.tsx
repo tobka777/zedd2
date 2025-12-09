@@ -357,7 +357,7 @@ export const PlatformView = observer((props: PlatformViewProps) => {
         (project) =>
           project.typ === 'REPLICON' &&
           project.projectName === task.projectName &&
-          project.taskCode === task.taskCode
+          project.taskCode === task.taskCode,
       )
       if (projectData) {
         const taskActivity = task.taskActivity || platformState.repliconActivity
@@ -377,7 +377,9 @@ export const PlatformView = observer((props: PlatformViewProps) => {
         const projectItems = projectTasksViewItems[isoDayStr(w.start)]
         const projectItem = projectItems?.find(
           (item) =>
-            item.projectName === projectData.projectName && item.taskCode === projectData.taskCode && item.taskActivity === taskActivity,
+            item.projectName === projectData.projectName &&
+            item.taskCode === projectData.taskCode &&
+            item.taskActivity === taskActivity,
         )
 
         if (projectItem) {

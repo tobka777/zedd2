@@ -93,11 +93,13 @@ export class RepliconIntegration extends PlatformIntegration {
         this.page.on('response', async (res) => {
           try {
             if (res.request().method() === 'OPTIONS') return
-            const body = await res.text() 
+            const body = await res.text()
             if (!body.includes(':activity:')) return
 
-            const json = JSON.parse(body) 
-            const activityOptions = Array.isArray(json.d) ? json.d.map((option: TaskActivity) => option) : []
+            const json = JSON.parse(body)
+            const activityOptions = Array.isArray(json.d)
+              ? json.d.map((option: TaskActivity) => option)
+              : []
             await this.browser.close()
             resolve(activityOptions)
           } catch (error) {
