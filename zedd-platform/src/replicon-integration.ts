@@ -82,9 +82,6 @@ export class RepliconIntegration extends PlatformIntegration {
 
     await this.addRow()
     await this.page.waitForTimeout(300)
-    const taskSearchButton = await this.clickElementWithContent(
-      '//td[.//span[contains(@class, "taskSelectorSearchByCategoryContainer")]//span[contains(@class, "placeholder") and contains(text(), "Select Project")]]',
-    )
 
     const [activitySelectNode] = await this.page.$x("//a[contains(., 'Select an Activity')]")
     let activitySelect = activitySelectNode as unknown as ElementHandle<Element>
@@ -95,15 +92,14 @@ export class RepliconIntegration extends PlatformIntegration {
       const taskActivities = await new Promise<TaskActivity[]>((resolve, reject) => {
         this.page.on('response', async (res) => {
           try {
-            if ((await res.text()).includes(':activity:')) {
-              const jsonResponse = await res.json()
+            if (res.request().method() === 'OPTIONS') return
+            const body = await res.text() 
+            if (!body.includes(':activity:')) return
 
-              if (jsonResponse && Array.isArray(jsonResponse.d)) {
-                const activityOptions = jsonResponse.d.map((option: TaskActivity) => option)
-                await this.browser.close()
-                resolve(activityOptions)
-              }
-            }
+            const json = JSON.parse(body) 
+            const activityOptions = Array.isArray(json.d) ? json.d.map((option: TaskActivity) => option) : []
+            await this.browser.close()
+            resolve(activityOptions)
           } catch (error) {
             console.error('Error parsing JSON:', error)
             await this.browser.close()
