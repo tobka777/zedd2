@@ -1,10 +1,10 @@
 import {
   app,
   autoUpdater,
+  screen as electronScreen,
   getCurrentWindow,
   Menu,
   powerMonitor,
-  screen as electronScreen,
   shell,
   Tray,
 } from '@electron/remote'
@@ -12,20 +12,10 @@ import { BrowserWindow, ipcRenderer, MenuItemConstructorOptions, Rectangle } fro
 import { autorun, computed, configure as configureMobx } from 'mobx'
 import * as path from 'path'
 import * as React from 'react'
+import { createRoot } from 'react-dom/client'
 import 'win-ca' // use windows root certificates
 import { AppState, format, formatInterval, TimeSlice } from './AppState'
 import { PlatformState } from './PlatformState'
-import { AppGui } from './components/AppGui'
-import './index.css'
-import { createRoot } from 'react-dom/client'
-import {
-  checkCgJira,
-  getLinksFromString,
-  getTasksForSearchString,
-  getTasksFromAssignedJiraIssues,
-  initJiraClient,
-} from './plJiraConnector'
-import { fileExists, floor, formatHoursBT, formatHoursHHmm, mkdirIfNotExists } from './util'
 import { ZeddSettings } from './ZeddSettings'
 import {
   getChromeDriverVersion,
@@ -34,7 +24,18 @@ import {
   getNonEnvPathChromePath,
   installChromeDriver,
 } from './chromeDriverMgmt'
+import { AppGui } from './components/AppGui'
+import './index.css'
 import { suggestedTaskMenuItems } from './menuUtil'
+import { startOttzTalkerServer } from './ottzTalkerServer'
+import {
+  checkCgJira,
+  getLinksFromString,
+  getTasksForSearchString,
+  getTasksFromAssignedJiraIssues,
+  initJiraClient,
+} from './plJiraConnector'
+import { fileExists, floor, formatHoursBT, formatHoursHHmm, mkdirIfNotExists } from './util'
 
 configureMobx({ enforceActions: 'never' })
 
@@ -169,6 +170,22 @@ async function setup() {
 
   state.startInterval(() => powerMonitor?.getSystemIdleTime() ?? 0)
   state.config = config
+
+  try {
+    const tokenFilePath = path.join(saveDir, 'ottztalker.token')
+    const { token } = await startOttzTalkerServer({
+      appState: state,
+      platformState,
+      tokenFilePath,
+    })
+    console.log(
+      'OTTZTalker REST server running on http://127.0.0.1:12345 (token in ' + tokenFilePath + ')',
+    )
+    console.log('OTTZTalker token: ' + token)
+  } catch (e) {
+    console.error('Failed to start OTTZTalker REST server')
+    console.error(e)
+  }
   let lastAwaySlice: string | undefined
   state.idleSliceNotificationCallback = (when) => {
     lastAwaySlice = formatInterval(when) + ' ' + '$$$OTHER$$$'
