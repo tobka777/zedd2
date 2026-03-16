@@ -227,7 +227,7 @@ export async function startOttzTalkerServer({
       const pathname = url.pathname
 
       if (req.method === 'GET' && pathname === '/platform') {
-        sendJson(res, 200, platformState.tasks)
+        sendJson(res, 200, { tasks: platformState.tasks, ztalkerVersion: 2 })
         return
       }
 
