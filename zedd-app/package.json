@@ -47,7 +47,8 @@
           "name": "@electron-forge/maker-squirrel",
           "config": {
             "name": "zedd",
-            "remoteReleases": "https://github.com/tobka777/zedd2/releases/latest/download"
+            "remoteReleases": "https://github.com/tobka777/zedd2/releases/latest/download",
+            "noDelta": true
           }
         },
         {
