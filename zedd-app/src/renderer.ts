@@ -9,6 +9,8 @@ import {
   Tray,
 } from '@electron/remote'
 import { BrowserWindow, ipcRenderer, MenuItemConstructorOptions, Rectangle } from 'electron'
+import { format as formatDate, getISODay, startOfISOWeek } from 'date-fns'
+import { sum } from 'lodash'
 import { autorun, computed, configure as configureMobx } from 'mobx'
 import * as path from 'path'
 import * as React from 'react'
@@ -453,6 +455,48 @@ async function setup() {
     document.title = workedTime + ' ' + timingInfo
   })
 
+  // Keys are date-specific (e.g. 'day-2026-04-07'), so each day/week gets exactly one notification.
+  const sentNotifications = new Set<string>()
+  const cleanupTargetNotificationAutorun = autorun(() => {
+    if (!config.targetNotificationsEnabled) return
+    const now = new Date()
+    const advanceHours = config.targetNotificationAdvanceMinutes / 60
+
+    // Daily notification
+    const dayTarget = config.workmask[getISODay(now) - 1] || 0
+    if (dayTarget > 0) {
+      const dayWorked = state.getDayWorkedHours(now)
+      const dayKey = 'day-' + formatDate(now, 'yyyy-MM-dd')
+      if (!sentNotifications.has(dayKey) && dayWorked >= dayTarget - advanceHours) {
+        sentNotifications.add(dayKey)
+        showNotification(
+          'Daily target almost reached',
+          `Tracked ${formatHoursHHmm(dayWorked)} of ${dayTarget}h daily target.`,
+          () => {
+            // no action needed for target notifications
+          },
+        )
+      }
+    }
+
+    // Weekly notification
+    const weekTarget = sum(config.workmask)
+    if (weekTarget > 0) {
+      const weekWorked = state.getWeekWorkedHours(now)
+      const weekKey = 'week-' + formatDate(startOfISOWeek(now), 'yyyy-MM-dd')
+      if (!sentNotifications.has(weekKey) && weekWorked >= weekTarget - advanceHours) {
+        sentNotifications.add(weekKey)
+        showNotification(
+          'Weekly target almost reached',
+          `Tracked ${formatHoursHHmm(weekWorked)} of ${weekTarget}h weekly target.`,
+          () => {
+            // no action needed for target notifications
+          },
+        )
+      }
+    }
+  })
+
   currentWindowEvents.push(
     ['blur', () => (state.windowFocused = false)],
     ['focus', () => (state.windowFocused = true)],
@@ -521,6 +565,7 @@ async function setup() {
       cleanupIconAutorun()
       cleanupTrayMenuAutorun()
       cleanupTrayTooltipAutorun()
+      cleanupTargetNotificationAutorun()
       state.cleanup()
       tray.destroy()
       cleanupAutoUpdater()

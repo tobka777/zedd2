@@ -198,6 +198,40 @@ export const SettingsDialog = observer(
             </Grid>
 
             <Grid item xs={4}>
+              <FormLabel>Target Notifications</FormLabel>
+              <div style={{ fontSize: 'small' }}>
+                Show a system notification when the daily or weekly hour target is almost reached.
+              </div>
+            </Grid>
+            <Grid item xs={8} component={'label'}>
+              Off
+              <Switch
+                checked={settings.targetNotificationsEnabled}
+                onChange={(_, checked) => (settings.targetNotificationsEnabled = checked)}
+              />
+              On
+            </Grid>
+
+            <Grid item xs={4}>
+              <FormLabel>Notification Advance</FormLabel>
+              <div style={{ fontSize: 'small' }}>
+                How many minutes before reaching the daily/weekly target the notification should
+                appear.
+              </div>
+            </Grid>
+            <Grid item xs={8}>
+              <TextField
+                type='number'
+                value={settings.targetNotificationAdvanceMinutes}
+                onChange={(e) => (settings.targetNotificationAdvanceMinutes = +e.target.value)}
+                InputProps={{
+                  endAdornment: <InputAdornment position='end'>minutes</InputAdornment>,
+                }}
+                inputProps={{ min: 0, step: 1 }}
+              />
+            </Grid>
+
+            <Grid item xs={4}>
               <FormLabel>Keep Always On Top</FormLabel>
               <div style={{ fontSize: 'small' }}>
                 Will minimize to always-on-top after losing focus.

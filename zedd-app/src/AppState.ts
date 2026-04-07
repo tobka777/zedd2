@@ -646,6 +646,11 @@ export class AppState {
     )
   }
 
+  public getWeekWorkedHours(weekDate: Date): number {
+    return sum(
+      eachDayOfInterval(isoWeekInterval(weekDate)).map((day) => this.getDayWorkedHours(day)),
+    )
+  }
   public getDayProgress(day: Date): number {
     const dayHours = this.getDayWorkedHours(day)
     const dayShouldWorkHours = this.config.workmask[getISODay(day) - 1] || 0

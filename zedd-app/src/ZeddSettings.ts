@@ -126,4 +126,19 @@ export class ZeddSettings {
   @observable
   @serializable(raw())
   public federalState: { code: string; label: string } | null = { code: '', label: '' }
+
+  /**
+   * Whether to show a system notification when the daily or weekly hour target is about to be reached.
+   */
+  @observable
+  @serializable
+  public targetNotificationsEnabled = true
+
+  /**
+   * Minutes before reaching the daily/weekly hour target when the notification should pop up.
+   * E.g. 15 means the notification fires when 15 minutes of the target remain.
+   */
+  @observable
+  @serializable
+  public targetNotificationAdvanceMinutes = 15
 }
