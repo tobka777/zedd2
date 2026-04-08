@@ -21,7 +21,7 @@ import { useTheme } from '@mui/material/styles'
 import * as React from 'react'
 import { useEffect, useState } from 'react'
 import { dialog } from '@electron/remote'
-import { MoreHoriz as PickFileIcon } from '@mui/icons-material'
+import { MoreHoriz as PickFileIcon, Add as AddIcon, Delete as DeleteIcon } from '@mui/icons-material'
 import { observer } from 'mobx-react-lite'
 import { PlatformState } from '../PlatformState'
 import { ZeddSettings } from '../ZeddSettings'
@@ -213,22 +213,43 @@ export const SettingsDialog = observer(
             </Grid>
 
             <Grid item xs={4}>
-              <FormLabel>Notification Advance</FormLabel>
+              <FormLabel>Notification Offsets</FormLabel>
               <div style={{ fontSize: 'small' }}>
-                How many minutes before reaching the daily/weekly target the notification should
-                appear.
+                Minutes before (+) or after (−) the daily/weekly target when a notification fires.
+                Add multiple entries for several reminders.
               </div>
             </Grid>
             <Grid item xs={8}>
-              <TextField
-                type='number'
-                value={settings.targetNotificationAdvanceMinutes}
-                onChange={(e) => (settings.targetNotificationAdvanceMinutes = +e.target.value)}
-                InputProps={{
-                  endAdornment: <InputAdornment position='end'>minutes</InputAdornment>,
-                }}
-                inputProps={{ min: 0, step: 1 }}
-              />
+              {settings.targetNotificationAdvanceMinutes.map((advMin, idx) => (
+                <div key={idx} style={{ display: 'flex', alignItems: 'center', marginBottom: 4 }}>
+                  <TextField
+                    type='number'
+                    value={advMin}
+                    onChange={(e) => {
+                      settings.targetNotificationAdvanceMinutes.splice(idx, 1, +e.target.value)
+                    }}
+                    InputProps={{
+                      endAdornment: <InputAdornment position='end'>minutes</InputAdornment>,
+                    }}
+                    inputProps={{ step: 1 }}
+                    style={{ width: '12em' }}
+                  />
+                  <IconButton
+                    size='small'
+                    aria-label='remove notification offset'
+                    onClick={() => settings.targetNotificationAdvanceMinutes.splice(idx, 1)}
+                  >
+                    <DeleteIcon fontSize='small' />
+                  </IconButton>
+                </div>
+              ))}
+              <Button
+                size='small'
+                startIcon={<AddIcon />}
+                onClick={() => settings.targetNotificationAdvanceMinutes.push(0)}
+              >
+                Add
+              </Button>
             </Grid>
 
             <Grid item xs={4}>

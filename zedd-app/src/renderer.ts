@@ -455,44 +455,64 @@ async function setup() {
     document.title = workedTime + ' ' + timingInfo
   })
 
-  // Keys are date-specific (e.g. 'day-2026-04-07'), so each day/week gets exactly one notification.
+  // Keys are date+advance-specific (e.g. 'day-2026-04-07-adv-15'), so each threshold gets
+  // exactly one notification per day/week, and the set naturally prevents re-firing.
   const sentNotifications = new Set<string>()
   const cleanupTargetNotificationAutorun = autorun(() => {
     if (!config.targetNotificationsEnabled) return
     const now = new Date()
-    const advanceHours = config.targetNotificationAdvanceMinutes / 60
+    const advanceList = config.targetNotificationAdvanceMinutes
 
-    // Daily notification
-    const dayTarget = config.workmask[getISODay(now) - 1] || 0
-    if (dayTarget > 0) {
-      const dayWorked = state.getDayWorkedHours(now)
-      const dayKey = 'day-' + formatDate(now, 'yyyy-MM-dd')
-      if (!sentNotifications.has(dayKey) && dayWorked >= dayTarget - advanceHours) {
-        sentNotifications.add(dayKey)
-        showNotification(
-          'Daily target almost reached',
-          `Tracked ${formatHoursHHmm(dayWorked)} of ${dayTarget}h daily target.`,
-          () => {
-            // no action needed for target notifications
-          },
-        )
+    const notifyOnce = (key: string, title: string, body: string) => {
+      if (!sentNotifications.has(key)) {
+        sentNotifications.add(key)
+        showNotification(title, body, () => {
+          // no action needed for target notifications
+        })
       }
     }
 
-    // Weekly notification
-    const weekTarget = sum(config.workmask)
-    if (weekTarget > 0) {
-      const weekWorked = state.getWeekWorkedHours(now)
-      const weekKey = 'week-' + formatDate(startOfISOWeek(now), 'yyyy-MM-dd')
-      if (!sentNotifications.has(weekKey) && weekWorked >= weekTarget - advanceHours) {
-        sentNotifications.add(weekKey)
-        showNotification(
-          'Weekly target almost reached',
-          `Tracked ${formatHoursHHmm(weekWorked)} of ${weekTarget}h weekly target.`,
-          () => {
-            // no action needed for target notifications
-          },
-        )
+    const describeOffset = (advMin: number): string => {
+      if (advMin > 0) return `${advMin} min before target`
+      if (advMin === 0) return 'target reached'
+      return `${-advMin} min past target`
+    }
+
+    const getTitle = (advMin: number, scope: 'Daily' | 'Weekly'): string => {
+      if (advMin > 0) return `${scope} target almost reached`
+      if (advMin === 0) return `${scope} target reached`
+      return `${scope} overtime`
+    }
+
+    for (const advMin of advanceList) {
+      const advanceHours = advMin / 60
+
+      // Daily notification
+      const dayTarget = config.workmask[getISODay(now) - 1] || 0
+      if (dayTarget > 0) {
+        const dayWorked = state.getDayWorkedHours(now)
+        const dayKey = `day-${formatDate(now, 'yyyy-MM-dd')}-adv-${advMin}`
+        if (dayWorked >= dayTarget - advanceHours) {
+          notifyOnce(
+            dayKey,
+            getTitle(advMin, 'Daily'),
+            `Tracked ${formatHoursHHmm(dayWorked)} of ${dayTarget}h daily target (${describeOffset(advMin)}).`,
+          )
+        }
+      }
+
+      // Weekly notification
+      const weekTarget = sum(config.workmask)
+      if (weekTarget > 0) {
+        const weekWorked = state.getWeekWorkedHours(now)
+        const weekKey = `week-${formatDate(startOfISOWeek(now), 'yyyy-MM-dd')}-adv-${advMin}`
+        if (weekWorked >= weekTarget - advanceHours) {
+          notifyOnce(
+            weekKey,
+            getTitle(advMin, 'Weekly'),
+            `Tracked ${formatHoursHHmm(weekWorked)} of ${weekTarget}h weekly target (${describeOffset(advMin)}).`,
+          )
+        }
       }
     }
   })

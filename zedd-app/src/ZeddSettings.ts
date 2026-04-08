@@ -135,10 +135,18 @@ export class ZeddSettings {
   public targetNotificationsEnabled = true
 
   /**
-   * Minutes before reaching the daily/weekly hour target when the notification should pop up.
-   * E.g. 15 means the notification fires when 15 minutes of the target remain.
+   * List of offsets (in minutes) before the daily/weekly hour target when a notification fires.
+   * Positive values trigger before the target (e.g. 15 = 15 min remaining).
+   * Zero triggers exactly on the target.
+   * Negative values trigger after the target (overtime warnings).
+   * Migrated automatically from the legacy single-number format.
    */
   @observable
-  @serializable
-  public targetNotificationAdvanceMinutes = 15
+  @serializable(
+    custom(
+      (x: number[]) => x,
+      (x: unknown) => (Array.isArray(x) ? x : x != null ? [x as number] : [60, 15, 0]),
+    ),
+  )
+  public targetNotificationAdvanceMinutes: number[] = [60, 15, 0]
 }
