@@ -149,4 +149,12 @@ export class ZeddSettings {
     ),
   )
   public targetNotificationAdvanceMinutes: number[] = [60, 15, 0]
+
+  /**
+   * Whether to flash the taskbar / window icon when a target notification fires.
+   * The flash is cleared automatically when the window gains focus.
+   */
+  @observable
+  @serializable
+  public targetNotificationIconAlert = true
 }

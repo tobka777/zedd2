@@ -4,6 +4,7 @@ import {
   screen as electronScreen,
   getCurrentWindow,
   Menu,
+  nativeImage,
   powerMonitor,
   shell,
   Tray,
@@ -73,6 +74,33 @@ function showNotification(title: string, text: string, cb: () => void) {
     body: text,
   })
   notification.onclick = cb
+}
+
+function createNotificationDotImage() {
+  const size = 16
+  const canvas = document.createElement('canvas')
+  canvas.width = size
+  canvas.height = size
+  const ctx = canvas.getContext('2d')!
+  ctx.fillStyle = '#FF4444'
+  ctx.beginPath()
+  ctx.arc(size / 2, size / 2, size / 2 - 1, 0, 2 * Math.PI)
+  ctx.fill()
+  return nativeImage.createFromDataURL(canvas.toDataURL())
+}
+
+function startIconAlert() {
+  getCurrentWindow().flashFrame(true)
+  if (isWin) {
+    getCurrentWindow().setOverlayIcon(createNotificationDotImage(), 'Notification')
+  }
+}
+
+function clearIconAlert() {
+  getCurrentWindow().flashFrame(false)
+  if (isWin) {
+    getCurrentWindow().setOverlayIcon(null, '')
+  }
 }
 
 function quit() {
@@ -469,6 +497,9 @@ async function setup() {
         showNotification(title, body, () => {
           // no action needed for target notifications
         })
+        if (config.targetNotificationIconAlert) {
+          startIconAlert()
+        }
       }
     }
 
@@ -519,7 +550,13 @@ async function setup() {
 
   currentWindowEvents.push(
     ['blur', () => (state.windowFocused = false)],
-    ['focus', () => (state.windowFocused = true)],
+    [
+      'focus',
+      () => {
+        state.windowFocused = true
+        clearIconAlert()
+      },
+    ],
   )
 
   autorun(

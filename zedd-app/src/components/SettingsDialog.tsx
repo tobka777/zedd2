@@ -253,6 +253,22 @@ export const SettingsDialog = observer(
             </Grid>
 
             <Grid item xs={4}>
+              <FormLabel>Icon Alert</FormLabel>
+              <div style={{ fontSize: 'small' }}>
+                Flash the taskbar icon when a target notification fires. Clears when the window is
+                focused.
+              </div>
+            </Grid>
+            <Grid item xs={8} component={'label'}>
+              Off
+              <Switch
+                checked={settings.targetNotificationIconAlert}
+                onChange={(_, checked) => (settings.targetNotificationIconAlert = checked)}
+              />
+              On
+            </Grid>
+
+            <Grid item xs={4}>
               <FormLabel>Keep Always On Top</FormLabel>
               <div style={{ fontSize: 'small' }}>
                 Will minimize to always-on-top after losing focus.
