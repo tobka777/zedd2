@@ -4,7 +4,7 @@ import { Autocomplete, TextField, Chip } from '@mui/material'
 import { StandardTextFieldProps } from '@mui/material/TextField'
 import { PlatformState } from '../PlatformState'
 import { Task } from 'zedd-platform'
-import { rankByWordPrefixSimilarity } from '../search'
+import { rankByWordPrefixSimilarity, tokenizeSearchWords } from '../search'
 
 export type PlatformTaskSelectProps = {
   platformState: PlatformState
@@ -22,6 +22,16 @@ export const PlatformTaskSelect = observer(
     ...textFieldProps
   }: PlatformTaskSelectProps) => {
     const maxEntries = 60
+    const searchableTasks = React.useMemo(
+      () =>
+        platformState.tasks.map((task) => {
+          const text = [task.projectName, task.name, task.projectIntId, task.taskCode]
+            .filter((x) => x !== undefined && x !== null && x !== '')
+            .join(' ')
+          return { item: task, text, words: tokenizeSearchWords(text) }
+        }),
+      [platformState.tasks],
+    )
 
     const resolvedVal = (value !== undefined && platformState.resolveTask(value)) || undefined
 
@@ -31,14 +41,9 @@ export const PlatformTaskSelect = observer(
         options={platformState.tasks}
         disabled={disabled}
         style={style}
-        filterOptions={(options: Task[], state) => {
+        filterOptions={(_options: Task[], state) => {
           return rankByWordPrefixSimilarity(
-            options.map((task) => ({
-              item: task,
-              text: [task.projectName, task.name, task.projectIntId, task.taskCode]
-                .filter((x) => x !== undefined && x !== null && x !== '')
-                .join(' '),
-            })),
+            searchableTasks,
             state.inputValue,
             maxEntries,
           )

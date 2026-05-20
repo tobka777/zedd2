@@ -1,11 +1,12 @@
 export type SearchableOption<T> = {
   item: T
   text: string
+  words?: string[]
 }
 
 const WORD_SEPARATOR_REGEX = /[^\p{L}\p{N}]+/gu
 
-const splitWords = (input: string): string[] =>
+export const tokenizeSearchWords = (input: string): string[] =>
   input
     .toLowerCase()
     .trim()
@@ -17,15 +18,41 @@ export const rankByWordPrefixSimilarity = <T>(
   query: string,
   maxEntries: number,
 ): T[] => {
-  const queryWords = splitWords(query)
+  const queryWords = tokenizeSearchWords(query)
   if (queryWords.length === 0) {
     return options.slice(0, maxEntries).map((x) => x.item)
   }
 
-  const scored: Array<{ item: T; tokenExcess: number; textLength: number; text: string }> = []
+  const isBetter = (
+    a: { tokenExcess: number; textLength: number; text: string },
+    b: { tokenExcess: number; textLength: number; text: string },
+  ): boolean =>
+    a.tokenExcess < b.tokenExcess ||
+    (a.tokenExcess === b.tokenExcess &&
+      (a.textLength < b.textLength ||
+        (a.textLength === b.textLength && a.text.localeCompare(b.text) < 0)))
+
+  const insertSorted = (
+    top: Array<{ item: T; tokenExcess: number; textLength: number; text: string }>,
+    candidate: { item: T; tokenExcess: number; textLength: number; text: string },
+  ) => {
+    let insertAt = top.length
+    for (let i = 0; i < top.length; i++) {
+      if (isBetter(candidate, top[i])) {
+        insertAt = i
+        break
+      }
+    }
+    top.splice(insertAt, 0, candidate)
+    if (top.length > maxEntries) {
+      top.pop()
+    }
+  }
+
+  const top: Array<{ item: T; tokenExcess: number; textLength: number; text: string }> = []
   for (let i = 0; i < options.length; i++) {
     const option = options[i]
-    const optionWords = splitWords(option.text)
+    const optionWords = option.words ?? tokenizeSearchWords(option.text)
     if (optionWords.length === 0) continue
 
     let tokenExcess = 0
@@ -49,20 +76,17 @@ export const rankByWordPrefixSimilarity = <T>(
     }
 
     if (fullyMatched) {
-      scored.push({
+      const scored = {
         item: option.item,
         tokenExcess,
         textLength: option.text.length,
         text: option.text,
-      })
+      }
+      if (top.length < maxEntries || isBetter(scored, top[top.length - 1])) {
+        insertSorted(top, scored)
+      }
     }
   }
 
-  scored.sort((a, b) => {
-    if (a.tokenExcess !== b.tokenExcess) return a.tokenExcess - b.tokenExcess
-    if (a.textLength !== b.textLength) return a.textLength - b.textLength
-    return a.text.localeCompare(b.text)
-  })
-
-  return scored.slice(0, maxEntries).map((x) => x.item)
+  return top.map((x) => x.item)
 }

@@ -5,7 +5,7 @@ import * as React from 'react'
 import { PlatformState } from '../PlatformState'
 import { TaskActivity } from 'zedd-platform/out/src/model/task-activity.model'
 import { Task } from 'zedd-platform'
-import { rankByWordPrefixSimilarity } from '../search'
+import { rankByWordPrefixSimilarity, tokenizeSearchWords } from '../search'
 
 export type TaskActivitySelectProps = {
   platformState: PlatformState
@@ -25,6 +25,14 @@ export const TaskActivitySelect = observer(
     ...textFieldProps
   }: TaskActivitySelectProps) => {
     const maxEntries = 60
+    const searchableActivities = React.useMemo(
+      () =>
+        (platformState.taskActivities ?? []).map((taskActivity) => {
+          const text = taskActivity?.displayText ?? taskActivity?.name ?? ''
+          return { item: taskActivity, text, words: tokenizeSearchWords(text) }
+        }),
+      [platformState.taskActivities],
+    )
 
     const resolvedVal = (value !== undefined && platformState.resolveActivity(value)) || undefined
 
@@ -35,12 +43,9 @@ export const TaskActivitySelect = observer(
         options={platformState.taskActivities ?? []}
         disabled={disabled}
         style={style}
-        filterOptions={(options: TaskActivity[], state) => {
+        filterOptions={(_options: TaskActivity[], state) => {
           return rankByWordPrefixSimilarity(
-            options.map((taskActivity) => ({
-              item: taskActivity,
-              text: taskActivity?.displayText ?? taskActivity?.name ?? '',
-            })),
+            searchableActivities,
             state.inputValue,
             maxEntries,
           )
