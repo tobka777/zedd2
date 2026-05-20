@@ -5,6 +5,7 @@ import * as React from 'react'
 import { PlatformState } from '../PlatformState'
 import { TaskActivity } from 'zedd-platform/out/src/model/task-activity.model'
 import { Task } from 'zedd-platform'
+import { rankByWordPrefixSimilarity } from '../search'
 
 export type TaskActivitySelectProps = {
   platformState: PlatformState
@@ -35,10 +36,14 @@ export const TaskActivitySelect = observer(
         disabled={disabled}
         style={style}
         filterOptions={(options: TaskActivity[], state) => {
-          const input = state.inputValue.toLowerCase().trim()
-          return options
-            .filter((task) => task?.displayText?.toLowerCase().includes(input))
-            .slice(0, maxEntries)
+          return rankByWordPrefixSimilarity(
+            options.map((taskActivity) => ({
+              item: taskActivity,
+              text: taskActivity?.displayText ?? taskActivity?.name ?? '',
+            })),
+            state.inputValue,
+            maxEntries,
+          )
         }}
         onChange={(_: unknown, taskActivity: TaskActivity | null) =>
           onChange?.(taskActivity ?? undefined)

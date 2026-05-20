@@ -4,6 +4,7 @@ import { Autocomplete, TextField, Chip } from '@mui/material'
 import { StandardTextFieldProps } from '@mui/material/TextField'
 import { PlatformState } from '../PlatformState'
 import { Task } from 'zedd-platform'
+import { rankByWordPrefixSimilarity } from '../search'
 
 export type PlatformTaskSelectProps = {
   platformState: PlatformState
@@ -31,27 +32,14 @@ export const PlatformTaskSelect = observer(
         disabled={disabled}
         style={style}
         filterOptions={(options: Task[], state) => {
-          const result = []
-          const inputParts = state.inputValue
-            .toLowerCase()
-            .replace('/', ' ')
-            .trim()
-            .split(/[\s*]+/)
-          for (let i = 0; i < options.length && result.length <= maxEntries; i++) {
-            const task = options[i]
-            if (
-              inputParts.every(
-                (ip) =>
-                  task.name.toLowerCase().includes(ip) ||
-                  task.projectName.toLowerCase().includes(ip) ||
-                  task.projectIntId.toLocaleString().includes(ip) ||
-                  task.taskCode.toLowerCase().includes(ip),
-              )
-            ) {
-              result.push(task)
-            }
-          }
-          return result
+          return rankByWordPrefixSimilarity(
+            options.map((task) => ({
+              item: task,
+              text: `${task.projectName} ${task.name} ${task.projectIntId} ${task.taskCode}`,
+            })),
+            state.inputValue,
+            maxEntries,
+          )
         }}
         onChange={(_: unknown, task: Task | undefined) => onChange(task?.intId)}
         value={resolvedVal ?? null}
