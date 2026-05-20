@@ -41,7 +41,7 @@ export const PlatformTaskSelect = observer(
         options={platformState.tasks}
         disabled={disabled}
         style={style}
-        filterOptions={(_options: Task[], state) => {
+        filterOptions={(_unusedOptions: Task[], state) => {
           return rankByWordPrefixSimilarity(
             searchableTasks,
             state.inputValue,

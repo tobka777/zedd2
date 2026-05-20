@@ -43,7 +43,7 @@ export const TaskActivitySelect = observer(
         options={platformState.taskActivities ?? []}
         disabled={disabled}
         style={style}
-        filterOptions={(_options: TaskActivity[], state) => {
+        filterOptions={(_unusedOptions: TaskActivity[], state) => {
           return rankByWordPrefixSimilarity(
             searchableActivities,
             state.inputValue,
