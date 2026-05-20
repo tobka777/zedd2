@@ -35,7 +35,9 @@ export const PlatformTaskSelect = observer(
           return rankByWordPrefixSimilarity(
             options.map((task) => ({
               item: task,
-              text: `${task.projectName} ${task.name} ${task.projectIntId} ${task.taskCode}`,
+              text: `${task.projectName ?? ''} ${task.name ?? ''} ${task.projectIntId ?? ''} ${
+                task.taskCode ?? ''
+              }`,
             })),
             state.inputValue,
             maxEntries,

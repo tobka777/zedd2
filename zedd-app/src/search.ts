@@ -22,7 +22,7 @@ export const rankByWordPrefixSimilarity = <T>(
     return options.slice(0, maxEntries).map((x) => x.item)
   }
 
-  const scored = []
+  const scored: Array<{ item: T; tokenExcess: number; textLength: number; text: string }> = []
   for (let i = 0; i < options.length; i++) {
     const option = options[i]
     const optionWords = splitWords(option.text)
