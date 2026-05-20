@@ -32,20 +32,20 @@ export const rankByWordPrefixSimilarity = <T>(
     let fullyMatched = true
     for (let q = 0; q < queryWords.length; q++) {
       const queryWord = queryWords[q]
-      let bestMatchLength = Number.POSITIVE_INFINITY
+      let shortestMatchLength = Number.POSITIVE_INFINITY
       for (let ow = 0; ow < optionWords.length; ow++) {
         const optionWord = optionWords[ow]
         if (optionWord.startsWith(queryWord)) {
-          if (optionWord.length < bestMatchLength) {
-            bestMatchLength = optionWord.length
+          if (optionWord.length < shortestMatchLength) {
+            shortestMatchLength = optionWord.length
           }
         }
       }
-      if (bestMatchLength === Number.POSITIVE_INFINITY) {
+      if (shortestMatchLength === Number.POSITIVE_INFINITY) {
         fullyMatched = false
         break
       }
-      tokenExcess += bestMatchLength - queryWord.length
+      tokenExcess += shortestMatchLength - queryWord.length
     }
 
     if (fullyMatched) {
