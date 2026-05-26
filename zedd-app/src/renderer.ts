@@ -26,6 +26,7 @@ import {
   getTasksFromAssignedJiraIssues,
   initJiraClient,
 } from './plJiraConnector'
+import { deriveTeamsAutoSwitchTask, isTeamsCallOrMeetingTitle } from './teamsAutoSwitch'
 import { fileExists, floor, formatHoursBT, formatHoursHHmm, mkdirIfNotExists } from './util'
 import { ZeddSettings } from './ZeddSettings'
 import {
@@ -72,8 +73,7 @@ function getActiveTeamsCallTitle(): Promise<string | null> {
           .map((t) => t.trim())
           .filter(Boolean)
         for (const title of titles) {
-          const lc = title.toLowerCase()
-          if (lc.includes('meeting') || lc.includes('call') || lc.includes('besprechung')) {
+          if (isTeamsCallOrMeetingTitle(title)) {
             resolve(title)
             return
           }
@@ -346,9 +346,12 @@ async function setup() {
       const callTitle = await getActiveTeamsCallTitle()
       if (callTitle && !teamsCallActive) {
         teamsCallActive = true
-        const taskName = config.teamsTaskName || 'teams meeting'
-        state.currentTask = state.getTaskForName(taskName)
-        d('Teams call detected, switched to task:', taskName)
+        const teamsTask = deriveTeamsAutoSwitchTask(callTitle, config.teamsTaskName)
+        state.currentTask = state.getTaskForNameWithDefaults(teamsTask.taskName, {
+          taskActivityName: teamsTask.taskActivityName,
+          platformTaskComment: teamsTask.kind === 'meeting' ? teamsTask.platformTaskComment : '',
+        })
+        d('Teams call detected, switched to task:', teamsTask.taskName)
       } else if (!callTitle && teamsCallActive) {
         teamsCallActive = false
       }

@@ -136,7 +136,7 @@ export class ZeddSettings {
   public teamsAutoSwitch: boolean = false
 
   /**
-   * Task name to switch to when a Teams call/meeting is detected.
+   * Fallback task name when a Teams call/meeting title cannot be converted into a task name.
    * Defaults to "teams meeting".
    */
   @observable

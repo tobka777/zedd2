@@ -388,9 +388,9 @@ export const SettingsDialog = observer(
             </Grid>
 
             <Grid item xs={4}>
-              <FormLabel>Teams Task Name</FormLabel>
+              <FormLabel>Teams Fallback Task Name</FormLabel>
               <div style={{ fontSize: 'small' }}>
-                Task name to switch to when a Teams call is detected. Defaults to "teams meeting".
+                Used only if the Teams window title cannot be converted into a task/activity name.
               </div>
             </Grid>
             <Grid item xs={8}>

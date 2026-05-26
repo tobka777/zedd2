@@ -714,10 +714,40 @@ export class AppState {
       return this.getUndefinedTask()
     }
     const taskNameLC = taskName.toLowerCase()
-    return (
+    const existingTask =
       this.tasks.find((t) => taskNameLC === t.name.toLowerCase()) ||
-      this.assignedIssueTasks.find((t) => taskNameLC === t.name.toLowerCase()) ||
-      new Task(taskName, [])
+      this.assignedIssueTasks.find((t) => taskNameLC === t.name.toLowerCase())
+    if (existingTask) {
+      return existingTask
+    }
+    return name instanceof Task ? name : new Task(taskName, [])
+  }
+
+  public getTaskForNameWithDefaults(
+    name: Task | string | undefined,
+    defaults: {
+      taskActivityName?: string
+      platformTaskComment?: string
+      platformType?: PlatformType
+    },
+  ): Task {
+    const existingTask = this.getTaskForName(name)
+    if (
+      this.tasks.includes(existingTask) ||
+      this.assignedIssueTasks.includes(existingTask) ||
+      name instanceof Task
+    ) {
+      return existingTask
+    }
+
+    return new Task(
+      existingTask.name,
+      [],
+      defaults.platformType,
+      defaults.taskActivityName,
+      undefined,
+      undefined,
+      defaults.platformTaskComment,
     )
   }
 
