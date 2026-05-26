@@ -390,7 +390,8 @@ export const SettingsDialog = observer(
             <Grid item xs={4}>
               <FormLabel>Teams Fallback Task Name</FormLabel>
               <div style={{ fontSize: 'small' }}>
-                Used only if the Teams window title cannot be converted into a task/activity name.
+                Used when Teams is detected but no call participant or meeting name can be
+                extracted from the window title.
               </div>
             </Grid>
             <Grid item xs={8}>

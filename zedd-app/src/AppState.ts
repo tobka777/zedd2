@@ -714,13 +714,11 @@ export class AppState {
       return this.getUndefinedTask()
     }
     const taskNameLC = taskName.toLowerCase()
-    const existingTask =
+    return (
       this.tasks.find((t) => taskNameLC === t.name.toLowerCase()) ||
-      this.assignedIssueTasks.find((t) => taskNameLC === t.name.toLowerCase())
-    if (existingTask) {
-      return existingTask
-    }
-    return name instanceof Task ? name : new Task(taskName, [])
+      this.assignedIssueTasks.find((t) => taskNameLC === t.name.toLowerCase()) ||
+      new Task(taskName, [])
+    )
   }
 
   public getTaskForNameWithDefaults(
@@ -731,17 +729,26 @@ export class AppState {
       platformType?: PlatformType
     },
   ): Task {
-    const existingTask = this.getTaskForName(name)
-    if (
-      this.tasks.includes(existingTask) ||
-      this.assignedIssueTasks.includes(existingTask) ||
-      name instanceof Task
-    ) {
+    const taskName = ('string' === typeof name ? name : name?.name)?.trim()?.replace(/\s+/, ' ')
+    if (!taskName) {
+      return this.getUndefinedTask()
+    }
+
+    const taskNameLC = taskName.toLowerCase()
+    const existingTask =
+      this.tasks.find((t) => taskNameLC === t.name.toLowerCase()) ||
+      this.assignedIssueTasks.find((t) => taskNameLC === t.name.toLowerCase())
+
+    if (existingTask) {
       return existingTask
     }
 
+    if (name instanceof Task) {
+      return name
+    }
+
     return new Task(
-      existingTask.name,
+      taskName,
       [],
       defaults.platformType,
       defaults.taskActivityName,

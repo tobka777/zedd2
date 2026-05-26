@@ -9,7 +9,7 @@ import {
   Tray,
 } from '@electron/remote'
 import { BrowserWindow, ipcRenderer, MenuItemConstructorOptions, Rectangle } from 'electron'
-import { exec } from 'child_process'
+import { execFile } from 'child_process'
 import { autorun, computed, configure as configureMobx } from 'mobx'
 import * as path from 'path'
 import * as React from 'react'
@@ -50,6 +50,9 @@ const userConfigFile = path.join(saveDir, 'zeddconfig.json')
 const d = (...x: any[]) => console.log('renderer.ts', ...x)
 
 const isWin = process.platform === 'win32'
+const TEAMS_WINDOW_TITLE_QUERY =
+  "Get-Process | Where-Object { ($_.Name -match 'ms-teams|msteams|Teams') -and ($_.MainWindowTitle -ne '') } | Select-Object -ExpandProperty MainWindowTitle"
+const TEAMS_CALL_CHECK_INTERVAL_MS = 15_000
 
 /**
  * Checks whether Microsoft Teams currently has an active call or meeting window open.
@@ -59,8 +62,9 @@ const isWin = process.platform === 'win32'
 function getActiveTeamsCallTitle(): Promise<string | null> {
   if (!isWin) return Promise.resolve(null)
   return new Promise((resolve) => {
-    exec(
-      'powershell.exe -NoProfile -NonInteractive -Command "Get-Process | Where-Object { ($_.Name -match \'ms-teams|msteams|Teams\') -and ($_.MainWindowTitle -ne \'\') } | Select-Object -ExpandProperty MainWindowTitle"',
+    execFile(
+      'powershell.exe',
+      ['-NoProfile', '-NonInteractive', '-Command', TEAMS_WINDOW_TITLE_QUERY],
       { timeout: 3000 },
       (error, stdout) => {
         if (error || !stdout.trim()) {
@@ -358,7 +362,7 @@ async function setup() {
     } catch (e) {
       console.error('Error checking Teams call status', e)
     }
-  }, 15_000)
+  }, TEAMS_CALL_CHECK_INTERVAL_MS)
 
   let taskSelectRef: HTMLInputElement | undefined = undefined
 
