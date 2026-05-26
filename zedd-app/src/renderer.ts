@@ -353,7 +353,7 @@ async function setup() {
         const teamsTask = deriveTeamsAutoSwitchTask(callTitle, config.teamsTaskName)
         state.currentTask = state.getTaskForNameWithDefaults(teamsTask.taskName, {
           taskActivityName: teamsTask.taskActivityName,
-          platformTaskComment: teamsTask.kind === 'meeting' ? teamsTask.platformTaskComment : '',
+          platformTaskComment: teamsTask.platformTaskComment,
         })
         d('Teams call detected, switched to task:', teamsTask.taskName)
       } else if (!callTitle && teamsCallActive) {

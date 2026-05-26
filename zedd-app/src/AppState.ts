@@ -709,7 +709,7 @@ export class AppState {
   }
 
   public getTaskForName(name: Task | string | undefined): Task {
-    const taskName = ('string' === typeof name ? name : name?.name)?.trim()?.replace(/\s+/, ' ')
+    const taskName = ('string' === typeof name ? name : name?.name)?.trim()?.replace(/\s+/g, ' ')
     if (!taskName) {
       return this.getUndefinedTask()
     }
@@ -729,7 +729,7 @@ export class AppState {
       platformType?: PlatformType
     },
   ): Task {
-    const taskName = ('string' === typeof name ? name : name?.name)?.trim()?.replace(/\s+/, ' ')
+    const taskName = ('string' === typeof name ? name : name?.name)?.trim()?.replace(/\s+/g, ' ')
     if (!taskName) {
       return this.getUndefinedTask()
     }
