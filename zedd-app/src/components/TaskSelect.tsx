@@ -2,9 +2,10 @@ import { TextField, TextFieldProps, Autocomplete } from '@mui/material'
 import { observer } from 'mobx-react-lite'
 import * as React from 'react'
 
-import { useCallback, useState } from 'react'
+import { useCallback, useMemo, useRef, useState } from 'react'
 import { Task } from '../AppState'
 import { useClasses, useDebouncedCallback } from '../util'
+import { rankByWordPrefixSimilarity, tokenizeSearchWords } from '../search'
 
 export type TaskSelectProps = {
   tasks: Task[]
@@ -41,9 +42,40 @@ export const TaskSelect = observer(
     hoverMode = false,
     ...textFieldProps
   }: TaskSelectProps) => {
+    const maxEntries = 60
     const [options, setOptions] = useState([] as Task[])
     const [searching, setSearching] = useState(false)
     const [currentRequest] = useState({ id: 0 })
+    const tokenCache = useRef(new Map<string, string[]>())
+    const searchableOptions = useMemo(
+      () => {
+        const byIdentity = new Map<string, Task>()
+        const getTaskIdentity = (task: Task) =>
+          `${task.name}\u0000${task.key ?? ''}\u0000${task.platformTaskIntId ?? ''}`
+        for (const task of tasks) byIdentity.set(getTaskIdentity(task), task)
+        for (const task of options) {
+          const taskIdentity = getTaskIdentity(task)
+          if (!byIdentity.has(taskIdentity)) byIdentity.set(taskIdentity, task)
+        }
+        const mergedTasks = Array.from(byIdentity.values())
+        const activeNames = new Set(mergedTasks.map((task) => task.name))
+        for (const cachedName of tokenCache.current.keys()) {
+          if (!activeNames.has(cachedName)) tokenCache.current.delete(cachedName)
+        }
+        return mergedTasks.map((task) => ({
+          item: task,
+          text: task.name,
+          words:
+            tokenCache.current.get(task.name) ??
+            (() => {
+              const words = tokenizeSearchWords(task.name)
+              tokenCache.current.set(task.name, words)
+              return words
+            })(),
+        }))
+      },
+      [tasks, options],
+    )
 
     const classes = useClasses(styles)
 
@@ -82,6 +114,9 @@ export const TaskSelect = observer(
         selectOnFocus
         loading={searching}
         loadingText='Searching for Tasks in JIRA'
+        filterOptions={(_unusedOptions: Task[], state) =>
+          rankByWordPrefixSimilarity(searchableOptions, state.inputValue, maxEntries)
+        }
         getOptionLabel={(t: Task | string) =>
           'string' === typeof t ? t : 'UNDEFINED' === t.name ? '' : t.name
         }
