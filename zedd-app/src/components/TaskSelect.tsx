@@ -49,12 +49,20 @@ export const TaskSelect = observer(
     const tokenCache = useRef(new Map<string, string[]>())
     const searchableOptions = useMemo(
       () => {
-        const byName = new Map<string, Task>()
-        for (const task of tasks) byName.set(task.name, task)
+        const byIdentity = new Map<string, Task>()
+        const getTaskIdentity = (task: Task) =>
+          `${task.name}\u0000${task.key ?? ''}\u0000${task.platformTaskIntId ?? ''}`
+        for (const task of tasks) byIdentity.set(getTaskIdentity(task), task)
         for (const task of options) {
-          if (!byName.has(task.name)) byName.set(task.name, task)
+          const taskIdentity = getTaskIdentity(task)
+          if (!byIdentity.has(taskIdentity)) byIdentity.set(taskIdentity, task)
         }
-        return Array.from(byName.values()).map((task) => ({
+        const mergedTasks = Array.from(byIdentity.values())
+        const activeNames = new Set(mergedTasks.map((task) => task.name))
+        for (const cachedName of tokenCache.current.keys()) {
+          if (!activeNames.has(cachedName)) tokenCache.current.delete(cachedName)
+        }
+        return mergedTasks.map((task) => ({
           item: task,
           text: task.name,
           words:
