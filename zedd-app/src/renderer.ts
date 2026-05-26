@@ -60,7 +60,7 @@ function getActiveTeamsCallTitle(): Promise<string | null> {
   return new Promise((resolve) => {
     exec(
       'powershell.exe -NoProfile -NonInteractive -Command "Get-Process | Where-Object { ($_.Name -match \'ms-teams|msteams|Teams\') -and ($_.MainWindowTitle -ne \'\') } | Select-Object -ExpandProperty MainWindowTitle"',
-      { timeout: 5000 },
+      { timeout: 3000 },
       (error, stdout) => {
         if (error || !stdout.trim()) {
           resolve(null)

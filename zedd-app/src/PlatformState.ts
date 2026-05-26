@@ -244,10 +244,13 @@ export class PlatformState {
       // Build the expected successor name by replacing the sprint number with (current + 1),
       // preserving the original zero-padding width.
       const paddedNext = String(nextSprint).padStart(match[1].length, '0')
+      // Regex-escape the old name, then replace the escaped sprint segment (sp\-XX) with the
+      // new one (sp\-YY) so the resulting pattern correctly matches the successor task name.
+      const escapedOldName = oldTask.name.replace(/[-[\]{}()*+?.,\\^$|#\s]/g, '\\$&')
+      const escapedSprintOld = `sp\\-${match[1]}`
+      const escapedSprintNew = `sp\\-${paddedNext}`
       const successorNamePattern = new RegExp(
-        oldTask.name
-          .replace(/[-[\]{}()*+?.,\\^$|#\s]/g, '\\$&')
-          .replace(new RegExp(`sp-${match[1]}`, 'i'), `sp-${paddedNext}`),
+        escapedOldName.replace(new RegExp(escapedSprintOld, 'i'), escapedSprintNew),
         'i',
       )
       const successor = newTasks.find((t) => successorNamePattern.test(t.name))

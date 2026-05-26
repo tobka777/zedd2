@@ -119,7 +119,9 @@ export const TaskEditor = observer(
       // project code and the ticket number (in any order across all searchable fields).
       if (!task) {
         for (const key of keys) {
-          const [project, ticketNumber] = key.split('-')
+          const parts = key.split('-')
+          const project = parts[0]
+          const ticketNumber = parts[parts.length - 1]
           const projectLC = project.toLowerCase()
           const numberLC = ticketNumber.toLowerCase()
           const matching = platformState.tasks.filter((ct) => {
