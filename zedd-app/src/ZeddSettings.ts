@@ -126,4 +126,35 @@ export class ZeddSettings {
   @observable
   @serializable(raw())
   public federalState: { code: string; label: string } | null = { code: '', label: '' }
+
+  /**
+   * Whether to show a system notification when the daily or weekly hour target is about to be reached.
+   */
+  @observable
+  @serializable
+  public targetNotificationsEnabled = true
+
+  /**
+   * List of offsets (in minutes) before the daily/weekly hour target when a notification fires.
+   * Positive values trigger before the target (e.g. 15 = 15 min remaining).
+   * Zero triggers exactly on the target.
+   * Negative values trigger after the target (overtime warnings).
+   * Migrated automatically from the legacy single-number format.
+   */
+  @observable
+  @serializable(
+    custom(
+      (x: number[]) => x,
+      (x: unknown) => (Array.isArray(x) ? x : x != null ? [x as number] : [60, 15, 0]),
+    ),
+  )
+  public targetNotificationAdvanceMinutes: number[] = [60, 15, 0]
+
+  /**
+   * Whether to flash the taskbar / window icon when a target notification fires.
+   * The flash is cleared automatically when the window gains focus.
+   */
+  @observable
+  @serializable
+  public targetNotificationIconAlert = true
 }
