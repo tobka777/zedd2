@@ -2,9 +2,10 @@ import { TextField, TextFieldProps, Autocomplete } from '@mui/material'
 import { observer } from 'mobx-react-lite'
 import * as React from 'react'
 
-import { useCallback, useState } from 'react'
+import { useCallback, useMemo, useState } from 'react'
 import { Task } from '../AppState'
 import { useClasses, useDebouncedCallback } from '../util'
+import { rankByWordPrefixSimilarity, tokenizeSearchWords } from '../search'
 
 export type TaskSelectProps = {
   tasks: Task[]
@@ -41,9 +42,19 @@ export const TaskSelect = observer(
     hoverMode = false,
     ...textFieldProps
   }: TaskSelectProps) => {
+    const maxEntries = 60
     const [options, setOptions] = useState([] as Task[])
     const [searching, setSearching] = useState(false)
     const [currentRequest] = useState({ id: 0 })
+    const searchableOptions = useMemo(
+      () =>
+        [...tasks, ...options].map((task) => ({
+          item: task,
+          text: task.name,
+          words: tokenizeSearchWords(task.name),
+        })),
+      [tasks, options],
+    )
 
     const classes = useClasses(styles)
 
@@ -82,6 +93,9 @@ export const TaskSelect = observer(
         selectOnFocus
         loading={searching}
         loadingText='Searching for Tasks in JIRA'
+        filterOptions={(_unusedOptions: Task[], state) =>
+          rankByWordPrefixSimilarity(searchableOptions, state.inputValue, maxEntries)
+        }
         getOptionLabel={(t: Task | string) =>
           'string' === typeof t ? t : 'UNDEFINED' === t.name ? '' : t.name
         }
