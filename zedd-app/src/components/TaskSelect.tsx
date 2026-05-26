@@ -47,12 +47,18 @@ export const TaskSelect = observer(
     const [searching, setSearching] = useState(false)
     const [currentRequest] = useState({ id: 0 })
     const searchableOptions = useMemo(
-      () =>
-        [...tasks, ...options].map((task) => ({
+      () => {
+        const byName = new Map<string, Task>()
+        for (const task of tasks) byName.set(task.name, task)
+        for (const task of options) {
+          if (!byName.has(task.name)) byName.set(task.name, task)
+        }
+        return Array.from(byName.values()).map((task) => ({
           item: task,
           text: task.name,
           words: tokenizeSearchWords(task.name),
-        })),
+        }))
+      },
       [tasks, options],
     )
 
