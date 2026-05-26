@@ -2,7 +2,7 @@ import { TextField, TextFieldProps, Autocomplete } from '@mui/material'
 import { observer } from 'mobx-react-lite'
 import * as React from 'react'
 
-import { useCallback, useMemo, useState } from 'react'
+import { useCallback, useMemo, useRef, useState } from 'react'
 import { Task } from '../AppState'
 import { useClasses, useDebouncedCallback } from '../util'
 import { rankByWordPrefixSimilarity, tokenizeSearchWords } from '../search'
@@ -46,6 +46,7 @@ export const TaskSelect = observer(
     const [options, setOptions] = useState([] as Task[])
     const [searching, setSearching] = useState(false)
     const [currentRequest] = useState({ id: 0 })
+    const tokenCache = useRef(new Map<string, string[]>())
     const searchableOptions = useMemo(
       () => {
         const byName = new Map<string, Task>()
@@ -56,7 +57,13 @@ export const TaskSelect = observer(
         return Array.from(byName.values()).map((task) => ({
           item: task,
           text: task.name,
-          words: tokenizeSearchWords(task.name),
+          words:
+            tokenCache.current.get(task.name) ??
+            (() => {
+              const words = tokenizeSearchWords(task.name)
+              tokenCache.current.set(task.name, words)
+              return words
+            })(),
         }))
       },
       [tasks, options],
