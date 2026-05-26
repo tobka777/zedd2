@@ -1,7 +1,7 @@
 {
   "name": "zedd-app",
   "productName": "zedd-app",
-  "version": "3.0.4",
+  "version": "3.1.0",
   "description": "Zedd-App Time Tracker",
   "main": ".webpack/main",
   "repository": "github:tobka777/zedd2",
@@ -47,7 +47,7 @@
           "name": "@electron-forge/maker-squirrel",
           "config": {
             "name": "zedd",
-            "remoteReleases": "https://github.com/tobka777/zedd2/releases/latest/download",
+            "remoteReleases": "https://github.com/125m125/zedd2/releases/latest/download",
             "noDelta": true
           }
         },

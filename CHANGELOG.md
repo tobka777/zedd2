@@ -1,3 +1,8 @@
+## [3.1.0] - 2026-05-24
+- Feature: Add OTTZTalker-Endpoint to directly access Zedd-App from browser
+- Feature: Add notifications for daily/weekly targets
+- Feature: Searching for Tasks now searches per word instead of exact contains
+
 ## [3.0.4] - 2025-12-09
 - Feature: Activity for OTT customizable
 - Fix: fix import activity
