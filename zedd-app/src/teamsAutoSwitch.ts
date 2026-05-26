@@ -83,7 +83,7 @@ export const deriveTeamsAutoSwitchTask = (
   return {
     taskName: activityName,
     taskActivityName: activityName,
-    platformTaskComment: meetingName ? meetingName : '',
+    platformTaskComment: meetingName,
     kind: meetingName ? 'meeting' : 'fallback',
   }
 }
