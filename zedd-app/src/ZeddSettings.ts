@@ -126,4 +126,20 @@ export class ZeddSettings {
   @observable
   @serializable(raw())
   public federalState: { code: string; label: string } | null = { code: '', label: '' }
+
+  /**
+   * Automatically switch to a Teams meeting task when a Microsoft Teams call or meeting
+   * is detected as active. Only works on Windows.
+   */
+  @observable
+  @serializable
+  public teamsAutoSwitch: boolean = false
+
+  /**
+   * Task name to switch to when a Teams call/meeting is detected.
+   * Defaults to "teams meeting".
+   */
+  @observable
+  @serializable
+  public teamsTaskName: string = 'teams meeting'
 }

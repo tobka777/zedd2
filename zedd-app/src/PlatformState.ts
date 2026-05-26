@@ -177,19 +177,35 @@ export class PlatformState {
     toImport: 'ALL' | PlatformType,
     infoNotify?: (info: string) => void,
     notSave?: boolean,
+    onSprintTaskReplaced?: (
+      oldIntId: number | string,
+      newIntId: number | string,
+      oldTaskName: string,
+      newTaskName: string,
+    ) => void,
   ) {
     try {
       if (toImport === 'ALL') {
         for (const [key] of Object.entries(this.integrationMap)) {
-          await this.importAndSavePlatformTasks(key as PlatformType, infoNotify, true)
+          await this.importAndSavePlatformTasks(
+            key as PlatformType,
+            infoNotify,
+            true,
+            onSprintTaskReplaced,
+          )
         }
       } else {
         this.platformIntegration = this.integrationMap[toImport]
+        const oldTasks = this._tasks.filter((task) => task.typ === toImport)
         const importedTasks = await this.importPlatformTasks(this.platformIntegration, (tasks) => {
           infoNotify && infoNotify('Imported ' + tasks.length + ' tasks from ' + toImport + '.')
         })
         const otherTasks = this._tasks.filter((task) => task.typ !== toImport)
         this._tasks = [...otherTasks, ...importedTasks]
+
+        if (onSprintTaskReplaced) {
+          this.detectAndReportSprintReplacements(oldTasks, this._tasks, onSprintTaskReplaced)
+        }
       }
 
       if (!notSave) {
@@ -197,6 +213,47 @@ export class PlatformState {
       }
     } catch (error) {
       this.platformIntegration?.quitBrowser()
+    }
+  }
+
+  /**
+   * Detects platform tasks that were removed and had a sprint identifier ("SP-XX") in their name.
+   * For each such deleted task, looks for a successor with the next sprint number ("SP-(XX+1)") in
+   * the new task list and invokes the callback so callers can remap zedd activities.
+   */
+  private detectAndReportSprintReplacements(
+    oldTasks: Task[],
+    newTasks: Task[],
+    onSprintTaskReplaced: (
+      oldIntId: number | string,
+      newIntId: number | string,
+      oldTaskName: string,
+      newTaskName: string,
+    ) => void,
+  ): void {
+    const sprintRegex = /sp-(\d+)/i
+    for (const oldTask of oldTasks) {
+      const stillExists = newTasks.some((t) => t.intId === oldTask.intId)
+      if (stillExists) continue
+
+      const match = oldTask.name.match(sprintRegex)
+      if (!match) continue
+
+      const currentSprint = parseInt(match[1], 10)
+      const nextSprint = currentSprint + 1
+      // Build the expected successor name by replacing the sprint number with (current + 1),
+      // preserving the original zero-padding width.
+      const paddedNext = String(nextSprint).padStart(match[1].length, '0')
+      const successorNamePattern = new RegExp(
+        oldTask.name
+          .replace(/[-[\]{}()*+?.,\\^$|#\s]/g, '\\$&')
+          .replace(new RegExp(`sp-${match[1]}`, 'i'), `sp-${paddedNext}`),
+        'i',
+      )
+      const successor = newTasks.find((t) => successorNamePattern.test(t.name))
+      if (successor) {
+        onSprintTaskReplaced(oldTask.intId, successor.intId, oldTask.name, successor.name)
+      }
     }
   }
 

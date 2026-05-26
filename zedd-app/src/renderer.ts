@@ -9,6 +9,7 @@ import {
   Tray,
 } from '@electron/remote'
 import { BrowserWindow, ipcRenderer, MenuItemConstructorOptions, Rectangle } from 'electron'
+import { exec } from 'child_process'
 import { autorun, computed, configure as configureMobx } from 'mobx'
 import * as path from 'path'
 import * as React from 'react'
@@ -48,6 +49,40 @@ const userConfigFile = path.join(saveDir, 'zeddconfig.json')
 const d = (...x: any[]) => console.log('renderer.ts', ...x)
 
 const isWin = process.platform === 'win32'
+
+/**
+ * Checks whether Microsoft Teams currently has an active call or meeting window open.
+ * Returns the window title of the active Teams call/meeting, or null if none is found.
+ * Only works on Windows.
+ */
+function getActiveTeamsCallTitle(): Promise<string | null> {
+  if (!isWin) return Promise.resolve(null)
+  return new Promise((resolve) => {
+    exec(
+      'powershell.exe -NoProfile -NonInteractive -Command "Get-Process | Where-Object { ($_.Name -match \'ms-teams|msteams|Teams\') -and ($_.MainWindowTitle -ne \'\') } | Select-Object -ExpandProperty MainWindowTitle"',
+      { timeout: 5000 },
+      (error, stdout) => {
+        if (error || !stdout.trim()) {
+          resolve(null)
+          return
+        }
+        const titles = stdout
+          .trim()
+          .split('\n')
+          .map((t) => t.trim())
+          .filter(Boolean)
+        for (const title of titles) {
+          const lc = title.toLowerCase()
+          if (lc.includes('meeting') || lc.includes('call') || lc.includes('besprechung')) {
+            resolve(title)
+            return
+          }
+        }
+        resolve(null)
+      },
+    )
+  })
+}
 
 // class Todo {
 //   name: string
@@ -302,6 +337,26 @@ async function setup() {
     1000,
   )
 
+  // Teams call detection: periodically check for active Teams call/meeting windows and
+  // auto-switch the current task when configured.
+  let teamsCallActive = false
+  const teamsCallInterval = setInterval(async () => {
+    if (!config.teamsAutoSwitch) return
+    try {
+      const callTitle = await getActiveTeamsCallTitle()
+      if (callTitle && !teamsCallActive) {
+        teamsCallActive = true
+        const taskName = config.teamsTaskName || 'teams meeting'
+        state.currentTask = state.getTaskForName(taskName)
+        d('Teams call detected, switched to task:', taskName)
+      } else if (!callTitle && teamsCallActive) {
+        teamsCallActive = false
+      }
+    } catch (e) {
+      console.error('Error checking Teams call status', e)
+    }
+  }, 15_000)
+
   let taskSelectRef: HTMLInputElement | undefined = undefined
 
   currentWindowEvents.push([
@@ -500,6 +555,7 @@ async function setup() {
       console.log('setup().cleanup')
       clearInterval(saveInterval)
       clearInterval(lastActionInterval)
+      clearInterval(teamsCallInterval)
       cleanupSetStateLinks()
       cleanupIconAutorun()
       cleanupTrayMenuAutorun()
