@@ -47,7 +47,6 @@
           "name": "@electron-forge/maker-squirrel",
           "config": {
             "name": "zedd",
-            "remoteReleases": "https://github.com/125m125/zedd2/releases/latest/download",
             "noDelta": true
           }
         },
@@ -83,7 +82,7 @@
           "name": "@electron-forge/publisher-github",
           "config": {
             "repository": {
-              "owner": "tobka777",
+              "owner": "125m125",
               "name": "zedd2"
             },
             "prerelease": false
