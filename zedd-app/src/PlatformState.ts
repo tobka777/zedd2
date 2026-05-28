@@ -250,7 +250,7 @@ export class PlatformState {
         paddedNext +
         oldTask.name.slice(sprintDigitsStart + match[1].length)
       const successor = newTasks.find(
-        (t) => t.name.localeCompare(successorName, undefined, { sensitivity: 'accent' }) === 0,
+        (t) => t.name.localeCompare(successorName, undefined, { sensitivity: 'base' }) === 0,
       )
       if (successor) {
         onSprintTaskReplaced(oldTask.intId, successor.intId, oldTask.name, successor.name)
