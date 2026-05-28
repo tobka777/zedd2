@@ -1,6 +1,11 @@
+## [3.2.0] - 2026-05-28
+- Feature: Automatically switch activity when entering Teams call/meeting
+- Feature: Automatically switch Account to next sprint when account for previous sprint was deleted (enable via settings)
+- Feature: Accounts can now be guessed even if the account name doesn't contain the task exactly in that order
+
 ## [3.1.0] - 2026-05-24
 - Feature: Add OTTZTalker-Endpoint to directly access Zedd-App from browser
-- Feature: Add notifications for daily/weekly targets
+- Feature: Add notifications for daily/weekly targets (configure timing in settings)
 - Feature: Searching for Tasks now searches per word instead of exact contains
 
 ## [3.0.4] - 2025-12-09
