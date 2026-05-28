@@ -402,12 +402,14 @@ async function setup() {
   // Teams call detection: periodically check for active Teams call/meeting windows and
   // auto-switch the current task when configured.
   let teamsCallActive = false
+  let previousTask: typeof state.currentTask | null = null
   const teamsCallInterval = setInterval(async () => {
     if (!config.teamsAutoSwitch) return
     try {
       const callTitle = await getActiveTeamsCallTitle()
       if (callTitle && !teamsCallActive) {
         teamsCallActive = true
+        previousTask = state.currentTask
         const teamsTask = deriveTeamsAutoSwitchTask(callTitle, config.teamsTaskName)
         state.currentTask = state.getTaskForNameWithDefaults(teamsTask.taskName, {
           taskActivityName: teamsTask.taskActivityName,
@@ -416,6 +418,11 @@ async function setup() {
         d('Teams call detected, switched to task:', teamsTask.taskName)
       } else if (!callTitle && teamsCallActive) {
         teamsCallActive = false
+        if (previousTask) {
+          state.currentTask = previousTask
+          d('Teams call ended, restored previous task:', previousTask.name)
+        }
+        previousTask = null
       }
     } catch (e) {
       console.error('Error checking Teams call status', e)
