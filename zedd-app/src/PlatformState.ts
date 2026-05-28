@@ -302,8 +302,20 @@ export class PlatformState {
     this.platformIntegration?.quitBrowser()
   }
 
-  public async replaceTasksFromExternal(tasks: Task[]): Promise<void> {
+  public async replaceTasksFromExternal(
+    tasks: Task[],
+    onSprintTaskReplaced?: (
+      oldIntId: number | string,
+      newIntId: number | string,
+      oldTaskName: string,
+      newTaskName: string,
+    ) => void,
+  ): Promise<void> {
+    const oldTasks = this._tasks
     this._tasks = tasks
+    if (onSprintTaskReplaced) {
+      this.detectAndReportSprintReplacements(oldTasks, this._tasks, onSprintTaskReplaced)
+    }
     this._tasksLastUpdated = new Date()
     await this.savePlatformTasksToFile(this._tasks)
   }
