@@ -1,6 +1,10 @@
 import * as assert from 'assert'
 
-import { deriveTeamsAutoSwitchTask, isTeamsCallOrMeetingTitle } from './teamsAutoSwitch'
+import {
+  deriveTeamsAutoSwitchTask,
+  isTeamsCallOrMeetingTitle,
+  pickBestTeamsCallOrMeetingTitle,
+} from './teamsAutoSwitch'
 
 describe('teamsAutoSwitch', () => {
   it('derives a call task from a Teams call title', () => {
@@ -35,5 +39,25 @@ describe('teamsAutoSwitch', () => {
     )
     assert.strictEqual(isTeamsCallOrMeetingTitle('Entwicklungs-Daily | Microsoft Teams'), true)
     assert.strictEqual(isTeamsCallOrMeetingTitle('Chat | Robert | Microsoft Teams'), false)
+  })
+
+  it('prefers explicit meeting windows when several Teams windows are open', () => {
+    assert.strictEqual(
+      pickBestTeamsCallOrMeetingTitle([
+        'Alex Example | Microsoft Teams',
+        'Architecture Sync | Meeting | Microsoft Teams',
+      ]),
+      'Architecture Sync | Meeting | Microsoft Teams',
+    )
+  })
+
+  it('returns undefined when no Teams call or meeting title exists', () => {
+    assert.strictEqual(
+      pickBestTeamsCallOrMeetingTitle([
+        'Chat | Alex Example | Microsoft Teams',
+        'Calendar | Microsoft Teams',
+      ]),
+      undefined,
+    )
   })
 })
