@@ -10,6 +10,7 @@ import {
   Tray,
 } from '@electron/remote'
 import { BrowserWindow, ipcRenderer, MenuItemConstructorOptions, Rectangle } from 'electron'
+import { execFile } from 'child_process'
 import { format as formatDate, getISODay, startOfISOWeek } from 'date-fns'
 import { sum } from 'lodash'
 import { autorun, computed, configure as configureMobx } from 'mobx'
@@ -19,6 +20,18 @@ import { createRoot } from 'react-dom/client'
 import 'win-ca' // use windows root certificates
 import { AppState, format, formatInterval, TimeSlice } from './AppState'
 import { PlatformState } from './PlatformState'
+import { AppGui } from './components/AppGui'
+import './index.css'
+import { createRoot } from 'react-dom/client'
+import {
+  checkCgJira,
+  getLinksFromString,
+  getTasksForSearchString,
+  getTasksFromAssignedJiraIssues,
+  initJiraClient,
+} from './plJiraConnector'
+import { deriveTeamsAutoSwitchTask, isTeamsCallOrMeetingTitle } from './teamsAutoSwitch'
+import { fileExists, floor, formatHoursBT, formatHoursHHmm, mkdirIfNotExists } from './util'
 import { ZeddSettings } from './ZeddSettings'
 import {
   getChromeDriverVersion,
@@ -52,6 +65,43 @@ const userConfigFile = path.join(saveDir, 'zeddconfig.json')
 const d = (...x: any[]) => console.log('renderer.ts', ...x)
 
 const isWin = process.platform === 'win32'
+const TEAMS_WINDOW_TITLE_QUERY =
+  "Get-Process | Where-Object { ($_.Name -match 'ms-teams|msteams|Teams') -and ($_.MainWindowTitle -ne '') } | Select-Object -ExpandProperty MainWindowTitle"
+const TEAMS_CALL_CHECK_INTERVAL_MS = 15_000
+
+/**
+ * Checks whether Microsoft Teams currently has an active call or meeting window open.
+ * Returns the window title of the active Teams call/meeting, or null if none is found.
+ * Only works on Windows.
+ */
+function getActiveTeamsCallTitle(): Promise<string | null> {
+  if (!isWin) return Promise.resolve(null)
+  return new Promise((resolve) => {
+    execFile(
+      'powershell.exe',
+      ['-NoProfile', '-NonInteractive', '-Command', TEAMS_WINDOW_TITLE_QUERY],
+      { timeout: 3000 },
+      (error, stdout) => {
+        if (error || !stdout.trim()) {
+          resolve(null)
+          return
+        }
+        const titles = stdout
+          .trim()
+          .split('\n')
+          .map((t) => t.trim())
+          .filter(Boolean)
+        for (const title of titles) {
+          if (isTeamsCallOrMeetingTitle(title)) {
+            resolve(title)
+            return
+          }
+        }
+        resolve(null)
+      },
+    )
+  })
+}
 
 // class Todo {
 //   name: string
@@ -349,6 +399,36 @@ async function setup() {
     1000,
   )
 
+  // Teams call detection: periodically check for active Teams call/meeting windows and
+  // auto-switch the current task when configured.
+  let teamsCallActive = false
+  let previousTask: typeof state.currentTask | null = null
+  const teamsCallInterval = setInterval(async () => {
+    if (!config.teamsAutoSwitch) return
+    try {
+      const callTitle = await getActiveTeamsCallTitle()
+      if (callTitle && !teamsCallActive) {
+        teamsCallActive = true
+        previousTask = state.currentTask
+        const teamsTask = deriveTeamsAutoSwitchTask(callTitle, config.teamsTaskName)
+        state.currentTask = state.getTaskForNameWithDefaults(teamsTask.taskName, {
+          taskActivityName: teamsTask.taskActivityName,
+          platformTaskComment: teamsTask.platformTaskComment,
+        })
+        d('Teams call detected, switched to task:', teamsTask.taskName)
+      } else if (!callTitle && teamsCallActive) {
+        teamsCallActive = false
+        if (previousTask) {
+          state.currentTask = previousTask
+          d('Teams call ended, restored previous task:', previousTask.name)
+        }
+        previousTask = null
+      }
+    } catch (e) {
+      console.error('Error checking Teams call status', e)
+    }
+  }, TEAMS_CALL_CHECK_INTERVAL_MS)
+
   let taskSelectRef: HTMLInputElement | undefined = undefined
 
   currentWindowEvents.push([
@@ -618,6 +698,7 @@ async function setup() {
       console.log('setup().cleanup')
       clearInterval(saveInterval)
       clearInterval(lastActionInterval)
+      clearInterval(teamsCallInterval)
       cleanupSetStateLinks()
       cleanupIconAutorun()
       cleanupTrayMenuAutorun()

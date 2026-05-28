@@ -444,6 +444,37 @@ export const SettingsDialog = observer(
             </Grid>
 
             <Grid item xs={4}>
+              <FormLabel>Teams Call Auto-Switch</FormLabel>
+              <div style={{ fontSize: 'small' }}>
+                Automatically switch to a task when a Microsoft Teams call or meeting is detected
+                (Windows only).
+              </div>
+            </Grid>
+            <Grid item xs={8} component={'label'}>
+              <Switch
+                checked={settings.teamsAutoSwitch}
+                onChange={(_, checked) => (settings.teamsAutoSwitch = checked)}
+              />
+              {settings.teamsAutoSwitch ? 'Enabled' : 'Disabled'}
+            </Grid>
+
+            <Grid item xs={4}>
+              <FormLabel>Teams Fallback Task Name</FormLabel>
+              <div style={{ fontSize: 'small' }}>
+                Used when Teams is detected but no call participant or meeting name can be
+                extracted from the window title.
+              </div>
+            </Grid>
+            <Grid item xs={8}>
+              <TextField
+                disabled={!settings.teamsAutoSwitch}
+                value={settings.teamsTaskName}
+                placeholder='teams meeting'
+                onChange={(e) => (settings.teamsTaskName = e.target.value)}
+              />
+            </Grid>
+
+            <Grid item xs={4}>
               <FormLabel>PL JIRA</FormLabel>
               <div style={{ fontSize: 'small' }}>
                 Leave blank if not relevant. If necessary, add required root certificates to the

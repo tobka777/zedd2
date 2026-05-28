@@ -128,6 +128,21 @@ export class ZeddSettings {
   public federalState: { code: string; label: string } | null = { code: '', label: '' }
 
   /**
+   * Automatically switch to a Teams meeting task when a Microsoft Teams call or meeting
+   * is detected as active. Only works on Windows.
+   */
+  @observable
+  @serializable
+  public teamsAutoSwitch: boolean = false
+
+  /**
+   * Fallback task name when a Teams call/meeting title cannot be converted into a task name.
+   * Defaults to "teams meeting".
+   */
+  @observable
+  @serializable
+  public teamsTaskName: string = 'teams meeting'
+  /**
    * Whether to show a system notification when the daily or weekly hour target is about to be reached.
    */
   @observable

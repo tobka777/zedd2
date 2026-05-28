@@ -714,7 +714,7 @@ export class AppState {
   }
 
   public getTaskForName(name: Task | string | undefined): Task {
-    const taskName = ('string' === typeof name ? name : name?.name)?.trim()?.replace(/\s+/, ' ')
+    const taskName = ('string' === typeof name ? name : name?.name)?.trim()?.replace(/\s+/g, ' ')
     if (!taskName) {
       return this.getUndefinedTask()
     }
@@ -723,6 +723,43 @@ export class AppState {
       this.tasks.find((t) => taskNameLC === t.name.toLowerCase()) ||
       this.assignedIssueTasks.find((t) => taskNameLC === t.name.toLowerCase()) ||
       new Task(taskName, [])
+    )
+  }
+
+  public getTaskForNameWithDefaults(
+    name: Task | string | undefined,
+    defaults: {
+      taskActivityName?: string
+      platformTaskComment?: string
+      platformType?: PlatformType
+    },
+  ): Task {
+    const taskName = ('string' === typeof name ? name : name?.name)?.trim()?.replace(/\s+/g, ' ')
+    if (!taskName) {
+      return this.getUndefinedTask()
+    }
+
+    const taskNameLC = taskName.toLowerCase()
+    const existingTask =
+      this.tasks.find((t) => taskNameLC === t.name.toLowerCase()) ||
+      this.assignedIssueTasks.find((t) => taskNameLC === t.name.toLowerCase())
+
+    if (existingTask) {
+      return existingTask
+    }
+
+    if (name instanceof Task) {
+      return name
+    }
+
+    return new Task(
+      taskName,
+      [],
+      defaults.platformType,
+      defaults.taskActivityName,
+      undefined,
+      undefined,
+      defaults.platformTaskComment,
     )
   }
 
