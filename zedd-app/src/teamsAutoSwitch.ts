@@ -71,13 +71,13 @@ export const isTeamsCallOrMeetingTitle = (title: string): boolean => {
   )
 }
 
-export const pickBestTeamsCallOrMeetingTitle = (titles: string[]): string | null => {
+export const pickBestTeamsCallOrMeetingTitle = (titles: string[]): string | undefined => {
   const sanitizedTitles = titles.map((title) => title.trim()).filter(Boolean)
   const explicitTitle = sanitizedTitles.find(
     (title) => isTeamsCallOrMeetingTitle(title) && hasExplicitCallOrMeetingMarker(title),
   )
   if (explicitTitle) return explicitTitle
-  return sanitizedTitles.find((title) => isTeamsCallOrMeetingTitle(title)) ?? null
+  return sanitizedTitles.find((title) => isTeamsCallOrMeetingTitle(title))
 }
 
 export const deriveTeamsAutoSwitchTask = (

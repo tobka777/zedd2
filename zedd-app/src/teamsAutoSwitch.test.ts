@@ -51,13 +51,13 @@ describe('teamsAutoSwitch', () => {
     )
   })
 
-  it('returns null when no Teams call or meeting title exists', () => {
+  it('returns undefined when no Teams call or meeting title exists', () => {
     assert.strictEqual(
       pickBestTeamsCallOrMeetingTitle([
         'Chat | Alex Example | Microsoft Teams',
         'Calendar | Microsoft Teams',
       ]),
-      null,
+      undefined,
     )
   })
 })

@@ -147,8 +147,8 @@ const TEAMS_CALL_CLEAR_CONFIRMATIONS = 2
  * Returns the window title of the active Teams call/meeting, or null if none is found.
  * Only works on Windows.
  */
-function getActiveTeamsCallTitle(): Promise<string | null> {
-  if (!isWin) return Promise.resolve(null)
+function getActiveTeamsCallTitle(): Promise<string | undefined> {
+  if (!isWin) return Promise.resolve(undefined)
   return new Promise((resolve) => {
     execFile(
       'powershell.exe',
@@ -156,7 +156,7 @@ function getActiveTeamsCallTitle(): Promise<string | null> {
       { timeout: 3000 },
       (error, stdout) => {
         if (error || !stdout.trim()) {
-          resolve(null)
+          resolve(undefined)
           return
         }
         const titles = stdout
@@ -472,7 +472,7 @@ async function setup() {
   let previousTask: typeof state.currentTask | null = null
   let teamsCallDetectStreak = 0
   let teamsCallClearStreak = 0
-  let pendingTeamsCallTitle: string | null = null
+  let pendingTeamsCallTitle: string | undefined = undefined
   const teamsCallInterval = setInterval(async () => {
     if (!config.teamsAutoSwitch) return
     try {
@@ -487,7 +487,7 @@ async function setup() {
         }
       } else {
         teamsCallDetectStreak = 0
-        pendingTeamsCallTitle = null
+        pendingTeamsCallTitle = undefined
         teamsCallClearStreak += 1
       }
 
