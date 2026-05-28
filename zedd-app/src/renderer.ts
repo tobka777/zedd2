@@ -139,6 +139,7 @@ public static class TeamsWindowEnumerator {
   Select-Object -ExpandProperty Title -Unique
 `
 const TEAMS_CALL_CHECK_INTERVAL_MS = 15_000
+// Require two consecutive checks to avoid switching/restoring on transient window-query noise.
 const TEAMS_CALL_DETECT_CONFIRMATIONS = 2
 const TEAMS_CALL_CLEAR_CONFIRMATIONS = 2
 
@@ -147,7 +148,7 @@ const TEAMS_CALL_CLEAR_CONFIRMATIONS = 2
  * Returns the window title of the active Teams call/meeting, or null if none is found.
  * Only works on Windows.
  */
-function getActiveTeamsCallTitle(): Promise<string | undefined> {
+function detectActiveTeamsCallOrMeetingTitle(): Promise<string | undefined> {
   if (!isWin) return Promise.resolve(undefined)
   return new Promise((resolve) => {
     execFile(
@@ -472,19 +473,15 @@ async function setup() {
   let previousTask: typeof state.currentTask | null = null
   let teamsCallDetectStreak = 0
   let teamsCallClearStreak = 0
-  let pendingTeamsCallTitle: string | undefined = undefined
+  let pendingTeamsCallTitle: string | undefined
   const teamsCallInterval = setInterval(async () => {
     if (!config.teamsAutoSwitch) return
     try {
-      const callTitle = await getActiveTeamsCallTitle()
+      const callTitle = await detectActiveTeamsCallOrMeetingTitle()
       if (callTitle) {
         teamsCallClearStreak = 0
-        if (pendingTeamsCallTitle !== callTitle) {
-          pendingTeamsCallTitle = callTitle
-          teamsCallDetectStreak = 1
-        } else {
-          teamsCallDetectStreak += 1
-        }
+        pendingTeamsCallTitle = callTitle
+        teamsCallDetectStreak += 1
       } else {
         teamsCallDetectStreak = 0
         pendingTeamsCallTitle = undefined
@@ -503,6 +500,7 @@ async function setup() {
           taskActivityName: teamsTask.taskActivityName,
           platformTaskComment: teamsTask.platformTaskComment,
         })
+        teamsCallDetectStreak = 0
         d('Teams call detected, switched to task:', teamsTask.taskName)
       } else if (
         teamsCallActive &&
