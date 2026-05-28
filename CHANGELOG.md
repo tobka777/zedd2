@@ -1,6 +1,10 @@
+## [3.2.1] - 2026-05-28
+- Fix: Improve teams window detection to handle focus switching
+- Fix: Improve sprint migration
+
 ## [3.2.0] - 2026-05-28
-- Feature: Automatically switch activity when entering Teams call/meeting
-- Feature: Automatically switch Account to next sprint when account for previous sprint was deleted (enable via settings)
+- Feature: Automatically switch activity when entering Teams call/meeting (enable in settings)
+- Feature: Automatically switch Account to next sprint when account for previous sprint was deleted
 - Feature: Accounts can now be guessed even if the account name doesn't contain the task exactly in that order
 
 ## [3.1.0] - 2026-05-24
