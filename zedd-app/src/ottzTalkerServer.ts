@@ -237,7 +237,25 @@ export async function startOttzTalkerServer({
           key === 'end' || key === 'start' ? parseISO(value) : value,
         )
 
-        await platformState.replaceTasksFromExternal(tasks)
+        await platformState.replaceTasksFromExternal(tasks, (oldIntId, newIntId) => {
+          const oldIntIdStr = String(oldIntId)
+          for (const task of appState.tasks) {
+            if (
+              task.platformTaskIntId !== undefined &&
+              String(task.platformTaskIntId) === oldIntIdStr
+            ) {
+              task.platformTaskIntId = newIntId
+              task.platformType = platformState.resolveTask(newIntId)?.typ
+            }
+          }
+          if (
+            appState.currentTask.platformTaskIntId !== undefined &&
+            String(appState.currentTask.platformTaskIntId) === oldIntIdStr
+          ) {
+            appState.currentTask.platformTaskIntId = newIntId
+            appState.currentTask.platformType = platformState.resolveTask(newIntId)?.typ
+          }
+        })
         sendJson(res, 200, { status: 'ok' })
         return
       }
