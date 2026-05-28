@@ -7,6 +7,7 @@ export type TeamsAutoSwitchTask = {
 
 const CALL_MARKER_RE = /\b(call|anruf)\b/i
 const MEETING_MARKER_RE = /\b(meeting|besprechung)\b/i
+const NON_MEETING_TITLE_RE = /\b(chat|activity|aktivität|calendar|kalender)\b/i
 const TEAMS_TOKEN_RE = /^(microsoft\s+)?teams(?:\s+classic)?$/i
 
 const normalizeWhitespace = (value: string) => value.replace(/\s+/g, ' ').trim()
@@ -46,11 +47,18 @@ const cleanupCallPartner = (token: string) =>
 export const isTeamsCallOrMeetingTitle = (title: string): boolean => {
   const normalizedTitle = stripTeamsSuffix(title)
   const titleTokens = splitTitle(normalizedTitle)
+  const hasTeamsSuffix = normalizeWhitespace(title) !== normalizedTitle
+  const looksLikeMarkerlessMeeting =
+    hasTeamsSuffix &&
+    titleTokens.length === 1 &&
+    !NON_MEETING_TITLE_RE.test(titleTokens[0]) &&
+    !isTeamsToken(titleTokens[0])
 
   return (
     CALL_MARKER_RE.test(normalizedTitle) ||
     MEETING_MARKER_RE.test(normalizedTitle) ||
-    titleTokens.some((token) => isCallToken(token) || isMeetingToken(token))
+    titleTokens.some((token) => isCallToken(token) || isMeetingToken(token)) ||
+    looksLikeMarkerlessMeeting
   )
 }
 

@@ -33,6 +33,7 @@ describe('teamsAutoSwitch', () => {
       isTeamsCallOrMeetingTitle('Architecture Sync | Besprechung | Microsoft Teams'),
       true,
     )
+    assert.strictEqual(isTeamsCallOrMeetingTitle('Entwicklungs-Daily | Microsoft Teams'), true)
     assert.strictEqual(isTeamsCallOrMeetingTitle('Chat | Robert | Microsoft Teams'), false)
   })
 })
