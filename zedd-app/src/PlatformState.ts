@@ -11,10 +11,10 @@ import {
   TaskActivity,
   webDriverQuit,
 } from 'zedd-platform'
+import { PlatformOptions } from 'zedd-platform/out/src/model/platform.options.model'
+import { RepliconIntegration } from 'zedd-platform/out/src/replicon-integration'
 import './index.css'
 import { FILE_DATE_FORMAT, getLatestFileInDir, mkdirIfNotExists } from './util'
-import { RepliconIntegration } from 'zedd-platform/out/src/replicon-integration'
-import { PlatformOptions } from 'zedd-platform/out/src/model/platform.options.model'
 
 export enum PlatformActionType {
   SubmitTimesheet,
@@ -300,6 +300,12 @@ export class PlatformState {
     this._currentlyImportingTasks = false
     webDriverQuit()
     this.platformIntegration?.quitBrowser()
+  }
+
+  public async replaceTasksFromExternal(tasks: Task[]): Promise<void> {
+    this._tasks = tasks
+    this._tasksLastUpdated = new Date()
+    await this.savePlatformTasksToFile(this._tasks)
   }
 
   private clearPlatformState(importing: boolean) {

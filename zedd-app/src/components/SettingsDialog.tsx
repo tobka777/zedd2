@@ -21,7 +21,7 @@ import { useTheme } from '@mui/material/styles'
 import * as React from 'react'
 import { useEffect, useState } from 'react'
 import { dialog } from '@electron/remote'
-import { MoreHoriz as PickFileIcon } from '@mui/icons-material'
+import { MoreHoriz as PickFileIcon, Add as AddIcon, Delete as DeleteIcon } from '@mui/icons-material'
 import { observer } from 'mobx-react-lite'
 import { PlatformState } from '../PlatformState'
 import { ZeddSettings } from '../ZeddSettings'
@@ -195,6 +195,77 @@ export const SettingsDialog = observer(
                 }}
                 inputProps={{ min: 1, max: 60, step: 1 }}
               />
+            </Grid>
+
+            <Grid item xs={4}>
+              <FormLabel>Target Notifications</FormLabel>
+              <div style={{ fontSize: 'small' }}>
+                Show a system notification when the daily or weekly hour target is almost reached.
+              </div>
+            </Grid>
+            <Grid item xs={8} component={'label'}>
+              Off
+              <Switch
+                checked={settings.targetNotificationsEnabled}
+                onChange={(_, checked) => (settings.targetNotificationsEnabled = checked)}
+              />
+              On
+            </Grid>
+
+            <Grid item xs={4}>
+              <FormLabel>Notification Offsets</FormLabel>
+              <div style={{ fontSize: 'small' }}>
+                Minutes before (+) or after (−) the daily/weekly target when a notification fires.
+                Add multiple entries for several reminders.
+              </div>
+            </Grid>
+            <Grid item xs={8}>
+              {settings.targetNotificationAdvanceMinutes.map((advMin, idx) => (
+                <div key={idx} style={{ display: 'flex', alignItems: 'center', marginBottom: 4 }}>
+                  <TextField
+                    type='number'
+                    value={advMin}
+                    onChange={(e) => {
+                      settings.targetNotificationAdvanceMinutes.splice(idx, 1, +e.target.value)
+                    }}
+                    InputProps={{
+                      endAdornment: <InputAdornment position='end'>minutes</InputAdornment>,
+                    }}
+                    inputProps={{ step: 1 }}
+                    style={{ width: '12em' }}
+                  />
+                  <IconButton
+                    size='small'
+                    aria-label='remove notification offset'
+                    onClick={() => settings.targetNotificationAdvanceMinutes.splice(idx, 1)}
+                  >
+                    <DeleteIcon fontSize='small' />
+                  </IconButton>
+                </div>
+              ))}
+              <Button
+                size='small'
+                startIcon={<AddIcon />}
+                onClick={() => settings.targetNotificationAdvanceMinutes.push(0)}
+              >
+                Add
+              </Button>
+            </Grid>
+
+            <Grid item xs={4}>
+              <FormLabel>Icon Alert</FormLabel>
+              <div style={{ fontSize: 'small' }}>
+                Flash the taskbar icon when a target notification fires. Clears when the window is
+                focused.
+              </div>
+            </Grid>
+            <Grid item xs={8} component={'label'}>
+              Off
+              <Switch
+                checked={settings.targetNotificationIconAlert}
+                onChange={(_, checked) => (settings.targetNotificationIconAlert = checked)}
+              />
+              On
             </Grid>
 
             <Grid item xs={4}>

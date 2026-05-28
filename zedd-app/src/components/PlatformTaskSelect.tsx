@@ -4,6 +4,7 @@ import { Autocomplete, TextField, Chip } from '@mui/material'
 import { StandardTextFieldProps } from '@mui/material/TextField'
 import { PlatformState } from '../PlatformState'
 import { Task } from 'zedd-platform'
+import { rankByWordPrefixSimilarity, tokenizeSearchWords } from '../search'
 
 export type PlatformTaskSelectProps = {
   platformState: PlatformState
@@ -21,6 +22,16 @@ export const PlatformTaskSelect = observer(
     ...textFieldProps
   }: PlatformTaskSelectProps) => {
     const maxEntries = 60
+    const searchableTasks = React.useMemo(
+      () =>
+        platformState.tasks.map((task) => {
+          const text = [task.projectName, task.name, task.projectIntId, task.taskCode]
+            .filter((x) => x !== undefined && x !== null && x !== '')
+            .join(' ')
+          return { item: task, text, words: tokenizeSearchWords(text) }
+        }),
+      [platformState.tasks],
+    )
 
     const resolvedVal = (value !== undefined && platformState.resolveTask(value)) || undefined
 
@@ -30,28 +41,12 @@ export const PlatformTaskSelect = observer(
         options={platformState.tasks}
         disabled={disabled}
         style={style}
-        filterOptions={(options: Task[], state) => {
-          const result = []
-          const inputParts = state.inputValue
-            .toLowerCase()
-            .replace('/', ' ')
-            .trim()
-            .split(/[\s*]+/)
-          for (let i = 0; i < options.length && result.length <= maxEntries; i++) {
-            const task = options[i]
-            if (
-              inputParts.every(
-                (ip) =>
-                  task.name.toLowerCase().includes(ip) ||
-                  task.projectName.toLowerCase().includes(ip) ||
-                  task.projectIntId.toLocaleString().includes(ip) ||
-                  task.taskCode.toLowerCase().includes(ip),
-              )
-            ) {
-              result.push(task)
-            }
-          }
-          return result
+        filterOptions={(_unusedOptions: Task[], state) => {
+          return rankByWordPrefixSimilarity(
+            searchableTasks,
+            state.inputValue,
+            maxEntries,
+          )
         }}
         onChange={(_: unknown, task: Task | undefined) => onChange(task?.intId)}
         value={resolvedVal ?? null}

@@ -1,18 +1,22 @@
 import {
   app,
   autoUpdater,
+  screen as electronScreen,
   getCurrentWindow,
   Menu,
+  nativeImage,
   powerMonitor,
-  screen as electronScreen,
   shell,
   Tray,
 } from '@electron/remote'
 import { BrowserWindow, ipcRenderer, MenuItemConstructorOptions, Rectangle } from 'electron'
 import { execFile } from 'child_process'
+import { format as formatDate, getISODay, startOfISOWeek } from 'date-fns'
+import { sum } from 'lodash'
 import { autorun, computed, configure as configureMobx } from 'mobx'
 import * as path from 'path'
 import * as React from 'react'
+import { createRoot } from 'react-dom/client'
 import 'win-ca' // use windows root certificates
 import { AppState, format, formatInterval, TimeSlice } from './AppState'
 import { PlatformState } from './PlatformState'
@@ -36,7 +40,18 @@ import {
   getNonEnvPathChromePath,
   installChromeDriver,
 } from './chromeDriverMgmt'
+import { AppGui } from './components/AppGui'
+import './index.css'
 import { suggestedTaskMenuItems } from './menuUtil'
+import { startOttzTalkerServer } from './ottzTalkerServer'
+import {
+  checkCgJira,
+  getLinksFromString,
+  getTasksForSearchString,
+  getTasksFromAssignedJiraIssues,
+  initJiraClient,
+} from './plJiraConnector'
+import { fileExists, floor, formatHoursBT, formatHoursHHmm, mkdirIfNotExists } from './util'
 
 configureMobx({ enforceActions: 'never' })
 
@@ -109,6 +124,33 @@ function showNotification(title: string, text: string, cb: () => void) {
     body: text,
   })
   notification.onclick = cb
+}
+
+function createNotificationDotImage() {
+  const size = 16
+  const canvas = document.createElement('canvas')
+  canvas.width = size
+  canvas.height = size
+  const ctx = canvas.getContext('2d')!
+  ctx.fillStyle = '#FF4444'
+  ctx.beginPath()
+  ctx.arc(size / 2, size / 2, size / 2 - 1, 0, 2 * Math.PI)
+  ctx.fill()
+  return nativeImage.createFromDataURL(canvas.toDataURL())
+}
+
+function startIconAlert() {
+  getCurrentWindow().flashFrame(true)
+  if (isWin) {
+    getCurrentWindow().setOverlayIcon(createNotificationDotImage(), 'Notification')
+  }
+}
+
+function clearIconAlert() {
+  getCurrentWindow().flashFrame(false)
+  if (isWin) {
+    getCurrentWindow().setOverlayIcon(null, '')
+  }
 }
 
 function quit() {
@@ -208,6 +250,22 @@ async function setup() {
 
   state.startInterval(() => powerMonitor?.getSystemIdleTime() ?? 0)
   state.config = config
+
+  try {
+    const tokenFilePath = path.join(saveDir, 'ottztalker.token')
+    const { token } = await startOttzTalkerServer({
+      appState: state,
+      platformState,
+      tokenFilePath,
+    })
+    console.log(
+      'OTTZTalker REST server running on http://127.0.0.1:12345 (token in ' + tokenFilePath + ')',
+    )
+    console.log('OTTZTalker token: ' + token)
+  } catch (e) {
+    console.error('Failed to start OTTZTalker REST server')
+    console.error(e)
+  }
   let lastAwaySlice: string | undefined
   state.idleSliceNotificationCallback = (when) => {
     lastAwaySlice = formatInterval(when) + ' ' + '$$$OTHER$$$'
@@ -498,9 +556,80 @@ async function setup() {
     document.title = workedTime + ' ' + timingInfo
   })
 
+  // Keys are date+advance-specific (e.g. 'day-2026-04-07-adv-15'), so each threshold gets
+  // exactly one notification per day/week, and the set naturally prevents re-firing.
+  const sentNotifications = new Set<string>()
+  const cleanupTargetNotificationAutorun = autorun(() => {
+    if (!config.targetNotificationsEnabled) return
+    const now = new Date()
+    const advanceList = config.targetNotificationAdvanceMinutes
+
+    const notifyOnce = (key: string, title: string, body: string) => {
+      if (!sentNotifications.has(key)) {
+        sentNotifications.add(key)
+        showNotification(title, body, () => {
+          // no action needed for target notifications
+        })
+        if (config.targetNotificationIconAlert) {
+          startIconAlert()
+        }
+      }
+    }
+
+    const describeOffset = (advMin: number): string => {
+      if (advMin > 0) return `${advMin} min before target`
+      if (advMin === 0) return 'target reached'
+      return `${-advMin} min past target`
+    }
+
+    const getTitle = (advMin: number, scope: 'Daily' | 'Weekly'): string => {
+      if (advMin > 0) return `${scope} target almost reached`
+      if (advMin === 0) return `${scope} target reached`
+      return `${scope} overtime`
+    }
+
+    for (const advMin of advanceList) {
+      const advanceHours = advMin / 60
+
+      // Daily notification
+      const dayTarget = config.workmask[getISODay(now) - 1] || 0
+      if (dayTarget > 0) {
+        const dayWorked = state.getDayWorkedHours(now)
+        const dayKey = `day-${formatDate(now, 'yyyy-MM-dd')}-adv-${advMin}`
+        if (dayWorked >= dayTarget - advanceHours) {
+          notifyOnce(
+            dayKey,
+            getTitle(advMin, 'Daily'),
+            `Tracked ${formatHoursHHmm(dayWorked)} of ${dayTarget}h daily target (${describeOffset(advMin)}).`,
+          )
+        }
+      }
+
+      // Weekly notification
+      const weekTarget = sum(config.workmask)
+      if (weekTarget > 0) {
+        const weekWorked = state.getWeekWorkedHours(now)
+        const weekKey = `week-${formatDate(startOfISOWeek(now), 'yyyy-MM-dd')}-adv-${advMin}`
+        if (weekWorked >= weekTarget - advanceHours) {
+          notifyOnce(
+            weekKey,
+            getTitle(advMin, 'Weekly'),
+            `Tracked ${formatHoursHHmm(weekWorked)} of ${weekTarget}h weekly target (${describeOffset(advMin)}).`,
+          )
+        }
+      }
+    }
+  })
+
   currentWindowEvents.push(
     ['blur', () => (state.windowFocused = false)],
-    ['focus', () => (state.windowFocused = true)],
+    [
+      'focus',
+      () => {
+        state.windowFocused = true
+        clearIconAlert()
+      },
+    ],
   )
 
   autorun(
@@ -567,6 +696,7 @@ async function setup() {
       cleanupIconAutorun()
       cleanupTrayMenuAutorun()
       cleanupTrayTooltipAutorun()
+      cleanupTargetNotificationAutorun()
       state.cleanup()
       tray.destroy()
       cleanupAutoUpdater()
