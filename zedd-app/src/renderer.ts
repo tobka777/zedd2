@@ -30,7 +30,10 @@ import {
   getTasksFromAssignedJiraIssues,
   initJiraClient,
 } from './plJiraConnector'
-import { deriveTeamsAutoSwitchTask, isTeamsCallOrMeetingTitle } from './teamsAutoSwitch'
+import {
+  deriveTeamsAutoSwitchTask,
+  pickBestTeamsCallOrMeetingTitle,
+} from './teamsAutoSwitch'
 import { fileExists, floor, formatHoursBT, formatHoursHHmm, mkdirIfNotExists } from './util'
 import { ZeddSettings } from './ZeddSettings'
 import {
@@ -65,9 +68,79 @@ const userConfigFile = path.join(saveDir, 'zeddconfig.json')
 const d = (...x: any[]) => console.log('renderer.ts', ...x)
 
 const isWin = process.platform === 'win32'
-const TEAMS_WINDOW_TITLE_QUERY =
-  "Get-Process | Where-Object { ($_.Name -match 'ms-teams|msteams|Teams') -and ($_.MainWindowTitle -ne '') } | Select-Object -ExpandProperty MainWindowTitle"
+const TEAMS_WINDOW_TITLE_QUERY = `
+$teamsPids = Get-Process | Where-Object { $_.Name -match 'ms-teams|msteams|Teams' } | Select-Object -ExpandProperty Id
+if (-not $teamsPids) { return }
+if (-not ('TeamsWindowEnumerator' -as [type])) {
+  Add-Type -TypeDefinition @"
+using System;
+using System.Collections.Generic;
+using System.Runtime.InteropServices;
+using System.Text;
+
+public class TeamsWindowInfo {
+  public int ProcessId { get; set; }
+  public string Title { get; set; }
+}
+
+public static class TeamsWindowEnumerator {
+  private delegate bool EnumWindowsProc(IntPtr hWnd, IntPtr lParam);
+
+  [DllImport("user32.dll")]
+  private static extern bool EnumWindows(EnumWindowsProc enumProc, IntPtr lParam);
+
+  [DllImport("user32.dll")]
+  private static extern int GetWindowText(IntPtr hWnd, StringBuilder text, int maxCount);
+
+  [DllImport("user32.dll")]
+  private static extern int GetWindowTextLength(IntPtr hWnd);
+
+  [DllImport("user32.dll")]
+  private static extern uint GetWindowThreadProcessId(IntPtr hWnd, out uint processId);
+
+  [DllImport("user32.dll")]
+  private static extern bool IsWindowVisible(IntPtr hWnd);
+
+  public static List<TeamsWindowInfo> GetOpenWindows() {
+    var windows = new List<TeamsWindowInfo>();
+    EnumWindows((hWnd, lParam) => {
+      if (!IsWindowVisible(hWnd)) {
+        return true;
+      }
+
+      int length = GetWindowTextLength(hWnd);
+      if (length == 0) {
+        return true;
+      }
+
+      var builder = new StringBuilder(length + 1);
+      GetWindowText(hWnd, builder, builder.Capacity);
+      var title = builder.ToString();
+      if (string.IsNullOrWhiteSpace(title)) {
+        return true;
+      }
+
+      uint processId;
+      GetWindowThreadProcessId(hWnd, out processId);
+      windows.Add(new TeamsWindowInfo {
+        ProcessId = (int)processId,
+        Title = title
+      });
+      return true;
+    }, IntPtr.Zero);
+    return windows;
+  }
+}
+"@ | Out-Null
+}
+
+[TeamsWindowEnumerator]::GetOpenWindows() |
+  Where-Object { $teamsPids -contains $_.ProcessId -and $_.Title -and $_.Title.Trim().Length -gt 0 } |
+  Select-Object -ExpandProperty Title -Unique
+`
 const TEAMS_CALL_CHECK_INTERVAL_MS = 15_000
+const TEAMS_CALL_DETECT_CONFIRMATIONS = 2
+const TEAMS_CALL_CLEAR_CONFIRMATIONS = 2
 
 /**
  * Checks whether Microsoft Teams currently has an active call or meeting window open.
@@ -91,13 +164,7 @@ function getActiveTeamsCallTitle(): Promise<string | null> {
           .split('\n')
           .map((t) => t.trim())
           .filter(Boolean)
-        for (const title of titles) {
-          if (isTeamsCallOrMeetingTitle(title)) {
-            resolve(title)
-            return
-          }
-        }
-        resolve(null)
+        resolve(pickBestTeamsCallOrMeetingTitle(titles))
       },
     )
   })
@@ -403,26 +470,51 @@ async function setup() {
   // auto-switch the current task when configured.
   let teamsCallActive = false
   let previousTask: typeof state.currentTask | null = null
+  let teamsCallDetectStreak = 0
+  let teamsCallClearStreak = 0
+  let pendingTeamsCallTitle: string | null = null
   const teamsCallInterval = setInterval(async () => {
     if (!config.teamsAutoSwitch) return
     try {
       const callTitle = await getActiveTeamsCallTitle()
-      if (callTitle && !teamsCallActive) {
+      if (callTitle) {
+        teamsCallClearStreak = 0
+        if (pendingTeamsCallTitle !== callTitle) {
+          pendingTeamsCallTitle = callTitle
+          teamsCallDetectStreak = 1
+        } else {
+          teamsCallDetectStreak += 1
+        }
+      } else {
+        teamsCallDetectStreak = 0
+        pendingTeamsCallTitle = null
+        teamsCallClearStreak += 1
+      }
+
+      if (
+        !teamsCallActive &&
+        pendingTeamsCallTitle &&
+        teamsCallDetectStreak >= TEAMS_CALL_DETECT_CONFIRMATIONS
+      ) {
         teamsCallActive = true
         previousTask = state.currentTask
-        const teamsTask = deriveTeamsAutoSwitchTask(callTitle, config.teamsTaskName)
+        const teamsTask = deriveTeamsAutoSwitchTask(pendingTeamsCallTitle, config.teamsTaskName)
         state.currentTask = state.getTaskForNameWithDefaults(teamsTask.taskName, {
           taskActivityName: teamsTask.taskActivityName,
           platformTaskComment: teamsTask.platformTaskComment,
         })
         d('Teams call detected, switched to task:', teamsTask.taskName)
-      } else if (!callTitle && teamsCallActive) {
+      } else if (
+        teamsCallActive &&
+        teamsCallClearStreak >= TEAMS_CALL_CLEAR_CONFIRMATIONS
+      ) {
         teamsCallActive = false
         if (previousTask) {
           state.currentTask = previousTask
           d('Teams call ended, restored previous task:', previousTask.name)
         }
         previousTask = null
+        teamsCallClearStreak = 0
       }
     } catch (e) {
       console.error('Error checking Teams call status', e)

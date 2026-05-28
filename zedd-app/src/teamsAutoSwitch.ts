@@ -35,6 +35,15 @@ const splitTitle = (title: string): string[] =>
 const isTeamsToken = (token: string) => TEAMS_TOKEN_RE.test(token)
 const isCallToken = (token: string) => /^(call|anruf)$/i.test(token)
 const isMeetingToken = (token: string) => /^(meeting|besprechung)$/i.test(token)
+const hasExplicitCallOrMeetingMarker = (title: string) => {
+  const normalizedTitle = stripTeamsSuffix(title)
+  const titleTokens = splitTitle(normalizedTitle)
+  return (
+    CALL_MARKER_RE.test(normalizedTitle) ||
+    MEETING_MARKER_RE.test(normalizedTitle) ||
+    titleTokens.some((token) => isCallToken(token) || isMeetingToken(token))
+  )
+}
 
 const cleanupCallPartner = (token: string) =>
   normalizeWhitespace(
@@ -60,6 +69,15 @@ export const isTeamsCallOrMeetingTitle = (title: string): boolean => {
     titleTokens.some((token) => isCallToken(token) || isMeetingToken(token)) ||
     looksLikeMarkerlessMeeting
   )
+}
+
+export const pickBestTeamsCallOrMeetingTitle = (titles: string[]): string | null => {
+  const sanitizedTitles = titles.map((title) => title.trim()).filter(Boolean)
+  const explicitTitle = sanitizedTitles.find(
+    (title) => isTeamsCallOrMeetingTitle(title) && hasExplicitCallOrMeetingMarker(title),
+  )
+  if (explicitTitle) return explicitTitle
+  return sanitizedTitles.find((title) => isTeamsCallOrMeetingTitle(title)) ?? null
 }
 
 export const deriveTeamsAutoSwitchTask = (
