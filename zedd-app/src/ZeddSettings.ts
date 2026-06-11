@@ -126,4 +126,50 @@ export class ZeddSettings {
   @observable
   @serializable(raw())
   public federalState: { code: string; label: string } | null = { code: '', label: '' }
+
+  /**
+   * Automatically switch to a Teams meeting task when a Microsoft Teams call or meeting
+   * is detected as active. Only works on Windows.
+   */
+  @observable
+  @serializable
+  public teamsAutoSwitch: boolean = false
+
+  /**
+   * Fallback task name when a Teams call/meeting title cannot be converted into a task name.
+   * Defaults to "teams meeting".
+   */
+  @observable
+  @serializable
+  public teamsTaskName: string = 'teams meeting'
+  /**
+   * Whether to show a system notification when the daily or weekly hour target is about to be reached.
+   */
+  @observable
+  @serializable
+  public targetNotificationsEnabled = true
+
+  /**
+   * List of offsets (in minutes) before the daily/weekly hour target when a notification fires.
+   * Positive values trigger before the target (e.g. 15 = 15 min remaining).
+   * Zero triggers exactly on the target.
+   * Negative values trigger after the target (overtime warnings).
+   * Migrated automatically from the legacy single-number format.
+   */
+  @observable
+  @serializable(
+    custom(
+      (x: number[]) => x,
+      (x: unknown) => (Array.isArray(x) ? x : x != null ? [x as number] : [60, 15, 0]),
+    ),
+  )
+  public targetNotificationAdvanceMinutes: number[] = [60, 15, 0]
+
+  /**
+   * Whether to flash the taskbar / window icon when a target notification fires.
+   * The flash is cleared automatically when the window gains focus.
+   */
+  @observable
+  @serializable
+  public targetNotificationIconAlert = true
 }

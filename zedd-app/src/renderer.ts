@@ -1,17 +1,22 @@
 import {
   app,
   autoUpdater,
+  screen as electronScreen,
   getCurrentWindow,
   Menu,
+  nativeImage,
   powerMonitor,
-  screen as electronScreen,
   shell,
   Tray,
 } from '@electron/remote'
 import { BrowserWindow, ipcRenderer, MenuItemConstructorOptions, Rectangle } from 'electron'
+import { execFile } from 'child_process'
+import { format as formatDate, getISODay, startOfISOWeek } from 'date-fns'
+import { sum } from 'lodash'
 import { autorun, computed, configure as configureMobx } from 'mobx'
 import * as path from 'path'
 import * as React from 'react'
+import { createRoot } from 'react-dom/client'
 import 'win-ca' // use windows root certificates
 import { AppState, format, formatInterval, TimeSlice } from './AppState'
 import { PlatformState } from './PlatformState'
@@ -25,6 +30,10 @@ import {
   getTasksFromAssignedJiraIssues,
   initJiraClient,
 } from './plJiraConnector'
+import {
+  deriveTeamsAutoSwitchTask,
+  pickBestTeamsCallOrMeetingTitle,
+} from './teamsAutoSwitch'
 import { fileExists, floor, formatHoursBT, formatHoursHHmm, mkdirIfNotExists } from './util'
 import { ZeddSettings } from './ZeddSettings'
 import {
@@ -34,7 +43,18 @@ import {
   getNonEnvPathChromePath,
   installChromeDriver,
 } from './chromeDriverMgmt'
+import { AppGui } from './components/AppGui'
+import './index.css'
 import { suggestedTaskMenuItems } from './menuUtil'
+import { startOttzTalkerServer } from './ottzTalkerServer'
+import {
+  checkCgJira,
+  getLinksFromString,
+  getTasksForSearchString,
+  getTasksFromAssignedJiraIssues,
+  initJiraClient,
+} from './plJiraConnector'
+import { fileExists, floor, formatHoursBT, formatHoursHHmm, mkdirIfNotExists } from './util'
 
 configureMobx({ enforceActions: 'never' })
 
@@ -48,6 +68,108 @@ const userConfigFile = path.join(saveDir, 'zeddconfig.json')
 const d = (...x: any[]) => console.log('renderer.ts', ...x)
 
 const isWin = process.platform === 'win32'
+const TEAMS_WINDOW_TITLE_QUERY = `
+$teamsPids = Get-Process | Where-Object { $_.Name -match 'ms-teams|msteams|Teams' } | Select-Object -ExpandProperty Id
+if (-not $teamsPids) { return }
+if (-not ('TeamsWindowEnumerator' -as [type])) {
+  Add-Type -TypeDefinition @"
+using System;
+using System.Collections.Generic;
+using System.Runtime.InteropServices;
+using System.Text;
+
+public class TeamsWindowInfo {
+  public int ProcessId { get; set; }
+  public string Title { get; set; }
+}
+
+public static class TeamsWindowEnumerator {
+  private delegate bool EnumWindowsProc(IntPtr hWnd, IntPtr lParam);
+
+  [DllImport("user32.dll")]
+  private static extern bool EnumWindows(EnumWindowsProc enumProc, IntPtr lParam);
+
+  [DllImport("user32.dll")]
+  private static extern int GetWindowText(IntPtr hWnd, StringBuilder text, int maxCount);
+
+  [DllImport("user32.dll")]
+  private static extern int GetWindowTextLength(IntPtr hWnd);
+
+  [DllImport("user32.dll")]
+  private static extern uint GetWindowThreadProcessId(IntPtr hWnd, out uint processId);
+
+  [DllImport("user32.dll")]
+  private static extern bool IsWindowVisible(IntPtr hWnd);
+
+  public static List<TeamsWindowInfo> GetOpenWindows() {
+    var windows = new List<TeamsWindowInfo>();
+    EnumWindows((hWnd, lParam) => {
+      if (!IsWindowVisible(hWnd)) {
+        return true;
+      }
+
+      int length = GetWindowTextLength(hWnd);
+      if (length == 0) {
+        return true;
+      }
+
+      var builder = new StringBuilder(length + 1);
+      GetWindowText(hWnd, builder, builder.Capacity);
+      var title = builder.ToString();
+      if (string.IsNullOrWhiteSpace(title)) {
+        return true;
+      }
+
+      uint processId;
+      GetWindowThreadProcessId(hWnd, out processId);
+      windows.Add(new TeamsWindowInfo {
+        ProcessId = (int)processId,
+        Title = title
+      });
+      return true;
+    }, IntPtr.Zero);
+    return windows;
+  }
+}
+"@ | Out-Null
+}
+
+[TeamsWindowEnumerator]::GetOpenWindows() |
+  Where-Object { $teamsPids -contains $_.ProcessId -and $_.Title -and $_.Title.Trim().Length -gt 0 } |
+  Select-Object -ExpandProperty Title -Unique
+`
+const TEAMS_CALL_CHECK_INTERVAL_MS = 15_000
+// Require two consecutive checks to avoid switching/restoring on transient window-query noise.
+const TEAMS_CALL_DETECT_CONFIRMATIONS = 2
+const TEAMS_CALL_CLEAR_CONFIRMATIONS = 2
+
+/**
+ * Checks whether Microsoft Teams currently has an active call or meeting window open.
+ * Returns the window title of the active Teams call/meeting, or null if none is found.
+ * Only works on Windows.
+ */
+function detectActiveTeamsCallOrMeetingTitle(): Promise<string | undefined> {
+  if (!isWin) return Promise.resolve(undefined)
+  return new Promise((resolve) => {
+    execFile(
+      'powershell.exe',
+      ['-NoProfile', '-NonInteractive', '-Command', TEAMS_WINDOW_TITLE_QUERY],
+      { timeout: 3000 },
+      (error, stdout) => {
+        if (error || !stdout.trim()) {
+          resolve(undefined)
+          return
+        }
+        const titles = stdout
+          .trim()
+          .split('\n')
+          .map((t) => t.trim())
+          .filter(Boolean)
+        resolve(pickBestTeamsCallOrMeetingTitle(titles))
+      },
+    )
+  })
+}
 
 // class Todo {
 //   name: string
@@ -70,6 +192,33 @@ function showNotification(title: string, text: string, cb: () => void) {
     body: text,
   })
   notification.onclick = cb
+}
+
+function createNotificationDotImage() {
+  const size = 16
+  const canvas = document.createElement('canvas')
+  canvas.width = size
+  canvas.height = size
+  const ctx = canvas.getContext('2d')!
+  ctx.fillStyle = '#FF4444'
+  ctx.beginPath()
+  ctx.arc(size / 2, size / 2, size / 2 - 1, 0, 2 * Math.PI)
+  ctx.fill()
+  return nativeImage.createFromDataURL(canvas.toDataURL())
+}
+
+function startIconAlert() {
+  getCurrentWindow().flashFrame(true)
+  if (isWin) {
+    getCurrentWindow().setOverlayIcon(createNotificationDotImage(), 'Notification')
+  }
+}
+
+function clearIconAlert() {
+  getCurrentWindow().flashFrame(false)
+  if (isWin) {
+    getCurrentWindow().setOverlayIcon(null, '')
+  }
 }
 
 function quit() {
@@ -169,6 +318,22 @@ async function setup() {
 
   state.startInterval(() => powerMonitor?.getSystemIdleTime() ?? 0)
   state.config = config
+
+  try {
+    const tokenFilePath = path.join(saveDir, 'ottztalker.token')
+    const { token } = await startOttzTalkerServer({
+      appState: state,
+      platformState,
+      tokenFilePath,
+    })
+    console.log(
+      'OTTZTalker REST server running on http://127.0.0.1:12345 (token in ' + tokenFilePath + ')',
+    )
+    console.log('OTTZTalker token: ' + token)
+  } catch (e) {
+    console.error('Failed to start OTTZTalker REST server')
+    console.error(e)
+  }
   let lastAwaySlice: string | undefined
   state.idleSliceNotificationCallback = (when) => {
     lastAwaySlice = formatInterval(when) + ' ' + '$$$OTHER$$$'
@@ -301,6 +466,58 @@ async function setup() {
     () => (state.lastAction = powerMonitor.getSystemIdleTime()),
     1000,
   )
+
+  // Teams call detection: periodically check for active Teams call/meeting windows and
+  // auto-switch the current task when configured.
+  let teamsCallActive = false
+  let previousTask: typeof state.currentTask | null = null
+  let teamsCallDetectStreak = 0
+  let teamsCallClearStreak = 0
+  let pendingTeamsCallTitle: string | undefined
+  const teamsCallInterval = setInterval(async () => {
+    if (!config.teamsAutoSwitch) return
+    try {
+      const callTitle = await detectActiveTeamsCallOrMeetingTitle()
+      if (callTitle) {
+        teamsCallClearStreak = 0
+        pendingTeamsCallTitle = callTitle
+        teamsCallDetectStreak += 1
+      } else {
+        teamsCallDetectStreak = 0
+        pendingTeamsCallTitle = undefined
+        teamsCallClearStreak += 1
+      }
+
+      if (
+        !teamsCallActive &&
+        pendingTeamsCallTitle &&
+        teamsCallDetectStreak >= TEAMS_CALL_DETECT_CONFIRMATIONS
+      ) {
+        teamsCallActive = true
+        previousTask = state.currentTask
+        const teamsTask = deriveTeamsAutoSwitchTask(pendingTeamsCallTitle, config.teamsTaskName)
+        state.currentTask = state.getTaskForNameWithDefaults(teamsTask.taskName, {
+          taskActivityName: teamsTask.taskActivityName,
+          platformTaskComment: teamsTask.platformTaskComment,
+        })
+        teamsCallDetectStreak = 0
+        d('Teams call detected, switched to task:', teamsTask.taskName)
+      } else if (
+        teamsCallActive &&
+        teamsCallClearStreak >= TEAMS_CALL_CLEAR_CONFIRMATIONS
+      ) {
+        teamsCallActive = false
+        if (previousTask) {
+          state.currentTask = previousTask
+          d('Teams call ended, restored previous task:', previousTask.name)
+        }
+        previousTask = null
+        teamsCallClearStreak = 0
+      }
+    } catch (e) {
+      console.error('Error checking Teams call status', e)
+    }
+  }, TEAMS_CALL_CHECK_INTERVAL_MS)
 
   let taskSelectRef: HTMLInputElement | undefined = undefined
 
@@ -436,9 +653,80 @@ async function setup() {
     document.title = workedTime + ' ' + timingInfo
   })
 
+  // Keys are date+advance-specific (e.g. 'day-2026-04-07-adv-15'), so each threshold gets
+  // exactly one notification per day/week, and the set naturally prevents re-firing.
+  const sentNotifications = new Set<string>()
+  const cleanupTargetNotificationAutorun = autorun(() => {
+    if (!config.targetNotificationsEnabled) return
+    const now = new Date()
+    const advanceList = config.targetNotificationAdvanceMinutes
+
+    const notifyOnce = (key: string, title: string, body: string) => {
+      if (!sentNotifications.has(key)) {
+        sentNotifications.add(key)
+        showNotification(title, body, () => {
+          // no action needed for target notifications
+        })
+        if (config.targetNotificationIconAlert) {
+          startIconAlert()
+        }
+      }
+    }
+
+    const describeOffset = (advMin: number): string => {
+      if (advMin > 0) return `${advMin} min before target`
+      if (advMin === 0) return 'target reached'
+      return `${-advMin} min past target`
+    }
+
+    const getTitle = (advMin: number, scope: 'Daily' | 'Weekly'): string => {
+      if (advMin > 0) return `${scope} target almost reached`
+      if (advMin === 0) return `${scope} target reached`
+      return `${scope} overtime`
+    }
+
+    for (const advMin of advanceList) {
+      const advanceHours = advMin / 60
+
+      // Daily notification
+      const dayTarget = config.workmask[getISODay(now) - 1] || 0
+      if (dayTarget > 0) {
+        const dayWorked = state.getDayWorkedHours(now)
+        const dayKey = `day-${formatDate(now, 'yyyy-MM-dd')}-adv-${advMin}`
+        if (dayWorked >= dayTarget - advanceHours) {
+          notifyOnce(
+            dayKey,
+            getTitle(advMin, 'Daily'),
+            `Tracked ${formatHoursHHmm(dayWorked)} of ${dayTarget}h daily target (${describeOffset(advMin)}).`,
+          )
+        }
+      }
+
+      // Weekly notification
+      const weekTarget = sum(config.workmask)
+      if (weekTarget > 0) {
+        const weekWorked = state.getWeekWorkedHours(now)
+        const weekKey = `week-${formatDate(startOfISOWeek(now), 'yyyy-MM-dd')}-adv-${advMin}`
+        if (weekWorked >= weekTarget - advanceHours) {
+          notifyOnce(
+            weekKey,
+            getTitle(advMin, 'Weekly'),
+            `Tracked ${formatHoursHHmm(weekWorked)} of ${weekTarget}h weekly target (${describeOffset(advMin)}).`,
+          )
+        }
+      }
+    }
+  })
+
   currentWindowEvents.push(
     ['blur', () => (state.windowFocused = false)],
-    ['focus', () => (state.windowFocused = true)],
+    [
+      'focus',
+      () => {
+        state.windowFocused = true
+        clearIconAlert()
+      },
+    ],
   )
 
   autorun(
@@ -500,10 +788,12 @@ async function setup() {
       console.log('setup().cleanup')
       clearInterval(saveInterval)
       clearInterval(lastActionInterval)
+      clearInterval(teamsCallInterval)
       cleanupSetStateLinks()
       cleanupIconAutorun()
       cleanupTrayMenuAutorun()
       cleanupTrayTooltipAutorun()
+      cleanupTargetNotificationAutorun()
       state.cleanup()
       tray.destroy()
       cleanupAutoUpdater()

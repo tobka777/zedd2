@@ -11,10 +11,10 @@ import {
   TaskActivity,
   webDriverQuit,
 } from 'zedd-platform'
+import { PlatformOptions } from 'zedd-platform/out/src/model/platform.options.model'
+import { RepliconIntegration } from 'zedd-platform/out/src/replicon-integration'
 import './index.css'
 import { FILE_DATE_FORMAT, getLatestFileInDir, mkdirIfNotExists } from './util'
-import { RepliconIntegration } from 'zedd-platform/out/src/replicon-integration'
-import { PlatformOptions } from 'zedd-platform/out/src/model/platform.options.model'
 
 export enum PlatformActionType {
   SubmitTimesheet,
@@ -177,19 +177,35 @@ export class PlatformState {
     toImport: 'ALL' | PlatformType,
     infoNotify?: (info: string) => void,
     notSave?: boolean,
+    onSprintTaskReplaced?: (
+      oldIntId: number | string,
+      newIntId: number | string,
+      oldTaskName: string,
+      newTaskName: string,
+    ) => void,
   ) {
     try {
       if (toImport === 'ALL') {
         for (const [key] of Object.entries(this.integrationMap)) {
-          await this.importAndSavePlatformTasks(key as PlatformType, infoNotify, true)
+          await this.importAndSavePlatformTasks(
+            key as PlatformType,
+            infoNotify,
+            true,
+            onSprintTaskReplaced,
+          )
         }
       } else {
         this.platformIntegration = this.integrationMap[toImport]
+        const oldTasks = this._tasks.filter((task) => task.typ === toImport)
         const importedTasks = await this.importPlatformTasks(this.platformIntegration, (tasks) => {
           infoNotify && infoNotify('Imported ' + tasks.length + ' tasks from ' + toImport + '.')
         })
         const otherTasks = this._tasks.filter((task) => task.typ !== toImport)
         this._tasks = [...otherTasks, ...importedTasks]
+
+        if (onSprintTaskReplaced) {
+          this.detectAndReportSprintReplacements(oldTasks, this._tasks, onSprintTaskReplaced)
+        }
       }
 
       if (!notSave) {
@@ -197,6 +213,48 @@ export class PlatformState {
       }
     } catch (error) {
       this.platformIntegration?.quitBrowser()
+    }
+  }
+
+  /**
+   * Detects platform tasks that were removed and had a sprint identifier ("SP-XX") in their name.
+   * For each such deleted task, looks for a successor with the next sprint number ("SP-(XX+1)") in
+   * the new task list and invokes the callback so callers can remap zedd activities.
+   */
+  private detectAndReportSprintReplacements(
+    oldTasks: Task[],
+    newTasks: Task[],
+    onSprintTaskReplaced: (
+      oldIntId: number | string,
+      newIntId: number | string,
+      oldTaskName: string,
+      newTaskName: string,
+    ) => void,
+  ): void {
+    const sprintRegex = /sp-(\d+)/i
+    for (const oldTask of oldTasks) {
+      const stillExists = newTasks.some((t) => t.intId === oldTask.intId)
+      if (stillExists) continue
+
+      const match = oldTask.name.match(sprintRegex)
+      if (!match) continue
+
+      const currentSprint = parseInt(match[1], 10)
+      const nextSprint = currentSprint + 1
+      // Build the expected successor name by replacing the sprint number with (current + 1),
+      // preserving the original zero-padding width.
+      const paddedNext = String(nextSprint).padStart(match[1].length, '0')
+      const sprintDigitsStart = (match.index ?? 0) + match[0].length - match[1].length
+      const successorName =
+        oldTask.name.slice(0, sprintDigitsStart) +
+        paddedNext +
+        oldTask.name.slice(sprintDigitsStart + match[1].length)
+      const successor = newTasks.find(
+        (t) => t.name.localeCompare(successorName, undefined, { sensitivity: 'base' }) === 0,
+      )
+      if (successor) {
+        onSprintTaskReplaced(oldTask.intId, successor.intId, oldTask.name, successor.name)
+      }
     }
   }
 
@@ -240,6 +298,24 @@ export class PlatformState {
     this._currentlyImportingTasks = false
     webDriverQuit()
     this.platformIntegration?.quitBrowser()
+  }
+
+  public async replaceTasksFromExternal(
+    tasks: Task[],
+    onSprintTaskReplaced?: (
+      oldIntId: number | string,
+      newIntId: number | string,
+      oldTaskName: string,
+      newTaskName: string,
+    ) => void,
+  ): Promise<void> {
+    const oldTasks = this._tasks
+    this._tasks = tasks
+    if (onSprintTaskReplaced) {
+      this.detectAndReportSprintReplacements(oldTasks, this._tasks, onSprintTaskReplaced)
+    }
+    this._tasksLastUpdated = new Date()
+    await this.savePlatformTasksToFile(this._tasks)
   }
 
   private clearPlatformState(importing: boolean) {

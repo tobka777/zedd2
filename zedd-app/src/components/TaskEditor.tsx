@@ -43,8 +43,29 @@ export const TaskEditor = observer(
 
         try {
           await platformState
-            .importAndSavePlatformTasks(platformType, (info) =>
-              state.addMessage(info, 'info', 2000),
+            .importAndSavePlatformTasks(
+              platformType,
+              (info) => state.addMessage(info, 'info', 2000),
+              undefined,
+              (oldIntId, newIntId, oldName, newName) => {
+                // Remap all zedd tasks that pointed to the deleted sprint task
+                for (const task of state.tasks) {
+                  if (task.platformTaskIntId === oldIntId) {
+                    task.platformTaskIntId = newIntId
+                    task.platformType = platformState.resolveTask(newIntId)?.typ
+                    state.addMessage(
+                      `Remapped sprint task: "${oldName}" → "${newName}"`,
+                      'info',
+                      5000,
+                    )
+                  }
+                }
+                // Also remap currentTask if it points to the deleted sprint task
+                if (state.currentTask.platformTaskIntId === oldIntId) {
+                  state.currentTask.platformTaskIntId = newIntId
+                  state.currentTask.platformType = platformState.resolveTask(newIntId)?.typ
+                }
+              },
             )
             .catch((e) => {
               platformState.error = e.message
@@ -91,9 +112,29 @@ export const TaskEditor = observer(
     if (value.platformTaskIntId === undefined) {
       const keys = value.name.match(/[A-Z]+-\d+/g) ?? []
       const keyRegexes = keys.map((key) => new RegExp(key + '(?!\\d)'))
-      const task = platformState.tasks.find((ct) =>
+      let task = platformState.tasks.find((ct) =>
         keyRegexes.some((regex) => ct.name.match(regex)),
       )
+      // Fall back: for each JIRA key, check if exactly one platform task contains both the
+      // project code and the ticket number (in any order across all searchable fields).
+      if (!task) {
+        for (const key of keys) {
+          const parts = key.split('-')
+          const project = parts[0]
+          const ticketNumber = parts[parts.length - 1]
+          const projectLC = project.toLowerCase()
+          const numberLC = ticketNumber.toLowerCase()
+          const matching = platformState.tasks.filter((ct) => {
+            const searchable =
+              `${ct.projectName} ${ct.name} ${ct.taskCode}`.toLowerCase()
+            return searchable.includes(projectLC) && searchable.includes(numberLC)
+          })
+          if (matching.length === 1) {
+            task = matching[0]
+            break
+          }
+        }
+      }
       guessPlatformIntId = task?.intId
     }
 
