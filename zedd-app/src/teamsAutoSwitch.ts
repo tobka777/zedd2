@@ -102,8 +102,9 @@ export const deriveTeamsAutoSwitchTask = (
     }
   }
 
-  const meetingName =
-    titleTokens.find((token) => token && !isMeetingToken(token)) || normalizeWhitespace(rawTitle)
+  const meetingName = titleTokens.some(isMeetingToken)
+    ? titleTokens.find((token) => token && !isMeetingToken(token)) ?? normalizeWhitespace(rawTitle)
+    : normalizeWhitespace(rawTitle)
   const activityName = meetingName || sanitizedFallback
 
   return {

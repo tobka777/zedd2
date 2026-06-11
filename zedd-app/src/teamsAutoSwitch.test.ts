@@ -65,6 +65,20 @@ describe('teamsAutoSwitch', () => {
     )
   })
 
+  it('uses the full title (minus Teams suffix) for markerless meetings with hyphens and pipes', () => {
+    assert.deepStrictEqual(
+      deriveTeamsAutoSwitchTask(
+        'test-/&!"=&%!"$afhaus asfv - asufiyx | asfuiyxv | Microsoft Teams',
+      ),
+      {
+        taskName: 'test-/&!"=&%!"$afhaus asfv - asufiyx | asfuiyxv',
+        taskActivityName: 'test-/&!"=&%!"$afhaus asfv - asufiyx | asfuiyxv',
+        platformTaskComment: 'test-/&!"=&%!"$afhaus asfv - asufiyx | asfuiyxv',
+        kind: 'meeting',
+      },
+    )
+  })
+
   it('returns undefined when no Teams call or meeting title exists', () => {
     assert.strictEqual(
       pickBestTeamsCallOrMeetingTitle([
