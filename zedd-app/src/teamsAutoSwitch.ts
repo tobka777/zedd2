@@ -59,9 +59,9 @@ export const isTeamsCallOrMeetingTitle = (title: string): boolean => {
   const hasTeamsSuffix = normalizeWhitespace(title) !== normalizedTitle
   const looksLikeMarkerlessMeeting =
     hasTeamsSuffix &&
-    titleTokens.length === 1 &&
-    !NON_MEETING_TITLE_RE.test(titleTokens[0]) &&
-    !isTeamsToken(titleTokens[0])
+    titleTokens.length > 0 &&
+    !titleTokens.some((token) => NON_MEETING_TITLE_RE.test(token)) &&
+    !titleTokens.every((token) => isTeamsToken(token))
 
   return (
     CALL_MARKER_RE.test(normalizedTitle) ||

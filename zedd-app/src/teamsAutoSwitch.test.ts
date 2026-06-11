@@ -39,6 +39,10 @@ describe('teamsAutoSwitch', () => {
     )
     assert.strictEqual(isTeamsCallOrMeetingTitle('Entwicklungs-Daily | Microsoft Teams'), true)
     assert.strictEqual(isTeamsCallOrMeetingTitle('Chat | Robert | Microsoft Teams'), false)
+    assert.strictEqual(
+      isTeamsCallOrMeetingTitle('AI Techtalk I - Grundlagen | Microsoft Teams'),
+      true,
+    )
   })
 
   it('prefers explicit meeting windows when several Teams windows are open', () => {
@@ -48,6 +52,16 @@ describe('teamsAutoSwitch', () => {
         'Architecture Sync | Meeting | Microsoft Teams',
       ]),
       'Architecture Sync | Meeting | Microsoft Teams',
+    )
+  })
+
+  it('picks the meeting title when a chat and a meeting with hyphens are open', () => {
+    assert.strictEqual(
+      pickBestTeamsCallOrMeetingTitle([
+        'Chat | Doe, John | Microsoft Teams',
+        'AI Techtalk I - Grundlagen | Microsoft Teams',
+      ]),
+      'AI Techtalk I - Grundlagen | Microsoft Teams',
     )
   })
 
