@@ -401,13 +401,11 @@ async function setup() {
 
         ...(0 === state.links.length ? [] : [{ type: 'separator' } as MenuItemConstructorOptions]),
 
-        ...state.links.map(
-          ([key, link]): MenuItemConstructorOptions => ({
-            label: 'Open in Browser: ' + key,
-            type: 'normal',
-            click: () => shell.openExternal(link),
-          }),
-        ),
+        ...state.links.map(([key, link]): MenuItemConstructorOptions => ({
+          label: 'Open in Browser: ' + key,
+          type: 'normal',
+          click: () => shell.openExternal(link),
+        })),
 
         { type: 'separator' },
 

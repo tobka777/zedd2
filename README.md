@@ -38,16 +38,16 @@ The `Autosubmit` checkbox will submit the timesheets as well.
 
 ### Tips and Tricks
 
-| **Command**                                         | **Description**                         | 
-|-----------------------------------------------------|-----------------------------------------|
+| **Command**                                         | **Description**                         |
+| --------------------------------------------------- | --------------------------------------- |
 | **CTRL+Click** on an empty space in the calendar    | Adds a new slice                        |
 | **CTRL+Click** on an existing slice in the calendar | Divides it into two                     |
 | **ALT+Click**                                       | Sets the slice to the last used task    |
-| **CTRL+Z**                                          | Undoes the last action                  | 
+| **CTRL+Z**                                          | Undoes the last action                  |
 | **CTRL+Y**                                          | Will redo any previously-undone action  |
-| Pressing the **Replicon** button                    | The current view is booked in Replicon. | 
-| Pressing the **OTT** button                         | The current view is booked in OTT.      | 
-| **CTRL+C** on an existing slice in the calendar     | Copy slice                              | 
+| Pressing the **Replicon** button                    | The current view is booked in Replicon. |
+| Pressing the **OTT** button                         | The current view is booked in OTT.      |
+| **CTRL+C** on an existing slice in the calendar     | Copy slice                              |
 | **CTRL+V** on an empty space in the calendar        | Paste slice at mouse pointer            |
 
 - To book the forecast:
@@ -60,7 +60,7 @@ The `Autosubmit` checkbox will submit the timesheets as well.
 
 - If you want to view the overtime hours of a month:
   - select the period of the month accordingly, or click `NEXT
-      MONTH`
+  MONTH`
   - navigate using the `←` (left) or `→` (right) buttons.
   - at the bottom, the summary of all tasks and bookings including overtime/undertime is displayed:
     ![img_6.png](screenshots/img_6.png)
@@ -94,4 +94,3 @@ If you want to contribute please read our [Contribution Guide](https://github.co
 ## Contact 🙋
 
 Contact person: [tobka777](https://github.com/tobka777)
-

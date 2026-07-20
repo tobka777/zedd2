@@ -1,10 +1,16 @@
+## [3.0.4] - 2026-07-20
+- Fix: added guardrail for orphaned browsers 
+
+
 ## [3.0.4] - 2025-12-09
+
 - Feature: Activity for OTT customizable
 - Fix: fix import activity
 - Fix: read chrome version in windows with powershell instead of wmic
 - Fix: Mapping for OTT to Replicon with different taskcode
 
 ## [3.0.3] - 2025-10-14
+
 - Feature: use default activity
 - Feature: custom tasks
 - Fix: filter table and task

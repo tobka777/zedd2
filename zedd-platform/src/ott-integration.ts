@@ -20,7 +20,7 @@ export class OTTIntegration extends PlatformIntegration {
 
     await this.page.setRequestInterception(true)
 
-     const [dropdownNode] = await this.page.$x(
+    const [dropdownNode] = await this.page.$x(
       "//div[@role='button' and contains(text(), 'Started & ended in selected period')]",
     )
 
