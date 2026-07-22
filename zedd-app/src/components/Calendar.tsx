@@ -479,7 +479,9 @@ const CalendarBase = <T extends Interval>({
               backgroundColor: 0 === getDay(d) % 2 ? 'green' : 'red',
               flex: '1 1 auto',
             }}
-            ref={(r) => (timeBlockDivs[i] = r!)}
+            ref={(r) => {
+              timeBlockDivs[i] = r!
+            }}
             onMouseMove={hoursBlockMouseMove}
             onClick={hoursBlockMouseClick}
             onMouseLeave={hoursBlockMouseLeave}

@@ -26,8 +26,10 @@ export class ErrorBoundary extends Component<{ children?: ReactNode }> {
           <TextField
             value={this.state.error.stack}
             multiline
-            InputProps={{
-              readOnly: true,
+            slotProps={{
+              input: {
+                readOnly: true,
+              },
             }}
             error
             style={{ color: 'red', width: '100%' }}

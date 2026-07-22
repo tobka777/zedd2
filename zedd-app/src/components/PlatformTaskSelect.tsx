@@ -25,12 +25,12 @@ export const PlatformTaskSelect = observer(
     const resolvedVal = (value !== undefined && platformState.resolveTask(value)) || undefined
 
     return (
-      <Autocomplete
+      <Autocomplete<Task, false, false, false>
         renderInput={(params) => <TextField {...params} {...textFieldProps} />}
         options={platformState.tasks}
         disabled={disabled}
         style={style}
-        filterOptions={(options: Task[], state) => {
+        filterOptions={(options, state) => {
           const result = []
           const inputParts = state.inputValue
             .toLowerCase()
@@ -53,9 +53,9 @@ export const PlatformTaskSelect = observer(
           }
           return result
         }}
-        onChange={(_: unknown, task: Task | undefined) => onChange(task?.intId)}
+        onChange={(_, task) => onChange(task?.intId)}
         value={resolvedVal ?? null}
-        renderOption={(props, option: Task, _state) => (
+        renderOption={(props, option, _state) => (
           <li
             {...props}
             className={`${props.className ?? ''} ${
@@ -80,7 +80,7 @@ export const PlatformTaskSelect = observer(
             </div>
           </li>
         )}
-        getOptionLabel={(x: Task) =>
+        getOptionLabel={(x) =>
           x
             ? (x.projectName === x.name ? x.projectName : x.projectName + ' / ' + x.name) +
               ' / ' +

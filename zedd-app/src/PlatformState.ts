@@ -22,17 +22,17 @@ export enum PlatformActionType {
 }
 
 export class PlatformState {
-  public ottLink: string
+  public ottLink!: string
 
-  public repliconLink: string
+  public repliconLink!: string
 
-  public repliconActivity: string
+  public repliconActivity!: string
 
-  public chromeExe: string
+  public chromeExe!: string
 
-  public chromedriverExe: string
+  public chromedriverExe!: string
 
-  public chromeHeadless: boolean
+  public chromeHeadless!: boolean
 
   /**
    * The name of the "platform resource" you are filling out
@@ -49,7 +49,7 @@ export class PlatformState {
   public success = false
 
   @observable
-  public actionType: PlatformActionType
+  public actionType!: PlatformActionType
 
   @observable
   private _currentlyImportingTasks = false
@@ -63,12 +63,12 @@ export class PlatformState {
   @observable
   private _taskActivities: TaskActivity[] = []
 
-  private platformIntegration: PlatformIntegration
+  private platformIntegration!: PlatformIntegration
 
   @observable
   private _tasksLastUpdated: Date | undefined
 
-  private integrationMap: Record<string, PlatformIntegration>
+  private integrationMap!: Record<string, PlatformIntegration>
 
   public constructor(public platformDir: string) {
     makeObservable(this)

@@ -67,12 +67,10 @@ export const TaskSelect = observer(
       [getTasksForSearchStringDebounced],
     )
 
-    if (textFieldProps.inputProps) throw new Error('???')
-
     return (
-      <Autocomplete
+      <Autocomplete<Task, false, false, true>
         options={[...tasks, ...options]}
-        onChange={onChange}
+        onChange={(e, v) => onChange(e as React.ChangeEvent<object>, v ?? undefined)}
         style={style}
         openOnFocus={false}
         value={value ?? ''}
@@ -92,7 +90,7 @@ export const TaskSelect = observer(
             style={textFieldStyle}
             onChange={onTextFieldChange}
             placeholder='Nothing. Nichts. Nada. Absolument rien.'
-            InputProps={params.InputProps}
+            slotProps={params.slotProps}
             margin='dense'
           />
         )}

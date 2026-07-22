@@ -126,11 +126,11 @@ export const SettingsDialog = observer(
         <DialogTitle id='config-dialog-title'>Settings</DialogTitle>
         <DialogContent>
           <Grid container spacing={2}>
-            <Grid item xs={4}>
+            <Grid size={{ xs: 4 }}>
               <FormLabel>Hour Mask</FormLabel>
               <div style={{ fontSize: 'small' }}>Regular worktimes. Used for sick/holidays.</div>
             </Grid>
-            <Grid item xs={8}>
+            <Grid size={{ xs: 8 }}>
               {['Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa', 'Su'].map((d, di) => (
                 <TextField
                   key={d}
@@ -146,64 +146,70 @@ export const SettingsDialog = observer(
               ))}
             </Grid>
 
-            <Grid item xs={4}>
+            <Grid size={{ xs: 4 }}>
               <FormLabel>Weekly Working Time</FormLabel>
             </Grid>
-            <Grid item xs={8} component={'label'}>
+            <Grid size={{ xs: 8 }} component={'label'}>
               <TextField
                 type='number'
                 value={settings.workmask.reduce((total, day) => (total = total + day.valueOf()), 0)}
                 onChange={(e) => updateWorkmask(parseInt(e.target.value))}
-                InputProps={{
-                  endAdornment: <InputAdornment position='end'>hours</InputAdornment>,
+                slotProps={{
+                  input: {
+                    endAdornment: <InputAdornment position='end'>hours</InputAdornment>,
+                  },
+                  htmlInput: { min: 1, max: 168, step: 1 },
                 }}
-                inputProps={{ min: 1, max: 168, step: 1 }}
               />
             </Grid>
 
-            <Grid item xs={4}>
+            <Grid size={{ xs: 4 }}>
               <FormLabel>Start Hour</FormLabel>
               <div style={{ fontSize: 'small' }}>
                 First hour of the calendar by default, as well as start hour for holidays etc.
               </div>
             </Grid>
-            <Grid item xs={8}>
+            <Grid size={{ xs: 8 }}>
               <TextField
                 type='number'
                 value={settings.startHour}
                 onChange={(e) => (settings.startHour = +e.target.value)}
-                InputProps={{
-                  endAdornment: <InputAdornment position='end'>:00</InputAdornment>,
+                slotProps={{
+                  input: {
+                    endAdornment: <InputAdornment position='end'>:00</InputAdornment>,
+                  },
+                  htmlInput: { min: 1, max: 60, step: 1 },
                 }}
-                inputProps={{ min: 1, max: 60, step: 1 }}
               />
             </Grid>
 
-            <Grid item xs={4}>
+            <Grid size={{ xs: 4 }}>
               <FormLabel>Min Idle Time</FormLabel>
               <div style={{ fontSize: 'small' }}>
                 Minimum user idle time in minutes which counts as "user is away".
               </div>
             </Grid>
-            <Grid item xs={8}>
+            <Grid size={{ xs: 8 }}>
               <TextField
                 type='number'
                 value={settings.minIdleTimeMin}
                 onChange={(e) => (settings.minIdleTimeMin = +e.target.value)}
-                InputProps={{
-                  endAdornment: <InputAdornment position='end'>minutes</InputAdornment>,
+                slotProps={{
+                  input: {
+                    endAdornment: <InputAdornment position='end'>minutes</InputAdornment>,
+                  },
+                  htmlInput: { min: 1, max: 60, step: 1 },
                 }}
-                inputProps={{ min: 1, max: 60, step: 1 }}
               />
             </Grid>
 
-            <Grid item xs={4}>
+            <Grid size={{ xs: 4 }}>
               <FormLabel>Keep Always On Top</FormLabel>
               <div style={{ fontSize: 'small' }}>
                 Will minimize to always-on-top after losing focus.
               </div>
             </Grid>
-            <Grid item xs={8} component={'label'}>
+            <Grid size={{ xs: 8 }} component={'label'}>
               <RadioGroup
                 row
                 value={'' + settings.keepHovering}
@@ -224,10 +230,10 @@ export const SettingsDialog = observer(
               /> */}
             </Grid>
 
-            <Grid item xs={4}>
+            <Grid size={{ xs: 4 }}>
               <FormLabel>Time Format</FormLabel>
             </Grid>
-            <Grid item xs={8} component={'label'}>
+            <Grid size={{ xs: 8 }} component={'label'}>
               BT
               <Switch
                 checked={'hours' === settings.timeFormat}
@@ -236,10 +242,10 @@ export const SettingsDialog = observer(
               Hours:Minutes
             </Grid>
 
-            <Grid item xs={4}>
+            <Grid size={{ xs: 4 }}>
               <FormLabel>OTT URL</FormLabel>
             </Grid>
-            <Grid item xs={8}>
+            <Grid size={{ xs: 8 }}>
               <TextField
                 style={{ width: '100%' }}
                 value={textFieldOTTLink}
@@ -250,10 +256,10 @@ export const SettingsDialog = observer(
               />
             </Grid>
 
-            <Grid item xs={4}>
+            <Grid size={{ xs: 4 }}>
               <FormLabel>Replicon URL</FormLabel>
             </Grid>
-            <Grid item xs={8}>
+            <Grid size={{ xs: 8 }}>
               <TextField
                 style={{ width: '100%' }}
                 value={textFieldRepliconLink}
@@ -264,10 +270,10 @@ export const SettingsDialog = observer(
               />
             </Grid>
 
-            <Grid item xs={4}>
+            <Grid size={{ xs: 4 }}>
               <FormLabel>Default Replicon Activity</FormLabel>
             </Grid>
-            <Grid item xs={8}>
+            <Grid size={{ xs: 8 }}>
               <Autocomplete
                 options={platformState.taskActivities.map((a) => a.name)}
                 value={settings.repliconActivity}
@@ -277,21 +283,15 @@ export const SettingsDialog = observer(
                 }}
                 renderOption={(props, option) => <li {...props}>{option}</li>}
                 renderInput={(params) => (
-                  <TextField
-                    {...params}
-                    label='Choose activity for Replicon'
-                    inputProps={{
-                      ...params.inputProps,
-                    }}
-                  />
+                  <TextField {...params} label='Choose activity for Replicon' />
                 )}
               ></Autocomplete>
             </Grid>
 
-            <Grid item xs={4}>
+            <Grid size={{ xs: 4 }}>
               <FormLabel>Open Chrome in</FormLabel>
             </Grid>
-            <Grid item xs={8} component={'label'}>
+            <Grid size={{ xs: 8 }} component={'label'}>
               Foreground
               <Switch
                 checked={!!settings.chromeHeadless}
@@ -300,10 +300,10 @@ export const SettingsDialog = observer(
               Background
             </Grid>
 
-            <Grid item xs={4}>
+            <Grid size={{ xs: 4 }}>
               <FormLabel>Location (for public holidays)</FormLabel>
             </Grid>
-            <Grid item xs={8}>
+            <Grid size={{ xs: 8 }}>
               <Autocomplete
                 options={countries}
                 value={settings.location}
@@ -321,21 +321,13 @@ export const SettingsDialog = observer(
                     <div>{option.label}</div>
                   </li>
                 )}
-                renderInput={(params) => (
-                  <TextField
-                    {...params}
-                    label='Choose a country'
-                    inputProps={{
-                      ...params.inputProps,
-                    }}
-                  />
-                )}
+                renderInput={(params) => <TextField {...params} label='Choose a country' />}
               ></Autocomplete>
             </Grid>
-            <Grid item xs={4}>
+            <Grid size={{ xs: 4 }}>
               <FormLabel>Federal State</FormLabel>
             </Grid>
-            <Grid item xs={8}>
+            <Grid size={{ xs: 8 }}>
               <Autocomplete
                 style={{
                   display: settings.location && settings.location.code === 'DE' ? 'block' : 'none',
@@ -351,43 +343,37 @@ export const SettingsDialog = observer(
                     <div>{option.label}</div>
                   </li>
                 )}
-                renderInput={(params) => (
-                  <TextField
-                    {...params}
-                    label='Choose your state'
-                    inputProps={{
-                      ...params.inputProps,
-                    }}
-                  />
-                )}
+                renderInput={(params) => <TextField {...params} label='Choose your state' />}
               ></Autocomplete>
             </Grid>
-            <Grid item xs={4}>
+            <Grid size={{ xs: 4 }}>
               <FormLabel>Ersatz Task</FormLabel>
             </Grid>
-            <Grid item xs={8}>
+            <Grid size={{ xs: 8 }}>
               <TextField
                 value={settings.ersatzTask}
                 onChange={(e) => (settings.ersatzTask = e.target.value.trim())}
               />
             </Grid>
 
-            <Grid item xs={4}>
+            <Grid size={{ xs: 4 }}>
               <FormLabel>PL JIRA</FormLabel>
               <div style={{ fontSize: 'small' }}>
                 Leave blank if not relevant. If necessary, add required root certificates to the
                 windows root certificate store.
               </div>
             </Grid>
-            <Grid item xs={8}>
+            <Grid size={{ xs: 8 }}>
               <TextField
                 label='URL'
                 placeholder='http://...'
                 style={{ width: '100%' }}
-                InputProps={{
-                  endAdornment: (
-                    <InputAdornment position='end'>secure/Dashboard.jspa</InputAdornment>
-                  ),
+                slotProps={{
+                  input: {
+                    endAdornment: (
+                      <InputAdornment position='end'>secure/Dashboard.jspa</InputAdornment>
+                    ),
+                  },
                 }}
                 value={settings.cgJira.url}
                 onChange={(e) => {
@@ -397,8 +383,8 @@ export const SettingsDialog = observer(
               />
             </Grid>
 
-            <Grid item xs={4}></Grid>
-            <Grid item xs={8}>
+            <Grid size={{ xs: 4 }}></Grid>
+            <Grid size={{ xs: 8 }}>
               <TextField
                 label='Personal Access Token'
                 style={{ width: '95%' }}
@@ -419,32 +405,34 @@ export const SettingsDialog = observer(
               ) : null}
             </Grid>
 
-            <Grid item xs={4}>
+            <Grid size={{ xs: 4 }}>
               <FormLabel>JIRA 2</FormLabel>
               <div style={{ fontSize: 'small' }}>
                 If task names contain JIRA keys which are not from projects in the above JIRA, this
                 URL will be used to generate links instead.
               </div>
             </Grid>
-            <Grid item xs={8}>
+            <Grid size={{ xs: 8 }}>
               <TextField
                 label='URL'
                 placeholder='http://...'
                 style={{ width: '100%' }}
-                InputProps={{
-                  endAdornment: (
-                    <InputAdornment position='end'>secure/Dashboard.jspa</InputAdornment>
-                  ),
+                slotProps={{
+                  input: {
+                    endAdornment: (
+                      <InputAdornment position='end'>secure/Dashboard.jspa</InputAdornment>
+                    ),
+                  },
                 }}
                 value={settings.jira2.url}
                 onChange={(e) => (settings.jira2.url = e.target.value.trim())}
               />
             </Grid>
 
-            <Grid item xs={4}>
+            <Grid size={{ xs: 4 }}>
               <FormLabel>Chrome Path</FormLabel>
             </Grid>
-            <Grid item xs={8} style={{ minHeight: '4em' }}>
+            <Grid size={{ xs: 8 }} style={{ minHeight: '4em' }}>
               <TextField
                 style={{ width: '100%' }}
                 value={settings.chromePath}
@@ -452,29 +440,31 @@ export const SettingsDialog = observer(
                   settings.chromePath = e.target.value
                   updateChromeStatusDebounced()
                 }}
-                InputProps={{
-                  endAdornment: (
-                    <InputAdornment position='end'>
-                      <IconButton
-                        aria-label='toggle password visibility'
-                        size='small'
-                        onClick={async () => {
-                          const result = await dialog.showOpenDialog({
-                            defaultPath: settings.chromePath,
-                            filters: [{ name: 'Executable', extensions: ['exe'] }],
-                            properties: ['openFile'],
-                          })
-                          if (result.filePaths[0]) {
-                            settings.chromePath = result.filePaths[0]
-                            updateChromeStatusDebounced()
-                          }
-                        }}
-                        edge='end'
-                      >
-                        <PickFileIcon />
-                      </IconButton>
-                    </InputAdornment>
-                  ),
+                slotProps={{
+                  input: {
+                    endAdornment: (
+                      <InputAdornment position='end'>
+                        <IconButton
+                          aria-label='toggle password visibility'
+                          size='small'
+                          onClick={async () => {
+                            const result = await dialog.showOpenDialog({
+                              defaultPath: settings.chromePath,
+                              filters: [{ name: 'Executable', extensions: ['exe'] }],
+                              properties: ['openFile'],
+                            })
+                            if (result.filePaths[0]) {
+                              settings.chromePath = result.filePaths[0]
+                              updateChromeStatusDebounced()
+                            }
+                          }}
+                          edge='end'
+                        >
+                          <PickFileIcon />
+                        </IconButton>
+                      </InputAdornment>
+                    ),
+                  },
                 }}
               />
               {chromeStatus.error ? (

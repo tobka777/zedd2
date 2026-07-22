@@ -89,10 +89,15 @@ export const installChromeDriver = async (
       fsp.chmod(sourcePath, 0o755)
 
       if (adminPrompt) {
-        await promisify<string, { name: string }, Buffer>(sudo.exec)(
-          `move /Y ${JSON.stringify(sourcePath)} ${JSON.stringify(targetPath)}`,
-          { name: 'Copy Chromedriver' },
-        )
+        // sudo.exec uses a (error, stdout, stderr) callback which no longer matches
+        // util.promisify's overloads, so wrap it in a Promise manually.
+        await new Promise<void>((resolve, reject) => {
+          sudo.exec(
+            `move /Y ${JSON.stringify(sourcePath)} ${JSON.stringify(targetPath)}`,
+            { name: 'Copy Chromedriver' },
+            (error) => (error ? reject(error) : resolve()),
+          )
+        })
       } else {
         await fsp.copyFile(sourcePath, targetPath)
       }

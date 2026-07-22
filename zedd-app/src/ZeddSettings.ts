@@ -9,7 +9,11 @@ export class ZeddSettings {
   }
 
   public static async readFromFile(file: string): Promise<ZeddSettings> {
-    const settings = deserialize(ZeddSettings, JSON.parse(await fsp.readFile(file, 'utf8')))
+    // Cast to object so serializr picks the single-object deserialize overload (not the array one).
+    const settings = deserialize(
+      ZeddSettings,
+      JSON.parse(await fsp.readFile(file, 'utf8')) as object,
+    )
     settings.fromFile = file
     return settings
   }

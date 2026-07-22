@@ -1,3 +1,13 @@
+## [3.1.0] - 2026-07-22
+
+- Feature: Updated all dependencies to their latest versions (Electron 43, React 19, MUI 9, TypeScript 6, date-fns 4, Puppeteer 25, Selenium 4.46, jira.js 5, ESLint 9, Prettier 3, and more)
+- Fix: Resolved all known CVEs in the shipped application dependencies
+- Fix: Removed deprecated/unused packages (`request`, `browser-request`, `tslint`, `babel-plugin-import`)
+- Feature: Migrated ESLint to the flat config format (`eslint.config.js`) and dropped TSLint
+- Feature: Migrated code for breaking changes in MUI (Grid `size` prop, `slotProps`), Autocomplete, Puppeteer (XPath/`waitForTimeout` helpers), Selenium (Chrome options), jira.js v5 (auth + paginated project search) and serializr 3
+- Fix (175): OTT Import failing because of non matching `Default Issue Filter`
+- Fix (164): Browser for Import / Export is sometimes not starting because of missing chromePath
+
 ## [3.0.4] - 2025-12-09
 - Feature: Activity for OTT customizable
 - Fix: fix import activity
