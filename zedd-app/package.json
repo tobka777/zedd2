@@ -164,7 +164,7 @@
     "react-markdown": "^8.0.0",
     "request": "^2.88.2",
     "serializr": "^2.0.5",
-    "sharp": "^0.30.7",
+    "sharp": "^0.35.0",
     "sinon": "^14.0.0",
     "sleep-promise": "^9.1.0",
     "style-loader": "^3.3.1",
