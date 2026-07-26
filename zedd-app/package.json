@@ -97,7 +97,7 @@
     "win-ca": "^3.4.5"
   },
   "devDependencies": {
-    "@babel/core": "^7.17.5",
+    "@babel/core": "^7.29.6",
     "@babel/preset-env": "^7.16.11",
     "@babel/preset-typescript": "^7.16.7",
     "@electron-forge/cli": "^6.0.5",
