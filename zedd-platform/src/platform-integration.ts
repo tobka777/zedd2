@@ -16,15 +16,20 @@ export abstract class PlatformIntegration {
 
   async init() {
     checkPlatformUrl(this.platformLink)
+
     this.browser = await puppeteer.launch({
       headless: this.options.headless,
       executablePath: this.options.executablePath,
-      args: [`--window-size=${window.screen.availWidth},${window.screen.availHeight}`],
+      args: [
+        `--window-size=${window.screen.availWidth},${window.screen.availHeight}`,
+        '--no-sandbox',
+      ],
       defaultViewport: {
         width: Math.round(window.screen.availWidth),
         height: Math.round(window.screen.availHeight * 0.9),
       },
     })
+
     setTimeout(async () => {
       console.error('Timeout: Browser closed after 10 minutes.')
       await this.quitBrowser()

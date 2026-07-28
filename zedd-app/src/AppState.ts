@@ -558,17 +558,20 @@ export class AppState {
   @computed
   get tasksInfos(): { task: Task; lastEnd: Date }[] {
     const UNDEFINED_TASK = this.getUndefinedTask()
-    const tasksInfos = this.slices.reduceRight((result, slice) => {
-      if (slice.task !== UNDEFINED_TASK) {
-        const info = result.find((i) => i.task === slice.task)
-        if (info) {
-          info.lastEnd = dateMax([info.lastEnd, slice.end])
-        } else {
-          result.push({ task: slice.task, lastEnd: slice.end })
+    const tasksInfos = this.slices.reduceRight(
+      (result, slice) => {
+        if (slice.task !== UNDEFINED_TASK) {
+          const info = result.find((i) => i.task === slice.task)
+          if (info) {
+            info.lastEnd = dateMax([info.lastEnd, slice.end])
+          } else {
+            result.push({ task: slice.task, lastEnd: slice.end })
+          }
         }
-      }
-      return result
-    }, [] as { task: Task; lastEnd: Date }[])
+        return result
+      },
+      [] as { task: Task; lastEnd: Date }[],
+    )
     tasksInfos.sort((a, b) => compareDesc(a.lastEnd, b.lastEnd))
     return tasksInfos
   }
@@ -693,19 +696,25 @@ export class AppState {
   }
 
   public getPreviousSlice(slice: Interval): TimeSlice | undefined {
-    return this.slices.reduce((result, s) => {
-      if (!isBefore(s.start, slice.start)) return result
-      if (!result || isAfter(s.start, result.start)) return s
-      return result
-    }, undefined as TimeSlice | undefined)
+    return this.slices.reduce(
+      (result, s) => {
+        if (!isBefore(s.start, slice.start)) return result
+        if (!result || isAfter(s.start, result.start)) return s
+        return result
+      },
+      undefined as TimeSlice | undefined,
+    )
   }
 
   public getNextSlice(slice: Interval): TimeSlice | undefined {
-    return this.slices.reduce((result, s) => {
-      if (!isAfter(s.start, slice.start)) return result
-      if (!result || isBefore(s.start, result.start)) return s
-      return result
-    }, undefined as TimeSlice | undefined)
+    return this.slices.reduce(
+      (result, s) => {
+        if (!isAfter(s.start, slice.start)) return result
+        if (!result || isBefore(s.start, result.start)) return s
+        return result
+      },
+      undefined as TimeSlice | undefined,
+    )
   }
 
   public getTaskForName(name: Task | string | undefined): Task {
@@ -806,14 +815,17 @@ export class AppState {
         return
       }
       let lastSlice =
-        this.slices.reduce((prev, s) => {
-          if (abs(differenceInMinutes(now, s.end)) < 5 && isBefore(s.start, now)) {
-            if (!prev || isAfter(s.start, prev.start)) {
-              return s
+        this.slices.reduce(
+          (prev, s) => {
+            if (abs(differenceInMinutes(now, s.end)) < 5 && isBefore(s.start, now)) {
+              if (!prev || isAfter(s.start, prev.start)) {
+                return s
+              }
             }
-          }
-          return prev
-        }, undefined as TimeSlice | undefined) ?? this.lastTimedSlice
+            return prev
+          },
+          undefined as TimeSlice | undefined,
+        ) ?? this.lastTimedSlice
 
       if (differenceInMinutes(now, this.lastUserAction) > minIdleTimeInMin) {
         if (lastSlice) {

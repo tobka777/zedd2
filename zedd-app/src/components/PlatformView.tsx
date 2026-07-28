@@ -304,19 +304,19 @@ export const PlatformView = observer((props: PlatformViewProps) => {
           end: lastDayOfYear(start),
         }))
       : 'month' === groupBy
-      ? eachMonthOfInterval(showing).map((start) => ({
-          start: start,
-          end: lastDayOfMonth(start),
-        }))
-      : 'week' === groupBy
-      ? eachWeekOfInterval(showing, { weekStartsOn: 1 }).map((start) => ({
-          start: start,
-          end: lastDayOfISOWeek(start),
-        }))
-      : eachDayOfInterval(showing).map((start) => ({
-          start: start,
-          end: start,
-        }))
+        ? eachMonthOfInterval(showing).map((start) => ({
+            start: start,
+            end: lastDayOfMonth(start),
+          }))
+        : 'week' === groupBy
+          ? eachWeekOfInterval(showing, { weekStartsOn: 1 }).map((start) => ({
+              start: start,
+              end: lastDayOfISOWeek(start),
+            }))
+          : eachDayOfInterval(showing).map((start) => ({
+              start: start,
+              end: start,
+            }))
   const intervals = untrimmedIntervals.map((i) => ({
     start: dateMax([i.start, showing.start]),
     end: dateMin([i.end, showing.end]),
@@ -329,10 +329,10 @@ export const PlatformView = observer((props: PlatformViewProps) => {
     'year' === groupBy
       ? 'y'
       : 'month' === groupBy
-      ? 'LLL y'
-      : 'week' === groupBy
-      ? "'Wk' RRRR / I"
-      : 'EEEEEE, dd.MM'
+        ? 'LLL y'
+        : 'week' === groupBy
+          ? "'Wk' RRRR / I"
+          : 'EEEEEE, dd.MM'
   const platformExport = transform(props)
   const allWorkEntries = Object.values(platformExport).flatMap((x) => x)
   const tasksToShow = sortBy(

@@ -3,7 +3,7 @@ module.exports = {
   parser: '@typescript-eslint/parser',
   plugins: ['@typescript-eslint', 'react-hooks'],
   settings: {
-    react: { version: 'detect' }
+    react: { version: 'detect' },
   },
   extends: [
     'eslint:recommended',
@@ -21,13 +21,16 @@ module.exports = {
     '@typescript-eslint/no-explicit-any': 'off',
     '@typescript-eslint/ban-ts-ignore': 'off',
     '@typescript-eslint/ban-ts-comment': 'off',
-    'prefer-const': ['error', {
-      'destructuring': 'all',
-    }],
+    'prefer-const': [
+      'error',
+      {
+        destructuring: 'all',
+      },
+    ],
     'no-extra-semi': 'off',
     '@typescript-eslint/no-inferrable-types': 'off',
-    'eqeqeq': 'error',
+    eqeqeq: 'error',
     '@typescript-eslint/no-unused-vars': ['off'],
-    'no-constant-condition': ['warn', { checkLoops: false }]
+    'no-constant-condition': ['warn', { checkLoops: false }],
   },
 }
