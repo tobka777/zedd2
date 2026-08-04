@@ -7,13 +7,11 @@ export class ZeddSettings {
     this.fromFile = fromFile!
     makeObservable(this)
   }
-
+  
   public static async readFromFile(file: string): Promise<ZeddSettings> {
-    // Cast to object so serializr picks the single-object deserialize overload (not the array one).
-    const settings = deserialize(
-      ZeddSettings,
-      JSON.parse(await fsp.readFile(file, 'utf8')) as object,
-    )
+
+    const json : Record<string, unknown> = JSON.parse(await fsp.readFile(file, 'utf8'))
+    const settings = deserialize(ZeddSettings, json) 
     settings.fromFile = file
     return settings
   }

@@ -24,8 +24,6 @@ module.exports = [
     test: /\.tsx?$/,
     exclude: /(node_modules|\.webpack)/,
     use: [
-      // MUI v5+ supports tree-shaking of named imports directly, so the previous
-      // babel-plugin-import step is no longer required (it was also incompatible with Babel 8).
       {
         loader: 'ts-loader',
         options: {

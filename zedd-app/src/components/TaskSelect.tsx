@@ -68,7 +68,7 @@ export const TaskSelect = observer(
     )
 
     return (
-      <Autocomplete<Task, false, false, true>
+      <Autocomplete
         options={[...tasks, ...options]}
         onChange={(e, v) => onChange(e as React.ChangeEvent<object>, v ?? undefined)}
         style={style}

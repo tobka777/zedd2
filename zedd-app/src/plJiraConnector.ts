@@ -28,10 +28,9 @@ export function initJiraClient(
   const url = new URL(jc.url)
   jira = new JiraClient({
     host: url.toString(),
-    // jira.js v5 removed Personal-Access-Token / Bearer authentication, so inject the
-    // Authorization header directly into the underlying axios request config instead.
-    baseRequestConfig: {
-      headers: { Authorization: 'Bearer ' + jc.token },
+    telemetry: false,
+    authentication: {
+      personalAccessToken: jc.token,
     },
   })
 }
@@ -72,26 +71,9 @@ const callWithJsessionCookie = async <T>(cb: () => Promise<T>) => {
 
 const updateJiraProjectKeys = () =>
   callWithJsessionCookie(async () => {
-    const keys: string[] = []
-
-    const res = await fetch(`${jiraConfig.url}/rest/api/2/project`, {
-      method: 'GET',
-      headers: {
-        Accept: 'application/json',
-        Authorization: `Bearer ${jiraConfig.token}`,
-      },
-    })
-
-    if (!res.ok) {
-      throw new Error(`GET /project failed: ${res.status} ${res.statusText}`)
-    }
-
-    const projects = (await res.json()) as Array<{ key?: string }>
-    for (const p of projects) {
-      if (p.key !== undefined) keys.push(p.key)
-    }
-
-    console.warn(keys)
+    const projects = await jira.projects.getAllProjects()
+    console.warn(projects)
+    const keys = projects.map((p) => p.key).filter((key): key is string => key !== undefined)
     if (!isEqual(keys, jiraConfig.keys)) {
       console.log('retrieved project keys: ', keys)
       jiraConfig.keys = keys
@@ -187,8 +169,8 @@ export function getLinksFromString(str: string): [string, string][] {
       !jiraConfig.keys?.length || jiraConfig.keys.includes(k.match(/\w+/)![0])
         ? jiraConfig.url + 'browse/' + k
         : jira2url
-          ? jira2url + 'browse/' + k
-          : '',
+        ? jira2url + 'browse/' + k
+        : '',
     ])
     .filter(([, link]) => link)
 }

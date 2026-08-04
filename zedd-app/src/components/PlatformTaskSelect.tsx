@@ -25,7 +25,7 @@ export const PlatformTaskSelect = observer(
     const resolvedVal = (value !== undefined && platformState.resolveTask(value)) || undefined
 
     return (
-      <Autocomplete<Task, false, false, false>
+      <Autocomplete
         renderInput={(params) => <TextField {...params} {...textFieldProps} />}
         options={platformState.tasks}
         disabled={disabled}
