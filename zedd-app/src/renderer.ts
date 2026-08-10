@@ -12,7 +12,6 @@ import { BrowserWindow, ipcRenderer, MenuItemConstructorOptions, Rectangle } fro
 import { autorun, computed, configure as configureMobx } from 'mobx'
 import * as path from 'path'
 import * as React from 'react'
-import 'win-ca' // use windows root certificates
 import { AppState, format, formatInterval, TimeSlice } from './AppState'
 import { PlatformState } from './PlatformState'
 import { AppGui } from './components/AppGui'

@@ -35,7 +35,6 @@
       "packagerConfig": {
         "ignore": [
           "^/src($|/)",
-          "^/node_modules($|/)",
           "\\.gitignore",
           "node_modules/\\.cache",
           ".*\\.(iobj|pdb|ipdb)$"
