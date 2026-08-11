@@ -75,6 +75,14 @@ export class RepliconIntegration extends PlatformIntegration {
     return tasks
   }
 
+  /**
+   * This method returns all activities related to given tasks from Replicon.
+   * 
+   * @param notifyTaskActivities a optional callback, after loading.
+   * @returns Promise with found task activities.
+   * @throws Error, if no activities are found, failure to parse JSON.
+   * 
+   */
   async importTaskActivities(
     notifyTaskActivities?: (p: TaskActivity[]) => void,
   ): Promise<TaskActivity[]> {
@@ -84,8 +92,15 @@ export class RepliconIntegration extends PlatformIntegration {
     await this.addRow()
     await waitForTimeout(300)
 
+    const [addRowNode] = await $x(this.page, "//a[contains(., '+ Add Row')]")
     const [activitySelectNode] = await $x(this.page, "//a[contains(., 'Select an Activity')]")
+    let addRow = addRowNode as unknown as ElementHandle<Element>
     let activitySelect = activitySelectNode as unknown as ElementHandle<Element>
+
+    if(addRow && !activitySelect) {
+      await addRow?.click()
+    }
+
     if (activitySelect) {
       await activitySelect?.click()
       await this.page.waitForSelector('td.activity > span')
