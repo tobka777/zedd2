@@ -7,11 +7,10 @@ export class ZeddSettings {
     this.fromFile = fromFile!
     makeObservable(this)
   }
-  
-  public static async readFromFile(file: string): Promise<ZeddSettings> {
 
-    const json : Record<string, unknown> = JSON.parse(await fsp.readFile(file, 'utf8'))
-    const settings = deserialize(ZeddSettings, json) 
+  public static async readFromFile(file: string): Promise<ZeddSettings> {
+    const json: Record<string, unknown> = JSON.parse(await fsp.readFile(file, 'utf8'))
+    const settings = deserialize(ZeddSettings, json)
     settings.fromFile = file
     return settings
   }

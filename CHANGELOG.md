@@ -5,13 +5,16 @@
 - Fix: Removed deprecated/unused packages (`request`, `browser-request`, `tslint`, `babel-plugin-import`)
 - Feature: Migrated ESLint to the flat config format (`eslint.config.js`) and dropped TSLint
 - Feature: Migrated code for breaking changes in MUI (Grid `size` prop, `slotProps`), Autocomplete, Puppeteer (XPath/`waitForTimeout` helpers), Selenium (Chrome options) and serializr 3
+
 ## [3.0.4] - 2025-12-09
+
 - Feature: Activity for OTT customizable
 - Fix: fix import activity
 - Fix: read chrome version in windows with powershell instead of wmic
 - Fix: Mapping for OTT to Replicon with different taskcode
 
 ## [3.0.3] - 2025-10-14
+
 - Feature: use default activity
 - Feature: custom tasks
 - Fix: filter table and task

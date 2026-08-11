@@ -5,10 +5,9 @@ export function checkPlatformUrl(urlToCheck: any) {
   if (!urlToCheck) {
     throw new InvalidPlattformUrlException(urlToCheck)
   }
-  try{
-     const urlParsed = new URL(urlToCheck)
-  }
-  catch{
+  try {
+    const urlParsed = new URL(urlToCheck)
+  } catch {
     throw new InvalidPlattformUrlException(urlToCheck)
   }
 }

@@ -22,15 +22,15 @@ export enum PlatformActionType {
 }
 
 export class PlatformState {
-  public ottLink: string = ""
+  public ottLink: string = ''
 
-  public repliconLink: string = ""
+  public repliconLink: string = ''
 
-  public repliconActivity: string = ""
+  public repliconActivity: string = ''
 
-  public chromeExe: string = ""
+  public chromeExe: string = ''
 
-  public chromedriverExe: string = ""
+  public chromedriverExe: string = ''
 
   public chromeHeadless: boolean = false
 
@@ -68,7 +68,7 @@ export class PlatformState {
   @observable
   private _tasksLastUpdated: Date | undefined
 
-  private integrationMap: Record<string, PlatformIntegration>  = {}
+  private integrationMap: Record<string, PlatformIntegration> = {}
 
   public constructor(public platformDir: string) {
     makeObservable(this)
