@@ -4,7 +4,8 @@ import TextField from '@mui/material/TextField'
 import * as React from 'react'
 import { ReactElement, useState } from 'react'
 
-import { AppState, Task } from '../AppState'
+import { AppState } from '../AppState'
+import {Task} from '../entities/Task'
 
 export const RenameTaskDialog = ({
   task,

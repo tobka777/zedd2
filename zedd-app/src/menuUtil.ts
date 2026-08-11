@@ -1,5 +1,6 @@
 import { MenuItemConstructorOptions } from 'electron'
-import { AppState, Task } from './AppState'
+import { AppState } from './AppState'
+import { Task } from './entities/Task'
 import { PlatformState } from './PlatformState'
 
 export const suggestedTaskMenuItems = (

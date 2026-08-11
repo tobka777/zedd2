@@ -33,14 +33,13 @@ import type { IObservableArray } from 'mobx'
 import { action, computed, intercept, makeObservable, observable, transaction } from 'mobx'
 import { createTransformer, ObservableGroupMap } from 'mobx-utils'
 import * as path from 'path'
-import * as chroma from 'chroma.ts'
+
 import {
   createSimpleSchema,
   custom,
   date,
   deserialize,
   getDefaultModelSchema,
-  identifier,
   list,
   object,
   reference,
@@ -59,13 +58,13 @@ import {
   mkdirIfNotExists,
   readFilesWithDate,
   startOfNextMinute,
-  stringHashColor,
   tryWithFilesInDir,
   uniqCustom,
 } from './util'
 import { ZeddSettings } from './ZeddSettings'
 import { Undoer } from './Undoer'
-import type { PlatformType } from 'zedd-platform'
+
+import {Task} from './entities/Task'
 
 export const MIN_GAP_TIME_MIN = 5
 
@@ -92,65 +91,7 @@ function filterDatesFalloff(dates: Date[], now = new Date()) {
   }
 }
 
-export class Task {
-  @serializable(identifier())
-  @observable
-  public name: string
 
-  @serializable
-  @observable
-  public platformTaskIntId: number | string | undefined
-
-  @serializable
-  @observable
-  public taskActivityName: string | undefined
-
-  @observable
-  public taskActivities: string[]
-
-  @serializable
-  @observable
-  public platformType: PlatformType | undefined
-
-  /**
-   * The internal key for JIRA-Issues.
-   * Used to prevent multiple tasks being created for the same issue.
-   */
-  @serializable
-  @observable
-  public key: string | undefined
-
-  @serializable
-  @observable
-  public platformTaskComment: string = ''
-
-  constructor(
-    name: string = '',
-    taskActivities: string[],
-    platformType?: PlatformType,
-    taskActivityName?: string,
-    intId?: number,
-    key?: string,
-    platformTaskComment?: string,
-  ) {
-    makeObservable(this)
-    this.name = name
-    this.platformTaskIntId = intId
-    this.key = key
-    this.platformTaskComment = platformTaskComment || ''
-    this.platformType = platformType
-    this.taskActivityName = taskActivityName
-    this.taskActivities = taskActivities
-  }
-
-  public static same(a: Task, b: Task): boolean {
-    return (a.key && b.key && a.key === b.key) || a.name === b.name
-  }
-
-  public getColor(): chroma.Color {
-    return stringHashColor(this.name)
-  }
-}
 
 export const validDate = <T extends Date | number>(d: T): T => {
   if (!isValid(d)) throw new Error('date invalid: ' + d)
@@ -897,7 +838,7 @@ export class AppState {
     if (!newSlice) {
       return false
     }
-    assert(isSameDay(newSlice.start, newSlice.end))
+    assert.ok(isSameDay(newSlice.start, newSlice.end))
     const dayIsEmpty = this.isDayEmpty(newSlice.start)
     if (dayIsEmpty) {
       this.addSlice(newSlice)

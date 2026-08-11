@@ -3,7 +3,7 @@ import { observer } from 'mobx-react-lite'
 import * as React from 'react'
 
 import { useCallback, useState } from 'react'
-import { Task } from '../AppState'
+import { Task } from '../entities/Task'
 import { useClasses, useDebouncedCallback } from '../util'
 
 export type TaskSelectProps = {
