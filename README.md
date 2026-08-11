@@ -60,7 +60,7 @@ The `Autosubmit` checkbox will submit the timesheets as well.
 
 - If you want to view the overtime hours of a month:
   - select the period of the month accordingly, or click `NEXT
-  MONTH`
+MONTH`
   - navigate using the `←` (left) or `→` (right) buttons.
   - at the bottom, the summary of all tasks and bookings including overtime/undertime is displayed:
     ![img_6.png](screenshots/img_6.png)

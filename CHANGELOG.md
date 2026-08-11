@@ -1,6 +1,6 @@
 ## [3.0.4] - 2026-07-20
-- Fix: added guardrail for orphaned browsers 
 
+- Fix: added guardrail for orphaned browsers
 
 ## [3.0.4] - 2025-12-09
 

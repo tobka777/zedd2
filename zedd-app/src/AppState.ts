@@ -64,7 +64,7 @@ import {
 import { ZeddSettings } from './ZeddSettings'
 import { Undoer } from './Undoer'
 
-import {Task} from './entities/Task'
+import { Task } from './entities/Task'
 
 export const MIN_GAP_TIME_MIN = 5
 
@@ -90,8 +90,6 @@ function filterDatesFalloff(dates: Date[], now = new Date()) {
     }
   }
 }
-
-
 
 export const validDate = <T extends Date | number>(d: T): T => {
   if (!isValid(d)) throw new Error('date invalid: ' + d)

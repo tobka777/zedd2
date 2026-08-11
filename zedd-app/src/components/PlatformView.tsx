@@ -53,7 +53,7 @@ import {
   sum,
   useClasses,
   hashStringToInt,
-  getActivityPercentage
+  getActivityPercentage,
 } from '../util'
 import KeyboardArrowDownIcon from '@mui/icons-material/KeyboardArrowDown'
 import KeyboardArrowUpIcon from '@mui/icons-material/KeyboardArrowUp'
@@ -344,7 +344,9 @@ export const PlatformView = observer((props: PlatformViewProps) => {
   ).filter((taskToShow) => isTaskVisible(taskToShow))
   const theme = useTheme()
   const classes = useClasses(styles)
-  const showingTotal = sum(allWorkEntries.map((we) => we.hours * getActivityPercentage(we.taskActivity)))
+  const showingTotal = sum(
+    allWorkEntries.map((we) => we.hours * getActivityPercentage(we.taskActivity)),
+  )
 
   const projectTasksViewItems: PlatformExportFormat = {}
   const ottTaskMissingRepliconTask: WorkEntry[] = []
@@ -607,7 +609,9 @@ function ProjectRow({
       .filter((we) => we.id === task.id)
 
   const getWorkedHours = (interval: Interval, task: WorkEntry) =>
-    sum(getWorkEntries(interval, task).map((we) => we.hours * getActivityPercentage(we.taskActivity)))
+    sum(
+      getWorkEntries(interval, task).map((we) => we.hours * getActivityPercentage(we.taskActivity)),
+    )
 
   return (
     <>

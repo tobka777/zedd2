@@ -5,7 +5,7 @@ import * as React from 'react'
 import { ReactElement, useState } from 'react'
 
 import { AppState } from '../AppState'
-import {Task} from '../entities/Task'
+import { Task } from '../entities/Task'
 
 export const RenameTaskDialog = ({
   task,

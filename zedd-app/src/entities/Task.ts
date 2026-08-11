@@ -1,6 +1,6 @@
-import {observable, makeObservable} from 'mobx'
-import {identifier, serializable} from 'serializr'
-import {stringHashColor} from '../util'
+import { observable, makeObservable } from 'mobx'
+import { identifier, serializable } from 'serializr'
+import { stringHashColor } from '../util'
 import type { PlatformType } from 'zedd-platform'
 import * as chroma from 'chroma.ts'
 
