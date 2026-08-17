@@ -343,11 +343,11 @@ export const PlatformView = observer((props: PlatformViewProps) => {
   ).filter((taskToShow) => isTaskVisible(taskToShow))
   const theme = useTheme()
   const classes = useClasses(styles)
-  const showingTotal = sum(
-    allWorkEntries.map((we) => we.hours)) 
+  const showingTotal = sum(allWorkEntries.map((we) => we.hours))
 
   const showingTotalWithTravelTime = sum(
-    allWorkEntries.map((we) => we.hours * getActivityPercentage(we.taskActivity)))
+    allWorkEntries.map((we) => we.hours * getActivityPercentage(we.taskActivity)),
+  )
 
   const projectTasksViewItems: PlatformExportFormat = {}
   const ottTaskMissingRepliconTask: WorkEntry[] = []
@@ -500,7 +500,9 @@ export const PlatformView = observer((props: PlatformViewProps) => {
                 targetHours={calculateTargetHours(showing)}
                 workedHours={showingTotal}
               >
-                <b>{formatHours(showingTotal)}  ({showingTotalWithTravelTime})</b>
+                <b>
+                  {formatHours(showingTotal)} ({showingTotalWithTravelTime})
+                </b>
               </DiffHoursTooltip>
             </TableCell>
           </TableRow>
