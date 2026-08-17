@@ -73,6 +73,7 @@ function showNotification(title: string, text: string, cb: () => void) {
 }
 
 function quit() {
+  cleanup?.()
   ipcRenderer.send('quit')
 }
 

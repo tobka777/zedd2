@@ -16,8 +16,7 @@ export abstract class PlatformIntegration {
 
   async init() {
     checkPlatformUrl(this.platformLink)
-
-    ;((this.browser = await puppeteer.launch({
+    ;(this.browser = await puppeteer.launch({
       headless: this.options.headless,
       executablePath: this.options.executablePath,
       args: [
@@ -32,7 +31,7 @@ export abstract class PlatformIntegration {
       setTimeout(async () => {
         console.error('Timeout: Browser closed after 10 minutes.')
         await this.quitBrowser()
-      }, 600_000))
+      }, 600_000)
 
     this.page = await this.browser.newPage()
     this.page.setDefaultTimeout(100_000)

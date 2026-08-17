@@ -11,7 +11,6 @@ import {
   Table,
   TableBody,
   TableCell,
-  TableContainer,
   TableHead,
   TableRow,
   TextField,
@@ -345,8 +344,10 @@ export const PlatformView = observer((props: PlatformViewProps) => {
   const theme = useTheme()
   const classes = useClasses(styles)
   const showingTotal = sum(
-    allWorkEntries.map((we) => we.hours * getActivityPercentage(we.taskActivity)),
-  )
+    allWorkEntries.map((we) => we.hours)) 
+
+  const showingTotalWithTravelTime = sum(
+    allWorkEntries.map((we) => we.hours * getActivityPercentage(we.taskActivity)))
 
   const projectTasksViewItems: PlatformExportFormat = {}
   const ottTaskMissingRepliconTask: WorkEntry[] = []
@@ -475,7 +476,7 @@ export const PlatformView = observer((props: PlatformViewProps) => {
           ))}
           <TableRow>
             <TableCell colSpan={2} style={{ textAlign: 'right' }}>
-              <b>Summe</b>
+              <b>Summe (Summe mit TT)</b>
             </TableCell>
             {intervals.map((w, i) => (
               <TableCell
@@ -499,7 +500,7 @@ export const PlatformView = observer((props: PlatformViewProps) => {
                 targetHours={calculateTargetHours(showing)}
                 workedHours={showingTotal}
               >
-                <b>{formatHours(showingTotal)}</b>
+                <b>{formatHours(showingTotal)}  ({showingTotalWithTravelTime})</b>
               </DiffHoursTooltip>
             </TableCell>
           </TableRow>
