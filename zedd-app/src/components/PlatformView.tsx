@@ -501,7 +501,7 @@ export const PlatformView = observer((props: PlatformViewProps) => {
                 workedHours={showingTotal}
               >
                 <b>
-                  {formatHours(showingTotal)} ({showingTotalWithTravelTime})
+                  {formatHours(showingTotal)} ({formatHours(showingTotalWithTravelTime)})
                 </b>
               </DiffHoursTooltip>
             </TableCell>
