@@ -1,8 +1,6 @@
 ## Prerequisites
 
-1. Node 22+
-2. Build tools for native modules (`sharp`, `zedd-win32`): on Windows, Visual Studio with the
-   "Desktop development with C++" workload
+1. Node 25+
 
 ```sh
 git clone https://github.com/tobka777/zedd2.git
@@ -21,7 +19,7 @@ npm run start
 
 ## For publishing - Prerequisites
 
-1. Node 22+
+1. Node 25+
 2. Create a GithubToken at https://github.com/settings/tokens (select all repo permissions)
 3. Customize changelog version and date
 
