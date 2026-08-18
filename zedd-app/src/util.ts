@@ -248,9 +248,9 @@ export const hashStringToInt = (str: string): number => {
 }
 
 /**
- * This method calculates the the percentagefactors for activities with percentages
- * @param activityName The name of the given activity associated to a given task
- * @returns The factor of the given activity.
+ * Calculates the percentage factor for activities that include a percentage in their name.
+ * @param activityName The name of the activity associated with a task.
+ * @returns The percentage factor (e.g. "Activity (50%)" → 0.5). Defaults to 1.0.
  */
 export function getActivityPercentage(activityName: string | undefined): number {
   if (!activityName) {
