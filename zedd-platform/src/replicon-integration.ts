@@ -77,11 +77,11 @@ export class RepliconIntegration extends PlatformIntegration {
 
   /**
    * This method returns all activities related to given tasks from Replicon.
-   * 
+   *
    * @param notifyTaskActivities an optional callback, after loading.
    * @returns Promise with found task activities.
    * @throws Error, if no activities are found, failure to parse JSON.
-   * 
+   *
    */
   async importTaskActivities(
     notifyTaskActivities?: (p: TaskActivity[]) => void,
@@ -97,7 +97,7 @@ export class RepliconIntegration extends PlatformIntegration {
     let addRow = addRowNode as unknown as ElementHandle<Element>
     let activitySelect = activitySelectNode as unknown as ElementHandle<Element>
 
-    if(addRow && !activitySelect) {
+    if (addRow && !activitySelect) {
       await addRow?.click()
     }
 
