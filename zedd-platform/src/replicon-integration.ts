@@ -78,7 +78,7 @@ export class RepliconIntegration extends PlatformIntegration {
   /**
    * This method returns all activities related to given tasks from Replicon.
    * 
-   * @param notifyTaskActivities a optional callback, after loading.
+   * @param notifyTaskActivities an optional callback, after loading.
    * @returns Promise with found task activities.
    * @throws Error, if no activities are found, failure to parse JSON.
    * 
