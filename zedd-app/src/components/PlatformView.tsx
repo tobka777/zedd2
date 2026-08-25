@@ -52,7 +52,8 @@ import {
   sum,
   useClasses,
   hashStringToInt,
-  getActivityPercentage,isActivityWithDeviatingFactor
+  getActivityPercentage,
+  isActivityWithDeviatingFactor,
 } from '../util'
 import KeyboardArrowDownIcon from '@mui/icons-material/KeyboardArrowDown'
 import KeyboardArrowUpIcon from '@mui/icons-material/KeyboardArrowUp'
@@ -248,7 +249,7 @@ const DiffHoursTooltip = ({
   children,
 }: {
   targetHours: number
-  timeTravelHours : number
+  timeTravelHours: number
   workedHours: number
   children: React.ReactElement
 }) => {
@@ -272,12 +273,15 @@ const DiffHoursTooltip = ({
           </Box>
           {showTravelTime ? (
             <>
-          <br></br>
-          - {targetHours} (target with TT) ={' '}
-          <Box component='span' sx={{ color: diff < 0 ? 'error.dark' : 'success.light' }}>
-            {diffTravelTime >= 0 ? '+' : ''}
-            {diffTravelTime}
-          </Box></>) : ""}
+              <br></br>- {targetHours} (target with TT) ={' '}
+              <Box component='span' sx={{ color: diff < 0 ? 'error.dark' : 'success.light' }}>
+                {diffTravelTime >= 0 ? '+' : ''}
+                {diffTravelTime}
+              </Box>
+            </>
+          ) : (
+            ''
+          )}
         </Typography>
       }
     >
@@ -443,8 +447,8 @@ export const PlatformView = observer((props: PlatformViewProps) => {
   const mergedPlatformExport = mergeExports(platformExport, projectTasksViewItems)
 
   /**
-   * Calculates the total worked hours within the given interval 
-   * 
+   * Calculates the total worked hours within the given interval
+   *
    * Iterates over each day in the interval, sums the hours of all work entries
    * recorded for that day in 'platformExport', and returns the aggregated total.
    * @param interval The date range for which worked hours should be calculated.
@@ -460,16 +464,23 @@ export const PlatformView = observer((props: PlatformViewProps) => {
 
   /**
    * Calculates the total worked hours within the given interval respective the travel time factors
-   * 
-   * Iterates over each day in the interval, sums the hours of all work entries 
+   *
+   * Iterates over each day in the interval, sums the hours of all work entries
    * recorded for that day in 'platformExport', and returns the aggregated total respective the TT factor.
-   * 
+   *
    * @param interval The date range for which worked hours should be calculated.
    * @returns The total number wof worked hours wihtin the interval respective the travel time factor.
    */
-  const getWorkedHoursRespectiveTravelTime = (interval : Interval) => {
+  const getWorkedHoursRespectiveTravelTime = (interval: Interval) => {
     return sum(
-        eachDayOfInterval(interval).map((date) => sum(platformExport[isoDayStr(date)]?.map((workEntry) => workEntry.hours * getActivityPercentage(workEntry.taskActivity)))))
+      eachDayOfInterval(interval).map((date) =>
+        sum(
+          platformExport[isoDayStr(date)]?.map(
+            (workEntry) => workEntry.hours * getActivityPercentage(workEntry.taskActivity),
+          ),
+        ),
+      ),
+    )
   }
 
   return (
@@ -523,8 +534,14 @@ export const PlatformView = observer((props: PlatformViewProps) => {
                   timeTravelHours={getWorkedHoursRespectiveTravelTime(w)}
                   workedHours={getWorkedHours(w)}
                 >
-                  <b>{
-                  !(getWorkedHoursRespectiveTravelTime(w) === getWorkedHours(w)) ? formatHours(getWorkedHours(w)) +  " (" + formatHours(getWorkedHoursRespectiveTravelTime(w)) + ")" : formatHours(getWorkedHours(w))}</b>
+                  <b>
+                    {!(getWorkedHoursRespectiveTravelTime(w) === getWorkedHours(w))
+                      ? formatHours(getWorkedHours(w)) +
+                        ' (' +
+                        formatHours(getWorkedHoursRespectiveTravelTime(w)) +
+                        ')'
+                      : formatHours(getWorkedHours(w))}
+                  </b>
                 </DiffHoursTooltip>
               </TableCell>
             ))}
@@ -649,11 +666,7 @@ function ProjectRow({
       .filter((we) => we.id === task.id)
 
   const getWorkedHours = (interval: Interval, task: WorkEntry) =>
-    sum(
-      getWorkEntries(interval, task).map((we) => we.hours),
-    )
-
-      
+    sum(getWorkEntries(interval, task).map((we) => we.hours))
 
   return (
     <>
@@ -702,9 +715,17 @@ function ProjectRow({
               ...taskColor,
             }}
           >
-            <b>{
-            
-            isActivityWithDeviatingFactor(projectTask.taskActivity) ? formatHours(getWorkedHours(w, projectTask)) +  " (" + formatHours(getWorkedHours(w, projectTask) * getActivityPercentage(projectTask.taskActivity)) + ")" : formatHours(getWorkedHours(w, projectTask))}</b>
+            <b>
+              {isActivityWithDeviatingFactor(projectTask.taskActivity)
+                ? formatHours(getWorkedHours(w, projectTask)) +
+                  ' (' +
+                  formatHours(
+                    getWorkedHours(w, projectTask) *
+                      getActivityPercentage(projectTask.taskActivity),
+                  ) +
+                  ')'
+                : formatHours(getWorkedHours(w, projectTask))}
+            </b>
           </TableCell>
         ))}
         <TableCell
@@ -713,7 +734,16 @@ function ProjectRow({
             ...taskColor,
           }}
         >
-          <b>{isActivityWithDeviatingFactor(projectTask.taskActivity) ? formatHours(showingTotal(projectTask))+  " (" + formatHours(showingTotal(projectTask) * getActivityPercentage(projectTask.taskActivity)) + ")" : formatHours(showingTotal(projectTask))}</b>
+          <b>
+            {isActivityWithDeviatingFactor(projectTask.taskActivity)
+              ? formatHours(showingTotal(projectTask)) +
+                ' (' +
+                formatHours(
+                  showingTotal(projectTask) * getActivityPercentage(projectTask.taskActivity),
+                ) +
+                ')'
+              : formatHours(showingTotal(projectTask))}
+          </b>
         </TableCell>
       </TableRow>
       {open && (

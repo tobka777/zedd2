@@ -1,6 +1,6 @@
 ## [3.0.6] - 2026-08-17
-- Feature: added Travel-Time deduction functionality
 
+- Feature: added Travel-Time deduction functionality
 
 ## [3.0.5] - 2026-07-20
 
