@@ -9,7 +9,8 @@ export class ZeddSettings {
   }
 
   public static async readFromFile(file: string): Promise<ZeddSettings> {
-    const settings = deserialize(ZeddSettings, JSON.parse(await fsp.readFile(file, 'utf8')))
+    const json: Record<string, unknown> = JSON.parse(await fsp.readFile(file, 'utf8'))
+    const settings = deserialize(ZeddSettings, json)
     settings.fromFile = file
     return settings
   }

@@ -11,7 +11,6 @@ import {
   Table,
   TableBody,
   TableCell,
-  TableContainer,
   TableHead,
   TableRow,
   TextField,
@@ -46,14 +45,7 @@ import { TimeSlice, validDate } from '../AppState'
 import { PlatformActionType, PlatformState } from '../PlatformState'
 import { LoadingSpinner } from './LoadingSpinner'
 
-import {
-  isoDayStr,
-  omap,
-  splitIntervalIntoCalendarDays,
-  sum,
-  useClasses,
-  hashStringToInt,
-} from '../util'
+import { isoDayStr, omap, splitIntervalIntoCalendarDays, sum, hashStringToInt } from '../util'
 import KeyboardArrowDownIcon from '@mui/icons-material/KeyboardArrowDown'
 import KeyboardArrowUpIcon from '@mui/icons-material/KeyboardArrowUp'
 import { WorkEntry } from 'zedd-platform/out/src/model/work-entry.model'
@@ -106,26 +98,6 @@ export interface PlatformViewProps {
   onChangeSubmitTimesheets: (x: boolean) => void
   errorHandler: (e: Error) => void
 }
-
-const styles = (theme: any) => ({
-  table: {
-    padding: 0,
-    borderSpacing: 0,
-    '& .textHeader': { textAlign: 'left' },
-    '& .numberCell, .numberHeader': {
-      textAlign: 'right',
-    },
-    '& th': { padding: theme.spacing(1, 2) },
-    '& td': {
-      borderTop: '1px solid',
-      borderColor: theme.palette.divider,
-      padding: theme.spacing(0.5, 2),
-    },
-    '& tbody tr:hover, tfoot tr:hover': {
-      backgroundColor: theme.palette.grey[500],
-    },
-  },
-})
 
 const formatHours = (h: number) =>
   h ? h.toLocaleString('de-DE', { minimumFractionDigits: 2 }) : '-'
@@ -254,7 +226,7 @@ const DiffHoursTooltip = ({
 
   return (
     <Tooltip
-      componentsProps={{
+      slotProps={{
         tooltip: {
           sx: { backgroundColor: 'common.black', color: 'primary' },
         },
@@ -304,19 +276,19 @@ export const PlatformView = observer((props: PlatformViewProps) => {
           end: lastDayOfYear(start),
         }))
       : 'month' === groupBy
-      ? eachMonthOfInterval(showing).map((start) => ({
-          start: start,
-          end: lastDayOfMonth(start),
-        }))
-      : 'week' === groupBy
-      ? eachWeekOfInterval(showing, { weekStartsOn: 1 }).map((start) => ({
-          start: start,
-          end: lastDayOfISOWeek(start),
-        }))
-      : eachDayOfInterval(showing).map((start) => ({
-          start: start,
-          end: start,
-        }))
+        ? eachMonthOfInterval(showing).map((start) => ({
+            start: start,
+            end: lastDayOfMonth(start),
+          }))
+        : 'week' === groupBy
+          ? eachWeekOfInterval(showing, { weekStartsOn: 1 }).map((start) => ({
+              start: start,
+              end: lastDayOfISOWeek(start),
+            }))
+          : eachDayOfInterval(showing).map((start) => ({
+              start: start,
+              end: start,
+            }))
   const intervals = untrimmedIntervals.map((i) => ({
     start: dateMax([i.start, showing.start]),
     end: dateMin([i.end, showing.end]),
@@ -329,10 +301,10 @@ export const PlatformView = observer((props: PlatformViewProps) => {
     'year' === groupBy
       ? 'y'
       : 'month' === groupBy
-      ? 'LLL y'
-      : 'week' === groupBy
-      ? "'Wk' RRRR / I"
-      : 'EEEEEE, dd.MM'
+        ? 'LLL y'
+        : 'week' === groupBy
+          ? "'Wk' RRRR / I"
+          : 'EEEEEE, dd.MM'
   const platformExport = transform(props)
   const allWorkEntries = Object.values(platformExport).flatMap((x) => x)
   const tasksToShow = sortBy(
@@ -342,7 +314,6 @@ export const PlatformView = observer((props: PlatformViewProps) => {
     (x) => x.taskName,
   ).filter((taskToShow) => isTaskVisible(taskToShow))
   const theme = useTheme()
-  const classes = useClasses(styles)
   const showingTotal = sum(allWorkEntries.map((we) => we.hours))
 
   const projectTasksViewItems: PlatformExportFormat = {}

@@ -54,7 +54,10 @@ async function makeContext({
   chromedriverExe,
 }: SeleniumOptions) {
   d('making context headless=' + headless)
-  const chromeOptions = new chrome.Options().addArguments('--no-sandbox')
+  // Note: don't chain addArguments() here - it returns the chromium base Options type
+  // and would drop the chrome.Options subtype (setChromeBinaryPath / setChromeService).
+  const chromeOptions = new chrome.Options()
+  chromeOptions.addArguments('--no-sandbox')
   if (downloadDir) {
     await fsp.mkdir(downloadDir, { recursive: true })
     chromeOptions.setUserPreferences({ 'download.default_directory': downloadDir })
@@ -65,7 +68,8 @@ async function makeContext({
     chromeOptions.setChromeBinaryPath(chromeExe)
   }
   if (headless) {
-    chromeOptions.headless()
+    // Options.headless() was removed in selenium-webdriver 4; use the argument instead.
+    chromeOptions.addArguments('--headless=new')
   }
   const driver = new WebDriverBuilder()
     .setChromeOptions(chromeOptions)
@@ -155,7 +159,7 @@ async function getProjects(
   // clicking "options" gear can result in ElementClickInterceptedException, who knows why
   const action = await $('[alt="In CSV exportieren"]').getAttribute('href')
   d('  running csv export action ' + action)
-  await driver.executeScript(action.replace(/^javascript:/, ''))
+  await driver.executeScript(action!.replace(/^javascript:/, ''))
   d('  waiting for new file in downloadDir')
   let files
   do {
@@ -222,7 +226,7 @@ async function getProjectTasks(
   // clicking "options" gear can result in ElementClickInterceptedException, who knows why
   const action = await $('[alt="In CSV exportieren"]').getAttribute('href')
   d('  running csv export action ' + action)
-  await driver.executeScript(action.replace(/^javascript:/, ''))
+  await driver.executeScript(action!.replace(/^javascript:/, ''))
   d('  waiting for new file in downloadDir')
   let files
   do {
@@ -286,7 +290,9 @@ function getPagination(ctx: Context, where?: WebElement) {
 }
 
 function hasClass(e: WebElement, c: string) {
-  return e.getAttribute('class').then((classString) => classString.split('\\s+').includes(c))
+  return e
+    .getAttribute('class')
+    .then((classString) => (classString ?? '').split('\\s+').includes(c))
 }
 
 async function getProjectInfoInternal(
@@ -319,7 +325,7 @@ async function addTasks(
 
   const as = await $$('#portlet-table-timeadmin\\.editTimesheet tbody td[column="9"] a')
   const addedIds = await Promise.all(
-    as.map((a) => a.getAttribute('href').then((href) => +urlHashQueryParam(href, 'id')!)),
+    as.map((a) => a.getAttribute('href').then((href) => +urlHashQueryParam(href!, 'id')!)),
   )
   d('already have tasks with ids ' + addedIds)
   tasks = tasks.filter((t) => !addedIds.includes(t.intId))
@@ -354,7 +360,7 @@ async function addTasks(
     )
     d(`found ${taskRows.length} taskRows`)
     for (const tr of taskRows) {
-      const taskRowTaskId = +(await $(tr, 'input[name=selitem_id]').getAttribute('value'))
+      const taskRowTaskId = +(await $(tr, 'input[name=selitem_id]').getAttribute('value'))!
       d('taskRowTaskId', taskRowTaskId)
       if (taskRowTaskId === task.intId) {
         await $(tr, 'input[name=selitem]').click()
@@ -403,7 +409,7 @@ async function exportToClarity(
         const taskName = await taskNameA.getText()
         const taskIntId = await taskNameA
           .getAttribute('href')
-          .then((href) => +urlHashQueryParam(href, 'id')!)
+          .then((href) => +urlHashQueryParam(href!, 'id')!)
         const hasComments = await hasClass(
           await $(tr, `td[column="${editMode ? 7 : 6}"] img`),
           'caui-ndeNotes',

@@ -169,8 +169,8 @@ export function getLinksFromString(str: string): [string, string][] {
       !jiraConfig.keys?.length || jiraConfig.keys.includes(k.match(/\w+/)![0])
         ? jiraConfig.url + 'browse/' + k
         : jira2url
-        ? jira2url + 'browse/' + k
-        : '',
+          ? jira2url + 'browse/' + k
+          : '',
     ])
     .filter(([, link]) => link)
 }

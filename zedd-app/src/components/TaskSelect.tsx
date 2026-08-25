@@ -9,7 +9,7 @@ import { useClasses, useDebouncedCallback } from '../util'
 export type TaskSelectProps = {
   tasks: Task[]
   getTasksForSearchString: (search: string) => Promise<Task[]>
-  onChange: (event: React.ChangeEvent<object>, value: Task | string | undefined) => void
+  onChange: (event: React.SyntheticEvent, value: Task | string | null) => void
   value: Task
   handleError: (err: Error) => void
   textFieldStyle?: React.CSSProperties
@@ -67,12 +67,10 @@ export const TaskSelect = observer(
       [getTasksForSearchStringDebounced],
     )
 
-    if (textFieldProps.inputProps) throw new Error('???')
-
     return (
       <Autocomplete
         options={[...tasks, ...options]}
-        onChange={onChange}
+        onChange={(event, value) => onChange(event, value)}
         style={style}
         openOnFocus={false}
         value={value ?? ''}
@@ -92,7 +90,7 @@ export const TaskSelect = observer(
             style={textFieldStyle}
             onChange={onTextFieldChange}
             placeholder='Nothing. Nichts. Nada. Absolument rien.'
-            InputProps={params.InputProps}
+            slotProps={params.slotProps}
             margin='dense'
           />
         )}

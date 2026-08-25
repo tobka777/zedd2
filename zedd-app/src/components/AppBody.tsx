@@ -112,13 +112,11 @@ export const AppBody = observer(
 
           { type: 'separator' },
 
-          ...getLinksFromString(slice.task.name).map(
-            ([key, link]): MenuItemConstructorOptions => ({
-              type: 'normal',
-              label: 'Open in Browser: ' + key,
-              click: () => shell.openExternal(link),
-            }),
-          ),
+          ...getLinksFromString(slice.task.name).map(([key, link]): MenuItemConstructorOptions => ({
+            type: 'normal',
+            label: 'Open in Browser: ' + key,
+            click: () => shell.openExternal(link),
+          })),
 
           { type: 'separator' },
 
@@ -192,7 +190,7 @@ export const AppBody = observer(
         )
       } catch (e) {
         console.error('Error while fetching holidays: ' + e)
-        state.addMessage('Could not load holidays', e)
+        state.addMessage('Could not load holidays: ' + e)
       }
       setAllHolidays(holidays)
     }

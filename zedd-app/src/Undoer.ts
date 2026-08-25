@@ -20,10 +20,7 @@ export class Undoer {
         object,
         (
           change:
-            | IArrayDidChange<any>
-            | ISetDidChange<any>
-            | IMapDidChange<any>
-            | IObjectDidChange<any>,
+            IArrayDidChange<any> | ISetDidChange<any> | IMapDidChange<any> | IObjectDidChange<any>,
         ) => {
           if (this.trackUndoEvents) {
             if (change.type === 'splice' || change.type === 'update') {

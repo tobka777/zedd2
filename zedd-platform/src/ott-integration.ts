@@ -7,7 +7,7 @@ import { enGB } from 'date-fns/locale'
 import partition from 'lodash/partition'
 import { What } from './model/what.model'
 import { WorkEntry } from './model/work-entry.model'
-import { clearInput } from './utils'
+import { $x, clearInput, waitForXPath } from './utils'
 
 export class OTTIntegration extends PlatformIntegration {
   public constructor(platformLink: string, options: PlatformOptions) {
@@ -20,12 +20,12 @@ export class OTTIntegration extends PlatformIntegration {
 
     await this.page.setRequestInterception(true)
 
-    const [dropdownNode] = await this.page.$x(
-      "//div[@role='button' and contains(text(), 'Started & ended in selected period')]",
-    )
+    const [dropdownNode] = (await $x(
+      this.page,
+      "//*[contains(text(), 'Issue Filter')]/../../div/div[@role='button']",
+    )) as [ElementHandle<Element>]
 
-    const dropdown = dropdownNode as unknown as ElementHandle<Element>
-    await dropdown.click()
+    await dropdownNode.click()
 
     const dropdownOptions = await this.page.waitForSelector('ul[role="listbox"]')
 
@@ -169,14 +169,16 @@ export class OTTIntegration extends PlatformIntegration {
   private async addNewTask(work: WorkEntry, startWeek: Date, taskDay: Date) {
     if (work.platformType === 'REPLICON') return
     let addNewTaskInput = await this.page.waitForSelector("input[placeholder*='Search task']")
-    const [clearButton] = await this.page.$x(
+    const [clearButton] = await $x(
+      this.page,
       "//input[contains(@placeholder, 'Search task')]/../div/button[contains(@title, 'Clear')]",
     )
     await (clearButton as ElementHandle<Element>)!.click()
 
     await addNewTaskInput!.type(String(work.taskName))
 
-    let rowWithSearchedTaskNode = await this.page.waitForXPath(
+    let rowWithSearchedTaskNode = await waitForXPath(
+      this.page,
       "//tr[.//div[text()='" + work.taskName + "']]",
     )
 
@@ -196,7 +198,8 @@ export class OTTIntegration extends PlatformIntegration {
 
   private async clickAllAssigned(value: string = 'All') {
     await this.sleep(2)
-    const [issueFilterElement] = (await this.page.$x(
+    const [issueFilterElement] = (await $x(
+      this.page,
       "//*[contains(text(), 'Issue Filter')]/../../div/div[@role='button']",
     )) as [ElementHandle<Element>]
 
@@ -212,7 +215,7 @@ export class OTTIntegration extends PlatformIntegration {
   }
 
   private async clickAllEngagements() {
-    const [engagementElement] = await this.page.$x("//*[text() = 'Engagement']")
+    const [engagementElement] = await $x(this.page, "//*[text() = 'Engagement']")
 
     const engagementSelect = (await engagementElement.evaluateHandle((el) => {
       let parent: Element | null = el as unknown as Element
@@ -308,7 +311,8 @@ export class OTTIntegration extends PlatformIntegration {
   }
 
   private async checkFinilisedButton(timerange: string) {
-    const finaliseBtnHandleNode = await this.page.waitForXPath(
+    const finaliseBtnHandleNode = await waitForXPath(
+      this.page,
       "//button[.//span[contains(text(), 'Finalize')]]",
     )
     const finaliseBtnHandle = finaliseBtnHandleNode as unknown as HTMLButtonElement
@@ -337,7 +341,8 @@ export class OTTIntegration extends PlatformIntegration {
 
     await this.page.mouse.click(0, 0)
 
-    let [rowWithSearchedTaskNodeUpdated] = await this.page.$x(
+    let [rowWithSearchedTaskNodeUpdated] = await $x(
+      this.page,
       "//tr[.//div[text()='" + work.taskName + "']]",
     )
 
@@ -392,9 +397,9 @@ export class OTTIntegration extends PlatformIntegration {
   private async finaliseTimesheet(submitTimesheets: boolean) {
     if (submitTimesheets) {
       await this.clickElementWithContent("//button[.//span[contains(text(), 'Finalise')]]")
-      await this.page.waitForXPath("//div[contains(text(), 'FINALISING YOUR TIMESHEET')]")
+      await waitForXPath(this.page, "//div[contains(text(), 'FINALISING YOUR TIMESHEET')]")
       await this.clickElementWithContent("//button[.//span[text()='Yes, Continue']]")
-      await this.page.waitForXPath("//div[contains(text(), 'FINALISING YOUR TIMESHEET')]", {
+      await waitForXPath(this.page, "//div[contains(text(), 'FINALISING YOUR TIMESHEET')]", {
         hidden: true,
       })
     }

@@ -2,20 +2,20 @@ name: Release
 on:
   push:
     tags:
-      - '*'
+      - "*"
 
 jobs:
   publish:
     strategy:
       matrix:
-        os: [ windows-latest, macos-latest ]
+        os: [windows-latest, macos-latest]
     runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v2
       - uses: actions/setup-node@master
         with:
-          node-version: 14
-          architecture: 'x64'
+          node-version: 25.3.0
+          architecture: "x64"
 
       - name: install platform dependencies
         working-directory: ./zedd-platform
@@ -27,7 +27,7 @@ jobs:
       - name: install app dependencies
         working-directory: ./zedd-app
         run: npm install
-        
+
       - name: build release
         working-directory: ./zedd-app
         run: npm run make
