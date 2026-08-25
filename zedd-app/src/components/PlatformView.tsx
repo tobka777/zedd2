@@ -34,7 +34,7 @@ import {
   max as dateMax,
   min as dateMin,
 } from 'date-fns'
-import { groupBy, remove, sortBy, uniqBy } from 'lodash'
+import { constant, groupBy, remove, sortBy, uniqBy } from 'lodash'
 import { observer } from 'mobx-react-lite'
 import * as React from 'react'
 import { useRef, useState } from 'react'
@@ -52,7 +52,7 @@ import {
   sum,
   useClasses,
   hashStringToInt,
-  getActivityPercentage,
+  getActivityPercentage,isActivityWithDeviatingFactor
 } from '../util'
 import KeyboardArrowDownIcon from '@mui/icons-material/KeyboardArrowDown'
 import KeyboardArrowUpIcon from '@mui/icons-material/KeyboardArrowUp'
@@ -244,13 +244,17 @@ function transform({ slices, showing, platformState }: PlatformViewProps): Platf
 const DiffHoursTooltip = ({
   targetHours,
   workedHours,
+  timeTravelHours,
   children,
 }: {
   targetHours: number
+  timeTravelHours : number
   workedHours: number
   children: React.ReactElement
 }) => {
   const diff = workedHours - targetHours
+  const diffTravelTime = timeTravelHours - targetHours
+  const showTravelTime = timeTravelHours !== workedHours
 
   return (
     <Tooltip
@@ -266,6 +270,14 @@ const DiffHoursTooltip = ({
             {diff >= 0 ? '+' : ''}
             {diff}
           </Box>
+          {showTravelTime ? (
+            <>
+          <br></br>
+          - {targetHours} (target with TT) ={' '}
+          <Box component='span' sx={{ color: diff < 0 ? 'error.dark' : 'success.light' }}>
+            {diffTravelTime >= 0 ? '+' : ''}
+            {diffTravelTime}
+          </Box></>) : ""}
         </Typography>
       }
     >
@@ -430,12 +442,34 @@ export const PlatformView = observer((props: PlatformViewProps) => {
   ]
   const mergedPlatformExport = mergeExports(platformExport, projectTasksViewItems)
 
+  /**
+   * Calculates the total worked hours within the given interval 
+   * 
+   * Iterates over each day in the interval, sums the hours of all work entries
+   * recorded for that day in 'platformExport', and returns the aggregated total.
+   * @param interval The date range for which worked hours should be calculated.
+   * @returns The total number of worked hours within the interval.
+   */
   const getWorkedHours = (interval: Interval) => {
     return sum(
-      eachDayOfInterval(interval).map((d) =>
-        sum(platformExport[isoDayStr(d)]?.map((we) => we.hours) ?? []),
+      eachDayOfInterval(interval).map((date) =>
+        sum(platformExport[isoDayStr(date)]?.map((workEntry) => workEntry.hours) ?? []),
       ),
     )
+  }
+
+  /**
+   * Calculates the total worked hours within the given interval respective the travel time factors
+   * 
+   * Iterates over each day in the interval, sums the hours of all work entries 
+   * recorded for that day in 'platformExport', and returns the aggregated total respective the TT factor.
+   * 
+   * @param interval The date range for which worked hours should be calculated.
+   * @returns The total number wof worked hours wihtin the interval respective the travel time factor.
+   */
+  const getWorkedHoursRespectiveTravelTime = (interval : Interval) => {
+    return sum(
+        eachDayOfInterval(interval).map((date) => sum(platformExport[isoDayStr(date)]?.map((workEntry) => workEntry.hours * getActivityPercentage(workEntry.taskActivity)))))
   }
 
   return (
@@ -486,9 +520,11 @@ export const PlatformView = observer((props: PlatformViewProps) => {
               >
                 <DiffHoursTooltip
                   targetHours={calculateTargetHours(w)}
+                  timeTravelHours={getWorkedHoursRespectiveTravelTime(w)}
                   workedHours={getWorkedHours(w)}
                 >
-                  <b>{formatHours(getWorkedHours(w))}</b>
+                  <b>{
+                  !(getWorkedHoursRespectiveTravelTime(w) === getWorkedHours(w)) ? formatHours(getWorkedHours(w)) +  " (" + formatHours(getWorkedHoursRespectiveTravelTime(w)) + ")" : formatHours(getWorkedHours(w))}</b>
                 </DiffHoursTooltip>
               </TableCell>
             ))}
@@ -498,6 +534,7 @@ export const PlatformView = observer((props: PlatformViewProps) => {
             >
               <DiffHoursTooltip
                 targetHours={calculateTargetHours(showing)}
+                timeTravelHours={getWorkedHoursRespectiveTravelTime(showing)}
                 workedHours={showingTotal}
               >
                 <b>
@@ -613,8 +650,10 @@ function ProjectRow({
 
   const getWorkedHours = (interval: Interval, task: WorkEntry) =>
     sum(
-      getWorkEntries(interval, task).map((we) => we.hours * getActivityPercentage(we.taskActivity)),
+      getWorkEntries(interval, task).map((we) => we.hours),
     )
+
+      
 
   return (
     <>
@@ -663,7 +702,9 @@ function ProjectRow({
               ...taskColor,
             }}
           >
-            <b>{formatHours(getWorkedHours(w, projectTask))}</b>
+            <b>{
+            
+            isActivityWithDeviatingFactor(projectTask.taskActivity) ? formatHours(getWorkedHours(w, projectTask)) +  " (" + formatHours(getWorkedHours(w, projectTask) * getActivityPercentage(projectTask.taskActivity)) + ")" : formatHours(getWorkedHours(w, projectTask))}</b>
           </TableCell>
         ))}
         <TableCell
@@ -672,7 +713,7 @@ function ProjectRow({
             ...taskColor,
           }}
         >
-          <b>{formatHours(showingTotal(projectTask))}</b>
+          <b>{isActivityWithDeviatingFactor(projectTask.taskActivity) ? formatHours(showingTotal(projectTask))+  " (" + formatHours(showingTotal(projectTask) * getActivityPercentage(projectTask.taskActivity)) + ")" : formatHours(showingTotal(projectTask))}</b>
         </TableCell>
       </TableRow>
       {open && (

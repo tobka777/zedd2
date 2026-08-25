@@ -262,3 +262,12 @@ export function getActivityPercentage(activityName: string | undefined): number 
   }
   return 1.0
 }
+
+/**
+ * This method checks for a given activityName, if the factor of 1.0 deviates from the actual booking factor
+ * @param activityName Name of the activity for a given task
+ * @returns true, iff not 100% booking time, false otherwise
+ */
+export function isActivityWithDeviatingFactor(activityName: string | undefined): boolean {
+  return getActivityPercentage(activityName) != 1.0
+}
