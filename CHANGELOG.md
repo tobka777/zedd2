@@ -1,6 +1,7 @@
 ## [3.1.1] - 2026-08-17
 
 - Feature: added travel-time deduction functionality
+- Fix: added guardrail for orphaned browsers
 
 ## [3.1.0] - 2026-08-11
 
@@ -10,10 +11,6 @@
 - Feature: Migrated ESLint to the flat config format (`eslint.config.js`) and dropped TSLint
 - Feature: Migrated code for breaking changes in MUI (Grid `size` prop, `slotProps`), Autocomplete, Puppeteer (XPath/`waitForTimeout` helpers), Selenium (Chrome options) and serializr 3
 - Removed deprecated module zedd-win32
-
-## [3.0.5] - 2026-07-20
-
-- Fix: added guardrail for orphaned browsers
 
 ## [3.0.4] - 2025-12-09
 
