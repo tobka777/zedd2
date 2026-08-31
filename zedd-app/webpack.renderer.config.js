@@ -19,8 +19,11 @@ module.exports = {
   },
   externals: {
     puppeteer: 'commonjs puppeteer',
+
     'selenium-webdriver': 'commonjs selenium-webdriver',
+
     'selenium-webdriver/chrome': 'commonjs selenium-webdriver/chrome',
+
     'win-ca': 'commonjs win-ca',
   },
 }

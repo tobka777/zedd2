@@ -4,7 +4,8 @@ import { format as formatDate } from 'date-fns'
 import * as React from 'react'
 import { useState } from 'react'
 
-import { AppState, Task, TimeSlice } from '../AppState'
+import { AppState, TimeSlice } from '../AppState'
+import { Task } from '../entities/Task'
 import { PlatformState } from '../PlatformState'
 import { TaskEditor } from './TaskEditor'
 

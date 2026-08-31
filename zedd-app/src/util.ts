@@ -246,3 +246,28 @@ export const hashStringToInt = (str: string): number => {
   }
   return Math.abs(hash)
 }
+
+/**
+ * Calculates the percentage factor for activities that include a percentage in their name.
+ * @param activityName The name of the activity associated with a task.
+ * @returns The percentage factor (e.g. "Activity (50%)" → 0.5). Defaults to 1.0.
+ */
+export function getActivityPercentage(activityName: string | undefined): number {
+  if (!activityName) {
+    return 1.0
+  }
+  const match = activityName.match(/\((\d+)%\)/)
+  if (match) {
+    return Number(match[1]) / 100
+  }
+  return 1.0
+}
+
+/**
+ * This method checks for a given activityName, if the factor of 1.0 deviates from the actual booking factor
+ * @param activityName Name of the activity for a given task
+ * @returns true, iff not 100% booking time, false otherwise
+ */
+export function isActivityWithDeviatingFactor(activityName: string | undefined): boolean {
+  return getActivityPercentage(activityName) != 1.0
+}

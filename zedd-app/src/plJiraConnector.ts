@@ -1,7 +1,7 @@
 import { compareDesc, differenceInMinutes } from 'date-fns'
 import { Version2Client as JiraClient } from 'jira.js'
 import { isEqual } from 'lodash'
-import { Task } from './AppState'
+import { Task } from './entities/Task'
 import { PlatformState } from './PlatformState'
 import { PlatformType, Task as PlatformTask } from 'zedd-platform'
 import { ZeddSettings } from './ZeddSettings'

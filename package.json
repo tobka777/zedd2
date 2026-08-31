@@ -1,0 +1,14 @@
+{
+  "name": "zedd",
+  "private": true,
+  "workspaces": [
+    "zedd-platform",
+    "zedd-app"
+  ],
+  "scripts": {
+    "install:all": "npm install --workspaces",
+    "build:platform": "npm run build --workspace=zedd-platform",
+    "start:app": "npm run start --workspace=zedd-app",
+    "dev": "npm run build:platform && npm run start:app"
+  }
+}
