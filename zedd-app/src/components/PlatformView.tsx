@@ -45,9 +45,15 @@ import { TimeSlice, validDate } from '../AppState'
 import { PlatformActionType, PlatformState } from '../PlatformState'
 import { LoadingSpinner } from './LoadingSpinner'
 
-
-
-import { isoDayStr, omap, splitIntervalIntoCalendarDays, sum, getActivityPercentage, hashStringToInt, isActivityWithDeviatingFactor } from '../util'
+import {
+  isoDayStr,
+  omap,
+  splitIntervalIntoCalendarDays,
+  sum,
+  getActivityPercentage,
+  hashStringToInt,
+  isActivityWithDeviatingFactor,
+} from '../util'
 import KeyboardArrowDownIcon from '@mui/icons-material/KeyboardArrowDown'
 import KeyboardArrowUpIcon from '@mui/icons-material/KeyboardArrowUp'
 import { WorkEntry } from 'zedd-platform/out/src/model/work-entry.model'

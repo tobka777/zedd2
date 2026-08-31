@@ -6,10 +6,10 @@ rules.push({
 })
 
 module.exports = {
-    module: {
-        rules,
-    },
-    target: 'electron-renderer',
+  module: {
+    rules,
+  },
+  target: 'electron-renderer',
   resolve: {
     extensions: ['.js', '.ts', '.jsx', '.tsx', '.css'],
     // https://github.com/ZJONSSON/node-unzipper/issues/330 - bundle issue with unzipper
@@ -17,13 +17,13 @@ module.exports = {
       '@aws-sdk/client-s3': false,
     },
   },
-    externals: {
-        'puppeteer': 'commonjs puppeteer',
+  externals: {
+    puppeteer: 'commonjs puppeteer',
 
-        'selenium-webdriver': 'commonjs selenium-webdriver',
+    'selenium-webdriver': 'commonjs selenium-webdriver',
 
-        'selenium-webdriver/chrome': 'commonjs selenium-webdriver/chrome',
+    'selenium-webdriver/chrome': 'commonjs selenium-webdriver/chrome',
 
-        'win-ca': 'commonjs win-ca',
-    },
+    'win-ca': 'commonjs win-ca',
+  },
 }
