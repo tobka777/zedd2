@@ -49,22 +49,6 @@ const d = (...x: any[]) => console.log('renderer.ts', ...x)
 
 const isWin = process.platform === 'win32'
 
-// class Todo {
-//   name: string
-// }
-
-// createModelSchema(Todo, {
-//   title: optional(primitive()),
-//   user: optional(
-//     custom(
-//       (value) => value.name,
-//       () => SKIP,
-//     ),
-//   ),
-// })
-
-// serialize(new Todo()) // {}
-
 function showNotification(title: string, text: string, cb: () => void) {
   const notification = new Notification(title, {
     body: text,
@@ -138,8 +122,6 @@ async function setup() {
     platformState.setIntegrationMap()
   })
 
-  // await sleep(5000);
-  // importAndSaveClarityTasks();
   try {
     await platformState.loadStateFromFile()
   } catch (e) {
@@ -194,29 +176,6 @@ async function setup() {
           state.changingSliceTask = newSlice
         }
       },
-      // code for interactive notification. Disabled because it only works with a native module
-      // which isn't worth the hassle.
-      //   [state.currentTask.name.substring(0), formatInterval(when) + ' ' + state.currentTask.name],
-      //   ['Other...', formatInterval(when) + ' ' + '$$$OTHER$$$'],
-      //   (_, wargs) => {
-      //     const [start, end, taskName] = TimeSlice.parse(wargs.arguments)
-      //     const newSlice = new TimeSlice(
-      //       start,
-      //       end,
-      //       '$$$OTHER$$$' === taskName ? state.getUndefinedTask() : state.getTaskForName(taskName),
-      //     )
-      //     state.addSlice(newSlice)
-      //     if ('$$$OTHER$$$' === taskName) {
-      //       if (!currentWindow.isVisible()) {
-      //         currentWindow.show()
-      //       }
-      //       if (state.hoverMode) {
-      //         state.hoverMode = false
-      //       }
-      //       currentWindow.focus()
-      //       state.changingSliceTask = newSlice
-      //     }
-      //   },
     )
   }
 
@@ -273,6 +232,7 @@ async function setup() {
     }
     platformState.chromeExe = state.config.chromePath
     platformState.chromedriverExe = chromeDriverPath
+    await platformState.setIntegrationMap()
     return { chromeVersion, chromeDriverVersion: requiredChromeDriverVersion }
   }
   checkChromePath().catch((error) => state.addMessage(error.message))
@@ -320,17 +280,18 @@ async function setup() {
   const restoreUnmaximizedBoundsIfNotHoverMode = () =>
     !state.hoverMode && setBoundsSafe(currentWindow, state.bounds.normal)
 
-  const saveWindowBounds = ({ sender }: { sender: BrowserWindow }) => {
+  const saveWindowBounds = () => {
+    const win = getCurrentWindow()
     if (state && !state.hoverMode) {
-      if (sender.isMaximized()) {
+      if (win.isMaximized()) {
         state.bounds.maximized = true
       } else {
         state.bounds.maximized = false
-        state.bounds.normal = sender.getBounds()
+        state.bounds.normal = win.getBounds()
       }
     }
     if (state && state.hoverMode) {
-      state.bounds.hover = sender.getBounds()
+      state.bounds.hover = win.getBounds()
     }
   }
 
@@ -458,10 +419,7 @@ async function setup() {
   const cleanupHoverModeAutorun = autorun(() => {
     currentWindow.setSkipTaskbar(state.hoverMode)
     currentWindow.setAlwaysOnTop(state.hoverMode)
-    // currentWindow.resizable = !state.hoverMode
     console.log('currentWindow.resizable', currentWindow.resizable)
-    // console.log('showing:', state.hoverMode, !currentWindow.isVisible)
-    // state.hoverMode && !currentWindow.isVisible && currentWindow.show()
     if (state.hoverMode) {
       const vertical = 'vertical' === state.config.keepHovering
       if (vertical) {

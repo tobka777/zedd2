@@ -36,8 +36,10 @@ export const DateRangePicker = ({
         aria-describedby={id}
         onClick={handleClick}
         label='Start 🡢 End'
-        InputProps={{
-          readOnly: true,
+        slotProps={{
+          input: {
+            readOnly: true,
+          },
         }}
         style={{ minWidth: '20rem' }}
         value={formatDate(value.start, 'E, do MMMM') + ' 🡢 ' + formatDate(value.end, 'E, do MMMM')}

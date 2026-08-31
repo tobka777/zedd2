@@ -191,7 +191,7 @@ export const AppBody = observer(
         )
       } catch (e) {
         console.error('Error while fetching holidays: ' + e)
-        state.addMessage('Could not load holidays', e)
+        state.addMessage('Could not load holidays: ' + e)
       }
       setAllHolidays(holidays)
     }

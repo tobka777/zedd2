@@ -1,6 +1,6 @@
 import { PlatformExportFormat, Task } from './model'
 import { PlatformOptions } from './model/platform.options.model'
-import { checkPlatformUrl } from './utils'
+import { $x, checkPlatformUrl } from './utils'
 import puppeteer, { Browser, ElementHandle, Page } from 'puppeteer'
 
 export abstract class PlatformIntegration {
@@ -46,7 +46,7 @@ export abstract class PlatformIntegration {
   abstract quitBrowser(): Promise<void>
 
   protected async clickElementWithContent(expression: string) {
-    const [node] = await this.page.$x(expression)
+    const [node] = await $x(this.page, expression)
 
     if (node) {
       const button = node as unknown as ElementHandle<Element>

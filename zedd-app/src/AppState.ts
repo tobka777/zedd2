@@ -111,7 +111,7 @@ export class TimeSlice {
   }
 
   @observable
-  private _startEnd: { start: Date; end: Date }
+  private _startEnd!: { start: Date; end: Date }
 
   @serializable(date())
   get start(): Date {
@@ -327,7 +327,7 @@ export class AppState {
   @observable
   private _showing!: Interval
 
-  private _interval: NodeJS.Timeout
+  private _interval!: NodeJS.Timeout
 
   @serializable(date())
   private lastUserAction: Date = new Date()

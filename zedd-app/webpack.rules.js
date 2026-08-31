@@ -24,35 +24,6 @@ module.exports = [
     test: /\.tsx?$/,
     exclude: /(node_modules|\.webpack)/,
     use: [
-      // use babel-plugin-import to convert import {...} from '@material-ui/icons'
-      // to default icons. REMOVING THIS WILL LEAD TO LONG REBUILD TIMES!
-      // see https://material-ui.com/guides/minimizing-bundle-size/
-      {
-        loader: 'babel-loader',
-        options: {
-          presets: [],
-          plugins: [
-            [
-              'babel-plugin-import',
-              {
-                libraryName: '@mui/material',
-                libraryDirectory: '',
-                camel2DashComponentName: false,
-              },
-              'core',
-            ],
-            [
-              'babel-plugin-import',
-              {
-                libraryName: '@mui/icons-material',
-                libraryDirectory: '',
-                camel2DashComponentName: false,
-              },
-              'icons',
-            ],
-          ],
-        },
-      },
       {
         loader: 'ts-loader',
         options: {

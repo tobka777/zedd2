@@ -106,7 +106,7 @@ export const TaskEditor = observer(
 
     return (
       <Grid container style={{ ...style, alignItems: 'center' }} spacing={2}>
-        <Grid item xs={10} lg={11}>
+        <Grid size={{ xs: 10, lg: 11 }}>
           <TaskSelect
             tasks={state.tasks}
             label={
@@ -129,7 +129,7 @@ export const TaskEditor = observer(
             getHoursForTask={(t) => state.formatHours(state.getTaskHours(t))}
           />
         </Grid>
-        <Grid item xs={2} lg={1}>
+        <Grid size={{ xs: 2, lg: 1 }}>
           <Button
             disabled={!value || value === state.getUndefinedTask()}
             onClick={(_) => (state.renamingTask = value)}
@@ -139,7 +139,7 @@ export const TaskEditor = observer(
             Rename
           </Button>
         </Grid>
-        <Grid item xs={6} lg={9}>
+        <Grid size={{ xs: 6, lg: 9 }}>
           <PlatformTaskSelect
             value={value.platformTaskIntId}
             disabled={value === state.getUndefinedTask()}
@@ -159,7 +159,7 @@ export const TaskEditor = observer(
             platformState={platformState}
           />
         </Grid>
-        <Grid item xs={2} lg={1}>
+        <Grid size={{ xs: 2, lg: 1 }}>
           <Button
             disabled={undefined === guessPlatformIntId}
             onClick={(_) => {
@@ -171,7 +171,7 @@ export const TaskEditor = observer(
             Guess
           </Button>
         </Grid>
-        <Grid item xs={2} lg={1}>
+        <Grid size={{ xs: 2, lg: 1 }}>
           <Tooltip
             title={`imported ${platformState.tasks.length} tasks ${
               platformState.tasksLastUpdated
@@ -223,7 +223,7 @@ export const TaskEditor = observer(
             ))}
           </Menu>
         </Grid>
-        <Grid item xs={2} lg={1}>
+        <Grid size={{ xs: 2, lg: 1 }}>
           <Button
             variant='text'
             style={{ width: '100%' }}
@@ -236,7 +236,7 @@ export const TaskEditor = observer(
 
         {value.platformTaskIntId && value.platformTaskIntId !== '' && (
           <>
-            <Grid item xs={10} lg={11}>
+            <Grid size={{ xs: 10, lg: 11 }}>
               <TaskActivitySelect
                 value={value.taskActivityName}
                 platformTask={platformState.resolveTask(value.platformTaskIntId as number)}
@@ -254,7 +254,7 @@ export const TaskEditor = observer(
                 platformState={platformState}
               />
             </Grid>
-            <Grid item xs={2} lg={1}>
+            <Grid size={{ xs: 2, lg: 1 }}>
               <Button
                 style={{ width: '100%' }}
                 disabled={!value || value === state.getUndefinedTask()}
@@ -266,7 +266,7 @@ export const TaskEditor = observer(
             </Grid>
           </>
         )}
-        <Grid item xs={10} lg={11}>
+        <Grid size={{ xs: 10, lg: 11 }}>
           <TextField
             value={value.platformTaskComment}
             label='Account Comment for This Task'
@@ -275,7 +275,7 @@ export const TaskEditor = observer(
             fullWidth
           />
         </Grid>
-        <Grid item xs={2} lg={1}>
+        <Grid size={{ xs: 2, lg: 1 }}>
           <Tooltip title='Copy task name to task comment'>
             <span>
               <Button
