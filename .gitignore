@@ -31,6 +31,8 @@ coverage
 
 # Compiled binary addons (https://nodejs.org/api/addons.html)
 build/Release
+tsconfig-resolved.json
+
 
 # Dependency directories
 node_modules/
@@ -90,3 +92,4 @@ out/
 
 .vs
 .idea
+api/

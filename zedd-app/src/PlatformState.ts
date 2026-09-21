@@ -133,10 +133,25 @@ export class PlatformState {
   }
 
   public async setIntegrationMap(): Promise<void> {
+    if (this._currentlyExportingTasks || this._currentlyImportingTasks) {
+      return
+    }
+
     const options: PlatformOptions = {
       headless: this.chromeHeadless,
       executablePath: this.chromeExe,
     }
+
+    if (this.integrationMap) {
+      await Promise.all(
+        Object.values(this.integrationMap).map((integration) =>
+          integration
+            .quitBrowser()
+            .catch((error) => console.error('Error quitting old browser', error)),
+        ),
+      )
+    }
+
     this.integrationMap = {
       REPLICON: new RepliconIntegration(this.repliconLink, options),
       OTT: new OTTIntegration(this.ottLink, options),
@@ -196,7 +211,7 @@ export class PlatformState {
         await this.savePlatformTasksToFile(this._tasks)
       }
     } catch (error) {
-      this.platformIntegration?.quitBrowser()
+      await this.platformIntegration?.quitBrowser()
     }
   }
 

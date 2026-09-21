@@ -1,3 +1,8 @@
+## [3.1.1] - 2026-08-17
+
+- Feature: added travel-time deduction functionality
+- Fix: added guardrail for orphaned browsers
+
 ## [3.1.0] - 2026-08-11
 
 - Feature: Updated all dependencies to their latest versions (Electron 43, React 19, MUI 9, TypeScript 6, date-fns 4, Puppeteer 25, Selenium 4.46, jira.js 5, ESLint 9, Prettier 3, and more)
