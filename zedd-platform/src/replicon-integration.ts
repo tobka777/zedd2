@@ -532,13 +532,12 @@ export class RepliconIntegration extends PlatformIntegration {
     })
     const [weekday, day] = formattedTaskDay.replace(',', '').split(' ')
 
-    const days = await $x(row, '//td[contains(@class,"day")]/input')
+    const days = await $x(row, './/td[contains(@class,"day")]/input')
     let dayFieldNode = null
 
     for (let dayNode of days) {
-      dayFieldNode = dayNode as unknown as ElementHandle<Element>
-
-      let isSearchedRow = await dayFieldNode.evaluate(
+      const node = dayNode as unknown as ElementHandle<Element>
+      let isSearchedRow = await node.evaluate(
         (el, weekday, day) => {
           let arialLabel = el.getAttribute('aria-label')
           return arialLabel && arialLabel.includes(day + ' ' + weekday)
@@ -547,6 +546,7 @@ export class RepliconIntegration extends PlatformIntegration {
         day,
       )
       if (isSearchedRow) {
+        dayFieldNode = node
         break
       }
     }
@@ -563,33 +563,39 @@ export class RepliconIntegration extends PlatformIntegration {
   }
 
   private async getRowTaskFromTable(work: WorkEntry) {
-    const rows = await $x(this.page, '//tbody[@sectiontype="rows"]/tr')
-    for (const rowNode of rows) {
-      const row = rowNode as ElementHandle<Element>
-      const taskCell = await row.$('.timesheetTaskNameFormat')
-      if (!taskCell) continue
+    const projectKey = String(work.projectIntId)
 
-      const isMatch = await taskCell.evaluate(
-        (el, projectName, taskCode) => {
-          const [projectDiv, taskDiv] = el.querySelectorAll('div')
-          const projectText = projectDiv?.textContent?.trim() ?? ''
-          const taskText = taskDiv?.textContent?.trim().split(' - ')[0] ?? ''
-          return projectText.includes(projectName) && taskText === taskCode
-        },
-        work.projectName,
-        work.taskCode,
-      )
+    for (let attempt = 1; attempt <= 3; attempt++) {
+      if (attempt > 1) {
+        await this.sleep(0.4)
+      }
 
-      const activityCell = await row.$('.activity')
-      if (!activityCell) continue
-      const isSameActivity = await activityCell.evaluate((el, taskActivity) => {
-        return (
-          el?.textContent?.trim() == taskActivity || el?.textContent?.trim() == 'Select an Activity'
+      const rows = await $x(this.page, '//tbody[@sectiontype="rows"]/tr')
+      for (const rowNode of rows) {
+        const row = rowNode as ElementHandle<Element>
+        const taskCell = await row.$('.timesheetTaskNameFormat')
+        const activityCell = await row.$('.activity')
+        if (!taskCell || !activityCell) continue
+
+        const projectMatches = await taskCell.evaluate(
+          (el, key) => (el.querySelector('div')?.textContent ?? '').includes('- ' + key),
+          projectKey,
         )
-      }, work.taskActivity)
+        const taskMatches = await taskCell.evaluate(
+          (el, taskCode) =>
+            el.querySelectorAll('div')[1]?.textContent?.trim().split(' - ')[0] === taskCode,
+          work.taskCode,
+        )
+        const activityMatches = await activityCell.evaluate(
+          (el, taskActivity) =>
+            el?.textContent?.trim() === taskActivity ||
+            el?.textContent?.trim() === 'Select an Activity',
+          work.taskActivity,
+        )
 
-      if (isMatch && isSameActivity) {
-        return row
+        if (projectMatches && taskMatches && activityMatches) {
+          return row
+        }
       }
     }
 
