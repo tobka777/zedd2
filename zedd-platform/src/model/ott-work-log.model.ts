@@ -4,10 +4,6 @@ export interface OttWorkLogResponse {
   data: OttWorkLogData[]
 }
 
-/**
- * Lookups built from the OTT work log so export entries can be resolved against
- * the known issues, projects and already-logged time entries.
- */
 export interface OttExportMaps {
   issueMap: Map<number, OttAssignedIssue>
   projectMap: Map<number, OttProjectCode>

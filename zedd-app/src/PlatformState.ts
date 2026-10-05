@@ -217,9 +217,6 @@ export class PlatformState {
       console.error('[PlatformState] importAndSavePlatformTasks failed:', error)
       this.error = error instanceof Error ? error.message : String(error)
     } finally {
-      // The browser is opened inside importTasks (via init). The new OTT
-      // integration no longer closes it itself, so always close it here —
-      // on success and on error — mirroring export()'s finally.
       await this.platformIntegration?.quitBrowser()
       this._currentlyImportingTasks = false
     }

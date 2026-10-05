@@ -49,9 +49,7 @@ const d = (...x: any[]) => console.log('renderer.ts', ...x)
 
 const isWin = process.platform === 'win32'
 
-// Forward renderer console output to the main-process console (see the
-// 'renderer-console' ipcMain handler in main.ts) so import/export logs are
-// visible in the `npm start` terminal.
+// Forward renderer console output
 ;(['log', 'warn', 'error', 'debug'] as const).forEach((level) => {
   const original = console[level].bind(console)
   console[level] = (...args: any[]) => {
@@ -68,7 +66,6 @@ const isWin = process.platform === 'win32'
         .join(' ')
       ipcRenderer.send('renderer-console', { level, text })
     } catch {
-      /* never let logging break the app */
     }
   }
 })
