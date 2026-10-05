@@ -9,8 +9,8 @@ import {
   OttTimeEntry,
   OttWorkLogData,
 } from './model/ott-work-log.model'
+import { OttWorkLocation } from './ott-work-location'
 import { PlatformIntegration } from './platform-integration'
-
 import { magicToken, getCurrentMonthDatePath } from './utils'
 import {
   eachDayOfInterval,
@@ -23,15 +23,29 @@ import {
 } from 'date-fns'
 export class OTTIntegration extends PlatformIntegration {
   private authorizationHeader?: string
-  private username?: string
   private userId?: number
 
-  //TODO: Hardcordiert.
-  WORK_LOCATION_ID = 1604387 //GERMANY ist in /lean/wsr/protected/ott/getWorkLocations/USRID
-  WORK_PLACE_ID = 1604435
+  private resolvedLocation?: OttWorkLocation
+
+  private static readonly FALLBACK_WORK_LOCATION_ID = 1604387
+  private static readonly FALLBACK_WORK_PLACE_ID = 1604435
 
   public constructor(platformLink: string, options: PlatformOptions) {
     super(platformLink, options)
+  }
+
+  
+  private getWorkLocation(): OttWorkLocation {
+    if (this.resolvedLocation) return this.resolvedLocation
+    console.warn(
+      '[OTT] keine Work Location aus den OTT-Zeiteinträgen gelesen – verwende ' +
+        `FALLBACK (GERMANY: workLocationId=${OTTIntegration.FALLBACK_WORK_LOCATION_ID}, ` +
+        `workPlaceId=${OTTIntegration.FALLBACK_WORK_PLACE_ID}).`,
+    )
+    return {
+      workLocationId: OTTIntegration.FALLBACK_WORK_LOCATION_ID,
+      workPlaceId: OTTIntegration.FALLBACK_WORK_PLACE_ID,
+    }
   }
 
   private attachAuthCapture(): void {
@@ -45,14 +59,14 @@ export class OTTIntegration extends PlatformIntegration {
   }
 
   override async importTasks(notifyTasks?: (p: Task[]) => void): Promise<Task[]> {
-    console.log('[OTT] importTasks started; platformLink:', this.platformLink)
     await this.init()
     this.attachAuthCapture()
     await this.page.reload()
     await this.page.waitForSelector('[role="table"]')
-    const username = await this.fetchUsernameandId()
+    const user = await this.fetchUser()
+    this.userId = user.id
     const currentMonthDatePath = getCurrentMonthDatePath()
-    const workLogData = await this.getWorkLogData(magicToken(username), currentMonthDatePath)
+    const workLogData = await this.getWorkLogData(magicToken(user.login), currentMonthDatePath)
 
     const tasks = this.mapWorkLogDataToTasks(workLogData)
     notifyTasks && notifyTasks(tasks)
@@ -70,35 +84,29 @@ export class OTTIntegration extends PlatformIntegration {
    * OTT currently holds. 
    * */
   override async exportTasks(data: PlatformExportFormat, submitTimesheets: boolean): Promise<void> {
-    // OTT has no separate "submit timesheet" step, so the flag has no effect here.
-    void submitTimesheets
+    void submitTimesheets //no submit required.
 
     const days = Object.keys(data)
     if (days.length === 0) return
 
-    // Phase 1 – open the browser and authenticate.
     await this.login()
 
-    // Phase 2 – load the current OTT work log for the exported date range.
-    const usernameMagic = magicToken(await this.fetchUsernameandId())
+    const user = await this.fetchUser()
+    this.userId = user.id
+    const usernameMagic = magicToken(user.login)
     const workLogData = await this.fetchWorkLog(usernameMagic, days)
 
-    // Phase 3 – index OTT data so export entries can be resolved against it.
+    this.resolveWorkLocationFromTimeEntries(workLogData)
+
     const maps = this.buildExportMaps(workLogData)
     const exportDays = this.exportedDays(days)
     const desiredKeys = this.desiredTimeEntryKeys(data)
 
-    // Phase 4 – create/update/skip each time entry and apply its comment.
     await this.applyTimeEntries(data, maps, usernameMagic)
 
-    // Phase 5 – delete OTT entries that are no longer part of the export.
     await this.deleteStaleTimeEntries(workLogData, exportDays, desiredKeys)
   }
 
-  /**
-   * Opens the OTT browser session and waits until the logged-in work log table is
-   * rendered so the captured authorization header can be reused for API calls.
-   */
   private async login(): Promise<void> {
     await this.init()
     this.attachAuthCapture()
@@ -122,6 +130,26 @@ export class OTTIntegration extends PlatformIntegration {
       workLogData.timeEntries.length,
     )
     return workLogData
+  }
+
+  /**
+   * Caches the work location to log new time entries against, read from the user's
+   * own time entries.
+   */
+  private resolveWorkLocationFromTimeEntries(workLogData: OttWorkLogData): void {
+    for (const te of workLogData.timeEntries) {
+      const workLocationId = te.workLocationId
+      const workPlaceId = te.workPlaceId
+      if (workLocationId != null && workLocationId > 0 && workPlaceId != null && workPlaceId > 0) {
+        this.resolvedLocation = { workLocationId, workPlaceId }
+        console.log(
+          `[OTT] export work location from existing time entries: workLocationId=${workLocationId}, ` +
+            `workPlaceId=${workPlaceId}`,
+        )
+        return
+      }
+    }
+    console.warn('[OTT] keine Work Location in den bestehenden OTT-Zeiteinträgen gefunden')
   }
 
   /**
@@ -246,14 +274,11 @@ export class OTTIntegration extends PlatformIntegration {
     project: OttProjectCode,
     existing: OttTimeEntry | undefined,
   ): Promise<void> {
-    // Identische Stunden -> kein POST (wie OTTzTalker), aber Comment wird trotzdem gesendet.
     if (existing && existing.hoursLogged === we.hours) {
       console.log(`Skip (Schon korrekt, ${we.hours}h): ${we.taskName} ${day}`)
       return
     }
 
-    // Update-Zweig: activityId wird NICHT gesendet (Referenz sendet es nicht,
-    // da es eine bestehende activityId sonst auf null setzen würde).
     const response = existing
       ? await this.apiRequest('POST', '/lean/wsr/protected/ott/updateTimeEntry', {
           id: Number(existing.id),
@@ -271,15 +296,14 @@ export class OTTIntegration extends PlatformIntegration {
     }
   }
 
-  /**
-   * The payload shared by the create and update time-entry requests.
-   */
+
   private timeEntryPayload(
     we: WorkEntry,
     dateLogged: number,
     issue: OttAssignedIssue,
     project: OttProjectCode,
   ) {
+    const { workLocationId, workPlaceId } = this.getWorkLocation()
     return {
       appointmentId: Number(we.taskIntId),
       stickyNoteId: Number(issue.stickyNoteId),
@@ -291,14 +315,12 @@ export class OTTIntegration extends PlatformIntegration {
       boardId: Number(project.boardId),
       engagementId: Number(issue.engagementId),
       issueName: we.taskName,
-      workLocationId: this.WORK_LOCATION_ID,
-      workPlaceId: this.WORK_PLACE_ID,
+      workLocationId,
+      workPlaceId,
     }
   }
 
-  /**
-   * Writes the comment for an export entry to OTT (no-op when there is none).
-   */
+
   private async writeComment(
     we: WorkEntry,
     day: string,
@@ -308,6 +330,7 @@ export class OTTIntegration extends PlatformIntegration {
   ): Promise<void> {
     if (!we.comment) return
 
+    const { workLocationId, workPlaceId } = this.getWorkLocation()
     const commentResponse = await this.apiRequest(
       'POST',
       `/lean/wsr/protected/ott/createOrUpdateOttStickyComment/${usernameMagic}`,
@@ -317,8 +340,8 @@ export class OTTIntegration extends PlatformIntegration {
           userId: Number(this.userId),
           stickyNoteId: Number(issue.stickyNoteId),
           appointmentId: Number(we.taskIntId),
-          workLocationId: this.WORK_LOCATION_ID,
-          workPlaceId: this.WORK_PLACE_ID,
+          workLocationId,
+          workPlaceId,
           loggedDate: String(dateLogged),
           comment: we.comment,
         },
@@ -332,13 +355,13 @@ export class OTTIntegration extends PlatformIntegration {
   }
 
   /**
-   * Retrieves the currently authenticated OTT username, it additionally sets the userId.
+   * Retrieves the currently authenticated OTT user (login name and id).
    *
-   * @returns The login name of the currently authenticated OTT user.
+   * @returns The login name and id of the currently authenticated OTT user.
    * @throws Error if no authorization header has been captured.
    * @throws Error if the request fails or the username is missing in the response.
    */
-  private async fetchUsernameandId(): Promise<string> {
+  private async fetchUser(): Promise<{ login: string; id: number }> {
     if (!this.authorizationHeader) {
       throw new Error('No username captured')
     }
@@ -359,14 +382,14 @@ export class OTTIntegration extends PlatformIntegration {
       return response.json()
     }, this.authorizationHeader)
 
-    this.username = userData?.data?.[0]?.login
-    this.userId = userData?.data?.[0]?.id
+    const login = userData?.data?.[0]?.login
+    const id = userData?.data?.[0]?.id
 
-    if (!this.username) {
+    if (!login) {
       throw new Error('Username not found in response')
     }
 
-    return this.username
+    return { login, id }
   }
 
   /**
@@ -408,8 +431,15 @@ export class OTTIntegration extends PlatformIntegration {
     )
   }
 
-  /**
-   * Derives the OTT date path (yyyyMMdd/yyyyMMdd) from the exported days.
+ /**
+   * Derives the OTT date path covering the exported days.
+   *
+   * The range is expanded to full calendar months: the lower bound is the first
+   * day of the month containing the earliest exported day, the upper bound the
+   * last day of the month containing the latest one.
+   *
+   * @param days - The exported ISO dates (yyyy-MM-dd) to cover.
+   * @returns The OTT date path `yyyyMMdd/yyyyMMdd` (startOfMonth of the first month / endOfMonth of the last month).
    */
   private datePathFromDays(days: string[]): string {
     const min = days.reduce((a, b) => (a < b ? a : b), days[0])
@@ -484,9 +514,8 @@ export class OTTIntegration extends PlatformIntegration {
   }
 
   /**
-   * The OTT time entries that are stale: inside the exported date range, no longer
-   * part of the export, and with a non-zero duration (zero-hour entries are left
-   * untouched, as OTT uses them as markers).
+   * The OTT time entries that are stale:  no longer
+   * part of the export, and with a non-zero duration.
    */
   private staleTimeEntries(
     workLogData: OttWorkLogData,
@@ -502,12 +531,13 @@ export class OTTIntegration extends PlatformIntegration {
   }
 
   /**
-   * Maps a raw OTT time entry to the delete-request payload expected by OTT.
+   * Maps a raw OTT time entry to the delete-request.
    */
   private buildDeleteEntry(te: OttTimeEntry): OttDeleteTimeEntry {
     const dateLogged = Number(te.dateLogged)
     const hoursLogged = Number(te.hoursLogged)
     const loggedFor = Number(te.loggedFor) || Number(this.userId)
+    const { workLocationId, workPlaceId } = this.getWorkLocation()
     return {
       id: Number(te.id),
       appointmentId: Number(te.appointmentId),
@@ -527,18 +557,17 @@ export class OTTIntegration extends PlatformIntegration {
         Duration: hoursLogged,
         Description: te.description ?? '',
         'Logged For': loggedFor,
-        'Work Location': this.WORK_LOCATION_ID,
-        'Place of Work': this.WORK_PLACE_ID,
+        'Work Location': workLocationId,
+        'Place of Work': workPlaceId,
       },
-      workLocationId: this.WORK_LOCATION_ID,
-      workPlaceId: this.WORK_PLACE_ID,
+      workLocationId,
+      workPlaceId,
       reason: 'Time booking adjustment.',
     }
   }
 
   /**
    * Sends an HTTP request to the given OTT API with the body serialized as JSON.
-   * Tolerates empty or non-JSON responses by normalizing them to a status payload.
    * @param method The HTTP method (e.g. 'POST', 'DELETE').
    * @param path The OTT API endpoint to call.
    * @param body The request payload, serialized to JSON.

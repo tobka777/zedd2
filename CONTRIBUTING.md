@@ -5,16 +5,7 @@
 ```sh
 git clone https://github.com/tobka777/zedd2.git
 cd zedd
-
-cd zedd-platform
-npm install
-npm run build
-
-cd ..
-
-cd zedd-app
-npm install
-npm run start
+npm run dev
 ```
 
 ## For publishing - Prerequisites
