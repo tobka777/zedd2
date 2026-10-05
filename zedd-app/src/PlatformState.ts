@@ -13,6 +13,7 @@ import {
 } from 'zedd-platform'
 import './index.css'
 import { FILE_DATE_FORMAT, getLatestFileInDir, mkdirIfNotExists } from './util'
+import { buildExportForPlatform, normalizeCatalogTask } from './DataSlicer'
 import { RepliconIntegration } from 'zedd-platform/out/src/replicon-integration'
 import { PlatformOptions } from 'zedd-platform/out/src/model/platform.options.model'
 
@@ -173,14 +174,7 @@ export class PlatformState {
         }
       } else {
         this.platformIntegration = this.integrationMap[platform]
-        const entriesForPlatform = Object.entries(platformExport).map(([day, entries]) => [
-          day,
-          entries.filter((e) => e.platformType === platform),
-        ])
-        const keepEmptyEntries = platform === 'OTT'
-        const exportTasksForPlatform = Object.fromEntries(
-          entriesForPlatform.filter(([_, entries]) => keepEmptyEntries || entries.length > 0),
-        )
+        const exportTasksForPlatform = buildExportForPlatform(platformExport, platform)
 
         await this.platformIntegration.exportTasks(exportTasksForPlatform, submitTimesheets)
       }
@@ -223,10 +217,10 @@ export class PlatformState {
   }
 
   public async importRepliconTaskActivities(
-    platformTaskIntId: string | number | undefined,
+    taskIntId: string | number | undefined,
     infoNotify?: (info: string) => void,
   ) {
-    const task: Task = (platformTaskIntId && this.resolveTask(platformTaskIntId as number)) as Task
+    const task: Task = (taskIntId && this.resolveTask(taskIntId as number)) as Task
 
     if (!task) {
       throw new Error('No task found')
@@ -308,9 +302,10 @@ export class PlatformState {
 
   private async loadPlatformTasksFromFile(): Promise<[Date, Task[]]> {
     const [date, content] = await this.loadFromFile('tasks')
-    const tasks: Task[] = JSON.parse(content, (key, value) =>
+    const raw: Record<string, unknown>[] = JSON.parse(content, (key, value) =>
       'end' === key || 'start' === key ? parseISO(value) : value,
     )
+    const tasks: Task[] = raw.map((r) => normalizeCatalogTask(r))
     return [date, tasks]
   }
 

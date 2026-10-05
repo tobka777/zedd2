@@ -113,6 +113,9 @@ export function splitIntervalIntoCalendarDays(interval: Interval): Interval[] {
 }
 export const sum = (nums: number[]): number => nums.reduce((a, b) => a + b, 0)
 
+export const formatHours = (hours: number): string =>
+  hours ? hours.toLocaleString('de-DE', { minimumFractionDigits: 2 }) : '-'
+
 export const formatHoursHHmm = (hours: number): string => {
   return (hours | 0) + ':' + ('' + (((hours % 1) * 60) | 0)).padStart(2, '0')
 }

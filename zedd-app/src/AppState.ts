@@ -65,6 +65,7 @@ import { ZeddSettings } from './ZeddSettings'
 import { Undoer } from './Undoer'
 
 import { Task } from './entities/Task'
+import { taskSchema } from './task-schema'
 
 export const MIN_GAP_TIME_MIN = 5
 
@@ -210,7 +211,7 @@ export class AppState {
   @observable
   public copiedSlice: TimeSlice | undefined = undefined
 
-  @serializable(list(object(Task)))
+  @serializable(list(taskSchema))
   public lastInteractedTasks: IObservableArray<Task> = observable([])
 
   private slicesByTask = new ObservableGroupMap(
@@ -488,7 +489,9 @@ export class AppState {
     return pathsToDelete.length
   }
 
-  @serializable(list(object(Task), { afterDeserialize: (callback) => callback(undefined, SKIP) }))
+  @serializable(
+    list(taskSchema, { afterDeserialize: (callback) => callback(undefined, SKIP) }),
+  )
   @computed
   get tasks(): Task[] {
     return Array.from(this.slicesByTask.keys())

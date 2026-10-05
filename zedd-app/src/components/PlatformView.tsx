@@ -19,10 +19,7 @@ import {
 } from '@mui/material'
 import { FileUpload as ExportIcon } from '@mui/icons-material'
 import {
-  addDays,
-  areIntervalsOverlapping,
   differenceInDays,
-  differenceInMinutes,
   eachDayOfInterval,
   eachMonthOfInterval,
   eachWeekOfInterval,
@@ -34,68 +31,29 @@ import {
   max as dateMax,
   min as dateMin,
 } from 'date-fns'
-import { groupBy, remove, sortBy, uniqBy } from 'lodash'
+import { sortBy, uniqBy } from 'lodash'
 import { observer } from 'mobx-react-lite'
 import * as React from 'react'
 import { useRef, useState } from 'react'
-import { PlatformExportFormat, PlatformType, Task } from 'zedd-platform'
+import { PlatformExportFormat, PlatformType, WorkEntry } from 'zedd-platform'
 import { useTheme } from '@mui/material/styles'
 
-import { TimeSlice, validDate } from '../AppState'
+import { TimeSlice } from '../AppState'
 import { PlatformActionType, PlatformState } from '../PlatformState'
 import { LoadingSpinner } from './LoadingSpinner'
 
 import {
   isoDayStr,
-  omap,
-  splitIntervalIntoCalendarDays,
   sum,
+  formatHours,
   getActivityPercentage,
-  hashStringToInt,
   isActivityWithDeviatingFactor,
 } from '../util'
 import KeyboardArrowDownIcon from '@mui/icons-material/KeyboardArrowDown'
 import KeyboardArrowUpIcon from '@mui/icons-material/KeyboardArrowUp'
-import { WorkEntry } from 'zedd-platform/out/src/model/work-entry.model'
-
-const roundToNearest = (x: number, toNearest: number) => Math.round(x / toNearest) * toNearest
-const floorToNearest = (x: number, toNearest: number) => Math.floor(x / toNearest) * toNearest
-const ceilToNearest = (x: number, toNearest: number) => Math.ceil(x / toNearest) * toNearest
-
-const outputCommentHours = false
-
-/**
- * Rounds a bunch of (wrapped) values up or down so that the sum of the rounded values
- * is equal to the rounded sum of the unrounded values.
- */
-export function smartRound<T>(arr: T[], f: (t: T) => number, toNearest: number): [number, T][] {
-  let result: [number, T][] = arr.map((x) => [f(x), x])
-  const targetValue = roundToNearest(sum(result.map(([x]) => x)), toNearest)
-  const allFloored = sum(result.map(([x]) => floorToNearest(x, toNearest)))
-  const roundUpCount = Math.round((targetValue - allFloored) / toNearest)
-  result = sortBy(
-    result,
-    // sort those for which ceil(x) === x at end, as they have to effect on the calculation
-    ([x]) => +(ceilToNearest(x, toNearest) === x),
-    // sort those which are closest to their ceil value first
-    ([x]) => ceilToNearest(x, toNearest) - x,
-  )
-
-  for (let i = 0; i < result.length; i++) {
-    const roundedValue =
-      i < roundUpCount
-        ? ceilToNearest(result[i][0], toNearest)
-        : floorToNearest(result[i][0], toNearest)
-    result[i][0] = roundedValue
-  }
-
-  const smartRoundSum = sum(result.map(([x]) => x))
-  if (roundToNearest(smartRoundSum, toNearest) !== targetValue) {
-    throw new Error(`expected=${targetValue} actual=${smartRoundSum}`)
-  }
-
-  return result
-}
+import { buildProjectViewGrouping, mergeExports, sliceToExport } from '../DataSlicer'
+// Re-exported because the existing test imports it from here (now lives in DataSlicer).
+export { smartRound } from '../DataSlicer'
 
 export interface PlatformViewProps {
   showing: Interval
@@ -105,120 +63,6 @@ export interface PlatformViewProps {
   submitTimesheets: boolean
   onChangeSubmitTimesheets: (x: boolean) => void
   errorHandler: (e: Error) => void
-}
-
-const formatHours = (h: number) =>
-  h ? h.toLocaleString('de-DE', { minimumFractionDigits: 2 }) : '-'
-
-const generateId = (intId: number, taskActivityName?: string): string =>
-  String(intId + (taskActivityName ? '_' + taskActivityName : ''))
-
-const placeholderPlatformTask = (name: string): Task => ({
-  projectName: 'UNDEFINED',
-  projectIntId: -1,
-  intId: hashStringToInt(name),
-  name: name || 'UNDEFINED',
-  taskCode: 'UNDEFINED',
-  typ: 'UNDEFINED',
-})
-
-function transform({ slices, showing, platformState }: PlatformViewProps): PlatformExportFormat {
-  // add 1 to the end of showing, because we want the interval to go to the end of the
-  // not just the begining
-  const showInterval = { start: showing.start, end: addDays(showing.end, 1) }
-
-  // in the first step, create a PlatformExportFormat with an entry for each
-  // task/comment combination
-  const dayMap: PlatformExportFormat = {}
-  // init dayMap so that days without slices are also included
-  for (const day of eachDayOfInterval(showing)) {
-    dayMap[isoDayStr(day)] = []
-  }
-  for (const slice of slices) {
-    validDate(slice.start)
-    validDate(slice.end)
-    validDate(showing.start)
-    validDate(showing.end)
-    try {
-      if (!areIntervalsOverlapping(slice, showInterval)) {
-        continue
-      }
-    } catch (e) {
-      console.error(slice, showInterval)
-      throw e
-    }
-    const task =
-      (slice.task.platformTaskIntId && platformState.resolveTask(slice.task.platformTaskIntId)) ||
-      placeholderPlatformTask(slice.task.name)
-    // fix start/end of b, as part of the interval may be outside showInterval
-    const bStartFixed = dateMax([slice.start, showInterval.start])
-    const bEndFixed = dateMin([slice.end, showInterval.end])
-    for (const daySlice of splitIntervalIntoCalendarDays({
-      start: bStartFixed,
-      end: bEndFixed,
-    })) {
-      const dayKey = isoDayStr(daySlice.start)
-      const dayHourss = dayMap[dayKey]
-      let dayHours = dayHourss.find(
-        (d) =>
-          d.taskIntId === slice.task.platformTaskIntId &&
-          d.taskActivity === slice.task.taskActivityName &&
-          d.comment === slice.task.platformTaskComment,
-      )
-      if (!dayHours) {
-        dayHours = {
-          hours: 0,
-          id: generateId(task.intId, slice.task.taskActivityName),
-          projectName: task.projectName,
-          projectIntId: task.projectIntId,
-          taskIntId: task.intId,
-          taskName: task.name,
-          platformType: task.typ,
-          taskCode: task.taskCode,
-          comment: slice.task.platformTaskComment,
-          taskActivity: slice.task.taskActivityName,
-        }
-        dayHourss.push(dayHours)
-      }
-
-      dayHours.hours += differenceInMinutes(daySlice.end, daySlice.start) / 60
-    }
-  }
-  // round hours
-  for (const dayHourss of Object.values(dayMap)) {
-    const smartRounded = smartRound(
-      // sort by task first so we have a stable result
-      // if there are multiple tasks with the same time
-      sortBy(dayHourss, 'projectName', 'taskName'),
-      (x) => x.hours,
-      0.25,
-    )
-    for (const [roundedHours, dayHours] of smartRounded) {
-      dayHours.hours = roundedHours
-    }
-    // After rounding, a WorkEntry might have 0 hours. Remove those:
-    remove(dayHourss, (we) => we.hours === 0)
-  }
-  // group entries with same task (but different comment)
-  for (const dayStr of Object.keys(dayMap)) {
-    dayMap[dayStr] = Object.values(groupBy(dayMap[dayStr], (we) => we.id)).map((workEntries) => ({
-      id: workEntries[0].id,
-      hours: sum(workEntries.map((we) => we.hours)),
-      projectName: workEntries[0].projectName,
-      projectIntId: workEntries[0].projectIntId,
-      taskIntId: workEntries[0].taskIntId,
-      taskName: workEntries[0].taskName,
-      platformType: workEntries[0].platformType,
-      taskCode: workEntries[0].taskCode,
-      comment:
-        workEntries
-          .filter((we) => we.comment)
-          .map((we) => (outputCommentHours ? formatHours(we.hours) + ': ' : '') + we.comment)
-          .join(', ') || undefined,
-      taskActivity: workEntries[0].taskActivity,
-    }))
-  }
-  return dayMap
 }
 
 const DiffHoursTooltip = ({
@@ -267,14 +111,6 @@ const DiffHoursTooltip = ({
       {children}
     </Tooltip>
   )
-}
-
-const mergeExports = (a: PlatformExportFormat, b: PlatformExportFormat): PlatformExportFormat => {
-  const result = { ...a }
-  for (const day in b) {
-    result[day] = [...(result[day] || []), ...b[day]]
-  }
-  return result
 }
 
 export const PlatformView = observer((props: PlatformViewProps) => {
@@ -328,7 +164,11 @@ export const PlatformView = observer((props: PlatformViewProps) => {
         : 'week' === groupBy
           ? "'Wk' RRRR / I"
           : 'EEEEEE, dd.MM'
-  const platformExport = transform(props)
+  const platformExport = sliceToExport({
+    slices: props.slices,
+    showing: props.showing,
+    resolveTask: platformState.resolveTask,
+  })
   const allWorkEntries = Object.values(platformExport).flatMap((x) => x)
   const tasksToShow = sortBy(
     uniqBy(allWorkEntries, (we) => we.id),
@@ -343,60 +183,13 @@ export const PlatformView = observer((props: PlatformViewProps) => {
     allWorkEntries.map((we) => we.hours * getActivityPercentage(we.taskActivity)),
   )
 
-  const projectTasksViewItems: PlatformExportFormat = {}
-  const ottTaskMissingRepliconTask: WorkEntry[] = []
-  for (const w of intervals) {
-    const workEntries = eachDayOfInterval(w)
-      .flatMap((d) => platformExport[isoDayStr(d)] ?? [])
-      ?.filter((t) => t.platformType === 'OTT' && isTaskVisible(t))
-
-    for (const task of workEntries) {
-      const projectData = platformState.tasks.find(
-        (project) =>
-          project.typ === 'REPLICON' &&
-          project.projectName === task.projectName &&
-          project.taskCode === task.taskCode,
-      )
-      if (projectData) {
-        const taskActivity = task.taskActivity || platformState.repliconActivity
-        const groupTask: WorkEntry = {
-          hours: 0,
-          id: generateId(projectData.intId, taskActivity),
-          projectName: projectData.projectName,
-          projectIntId: projectData.projectIntId,
-          taskIntId: projectData.intId,
-          taskName: projectData.name,
-          platformType: projectData.typ,
-          taskCode: projectData.taskCode,
-          comment: '',
-          taskActivity: taskActivity,
-          child: [],
-        }
-        const projectItems = projectTasksViewItems[isoDayStr(w.start)]
-        const projectItem = projectItems?.find(
-          (item) =>
-            item.projectName === projectData.projectName &&
-            item.taskCode === projectData.taskCode &&
-            item.taskActivity === taskActivity,
-        )
-
-        if (projectItem) {
-          projectItem.hours += task.hours
-          projectItem.child?.push(task)
-        } else {
-          groupTask.hours = task.hours
-          groupTask.child?.push(task)
-          if (projectItems) {
-            projectTasksViewItems[isoDayStr(w.start)].push(groupTask)
-          } else {
-            projectTasksViewItems[isoDayStr(w.start)] = [groupTask]
-          }
-        }
-      } else {
-        ottTaskMissingRepliconTask.push(task)
-      }
-    }
-  }
+  const { projectTasksViewItems, ottTaskMissingRepliconTask } = buildProjectViewGrouping({
+    platformExport,
+    repliconTasks: platformState.tasks.filter((t) => t.typ === 'REPLICON'),
+    repliconActivity: platformState.repliconActivity,
+    intervals,
+    isTaskVisible,
+  })
 
   const allProjectTasks = Object.values(projectTasksViewItems).flatMap((x) => x)
   const mergedProjectTasks = uniqBy(allProjectTasks, (task) => task.id).map((task) => {
@@ -597,13 +390,7 @@ export const PlatformView = observer((props: PlatformViewProps) => {
               onClick={async () => {
                 setPopperOpen(false)
                 platformState
-                  .export(
-                    platform,
-                    omap(mergedPlatformExport, (workEntries) =>
-                      workEntries.filter((entry) => -1 !== entry.taskIntId),
-                    ),
-                    submitTimesheets,
-                  )
+                  .export(platform, mergedPlatformExport, submitTimesheets)
                   .catch(errorHandler)
               }}
             >

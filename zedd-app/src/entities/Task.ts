@@ -1,7 +1,7 @@
 import { observable, makeObservable } from 'mobx'
 import { identifier, serializable } from 'serializr'
 import { stringHashColor } from '../util'
-import type { PlatformType } from 'zedd-platform'
+import type { PlatformType, TaskActivity } from 'zedd-platform'
 import * as chroma from 'chroma.ts'
 
 export class Task {
@@ -9,20 +9,28 @@ export class Task {
   @observable
   public name: string
 
+  /**
+   * The id of the platform task this task accounts for (matches the platform
+   * task's `intId`). Kept as `number | string` because the Jira connector stores
+   * string ids.
+   */
   @serializable
   @observable
-  public platformTaskIntId: number | string | undefined
+  public intId: number | string | undefined
 
   @serializable
   @observable
   public taskActivityName: string | undefined
 
   @observable
-  public taskActivities: string[]
+  public taskActivities: TaskActivity[] = []
 
+  /**
+   * The platform this task accounts for (matches the platform task's `typ`).
+   */
   @serializable
   @observable
-  public platformType: PlatformType | undefined
+  public typ: PlatformType | undefined
 
   /**
    * The internal key for JIRA-Issues.
@@ -38,19 +46,19 @@ export class Task {
 
   constructor(
     name: string = '',
-    taskActivities: string[],
-    platformType?: PlatformType,
+    taskActivities: TaskActivity[] = [],
+    typ?: PlatformType,
     taskActivityName?: string,
-    intId?: number,
+    intId?: number | string,
     key?: string,
     platformTaskComment?: string,
   ) {
     makeObservable(this)
     this.name = name
-    this.platformTaskIntId = intId
+    this.intId = intId
     this.key = key
     this.platformTaskComment = platformTaskComment || ''
-    this.platformType = platformType
+    this.typ = typ
     this.taskActivityName = taskActivityName
     this.taskActivities = taskActivities
   }
