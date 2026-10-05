@@ -37,16 +37,18 @@ export abstract class PlatformIntegration {
   }
 
   /**
-   * This method imports tasks for a given platform.
-   * @param notifyTasks
+   * Loads the tasks available on the platform and maps them to the internal task model.
+   *
+   * @param notifyTasks - optional callback, invoked with the loaded tasks before the method returns.
+   * @returns the list of tasks found on the platform.
    */
   abstract importTasks(notifyTasks?: (p: Task[]) => void): Promise<Task[]>
 
   /**
-   * This method exports timesheets to a given platform
+   * Writes the given work entries to the platform's timesheet, entry by entry.
    *
-   * @param data
-   * @param submitTimesheets
+   * @param data - the work entries to export, each value the entries for that day.
+   * @param submitTimesheets - whether to submit the timesheet for approval afterwards
    */
   abstract exportTasks(data: PlatformExportFormat, submitTimesheets: boolean): Promise<void>
 

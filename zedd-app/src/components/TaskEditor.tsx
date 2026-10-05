@@ -46,9 +46,6 @@ export const TaskEditor = observer(
           await platformState.importAndSavePlatformTasks(platformType, (info) =>
             state.addMessage(info, 'info', 8000),
           )
-          // importAndSavePlatformTasks swallows import errors internally and
-          // stores them in platformState.error, so a resolved await is not a
-          // guaranteed success — only report completion if there's no error.
           if (!platformState.error) {
             state.addMessage(`Import from ${platformType} finished.`, 'info', 8000)
           }

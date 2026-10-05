@@ -34,7 +34,6 @@ export class OTTIntegration extends PlatformIntegration {
     super(platformLink, options)
   }
 
-  
   private getWorkLocation(): OttWorkLocation {
     if (this.resolvedLocation) return this.resolvedLocation
     console.warn(
@@ -81,7 +80,7 @@ export class OTTIntegration extends PlatformIntegration {
 
   /**
    * Exports the given time entries to OTT and reconciles the result against what
-   * OTT currently holds. 
+   * OTT currently holds.
    * */
   override async exportTasks(data: PlatformExportFormat, submitTimesheets: boolean): Promise<void> {
     void submitTimesheets //no submit required.
@@ -234,10 +233,14 @@ export class OTTIntegration extends PlatformIntegration {
    * Resolves the OTT issue and its project for an export entry, failing with a
    * descriptive error if either cannot be found or the project has no boardId.
    */
-  private resolveIssueAndProject(we: WorkEntry, maps: OttExportMaps):
-    { issue: OttAssignedIssue; project: OttProjectCode } {
+  private resolveIssueAndProject(
+    we: WorkEntry,
+    maps: OttExportMaps,
+  ): { issue: OttAssignedIssue; project: OttProjectCode } {
     const issue = maps.issueMap.get(Number(we.taskIntId))
-    const resolvedBoardId = issue ? maps.projectMap.get(Number(issue.projectCode))?.boardId : undefined
+    const resolvedBoardId = issue
+      ? maps.projectMap.get(Number(issue.projectCode))?.boardId
+      : undefined
     console.log(
       `[OTT] export ${we.taskName} ${we.id}: issue${issue ? ' found' : ' NOT FOUND'}, ` +
         `projectCode=${issue?.projectCode}, boardId=${resolvedBoardId ?? '-'}`,
@@ -296,7 +299,6 @@ export class OTTIntegration extends PlatformIntegration {
     }
   }
 
-
   private timeEntryPayload(
     we: WorkEntry,
     dateLogged: number,
@@ -319,7 +321,6 @@ export class OTTIntegration extends PlatformIntegration {
       workPlaceId,
     }
   }
-
 
   private async writeComment(
     we: WorkEntry,
@@ -431,7 +432,7 @@ export class OTTIntegration extends PlatformIntegration {
     )
   }
 
- /**
+  /**
    * Derives the OTT date path covering the exported days.
    *
    * The range is expanded to full calendar months: the lower bound is the first
