@@ -173,10 +173,13 @@ export class PlatformState {
         }
       } else {
         this.platformIntegration = this.integrationMap[platform]
+        const entriesForPlatform = Object.entries(platformExport).map(([day, entries]) => [
+          day,
+          entries.filter((e) => e.platformType === platform),
+        ])
+        const keepEmptyEntries = platform === 'OTT'
         const exportTasksForPlatform = Object.fromEntries(
-          Object.entries(platformExport)
-            .map(([day, entries]) => [day, entries.filter((e) => e.platformType === platform)])
-            .filter(([_, entries]) => entries.length > 0),
+          entriesForPlatform.filter(([_, entries]) => keepEmptyEntries || entries.length > 0),
         )
 
         await this.platformIntegration.exportTasks(exportTasksForPlatform, submitTimesheets)
@@ -211,7 +214,11 @@ export class PlatformState {
         await this.savePlatformTasksToFile(this._tasks)
       }
     } catch (error) {
+      console.error('[PlatformState] importAndSavePlatformTasks failed:', error)
+      this.error = error instanceof Error ? error.message : String(error)
+    } finally {
       await this.platformIntegration?.quitBrowser()
+      this._currentlyImportingTasks = false
     }
   }
 

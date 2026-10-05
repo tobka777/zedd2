@@ -49,6 +49,31 @@ const d = (...x: any[]) => console.log('renderer.ts', ...x)
 
 const isWin = process.platform === 'win32'
 
+// Forward renderer console output
+;(['log', 'warn', 'error', 'debug'] as const).forEach((level) => {
+  const original = console[level].bind(console)
+  console[level] = (...args: any[]) => {
+    original(...args)
+    try {
+      const text = args
+        .map((a) => {
+          try {
+            return typeof a === 'string' ? a : JSON.stringify(a, _jsonReplacer)
+          } catch {
+            return String(a)
+          }
+        })
+        .join(' ')
+      ipcRenderer.send('renderer-console', { level, text })
+    } catch {
+    }
+  }
+})
+
+function _jsonReplacer(_key: string, value: any) {
+  return typeof value === 'bigint' ? value.toString() : value
+}
+
 function showNotification(title: string, text: string, cb: () => void) {
   const notification = new Notification(title, {
     body: text,

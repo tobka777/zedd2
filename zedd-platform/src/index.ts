@@ -1,5 +1,6 @@
 export * from './platform-integration'
 export * from './clarity-integration'
 export * from './ott-integration'
+export * from './ott-work-location'
 export * from './model'
 export * from './exception'

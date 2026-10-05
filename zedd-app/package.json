@@ -92,7 +92,7 @@
     }
   },
   "dependencies": {
-    "puppeteer": "^25.3.0",
+    "puppeteer": "25.3.0",
     "selenium-webdriver": "^4.46.0",
     "win-ca": "^3.5.1"
   },

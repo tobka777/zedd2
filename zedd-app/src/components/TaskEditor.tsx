@@ -9,7 +9,7 @@ import { format as formatDate, formatDistance } from 'date-fns'
 import { observer } from 'mobx-react-lite'
 import * as React from 'react'
 import { useCallback, useRef, useState } from 'react'
-import { InvalidPlattformUrlException, PlatformType } from 'zedd-platform'
+import { InvalidPlatformUrlException, PlatformType } from 'zedd-platform'
 import { AppState } from '../AppState'
 import { Task } from '../entities/Task'
 import { PlatformActionType, PlatformState } from '../PlatformState'
@@ -43,21 +43,13 @@ export const TaskEditor = observer(
         const platformType = 'OTT' === which ? 'OTT' : 'REPLICON' === which ? 'REPLICON' : 'ALL'
 
         try {
-          await platformState
-            .importAndSavePlatformTasks(platformType, (info) =>
-              state.addMessage(info, 'info', 2000),
-            )
-            .catch((e) => {
-              platformState.error = e.message
-              state.addMessage(
-                e.message +
-                  (e instanceof InvalidPlattformUrlException
-                    ? 'Check zeddConfig.ottLink or zeddConfig.repliconLink and reload config.'
-                    : ''),
-                'error',
-              )
-            })
-        } catch (e: any) {
+          await platformState.importAndSavePlatformTasks(platformType, (info) =>
+            state.addMessage(info, 'info', 8000),
+          )
+          if (!platformState.error) {
+            state.addMessage(`Import from ${platformType} finished.`, 'info', 8000)
+          }
+        } catch (e) {
           state.addMessage('Failed to fetch platform integrations: ' + e.message, 'error', 4000)
         }
       },
@@ -74,7 +66,7 @@ export const TaskEditor = observer(
             platformState.error = e.message
             state.addMessage(
               e.message +
-                (e instanceof InvalidPlattformUrlException
+                (e instanceof InvalidPlatformUrlException
                   ? 'Check zeddConfig.ottLink or zeddConfig.repliconLink and reload config.'
                   : ''),
               'error',

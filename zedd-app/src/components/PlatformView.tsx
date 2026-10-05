@@ -499,7 +499,11 @@ export const PlatformView = observer((props: PlatformViewProps) => {
           ))}
           <TableRow>
             <TableCell colSpan={2} style={{ textAlign: 'right' }}>
-              <b>Summe (Summe mit Reisezeit)</b>
+              <b>
+                {showingTotalWithTravelTime === showingTotal
+                  ? 'Summe'
+                  : 'Summe (Summe mit Reisezeit)'}
+              </b>
             </TableCell>
             {intervals.map((w, i) => (
               <TableCell
@@ -533,7 +537,12 @@ export const PlatformView = observer((props: PlatformViewProps) => {
                 workedHours={showingTotal}
               >
                 <b>
-                  {formatHours(showingTotal)} ({formatHours(showingTotalWithTravelTime)})
+                  {!(showingTotalWithTravelTime === showingTotal)
+                    ? formatHours(showingTotal) +
+                      ' (' +
+                      formatHours(showingTotalWithTravelTime) +
+                      ')'
+                    : formatHours(showingTotal)}
                 </b>
               </DiffHoursTooltip>
             </TableCell>
