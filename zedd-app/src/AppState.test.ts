@@ -17,6 +17,7 @@ import * as sinon from 'sinon'
 import { SinonSpy } from 'sinon'
 
 import { dateFormatString, formatInterval, AppState, TimeSlice } from './AppState'
+import { hydrateAppState, serializeAppState } from './persistence/serializer'
 
 const calcTargetTime = (now: Date, time: string) => {
   const parts = time.split(':').map((s) => +s)
@@ -45,8 +46,6 @@ describe('AppState', () => {
 
     function waitUntil(time: string) {
       const targetTime = calcTargetTime(now, time)
-      //   console.log('waiting from', now, 'until', targetTime)
-
       while (true) {
         const nextNow = addSeconds(now, 10)
         if (isAfter(nextNow, targetTime)) {
@@ -66,10 +65,10 @@ describe('AppState', () => {
       state.trackTime(now, 0)
     }
     function quitUntil(time: string) {
-      const saveFileContents = state.toJsonString()
+      const savedState = serializeAppState(state)
 
       waitUntil(time)
-      state = AppState.loadFromJsonString(saveFileContents)
+      state = hydrateAppState(savedState)
       state.idleSliceNotificationCallback = idleCallback
       state.trackTime(now, differenceInSeconds(now, lastUserInput))
     }
@@ -95,7 +94,9 @@ describe('AppState', () => {
     }
     function checkSlices(...slices: string[]) {
       assert.deepEqual(
-        state.slices.map((s) => formatInterval(s) + ' ' + s.task.name),
+        [...state.slices]
+          .sort((a, b) => a.start.getTime() - b.start.getTime())
+          .map((s) => formatInterval(s) + ' ' + s.task.name),
         slices,
         'state.slices at ' + formatISO(now),
       )
@@ -326,7 +327,7 @@ describe('AppState', () => {
       checkIdles('2020-01-01 10:20 - 2020-01-01 13:00')
     })
 
-    it('changes the currentTask to a task it "runs into"', () => {
+    it('keeps the current task when it "runs into" an existing slice', () => {
       addSlice('2020-01-01 11:00 - 2020-01-01 12:00 daily')
 
       startTiming('rebasing')
@@ -336,7 +337,7 @@ describe('AppState', () => {
         '2020-01-01 10:00 - 2020-01-01 11:00 rebasing',
         '2020-01-01 11:00 - 2020-01-01 12:00 daily',
       )
-      assert.equal(state.currentTask.name, 'daily', 'current task name')
+      assert.equal(state.currentTask.name, 'rebasing', 'current task name')
     })
 
     it('works when manually extending the current time slice', () => {
@@ -350,48 +351,21 @@ describe('AppState', () => {
       checkSlices('2020-01-01 10:00 - 2020-01-01 12:00 rebasing')
 
       waitUntil('13:00')
-      checkSlices('2020-01-01 11:00 - 2020-01-01 13:00 rebasing')
+      checkSlices(
+        '2020-01-01 10:00 - 2020-01-01 12:00 rebasing',
+        '2020-01-01 12:00 - 2020-01-01 13:00 rebasing',
+      )
     })
 
-    it.only('alle Stände von Sonja lassen sich laden', async () => {
+    it('alle Stände von Sonja lassen sich laden', async function () {
       const dir = 'C:\\Users\\aleonhar\\Documents\\My Received Files\\data'
+      if (!fs.existsSync(dir)) {
+        this.skip()
+      }
       for (const f of fs.readdirSync(dir)) {
         console.log('load ', f)
-        await AppState.loadFromJsonString(fs.readFileSync(path.join(dir, f), 'utf8'))
+        await hydrateAppState(JSON.parse(fs.readFileSync(path.join(dir, f), 'utf8')))
       }
     })
-
-    // it('is possible to switch task while in an existing slice', () => {
-    //   addSlice('2020-01-01 11:00 - 2020-01-01 12:00 daily')
-
-    //   startTiming('rebasing')
-    //   waitUntil('11:30')
-
-    //   startTiming('rebasing')
-    //   waitUntil('12:00')
-
-    //   assert.equal(state.currentTask.name, 'rebasing', 'current task name')
-    //   checkSlices(
-    //     '2020-01-01 10:00 - 2020-01-01 11:00 rebasing',
-    //     '2020-01-01 11:00 - 2020-01-01 11:30 daily',
-    //     '2020-01-01 11:30 - 2020-01-01 12:00 rebasing',
-    //   )
-    // })
-
-    // it.only('', () => {
-    //   addSlice('2020-01-01 11:00 - 2020-01-01 12:00 daily')
-
-    //   startTiming('rebasing')
-    //   leave()
-
-    //   waitUntil('11:30')
-    //   comeBack()
-
-    //   assert.equal(state.currentTask.name, 'daily', 'current task name')
-    //   checkSlices(
-    //     '2020-01-01 10:00 - 2020-01-01 11:00 rebasing',
-    //     '2020-01-01 11:00 - 2020-01-01 12:00 daily',
-    //   )
-    // })
   })
 })

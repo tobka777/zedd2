@@ -37,6 +37,7 @@ import { Task } from './model/task.model'
 import { PlatformExportFormat } from './model/platform-export-format.model'
 import { checkPlatformUrl } from './utils'
 import { WorkEntry } from './model/work-entry.model'
+import { What } from './model/what.model'
 
 const CONTROL_KEY: string = process.platform === 'darwin' ? Key.COMMAND : Key.CONTROL
 
@@ -569,11 +570,6 @@ async function exportToClarity(
 
   function formatDayYYYY(d: Date) {
     return format(d, 'dd.MM.yyyy')
-  }
-
-  interface What {
-    day: Date
-    work: WorkEntry[]
   }
 
   function normalizeWhatArray(ws: What[]) {

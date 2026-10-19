@@ -4,6 +4,8 @@ import {
   addMinutes,
   addSeconds,
   compareDesc,
+  differenceInDays,
+  differenceInHours,
   endOfMonth,
   endOfYear,
   format as formatDate,
@@ -84,6 +86,30 @@ export const tryWithFilesInDir = async <R>(
   )
 }
 
+/**
+ * Mutates `dates` (sorted descending) in place, keeping: everything newer
+ * than 1 hour, one per hour up to 1 day ago, and one per day beyond that.
+ */
+export function filterDatesFalloff(dates: Date[], now = new Date()) {
+  dates.sort(compareDesc)
+  for (let i = 1; i < dates.length; i++) {
+    const prev = dates[i - 1]
+    const current = dates[i]
+    let keep
+    if (differenceInHours(now, current) < 1) {
+      keep = true
+    } else if (differenceInDays(now, current) < 1) {
+      keep = prev.getHours() !== current.getHours()
+    } else {
+      keep = +startOfDay(prev) !== +startOfDay(current)
+    }
+    if (!keep) {
+      dates.splice(i, 1)
+      i--
+    }
+  }
+}
+
 export const { abs, floor, ceil, round, imul, min } = Math
 
 export async function mkdirIfNotExists(
@@ -95,6 +121,21 @@ export async function mkdirIfNotExists(
     await fsp.mkdir(dir, options)
   }
   return !dirExists
+}
+
+export async function writeFileAtomic(file: string, data: string): Promise<void> {
+  const tmp = file + '.tmp'
+  await fsp.writeFile(tmp, data)
+  try {
+    await fsp.rename(tmp, file)
+  } catch (e) {
+    try {
+      await fsp.unlink(tmp)
+    } catch (e2) {
+      console.log('Error while trying to unlink temp file after error writing', file, e2)
+    }
+    throw e
+  }
 }
 
 export const startOfNextMinute = (d: Date | number): Date => startOfMinute(addMinutes(d, 1))
@@ -112,6 +153,9 @@ export function splitIntervalIntoCalendarDays(interval: Interval): Interval[] {
   return result
 }
 export const sum = (nums: number[]): number => nums.reduce((a, b) => a + b, 0)
+
+export const formatHours = (hours: number): string =>
+  hours ? hours.toLocaleString('de-DE', { minimumFractionDigits: 2 }) : '-'
 
 export const formatHoursHHmm = (hours: number): string => {
   return (hours | 0) + ':' + ('' + (((hours % 1) * 60) | 0)).padStart(2, '0')

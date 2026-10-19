@@ -3,8 +3,7 @@ import { observer } from 'mobx-react-lite'
 import { Autocomplete, TextField } from '@mui/material'
 import * as React from 'react'
 import { PlatformState } from '../PlatformState'
-import { TaskActivity } from 'zedd-platform/out/src/model/task-activity.model'
-import { Task } from 'zedd-platform'
+import { Task, TaskActivity } from 'zedd-platform'
 
 export type TaskActivitySelectProps = {
   platformState: PlatformState

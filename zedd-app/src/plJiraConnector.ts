@@ -80,7 +80,7 @@ const updateJiraProjectKeys = () =>
       saveSettings()
     }
   })
-const issueInfoToTask = async (platformTasks: PlatformTask[], i: any): Promise<Task> => {
+export const issueInfoToTask = async (platformTasks: PlatformTask[], i: any): Promise<Task> => {
   if (i.fields.parent) {
     const result = await callWithJsessionCookie(() =>
       jira.issueSearch
@@ -128,6 +128,7 @@ const issueInfoToTask = async (platformTasks: PlatformTask[], i: any): Promise<T
       i.fields.summary.replace(new RegExp('^' + externalKey + ':? ?'), ''),
     [],
     platformType,
+    undefined,
     String(platformTaskId),
   )
 }
