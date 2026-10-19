@@ -11,22 +11,22 @@ jobs:
         os: [windows-latest, macos-latest]
     runs-on: ${{ matrix.os }}
     steps:
-      - uses: actions/checkout@v2
-      - uses: actions/setup-node@master
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
         with:
           node-version: 25.3.0
           architecture: "x64"
 
       - name: install platform dependencies
         working-directory: ./zedd-platform
-        run: npm install
+        run: npm install --workspaces=false
       - name: build platform
         working-directory: ./zedd-platform
         run: npm run build
 
       - name: install app dependencies
         working-directory: ./zedd-app
-        run: npm install
+        run: npm install --workspaces=false
 
       - name: build release
         working-directory: ./zedd-app
@@ -34,7 +34,7 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       - name: create release
-        uses: softprops/action-gh-release@v1
+        uses: softprops/action-gh-release@v3
         with:
           tag_name: ${{ github.ref }}
           name: ${{ github.ref }}
@@ -48,3 +48,4 @@ jobs:
             ./zedd-app/out/make/squirrel.windows/x64/RELEASES
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
