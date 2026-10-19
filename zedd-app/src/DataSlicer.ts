@@ -14,13 +14,7 @@ import type {
   WorkEntry,
 } from 'zedd-platform'
 import { validDate } from './AppState'
-import {
-  formatHours,
-  hashStringToInt,
-  isoDayStr,
-  splitIntervalIntoCalendarDays,
-  sum,
-} from './util'
+import { formatHours, hashStringToInt, isoDayStr, splitIntervalIntoCalendarDays, sum } from './util'
 
 /**
  * Minimal shape of a time slice needed to turn it into a platform work entry.
@@ -102,7 +96,10 @@ export function normalizeCatalogTask(raw: Record<string, unknown>): PlatformTask
   return t as unknown as PlatformTask
 }
 
-export const mergeExports = (a: PlatformExportFormat, b: PlatformExportFormat): PlatformExportFormat => {
+export const mergeExports = (
+  a: PlatformExportFormat,
+  b: PlatformExportFormat,
+): PlatformExportFormat => {
   const result = { ...a }
   for (const day in b) {
     result[day] = [...(result[day] || []), ...b[day]]
@@ -150,7 +147,8 @@ export function sliceToExport(args: {
       throw e
     }
     const task =
-      (slice.task.intId && resolveTask(slice.task.intId)) || placeholderPlatformTask(slice.task.name)
+      (slice.task.intId && resolveTask(slice.task.intId)) ||
+      placeholderPlatformTask(slice.task.name)
     // fix start/end of b, as part of the interval may be outside showInterval
     const bStartFixed = dateMax([slice.start, showInterval.start])
     const bEndFixed = dateMin([slice.end, showInterval.end])

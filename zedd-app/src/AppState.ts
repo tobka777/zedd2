@@ -3,8 +3,6 @@ import {
   addMinutes,
   areIntervalsOverlapping,
   compareDesc,
-  differenceInDays,
-  differenceInHours,
   differenceInMinutes,
   differenceInMonths,
   eachDayOfInterval,
@@ -27,38 +25,32 @@ import {
   startOfMinute,
   subSeconds,
 } from 'date-fns'
-import { promises as fsp } from 'fs'
 import { sum } from 'lodash'
 import type { IObservableArray } from 'mobx'
 import { action, computed, intercept, makeObservable, observable, transaction } from 'mobx'
 import { createTransformer, ObservableGroupMap } from 'mobx-utils'
-import * as path from 'path'
+
+import { randomUUID } from 'crypto'
 
 import {
   createSimpleSchema,
   custom,
   date,
-  deserialize,
   getDefaultModelSchema,
   list,
   object,
   reference,
   serializable,
-  serialize,
   SKIP,
 } from 'serializr'
 
 import {
   abs,
-  FILE_DATE_FORMAT,
   formatHoursBT,
   formatHoursHHmm,
   getUniqueId,
   isoWeekInterval,
-  mkdirIfNotExists,
-  readFilesWithDate,
   startOfNextMinute,
-  tryWithFilesInDir,
   uniqCustom,
 } from './util'
 import { ZeddSettings } from './ZeddSettings'
@@ -68,29 +60,6 @@ import { Task } from './entities/Task'
 import { taskSchema } from './task-schema'
 
 export const MIN_GAP_TIME_MIN = 5
-
-function filterDatesFalloff(dates: Date[], now = new Date()) {
-  dates.sort(compareDesc)
-  for (let i = 1; i < dates.length; i++) {
-    const prev = dates[i - 1]
-    const current = dates[i]
-    let keep
-    if (differenceInHours(now, current) < 1) {
-      // keep everything
-      keep = true
-    } else if (differenceInDays(now, current) < 1) {
-      // keep one per hour
-      keep = prev.getHours() !== current.getHours()
-    } else {
-      // keep one per day
-      keep = +startOfDay(prev) !== +startOfDay(current)
-    }
-    if (!keep) {
-      dates.splice(i, 1)
-      i--
-    }
-  }
-}
 
 export const validDate = <T extends Date | number>(d: T): T => {
   if (!isValid(d)) throw new Error('date invalid: ' + d)
@@ -110,6 +79,9 @@ export class TimeSlice {
       taskName,
     ]
   }
+
+  @serializable
+  public id: string
 
   @observable
   private _startEnd!: { start: Date; end: Date }
@@ -143,18 +115,15 @@ export class TimeSlice {
     this._startEnd = { start, end }
   }
 
-  constructor(start: Date, end: Date, task: Task) {
+  constructor(start: Date, end: Date, task: Task, id?: string) {
     makeObservable(this)
     this.setInterval(start, end)
     this.task = task
+    this.id = id ?? randomUUID()
   }
   toString(): string {
     return formatInterval(this) + ' ' + this.task.name
   }
-}
-export const timeSliceStr = (ts: TimeSlice | undefined): string | undefined => {
-  if (!ts) return undefined
-  return formatInterval(ts) + ' ' + ts.task.name
 }
 
 export class AppState {
@@ -177,8 +146,15 @@ export class AppState {
   @serializable(
     list(
       custom(
-        (s: TimeSlice) => s.toString(),
+        // v2 shape
+        (s: TimeSlice) => ({
+          id: s.id,
+          start: s.start,
+          end: s.end,
+          task: s.task.name,
+        }),
         (jsonValue, context, _oldValue, done) => {
+          // legacy v1 shape: slices as strings
           const [start, end, taskName] =
             'object' === typeof jsonValue
               ? [new Date(jsonValue.start), new Date(jsonValue.end), jsonValue.task]
@@ -191,7 +167,7 @@ export class AppState {
             context.rootContext.createCallback((task) => {
               let result
               try {
-                result = new TimeSlice(start, end, task)
+                result = new TimeSlice(start, end, task, jsonValue.id)
               } catch (e) {
                 result = SKIP
               }
@@ -287,11 +263,21 @@ export class AppState {
   @observable
   public changingSliceTask: TimeSlice | undefined = undefined
 
-  /**
-   * init last, so this.slices is already set
-   */
   @observable
-  @serializable(reference(Task))
+  @serializable(
+    custom(
+      (t: Task) => t.name,
+      (name, context, _oldValue, done) => {
+        context.rootContext.await(
+          getDefaultModelSchema(Task)!,
+          name,
+          // pass createCallback, otherwise random errors from ref-counting
+          // TODO: fix in serializr
+          context.rootContext.createCallback((task) => done(undefined, task)),
+        )
+      },
+    ),
+  )
   public currentTask: Task = this.getUndefinedTask()
 
   @observable
@@ -346,7 +332,7 @@ export class AppState {
   @observable
   public links: [string, string][] = []
 
-  private undoer: Undoer = new Undoer()
+  public undoer: Undoer = new Undoer()
 
   constructor() {
     makeObservable(this)
@@ -442,56 +428,7 @@ export class AppState {
     return differenceInMonths(now, date) > 1
   }
 
-  public static async saveToDir(instance: AppState, dir: string): Promise<void> {
-    // const allTasks = instance.slices.map(s => s.task)
-    // if (instance.currentTask) allTasks.push(instance.currentTask)
-    // instance.tasks = uniq(allTasks)
-    await mkdirIfNotExists(dir)
-    const newFile = 'data_' + formatDate(new Date(), FILE_DATE_FORMAT) + '.json'
-    try {
-      await fsp.writeFile(path.join(dir, newFile), instance.toJsonString(), 'utf8')
-    } catch (e) {
-      try {
-        await fsp.unlink(newFile)
-      } catch (e2) {
-        console.log('Error while trying to unlink file after error writing file.', e2)
-      }
-      throw e
-    }
-  }
-
-  public static loadFromJsonString(json: string): AppState {
-    const newState = deserialize(AppState, JSON.parse(json))
-    newState.undoer.reset()
-    return newState
-  }
-
-  public static async loadFromDir(dir: string): Promise<AppState> {
-    return await tryWithFilesInDir(dir, /^data_(.*).json$/, async (file, _date) => {
-      console.log('loadFromDir: loading AppState from', file)
-      const json = await fsp.readFile(path.join(dir, file), 'utf8')
-      return this.loadFromJsonString(json)
-    })
-  }
-
-  /**
-   * Delete old files in the directory. (Keeping some, the more recent, the more frequently).
-   * @returns The number of deleted files.
-   */
-  public static async cleanSaveDir(dir: string): Promise<number> {
-    const filesWithDate = await readFilesWithDate(dir, /^data_(.*).json$/)
-    const datesToKeep = filesWithDate.map(([_f, date]) => date)
-    filterDatesFalloff(datesToKeep)
-    const pathsToDelete = filesWithDate
-      .filter(([_f, date]) => !datesToKeep.includes(date))
-      .map(([f]) => path.join(dir, f))
-    await Promise.all(pathsToDelete.map(fsp.unlink))
-    return pathsToDelete.length
-  }
-
-  @serializable(
-    list(taskSchema, { afterDeserialize: (callback) => callback(undefined, SKIP) }),
-  )
+  @serializable(list(taskSchema, { afterDeserialize: (callback) => callback(undefined, SKIP) }))
   @computed
   get tasks(): Task[] {
     return Array.from(this.slicesByTask.keys())
@@ -534,6 +471,8 @@ export class AppState {
     ),
   )
   private lastTimedSlice: undefined | TimeSlice = undefined
+
+  private respectingManualSliceEnd = false
 
   public get startDate(): string {
     return this._startDate
@@ -797,9 +736,14 @@ export class AppState {
       }
 
       if (!lastSlice) {
-        const start = startOfMinute(now)
-        const newSlice: TimeSlice = new TimeSlice(start, addMinutes(start, 1), this.currentTask)
-        this.lastTimedSlice = this.addSlice(newSlice)
+        const coveringSlice = this.slices.find((s) => s.start <= now && now < s.end)
+        if (coveringSlice?.task === this.currentTask) {
+          this.lastTimedSlice = coveringSlice
+        } else if (!coveringSlice) {
+          const start = startOfMinute(now)
+          const newSlice: TimeSlice = new TimeSlice(start, addMinutes(start, 1), this.currentTask)
+          this.lastTimedSlice = this.addSlice(newSlice)
+        }
       } else {
         if (
           abs(differenceInMinutes(lastSlice.end, lastSlice.start)) < 5 &&
@@ -809,22 +753,46 @@ export class AppState {
           lastSlice.task = this.currentTask
         }
         if (lastSlice.task === this.currentTask) {
-          if (isSameDay(lastSlice.start, now)) {
-            // extend current slice
-            lastSlice.end = startOfNextMinute(now)
+          if (
+            this.respectingManualSliceEnd &&
+            lastSlice === this.lastTimedSlice &&
+            !isAfter(now, lastSlice.end)
+          ) {
+            this.lastTimedSlice = lastSlice
+          } else if (lastSlice.end > startOfNextMinute(now)) {
+            this.lastTimedSlice = lastSlice
+            this.respectingManualSliceEnd = true
+          } else if (this.respectingManualSliceEnd && lastSlice === this.lastTimedSlice) {
+            const boundary = dateMin([lastSlice.end, startOfNextMinute(now)])
+            lastSlice.end = boundary
+            this.respectingManualSliceEnd = false
+            this.lastTimedSlice = this.addSlice(
+              new TimeSlice(boundary, startOfNextMinute(now), this.currentTask),
+            )
+          } else if (isSameDay(lastSlice.start, now)) {
+            let nextSliceStart: Date | undefined
+            for (const s of this.slices) {
+              if (s !== lastSlice && s.start >= lastSlice.end) {
+                if (!nextSliceStart || s.start < nextSliceStart) nextSliceStart = s.start
+              }
+            }
+            lastSlice.end = nextSliceStart
+              ? dateMin([startOfNextMinute(now), nextSliceStart])
+              : startOfNextMinute(now)
             this.lastTimedSlice = lastSlice
           } else {
-            //   console.log('adding slice because of new day', now, timeSliceStr(lastSlice))
+            // new day: the previous slice ends at midnight
             const boundary = startOfDay(now)
             lastSlice.end = boundary
             this.lastTimedSlice = this.addSlice(
               new TimeSlice(boundary, startOfNextMinute(now), this.currentTask),
             )
           }
+        } else if (isAfter(lastSlice.end, now) && lastSlice !== this.lastTimedSlice) {
         } else {
+          this.respectingManualSliceEnd = false
           lastSlice.end = dateMin([lastSlice.end, startOfMinute(now)])
           const newSlice = new TimeSlice(lastSlice.end, startOfNextMinute(now), this.currentTask)
-          // console.log('lastSlice is different, add', timeSliceStr(lastSlice), timeSliceStr(newSlice))
           this.lastTimedSlice = this.addSlice(newSlice)
         }
       }
@@ -845,11 +813,6 @@ export class AppState {
       this.addSlice(newSlice)
     }
     return dayIsEmpty
-  }
-
-  public toJsonString(): string {
-    const stateJsonObject = serialize(AppState, this)
-    return JSON.stringify(stateJsonObject, undefined, '  ')
   }
 
   private updateShowingFromStartEnd() {

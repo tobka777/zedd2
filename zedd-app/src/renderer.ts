@@ -35,6 +35,7 @@ import {
   installChromeDriver,
 } from './chromeDriverMgmt'
 import { suggestedTaskMenuItems } from './menuUtil'
+import { JsonFileAppDataStore } from './persistence/jsonFileStore'
 
 configureMobx({ enforceActions: 'never' })
 
@@ -65,8 +66,7 @@ const isWin = process.platform === 'win32'
         })
         .join(' ')
       ipcRenderer.send('renderer-console', { level, text })
-    } catch {
-    }
+    } catch {}
   }
 })
 
@@ -161,18 +161,16 @@ async function setup() {
   }
 
   const currentWindowEvents: [string, (...args: any[]) => void][] = []
-  let state: AppState
-  try {
-    state = await AppState.loadFromDir(path.join(saveDir, 'data'))
-    d(state)
-    d('Cleaning save dir')
-    const deletedFileCount = await AppState.cleanSaveDir(path.join(saveDir, 'data'))
-    d(`Deleted ${deletedFileCount} files.`)
-  } catch (e) {
-    console.error(e)
-    console.error('Could not load state from ' + path.join(saveDir, 'data'))
-    state = new AppState()
+  const stateStore = new JsonFileAppDataStore(path.join(saveDir, 'data'))
+  const loadedState = await stateStore.load()
+  if (!loadedState) {
+    console.error('Could not load state from ' + path.join(saveDir, 'data') + '  starting fresh')
   }
+  let state: AppState = loadedState ?? new AppState()
+  d(state)
+  d('Cleaning save dir')
+  const deletedFileCount = await stateStore.clean()
+  d(`Deleted ${deletedFileCount} files.`)
 
   state.startInterval(() => powerMonitor?.getSystemIdleTime() ?? 0)
   state.config = config
@@ -277,10 +275,10 @@ async function setup() {
 
   console.log(electronScreen.getPrimaryDisplay().bounds, state.bounds)
 
-  const saveInterval = setInterval(
-    () => AppState.saveToDir(state, path.join(saveDir, 'data')),
-    10 * 1000,
-  )
+  const saveInterval = setInterval(() => {
+    stateStore.save(state).catch((e) => console.error('Could not save state', e))
+    stateStore.clean().catch((e) => console.error('Could not clean save dir', e))
+  }, 10 * 1000)
 
   const lastActionInterval = setInterval(
     () => (state.lastAction = powerMonitor.getSystemIdleTime()),
@@ -479,6 +477,7 @@ async function setup() {
   return {
     cleanup: (cleanup = () => {
       console.log('setup().cleanup')
+      stateStore.save(state).catch((e) => console.error('Could not save state on quit', e))
       clearInterval(saveInterval)
       clearInterval(lastActionInterval)
       cleanupSetStateLinks()

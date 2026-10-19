@@ -6,16 +6,16 @@ import {
   OTTIntegration,
   PlatformExportFormat,
   PlatformIntegration,
+  PlatformOptions,
   PlatformType,
+  RepliconIntegration,
   Task,
   TaskActivity,
   webDriverQuit,
 } from 'zedd-platform'
 import './index.css'
-import { FILE_DATE_FORMAT, getLatestFileInDir, mkdirIfNotExists } from './util'
+import { FILE_DATE_FORMAT, getLatestFileInDir, mkdirIfNotExists, writeFileAtomic } from './util'
 import { buildExportForPlatform, normalizeCatalogTask } from './DataSlicer'
-import { RepliconIntegration } from 'zedd-platform/out/src/replicon-integration'
-import { PlatformOptions } from 'zedd-platform/out/src/model/platform.options.model'
 
 export enum PlatformActionType {
   SubmitTimesheet,
@@ -311,7 +311,7 @@ export class PlatformState {
 
   private async saveToFile(json: string, name: string) {
     const newFile = name + '_' + formatDate(new Date(), FILE_DATE_FORMAT) + '.json'
-    await fsp.writeFile(path.join(this.platformDir, newFile), json)
+    await writeFileAtomic(path.join(this.platformDir, newFile), json)
     const filesToDelete = (await fsp.readdir(this.platformDir, { withFileTypes: true })).filter(
       (f) => f.isFile() && f.name !== newFile && f.name.includes(name + '_'),
     )

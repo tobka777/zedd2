@@ -1,6 +1,7 @@
 import { promises as fsp } from 'fs'
 import { makeObservable, observable } from 'mobx'
 import { custom, deserialize, raw, serializable, serialize } from 'serializr'
+import { writeFileAtomic } from './util'
 
 export class ZeddSettings {
   constructor(fromFile?: string) {
@@ -16,7 +17,7 @@ export class ZeddSettings {
   }
 
   public async saveToFile(file: string = this.fromFile) {
-    return fsp.writeFile(file, JSON.stringify(serialize(this), undefined, '  '), 'utf8')
+    return writeFileAtomic(file, JSON.stringify(serialize(this), undefined, '  '))
   }
 
   private fromFile: string

@@ -11,14 +11,29 @@ export const OLD_TO_NEW: Record<string, string> = {
   platformType: 'typ',
 }
 
-// TODO(next agent): implement the load-time key migration. serializr 3.0.5 has NO
-// `transform`/`createTransformer` export (the plan's snippet was wrong). Build the schema
-// as a manual ModelSchema ({ factory, deserialize, serialize }):
-//   - deserialize: for each [old, new] in OLD_TO_NEW, if the JSON value has `old` and
-//     lacks `new`, copy `old` -> `new` (idempotent; leave already-canonical data alone),
-//     then hand off to the inner object(Task) deserializer;
-//   - serialize: pass through (the class only ever holds the canonical keys).
-// For now this is the plain pre-migration schema so the build stays green and behavior
-// is byte-identical to before the rename. KNOWN GAP: old `data/` files carrying
-// `platformTaskIntId`/`platformType` will not populate `intId`/`typ` until this is wired.
-export const taskSchema = object(Task)
+/**
+ * Returns the task JSON with legacy keys promoted to their canonical names.
+*/
+export function migrateLegacyTaskKeys(json: any): any {
+  if (json === null || typeof json !== 'object' || Array.isArray(json)) {
+    return json
+  }
+  let changed = false
+  const out: Record<string, unknown> = { ...json }
+  for (const [legacy, canonical] of Object.entries(OLD_TO_NEW)) {
+    if (json[legacy] !== undefined && json[canonical] === undefined) {
+      out[canonical] = json[legacy]
+      changed = true
+    }
+  }
+  return changed ? out : json
+}
+
+/**
+ * Model schema for {@link Task} that migrates legacy on-disk field names onto the unified
+ * canonical ones at deserialization time.*/
+export const taskSchema = object(Task, {
+  beforeDeserialize: (callback, jsonValue) => {
+    callback(null, migrateLegacyTaskKeys(jsonValue))
+  },
+})

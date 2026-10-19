@@ -52,8 +52,6 @@ import {
 import KeyboardArrowDownIcon from '@mui/icons-material/KeyboardArrowDown'
 import KeyboardArrowUpIcon from '@mui/icons-material/KeyboardArrowUp'
 import { buildProjectViewGrouping, mergeExports, sliceToExport } from '../DataSlicer'
-// Re-exported because the existing test imports it from here (now lives in DataSlicer).
-export { smartRound } from '../DataSlicer'
 
 export interface PlatformViewProps {
   showing: Interval

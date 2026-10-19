@@ -3,17 +3,15 @@ import { identifier, serializable } from 'serializr'
 import { stringHashColor } from '../util'
 import type { PlatformType, TaskActivity } from 'zedd-platform'
 import * as chroma from 'chroma.ts'
+import { randomUUID } from 'crypto'
 
 export class Task {
   @serializable(identifier())
   @observable
   public name: string
 
-  /**
-   * The id of the platform task this task accounts for (matches the platform
-   * task's `intId`). Kept as `number | string` because the Jira connector stores
-   * string ids.
-   */
+  @serializable
+  public id: string
   @serializable
   @observable
   public intId: number | string | undefined
@@ -55,6 +53,7 @@ export class Task {
   ) {
     makeObservable(this)
     this.name = name
+    this.id = randomUUID()
     this.intId = intId
     this.key = key
     this.platformTaskComment = platformTaskComment || ''
