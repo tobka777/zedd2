@@ -1,0 +1,52 @@
+name: Beta Build (Develop)
+
+on:
+  push:
+    branches:
+      - develop
+  pull_request:
+    branches:
+      - develop
+    types: [labeled, synchronize]
+
+jobs:
+  build-beta:
+    if: github.event_name == 'push' || contains(github.event.pull_request.labels.*.name, 'beta-build')
+
+    strategy:
+      matrix:
+        os: [windows-latest, macos-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 25.3.0
+          architecture: "x64"
+
+      - name: install platform dependencies
+        working-directory: ./zedd-platform
+        run: npm install --workspaces=false
+      - name: build platform
+        working-directory: ./zedd-platform
+        run: npm run build
+      - name: build beta release 
+        working-directory: ./zedd-app
+        run: npm install --workspaces=false
+      - name: build beta release
+        working-directory: ./zedd-app
+        run: npm run make
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: upload beta artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: beta-build-${{ matrix.os }}
+          path: |
+            ./zedd-app/out/**/*.snap
+            ./zedd-app/out/**/*.dmg
+            ./zedd-app/out/**/*.zip
+            ./zedd-app/out/make/squirrel.windows/x64/*.exe
+            ./zedd-app/out/make/squirrel.windows/x64/*.nupkg
+            ./zedd-app/out/make/squirrel.windows/x64/RELEASES
