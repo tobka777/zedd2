@@ -24,21 +24,14 @@ jobs:
           node-version: 25.3.0
           architecture: "x64"
 
-      - name: install platform dependencies
-        working-directory: ./zedd-platform
+      - name: install workspace dependencies
         run: npm install
 
       - name: build platform
-        working-directory: ./zedd-platform
-        run: npm run build
-
-      - name: install app dependencies
-        working-directory: ./zedd-app
-        run: npm install
+        run: npm run build --workspace=zedd-platform
 
       - name: build beta release
-        working-directory: ./zedd-app
-        run: npm run make
+        run: npm run make --workspace=zedd-app
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
