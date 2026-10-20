@@ -45,7 +45,7 @@ export const TitleBar = observer(({ state, menuItems, showContextMenu }: TitleBa
       win.removeListener('maximize', onMaximize)
       win.removeListener('unmaximize', onUnmaximize)
     }
-  }), [local, state]
+  }, [local, state])
 
   const handleClick = (event: React.MouseEvent<HTMLButtonElement>) => {
     setAnchorEl(event.currentTarget)

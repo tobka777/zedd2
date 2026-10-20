@@ -36,9 +36,6 @@ import {
   installChromeDriver,
 } from './chromeDriverMgmt'
 import { suggestedTaskMenuItems } from './menuUtil'
-import { sign } from 'crypto'
-import cluster from 'cluster'
-
 configureMobx({ enforceActions: 'never' })
 
 const currentWindow = getCurrentWindow()
@@ -247,7 +244,7 @@ async function setup() {
 
     const requiredChromeDriverVersion = await getLatestChromeDriverVersion(chromeVersion)
     const chromeDriverDir = path.join(app.getPath('appData'), 'chromedriver', 'darwin' === process.platform ? process.arch : '')
-    await mkdirIfNotExists(chromeDriverDir)
+    await mkdirIfNotExists(chromeDriverDir, {recursive : true})
     let chromedriver = 'chromedriver'
     if (isWin) {
       chromedriver += '.exe'
@@ -283,10 +280,6 @@ async function setup() {
 
   console.log(electronScreen.getPrimaryDisplay().bounds, state.bounds)
 
-  const saveInterval = setInterval(
-    () => AppState.saveToDir(state, path.join(saveDir, 'data')),
-    10 * 1000,
-  )
 
   const dataDir = path.join(saveDir, 'data')
   let lastSavedJson : string | undefined
