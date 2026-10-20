@@ -26,6 +26,7 @@ import {
   startOfDay,
   startOfMinute,
   subSeconds,
+  subDays,
 } from 'date-fns'
 import { promises as fsp } from 'fs'
 import { sum } from 'lodash'
@@ -138,6 +139,9 @@ export class TimeSlice {
   public setInterval(start = this._startEnd.start, end = this._startEnd.end): void {
     if (differenceInMinutes(end, start) <= 0) {
       throw new Error(`start (${start}) must be at least one minute before end (${end})`)
+    }
+    if(this._startEnd && + this._startEnd.start === +start && +this._startEnd.end === +end){
+      return
     }
     this._startEnd = { start, end }
   }
@@ -441,14 +445,15 @@ export class AppState {
     return differenceInMonths(now, date) > 1
   }
 
-  public static async saveToDir(instance: AppState, dir: string): Promise<void> {
-    // const allTasks = instance.slices.map(s => s.task)
-    // if (instance.currentTask) allTasks.push(instance.currentTask)
-    // instance.tasks = uniq(allTasks)
+  public static async saveToDir(
+    instance : AppState, 
+    dir : string, 
+    json: string = instance.toJsonString(),
+  ): Promise<void> {
     await mkdirIfNotExists(dir)
-    const newFile = 'data_' + formatDate(new Date(), FILE_DATE_FORMAT) + '.json'
+    const newFile = path.join(dir, 'data_' + formatDate(new Date(), FILE_DATE_FORMAT) + '.json')
     try {
-      await fsp.writeFile(path.join(dir, newFile), instance.toJsonString(), 'utf8')
+      await fsp.writeFile(newFile, json, 'utf-8')
     } catch (e) {
       try {
         await fsp.unlink(newFile)
@@ -458,6 +463,7 @@ export class AppState {
       throw e
     }
   }
+
 
   public static loadFromJsonString(json: string): AppState {
     const newState = deserialize(AppState, JSON.parse(json))
@@ -753,8 +759,12 @@ export class AppState {
         this.lastTimedSlice = undefined
         return
       }
+      const canidateSlices = [
+        ...(this.slicesByDay.get(startOfDay(subDays(now, 1)).getTime()) ?? []),
+        ...(this.slicesByDay.get(startOfDay(now).getTime()) ?? []),
+      ]
       let lastSlice =
-        this.slices.reduce(
+        canidateSlices.reduce(
           (prev, s) => {
             if (abs(differenceInMinutes(now, s.end)) < 5 && isBefore(s.start, now)) {
               if (!prev || isAfter(s.start, prev.start)) {

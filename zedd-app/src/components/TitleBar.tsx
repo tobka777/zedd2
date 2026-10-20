@@ -36,15 +36,16 @@ export const TitleBar = observer(({ state, menuItems, showContextMenu }: TitleBa
   }))
 
   useEffect(() => {
+    const win = getCurrentWindow()
     const onMaximize = () => (local.maximized = true)
     const onUnmaximize = () => !state.hoverMode && (local.maximized = false)
-    getCurrentWindow().on('maximize', onMaximize)
-    getCurrentWindow().on('unmaximize', onUnmaximize)
+    win.on('maximize', onMaximize)
+    win.on('unmaximize', onUnmaximize)
     return () => {
-      getCurrentWindow().removeListener('maximize', onMaximize)
-      getCurrentWindow().removeListener('unmaximize', onUnmaximize)
+      win.removeListener('maximize', onMaximize)
+      win.removeListener('unmaximize', onUnmaximize)
     }
-  })
+  }), [local, state]
 
   const handleClick = (event: React.MouseEvent<HTMLButtonElement>) => {
     setAnchorEl(event.currentTarget)

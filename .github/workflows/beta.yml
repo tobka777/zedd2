@@ -14,15 +14,20 @@ jobs:
     if: github.event_name == 'push' || contains(github.event.pull_request.labels.*.name, 'beta-build')
 
     strategy:
+      fail-fast: false
       matrix:
-        os: [windows-latest, macos-latest]
+        include:
+        -  os: windows-latest
+           arch: x64
+        -  os: macos-latest
+           arch: arm64
     runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v7
       - uses: actions/setup-node@v7
         with:
           node-version: 25.3.0
-          architecture: "x64"
+          architecture: ${{ matrix.arch }}
 
       - name: install platform dependencies
         working-directory: ./zedd-platform
@@ -35,14 +40,14 @@ jobs:
         run: npm install --workspaces=false
       - name: build beta release
         working-directory: ./zedd-app
-        run: npm run make
+        run: npm run make -- --arch=${{ matrix.arch }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: upload beta artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: beta-build-${{ matrix.os }}
+          name: beta-build-${{ matrix.os }}-${{matrix.arch}}
           path: |
             ./zedd-app/out/**/*.snap
             ./zedd-app/out/**/*.dmg

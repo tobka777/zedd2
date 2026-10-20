@@ -144,10 +144,11 @@ const CalendarBase = <T extends Interval>({
     fixedShowInterval: undefined as { start: number; end: number } | undefined,
     virtualSlice: undefined as T | undefined,
     currentPositionValid: true,
-    lastPointTime: undefined as unknown as number | Date,
   }))
   const timeBlockDivs: HTMLDivElement[] = useRef([]).current
   timeBlockDivs.length = 0
+
+  const lastPointTime = useRef<Date | undefined>(undefined)
 
   // refresh every minute so that the "current time" bar moves correctly
   useEffect(() => {
@@ -199,9 +200,9 @@ const CalendarBase = <T extends Interval>({
       if (
         (e.ctrlKey || e.metaKey) &&
         e.key === 'v' &&
-        local.lastPointTime &&
+        lastPointTime &&
         slice &&
-        !slices.some((s) => isWithinInterval(local.lastPointTime, s))
+        !slices.some((s) => isWithinInterval(lastPointTime, s))
       ) {
         const minTime = dateMax(slices.map((s) => s.end).filter((s) => s <= local.lastPointTime))
         const maxTime = dateMin(slices.map((s) => s.start).filter((s) => local.lastPointTime < s))
@@ -228,7 +229,7 @@ const CalendarBase = <T extends Interval>({
     (e: React.MouseEvent) => {
       const pointTime = viewportXYToTime(e.clientX, e.clientY)
       if (pointTime !== undefined) {
-        local.lastPointTime = pointTime
+        local.lastPointTime.current = pointTime
       }
       if (
         (e.ctrlKey || e.metaKey) &&
@@ -273,6 +274,7 @@ const CalendarBase = <T extends Interval>({
 
   const dragOngoing = useCallback(
     (e: MouseEvent) => {
+      if(0 === local.currentlyDragging.length) return
       const newDate = viewportXYToTime(e.clientX, e.clientY)
       if (newDate && isValid(newDate) && local.currentlyDragging.length) {
         const newDateRounded = roundToNearestMinutes(newDate, {

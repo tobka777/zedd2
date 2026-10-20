@@ -3,6 +3,7 @@ import {
   autoUpdater,
   getCurrentWindow,
   Menu,
+  getGlobal,
   powerMonitor,
   screen as electronScreen,
   shell,
@@ -35,6 +36,8 @@ import {
   installChromeDriver,
 } from './chromeDriverMgmt'
 import { suggestedTaskMenuItems } from './menuUtil'
+import { sign } from 'crypto'
+import cluster from 'cluster'
 
 configureMobx({ enforceActions: 'never' })
 
@@ -49,8 +52,10 @@ const d = (...x: any[]) => console.log('renderer.ts', ...x)
 
 const isWin = process.platform === 'win32'
 
-// Forward renderer console output
-;(['log', 'warn', 'error', 'debug'] as const).forEach((level) => {
+// Renderlog only in dev mode
+const forwardLogs = !!getGlobal('isDev') || !!process.env.ZEDD_FORWARD_LOGS
+const MAX_FORWARDED_LOG_LENGTH = 4000
+;(forwardLogs ? ['log', 'warn', 'error', 'debug'] as const : []).forEach((level) => {
   const original = console[level].bind(console)
   console[level] = (...args: any[]) => {
     original(...args)
@@ -64,6 +69,7 @@ const isWin = process.platform === 'win32'
           }
         })
         .join(' ')
+        .slice(0, MAX_FORWARDED_LOG_LENGTH)
       ipcRenderer.send('renderer-console', { level, text })
     } catch {
     }
@@ -164,7 +170,7 @@ async function setup() {
   let state: AppState
   try {
     state = await AppState.loadFromDir(path.join(saveDir, 'data'))
-    d(state)
+    d(`Loaded state with ${state.slices.length} slices.`)
     d('Cleaning save dir')
     const deletedFileCount = await AppState.cleanSaveDir(path.join(saveDir, 'data'))
     d(`Deleted ${deletedFileCount} files.`)
@@ -240,7 +246,7 @@ async function setup() {
     }
 
     const requiredChromeDriverVersion = await getLatestChromeDriverVersion(chromeVersion)
-    const chromeDriverDir = path.join(app.getPath('appData'), 'chromedriver')
+    const chromeDriverDir = path.join(app.getPath('appData'), 'chromedriver', 'darwin' === process.platform ? process.arch : '')
     await mkdirIfNotExists(chromeDriverDir)
     let chromedriver = 'chromedriver'
     if (isWin) {
@@ -282,11 +288,33 @@ async function setup() {
     10 * 1000,
   )
 
-  const lastActionInterval = setInterval(
-    () => (state.lastAction = powerMonitor.getSystemIdleTime()),
-    1000,
-  )
+  const dataDir = path.join(saveDir, 'data')
+  let lastSavedJson : string | undefined
+  const save = () => {
+    const json = state.toJsonString()
+    if(json === lastSavedJson) return
+    AppState.saveToDir(state, dataDir, json)
+      .then(() => (lastSavedJson = json))
+      .catch((e) => console.error('Could not save state', e))
 
+  }
+
+  let saveIdleCallback: number | undefined
+  const saveInterval = setInterval(() => {
+    if(saveIdleCallback !== undefined) return
+    saveIdleCallback = requestIdleCallback(
+      () => {
+        saveIdleCallback = undefined
+        save()
+      },
+      {timeout : 5_000}
+    )
+  }, 10 * 1000)
+
+  const cleanSaveDirInterval = setInterval(
+    () => AppState.cleanSaveDir(dataDir).catch((e) => console.error('Could not clean save dir', e)),
+    60*60*1000,
+  )
   let taskSelectRef: HTMLInputElement | undefined = undefined
 
   currentWindowEvents.push([
@@ -350,11 +378,10 @@ async function setup() {
   })
 
   let currentMenu: Electron.Menu
+  let lastTrayMenuSignature : string | undefined
 
   const cleanupTrayMenuAutorun = autorun(() => {
-    tray.setContextMenu(
-      (currentMenu = Menu.buildFromTemplate([
-        // Quit first, so it is the furthest from the mouse
+    const template: MenuItemConstructorOptions[] = [
         {
           label: 'Quit',
           type: 'normal',
@@ -400,13 +427,20 @@ async function setup() {
           type: 'normal',
           click: () => state.toggleTimingInProgress(),
         },
-      ])),
-    )
+    ]
+
+    const signature = JSON.stringify(template.map(({label, sublabel, checked, type}) => [label, sublabel, checked, type]))
+    if(signature === lastTrayMenuSignature) return
+    lastTrayMenuSignature = signature
+    tray.setContextMenu((currentMenu = Menu.buildFromTemplate(template)))
   })
+
   const cleanupIconAutorun = autorun(() => {
     tray.setImage(currentIconImage.get())
     currentWindow.setIcon(currentIconImage.get())
   })
+
+  let lastTooltip :  string | undefined
   const cleanupTrayTooltipAutorun = autorun(() => {
     const workedTime = formatHoursHHmm(state.getDayWorkedHours(new Date()))
     const timingInfo =
@@ -416,8 +450,11 @@ async function setup() {
           ' ' +
           formatHoursBT(state.getTaskHours(state.currentTask))
         : '■ Not Timing'
-    tray.setToolTip(workedTime + ' ' + timingInfo)
-    document.title = workedTime + ' ' + timingInfo
+    const tooltip = workedTime + ' ' + timingInfo
+    if(tooltip === lastTooltip) return
+    lastTooltip = tooltip
+    tray.setToolTip(tooltip)
+    document.title = tooltip
   })
 
   currentWindowEvents.push(
@@ -443,7 +480,6 @@ async function setup() {
   const cleanupHoverModeAutorun = autorun(() => {
     currentWindow.setSkipTaskbar(state.hoverMode)
     currentWindow.setAlwaysOnTop(state.hoverMode)
-    console.log('currentWindow.resizable', currentWindow.resizable)
     if (state.hoverMode) {
       const vertical = 'vertical' === state.config.keepHovering
       if (vertical) {
@@ -480,7 +516,8 @@ async function setup() {
     cleanup: (cleanup = () => {
       console.log('setup().cleanup')
       clearInterval(saveInterval)
-      clearInterval(lastActionInterval)
+      if(saveIdleCallback !== undefined) cancelIdleCallback(saveIdleCallback)
+      clearInterval(cleanSaveDirInterval)
       cleanupSetStateLinks()
       cleanupIconAutorun()
       cleanupTrayMenuAutorun()
