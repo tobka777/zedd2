@@ -169,5 +169,8 @@
     "typescript": "^6.0.3",
     "unzipper": "^0.12.5",
     "zedd-platform": "file:../zedd-platform"
+  },
+  "overrides": {
+    "sharp": "$sharp"
   }
 }
