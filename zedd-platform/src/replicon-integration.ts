@@ -71,7 +71,7 @@ export class RepliconIntegration extends PlatformIntegration {
     const tasks = await this.getTasksFromJson(projectJsonResponse, tenant, timesheet)
 
     notifyTasks && notifyTasks(tasks)
-    await this.browser.close()
+    await this.quitBrowser()
     return tasks
   }
 
@@ -116,11 +116,11 @@ export class RepliconIntegration extends PlatformIntegration {
             const activityOptions = Array.isArray(json.d)
               ? json.d.map((option: TaskActivity) => option)
               : []
-            await this.browser.close()
+            await this.quitBrowser()
             resolve(activityOptions)
           } catch (error) {
             console.error('Error parsing JSON:', error)
-            await this.browser.close()
+            await this.quitBrowser()
             reject(error)
           }
         })
@@ -678,12 +678,6 @@ export class RepliconIntegration extends PlatformIntegration {
           })
         }
       }
-    }
-  }
-
-  async quitBrowser(): Promise<void> {
-    if (this.browser) {
-      await this.browser.close()
     }
   }
 }

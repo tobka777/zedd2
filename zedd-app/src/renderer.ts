@@ -10,7 +10,7 @@ import {
   Tray,
 } from '@electron/remote'
 import { BrowserWindow, ipcRenderer, MenuItemConstructorOptions, Rectangle } from 'electron'
-import { autorun, computed, configure as configureMobx } from 'mobx'
+import { autorun, computed, configure as configureMobx, untracked } from 'mobx'
 import * as path from 'path'
 import * as React from 'react'
 import 'win-ca' // use windows root certificates
@@ -146,7 +146,8 @@ async function setup() {
     platformState.repliconLink = config.repliconLink
     platformState.repliconActivity = config.repliconActivity
     platformState.chromeHeadless = config.chromeHeadless
-    platformState.setIntegrationMap()
+    // untracked, so the import/export flags read in there don't re-trigger this autorun
+    untracked(() => platformState.setIntegrationMap())
   })
 
   try {

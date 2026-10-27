@@ -34,6 +34,16 @@ export class OTTIntegration extends PlatformIntegration {
     super(platformLink, options)
   }
 
+  /**
+   * Resets the state of a previous run, so e.g. an expired authorization header isn't reused.
+   */
+  override async init(): Promise<void> {
+    this.authorizationHeader = undefined
+    this.userId = undefined
+    this.resolvedLocation = undefined
+    await super.init()
+  }
+
   private getWorkLocation(): OttWorkLocation {
     if (this.resolvedLocation) return this.resolvedLocation
     console.warn(
@@ -70,12 +80,6 @@ export class OTTIntegration extends PlatformIntegration {
     const tasks = this.mapWorkLogDataToTasks(workLogData)
     notifyTasks && notifyTasks(tasks)
     return tasks
-  }
-
-  override async quitBrowser(): Promise<void> {
-    if (this.browser) {
-      await this.browser.close()
-    }
   }
 
   /**
