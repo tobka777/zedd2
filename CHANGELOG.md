@@ -4,7 +4,7 @@
 - Feature: OTT import reads the tasks from the OTT work log
 - Feature: added travel-time deduction functionality (hours incl. travel time per activity in the platform view)
 - Feature: macOS build for Apple Silicon (arm64)
-- Feature: Updated all dependencies to their latest versions (Electron 43, React 19, MUI 9, TypeScript 6, date-fns 4, Puppeteer 25, Selenium 4.46, jira.js 5, ESLint 9, Prettier 3, and more)
+- Feature: Updated all dependencies to their latest versions (Electron 43, React 19, MUI 9, TypeScript 6, date-fns 4, Puppeteer 25, Selenium 4.46, ESLint 9, Prettier 3, and more)
 - Feature: Migrated ESLint to the flat config format (`eslint.config.js`) and dropped TSLint
 - Feature: Migrated code for breaking changes in MUI (Grid `size` prop, `slotProps`), Autocomplete, Puppeteer (XPath/`waitForTimeout` helpers), Selenium (Chrome options) and serializr 3
 - Fix: UI performance (no rendering of the app body in hover mode, faster lookup of previous/next slice)
