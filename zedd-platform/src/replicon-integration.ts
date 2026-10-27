@@ -578,7 +578,14 @@ export class RepliconIntegration extends PlatformIntegration {
         if (!taskCell || !activityCell) continue
 
         const projectMatches = await taskCell.evaluate(
-          (el, key) => (el.querySelector('div')?.textContent ?? '').includes('- ' + key),
+          (el, key) => {
+            const text = el.querySelector('div')?.textContent ?? ''
+            const needle = '- ' + key
+            for (let i = text.indexOf(needle); i !== -1; i = text.indexOf(needle, i + 1)) {
+              if (!/[A-Za-z0-9]/.test(text.charAt(i + needle.length))) return true
+            }
+            return false
+          },
           projectKey,
         )
         const taskMatches = await taskCell.evaluate(
