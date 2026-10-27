@@ -57,8 +57,8 @@ export const installChromeDriver = async (
     folder = 'win64'
     zipname = 'chromedriver-win64'
   } else if (isMac) {
-    folder = 'mac-x64'
-    zipname = 'chromedriver-mac-x64'
+    folder = 'arm64' === process.arch ? 'mac-arm64' : 'mac-x64'
+    zipname = 'chromedriver-' + folder
   } else {
     folder = 'linux64'
     zipname = 'chromedriver-linux64'

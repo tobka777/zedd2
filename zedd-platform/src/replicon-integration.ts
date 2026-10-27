@@ -71,7 +71,7 @@ export class RepliconIntegration extends PlatformIntegration {
     const tasks = await this.getTasksFromJson(projectJsonResponse, tenant, timesheet)
 
     notifyTasks && notifyTasks(tasks)
-    await this.browser.close()
+    await this.quitBrowser()
     return tasks
   }
 
@@ -116,11 +116,11 @@ export class RepliconIntegration extends PlatformIntegration {
             const activityOptions = Array.isArray(json.d)
               ? json.d.map((option: TaskActivity) => option)
               : []
-            await this.browser.close()
+            await this.quitBrowser()
             resolve(activityOptions)
           } catch (error) {
             console.error('Error parsing JSON:', error)
-            await this.browser.close()
+            await this.quitBrowser()
             reject(error)
           }
         })
@@ -577,10 +577,14 @@ export class RepliconIntegration extends PlatformIntegration {
         const activityCell = await row.$('.activity')
         if (!taskCell || !activityCell) continue
 
-        const projectMatches = await taskCell.evaluate(
-          (el, key) => (el.querySelector('div')?.textContent ?? '').includes('- ' + key),
-          projectKey,
-        )
+        const projectMatches = await taskCell.evaluate((el, key) => {
+          const text = el.querySelector('div')?.textContent ?? ''
+          const needle = '- ' + key
+          for (let i = text.indexOf(needle); i !== -1; i = text.indexOf(needle, i + 1)) {
+            if (!/[A-Za-z0-9]/.test(text.charAt(i + needle.length))) return true
+          }
+          return false
+        }, projectKey)
         const taskMatches = await taskCell.evaluate(
           (el, taskCode) =>
             el.querySelectorAll('div')[1]?.textContent?.trim().split(' - ')[0] === taskCode,
@@ -678,12 +682,6 @@ export class RepliconIntegration extends PlatformIntegration {
           })
         }
       }
-    }
-  }
-
-  async quitBrowser(): Promise<void> {
-    if (this.browser) {
-      await this.browser.close()
     }
   }
 }

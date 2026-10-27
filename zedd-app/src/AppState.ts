@@ -26,9 +26,10 @@ import {
   startOfDay,
   startOfMinute,
   subSeconds,
+  subDays,
 } from 'date-fns'
 import { promises as fsp } from 'fs'
-import { sum } from 'lodash'
+import { sortedIndex, sortedLastIndex, sum } from 'lodash'
 import type { IObservableArray } from 'mobx'
 import { action, computed, intercept, makeObservable, observable, transaction } from 'mobx'
 import { createTransformer, ObservableGroupMap } from 'mobx-utils'
@@ -138,6 +139,9 @@ export class TimeSlice {
   public setInterval(start = this._startEnd.start, end = this._startEnd.end): void {
     if (differenceInMinutes(end, start) <= 0) {
       throw new Error(`start (${start}) must be at least one minute before end (${end})`)
+    }
+    if (this._startEnd && +this._startEnd.start === +start && +this._startEnd.end === +end) {
+      return
     }
     this._startEnd = { start, end }
   }
@@ -441,14 +445,15 @@ export class AppState {
     return differenceInMonths(now, date) > 1
   }
 
-  public static async saveToDir(instance: AppState, dir: string): Promise<void> {
-    // const allTasks = instance.slices.map(s => s.task)
-    // if (instance.currentTask) allTasks.push(instance.currentTask)
-    // instance.tasks = uniq(allTasks)
+  public static async saveToDir(
+    instance: AppState,
+    dir: string,
+    json: string = instance.toJsonString(),
+  ): Promise<void> {
     await mkdirIfNotExists(dir)
-    const newFile = 'data_' + formatDate(new Date(), FILE_DATE_FORMAT) + '.json'
+    const newFile = path.join(dir, 'data_' + formatDate(new Date(), FILE_DATE_FORMAT) + '.json')
     try {
-      await fsp.writeFile(path.join(dir, newFile), instance.toJsonString(), 'utf8')
+      await fsp.writeFile(newFile, json, 'utf-8')
     } catch (e) {
       try {
         await fsp.unlink(newFile)
@@ -634,26 +639,55 @@ export class AppState {
     transaction(() => slicesToRemove.forEach((r) => this.slices.remove(r)))
   }
 
-  public getPreviousSlice(slice: Interval): TimeSlice | undefined {
-    return this.slices.reduce(
-      (result, s) => {
-        if (!isBefore(s.start, slice.start)) return result
-        if (!result || isAfter(s.start, result.start)) return s
-        return result
-      },
-      undefined as TimeSlice | undefined,
-    )
+  /**
+   * Ascending start-of-day timestamps of all days which have slices. Kept alive, as it is mostly
+   * accessed from event handlers (e.g. while dragging) outside of a reactive context.
+   */
+  @computed({ keepAlive: true })
+  private get sortedSliceDays(): number[] {
+    return Array.from(this.slicesByDay.keys()).sort((a, b) => a - b)
   }
 
+  /**
+   * Returns the slice which starts last before slice.start. Only looks at the day of slice.start
+   * and, if necessary, the previous days which have slices, instead of all slices.
+   */
+  public getPreviousSlice(slice: Interval): TimeSlice | undefined {
+    const days = this.sortedSliceDays
+    const startDay = startOfDay(slice.start).getTime()
+    for (let i = sortedLastIndex(days, startDay) - 1; i >= 0; i--) {
+      const result = this.slicesByDay.get(days[i])!.reduce(
+        (result, s) => {
+          if (!isBefore(s.start, slice.start)) return result
+          if (!result || isAfter(s.start, result.start)) return s
+          return result
+        },
+        undefined as TimeSlice | undefined,
+      )
+      if (result) return result
+    }
+    return undefined
+  }
+
+  /**
+   * Returns the slice which starts first after slice.start. Only looks at the day of slice.start
+   * and, if necessary, the following days which have slices, instead of all slices.
+   */
   public getNextSlice(slice: Interval): TimeSlice | undefined {
-    return this.slices.reduce(
-      (result, s) => {
-        if (!isAfter(s.start, slice.start)) return result
-        if (!result || isBefore(s.start, result.start)) return s
-        return result
-      },
-      undefined as TimeSlice | undefined,
-    )
+    const days = this.sortedSliceDays
+    const startDay = startOfDay(slice.start).getTime()
+    for (let i = sortedIndex(days, startDay); i < days.length; i++) {
+      const result = this.slicesByDay.get(days[i])!.reduce(
+        (result, s) => {
+          if (!isAfter(s.start, slice.start)) return result
+          if (!result || isBefore(s.start, result.start)) return s
+          return result
+        },
+        undefined as TimeSlice | undefined,
+      )
+      if (result) return result
+    }
+    return undefined
   }
 
   public getTaskForName(name: Task | string | undefined): Task {
@@ -753,8 +787,12 @@ export class AppState {
         this.lastTimedSlice = undefined
         return
       }
+      const canidateSlices = [
+        ...(this.slicesByDay.get(startOfDay(subDays(now, 1)).getTime()) ?? []),
+        ...(this.slicesByDay.get(startOfDay(now).getTime()) ?? []),
+      ]
       let lastSlice =
-        this.slices.reduce(
+        canidateSlices.reduce(
           (prev, s) => {
             if (abs(differenceInMinutes(now, s.end)) < 5 && isBefore(s.start, now)) {
               if (!prev || isAfter(s.start, prev.start)) {

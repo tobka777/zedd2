@@ -3,13 +3,14 @@ import {
   autoUpdater,
   getCurrentWindow,
   Menu,
+  getGlobal,
   powerMonitor,
   screen as electronScreen,
   shell,
   Tray,
 } from '@electron/remote'
 import { BrowserWindow, ipcRenderer, MenuItemConstructorOptions, Rectangle } from 'electron'
-import { autorun, computed, configure as configureMobx } from 'mobx'
+import { autorun, computed, configure as configureMobx, untracked } from 'mobx'
 import * as path from 'path'
 import * as React from 'react'
 import 'win-ca' // use windows root certificates
@@ -35,7 +36,6 @@ import {
   installChromeDriver,
 } from './chromeDriverMgmt'
 import { suggestedTaskMenuItems } from './menuUtil'
-
 configureMobx({ enforceActions: 'never' })
 
 const currentWindow = getCurrentWindow()
@@ -49,8 +49,10 @@ const d = (...x: any[]) => console.log('renderer.ts', ...x)
 
 const isWin = process.platform === 'win32'
 
-// Forward renderer console output
-;(['log', 'warn', 'error', 'debug'] as const).forEach((level) => {
+// Renderlog only in dev mode
+const forwardLogs = !!getGlobal('isDev') || !!process.env.ZEDD_FORWARD_LOGS
+const MAX_FORWARDED_LOG_LENGTH = 4000
+;(forwardLogs ? (['log', 'warn', 'error', 'debug'] as const) : []).forEach((level) => {
   const original = console[level].bind(console)
   console[level] = (...args: any[]) => {
     original(...args)
@@ -64,9 +66,9 @@ const isWin = process.platform === 'win32'
           }
         })
         .join(' ')
+        .slice(0, MAX_FORWARDED_LOG_LENGTH)
       ipcRenderer.send('renderer-console', { level, text })
-    } catch {
-    }
+    } catch {}
   }
 })
 
@@ -143,7 +145,8 @@ async function setup() {
     platformState.repliconLink = config.repliconLink
     platformState.repliconActivity = config.repliconActivity
     platformState.chromeHeadless = config.chromeHeadless
-    platformState.setIntegrationMap()
+    // untracked, so the import/export flags read in there don't re-trigger this autorun
+    untracked(() => platformState.setIntegrationMap())
   })
 
   try {
@@ -164,7 +167,7 @@ async function setup() {
   let state: AppState
   try {
     state = await AppState.loadFromDir(path.join(saveDir, 'data'))
-    d(state)
+    d(`Loaded state with ${state.slices.length} slices.`)
     d('Cleaning save dir')
     const deletedFileCount = await AppState.cleanSaveDir(path.join(saveDir, 'data'))
     d(`Deleted ${deletedFileCount} files.`)
@@ -240,8 +243,12 @@ async function setup() {
     }
 
     const requiredChromeDriverVersion = await getLatestChromeDriverVersion(chromeVersion)
-    const chromeDriverDir = path.join(app.getPath('appData'), 'chromedriver')
-    await mkdirIfNotExists(chromeDriverDir)
+    const chromeDriverDir = path.join(
+      app.getPath('appData'),
+      'chromedriver',
+      'darwin' === process.platform ? process.arch : '',
+    )
+    await mkdirIfNotExists(chromeDriverDir, { recursive: true })
     let chromedriver = 'chromedriver'
     if (isWin) {
       chromedriver += '.exe'
@@ -277,17 +284,49 @@ async function setup() {
 
   console.log(electronScreen.getPrimaryDisplay().bounds, state.bounds)
 
-  const saveInterval = setInterval(
-    () => AppState.saveToDir(state, path.join(saveDir, 'data')),
-    10 * 1000,
-  )
+  const dataDir = path.join(saveDir, 'data')
+  let lastSavedJson: string | undefined
+  const save = () => {
+    const json = state.toJsonString()
+    if (json === lastSavedJson) return
+    AppState.saveToDir(state, dataDir, json)
+      .then(() => (lastSavedJson = json))
+      .catch((e) => console.error('Could not save state', e))
+  }
 
-  const lastActionInterval = setInterval(
-    () => (state.lastAction = powerMonitor.getSystemIdleTime()),
-    1000,
-  )
+  let saveIdleCallback: number | undefined
+  const saveInterval = setInterval(() => {
+    if (saveIdleCallback !== undefined) return
+    saveIdleCallback = requestIdleCallback(
+      () => {
+        saveIdleCallback = undefined
+        save()
+      },
+      { timeout: 5_000 },
+    )
+  }, 10 * 1000)
 
-  let taskSelectRef: HTMLInputElement | undefined = undefined
+  const cleanSaveDirInterval = setInterval(
+    () => AppState.cleanSaveDir(dataDir).catch((e) => console.error('Could not clean save dir', e)),
+    60 * 60 * 1000,
+  )
+  let taskSelectRef: HTMLInputElement | null = null
+  // The task select is not mounted in hover mode, so focusing has to wait until it is rendered.
+  let focusTaskSelectPending = false
+  const setTaskSelectRef = (r: HTMLInputElement | null) => {
+    taskSelectRef = r
+    if (r && focusTaskSelectPending) {
+      focusTaskSelectPending = false
+      r.focus()
+    }
+  }
+  const focusTaskSelect = () => {
+    if (taskSelectRef) {
+      taskSelectRef.focus()
+    } else {
+      focusTaskSelectPending = true
+    }
+  }
 
   currentWindowEvents.push([
     'close',
@@ -350,63 +389,70 @@ async function setup() {
   })
 
   let currentMenu: Electron.Menu
+  let lastTrayMenuSignature: string | undefined
 
   const cleanupTrayMenuAutorun = autorun(() => {
-    tray.setContextMenu(
-      (currentMenu = Menu.buildFromTemplate([
-        // Quit first, so it is the furthest from the mouse
-        {
-          label: 'Quit',
-          type: 'normal',
-          click: () => quit(),
+    const template: MenuItemConstructorOptions[] = [
+      {
+        label: 'Quit',
+        type: 'normal',
+        click: () => quit(),
+      },
+
+      { type: 'separator' },
+
+      ...suggestedTaskMenuItems(
+        state,
+        platformState,
+        state.currentTask,
+        (task) => (state.currentTask = task),
+      ),
+
+      {
+        label: 'Other...',
+        click: () => {
+          if (!currentWindow.isVisible()) {
+            currentWindow.show()
+          }
+          if (state.hoverMode) {
+            state.hoverMode = false
+          }
+          currentWindow.focus()
+          focusTaskSelect()
         },
+      },
 
-        { type: 'separator' },
+      ...(0 === state.links.length ? [] : [{ type: 'separator' } as MenuItemConstructorOptions]),
 
-        ...suggestedTaskMenuItems(
-          state,
-          platformState,
-          state.currentTask,
-          (task) => (state.currentTask = task),
-        ),
+      ...state.links.map(([key, link]): MenuItemConstructorOptions => ({
+        label: 'Open in Browser: ' + key,
+        type: 'normal',
+        click: () => shell.openExternal(link),
+      })),
 
-        {
-          label: 'Other...',
-          click: () => {
-            if (!currentWindow.isVisible()) {
-              currentWindow.show()
-            }
-            if (state.hoverMode) {
-              state.hoverMode = false
-            }
-            currentWindow.focus()
-            console.log(taskSelectRef)
-            taskSelectRef && taskSelectRef.focus()
-          },
-        },
+      { type: 'separator' },
 
-        ...(0 === state.links.length ? [] : [{ type: 'separator' } as MenuItemConstructorOptions]),
+      {
+        label: state.timingInProgess ? '■ Stop Timing' : '▶️ Start Timing',
+        type: 'normal',
+        click: () => state.toggleTimingInProgress(),
+      },
+    ]
 
-        ...state.links.map(([key, link]): MenuItemConstructorOptions => ({
-          label: 'Open in Browser: ' + key,
-          type: 'normal',
-          click: () => shell.openExternal(link),
-        })),
-
-        { type: 'separator' },
-
-        {
-          label: state.timingInProgess ? '■ Stop Timing' : '▶️ Start Timing',
-          type: 'normal',
-          click: () => state.toggleTimingInProgress(),
-        },
-      ])),
+    const signature = JSON.stringify(
+      template.map(({ label, sublabel, checked, type }) => [label, sublabel, checked, type]),
     )
+    if (signature === lastTrayMenuSignature) return
+    lastTrayMenuSignature = signature
+    tray.setContextMenu((currentMenu = Menu.buildFromTemplate(template)))
   })
+
   const cleanupIconAutorun = autorun(() => {
     tray.setImage(currentIconImage.get())
     currentWindow.setIcon(currentIconImage.get())
   })
+
+  let lastTooltip: string | undefined
   const cleanupTrayTooltipAutorun = autorun(() => {
     const workedTime = formatHoursHHmm(state.getDayWorkedHours(new Date()))
     const timingInfo =
@@ -416,8 +462,11 @@ async function setup() {
           ' ' +
           formatHoursBT(state.getTaskHours(state.currentTask))
         : '■ Not Timing'
-    tray.setToolTip(workedTime + ' ' + timingInfo)
-    document.title = workedTime + ' ' + timingInfo
+    const tooltip = workedTime + ' ' + timingInfo
+    if (tooltip === lastTooltip) return
+    lastTooltip = tooltip
+    tray.setToolTip(tooltip)
+    document.title = tooltip
   })
 
   currentWindowEvents.push(
@@ -443,7 +492,6 @@ async function setup() {
   const cleanupHoverModeAutorun = autorun(() => {
     currentWindow.setSkipTaskbar(state.hoverMode)
     currentWindow.setAlwaysOnTop(state.hoverMode)
-    console.log('currentWindow.resizable', currentWindow.resizable)
     if (state.hoverMode) {
       const vertical = 'vertical' === state.config.keepHovering
       if (vertical) {
@@ -480,7 +528,8 @@ async function setup() {
     cleanup: (cleanup = () => {
       console.log('setup().cleanup')
       clearInterval(saveInterval)
-      clearInterval(lastActionInterval)
+      if (saveIdleCallback !== undefined) cancelIdleCallback(saveIdleCallback)
+      clearInterval(cleanSaveDirInterval)
       cleanupSetStateLinks()
       cleanupIconAutorun()
       cleanupTrayMenuAutorun()
@@ -498,7 +547,7 @@ async function setup() {
       root.render(
         React.createElement(AppGui, {
           showContextMenu: () => currentMenu.popup(),
-          taskSelectRef: (r) => (taskSelectRef = r),
+          taskSelectRef: setTaskSelectRef,
           state,
           checkCgJira,
           checkChromePath,

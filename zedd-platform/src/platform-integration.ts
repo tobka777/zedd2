@@ -4,10 +4,11 @@ import { $x, checkPlatformUrl } from './utils'
 import puppeteer, { Browser, ElementHandle, Page } from 'puppeteer'
 
 export abstract class PlatformIntegration {
-  protected browser!: Browser
+  protected browser?: Browser
   protected page!: Page
   protected platformLink: string
   protected options: PlatformOptions
+  private closeTimer?: ReturnType<typeof setTimeout>
 
   protected constructor(platformLink: string, options: PlatformOptions) {
     this.platformLink = platformLink
@@ -16,7 +17,8 @@ export abstract class PlatformIntegration {
 
   async init() {
     checkPlatformUrl(this.platformLink)
-    this.browser = await puppeteer.launch({
+    await this.quitBrowser()
+    const browser = await puppeteer.launch({
       headless: this.options.headless,
       executablePath: this.options.executablePath,
       args: [`--window-size=${window.screen.availWidth},${window.screen.availHeight}`],
@@ -25,12 +27,15 @@ export abstract class PlatformIntegration {
         height: Math.round(window.screen.availHeight * 0.9),
       },
     })
-    setTimeout(async () => {
+    this.browser = browser
+    this.closeTimer = setTimeout(async () => {
+      // only close the browser of this run, not one launched by a later run
+      if (this.browser !== browser) return
       console.error('Timeout: Browser closed after 10 minutes.')
       await this.quitBrowser()
     }, 600_000)
 
-    this.page = await this.browser.newPage()
+    this.page = await browser.newPage()
     this.page.setDefaultTimeout(100_000)
 
     await this.page.goto(this.platformLink)
@@ -52,7 +57,18 @@ export abstract class PlatformIntegration {
    */
   abstract exportTasks(data: PlatformExportFormat, submitTimesheets: boolean): Promise<void>
 
-  abstract quitBrowser(): Promise<void>
+  /**
+   * Closes the browser of the current run, if any. Safe to call multiple times.
+   */
+  async quitBrowser(): Promise<void> {
+    clearTimeout(this.closeTimer)
+    this.closeTimer = undefined
+    const browser = this.browser
+    this.browser = undefined
+    if (browser) {
+      await browser.close()
+    }
+  }
 
   protected async clickElementWithContent(expression: string) {
     const [node] = await $x(this.page, expression)

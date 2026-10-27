@@ -1,15 +1,23 @@
-## [3.1.1] - 2026-08-17
+## [3.1.0] - 2026-10-27
 
-- Feature: added travel-time deduction functionality
-- Fix: added guardrail for orphaned browsers
-
-## [3.1.0] - 2026-08-11
-
+- Feature: OTT export via the OTT API instead of UI automation: creates, updates and skips entries, deletes stale entries in the exported range, takes over the work location and writes comments
+- Feature: OTT import reads the tasks from the OTT work log
+- Feature: added travel-time deduction functionality (hours incl. travel time per activity in the platform view)
+- Feature: macOS build for Apple Silicon (arm64)
 - Feature: Updated all dependencies to their latest versions (Electron 43, React 19, MUI 9, TypeScript 6, date-fns 4, Puppeteer 25, Selenium 4.46, jira.js 5, ESLint 9, Prettier 3, and more)
-- Fix: Resolved all known CVEs in the shipped application dependencies
-- Fix: Removed deprecated/unused packages (`request`, `browser-request`, `tslint`, `babel-plugin-import`)
 - Feature: Migrated ESLint to the flat config format (`eslint.config.js`) and dropped TSLint
 - Feature: Migrated code for breaking changes in MUI (Grid `size` prop, `slotProps`), Autocomplete, Puppeteer (XPath/`waitForTimeout` helpers), Selenium (Chrome options) and serializr 3
+- Fix: UI performance (no rendering of the app body in hover mode, faster lookup of previous/next slice)
+- Fix: undo history is limited to 1000 steps, so memory doesn't grow while the app runs for a long time
+- Fix: import/export only worked again after changing the platform URL
+- Fix: browser of a later import/export was closed by the 10 minute timeout of an earlier one
+- Fix: Replicon export matched rows of other projects with a similar project number (e.g. 12 / 123)
+- Fix: copy/paste of slices in the calendar
+- Fix: chromedriver for Apple Silicon
+- Fix: confirmation messages after import were closed by the next click into the window
+- Fix: added guardrail for orphaned browsers
+- Fix: Updated dependencies with known CVEs
+- Removed deprecated/unused packages (`request`, `browser-request`, `tslint`, `babel-plugin-import`)
 - Removed deprecated module zedd-win32
 
 ## [3.0.4] - 2025-12-09

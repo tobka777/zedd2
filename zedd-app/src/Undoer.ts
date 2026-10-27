@@ -9,6 +9,12 @@ import {
 } from 'mobx'
 
 export class Undoer {
+  /**
+   * @param maxStackSize Maximum number of undo entries to keep. The oldest entries are dropped
+   * first, so memory doesn't grow unbounded while the app is running for a long time.
+   */
+  constructor(private readonly maxStackSize = 1000) {}
+
   private undoStack: any[] = []
   private trackUndoEvents: boolean = true
   private undoPosition: number = -1
@@ -31,7 +37,7 @@ export class Undoer {
             }
             const currentTimeStamp = Math.floor(Date.now() / 10)
             if (change.type === 'splice') {
-              this.undoStack.push({
+              this.pushUndoEntry({
                 type: change.type,
                 added: change.added,
                 removed: change.removed,
@@ -45,7 +51,7 @@ export class Undoer {
             } else if (change.type === 'update') {
               if (isObservableArray(change.object)) {
                 const updateChange = change as IArrayDidChange & { type: 'update' }
-                this.undoStack.push({
+                this.pushUndoEntry({
                   type: updateChange.type,
                   element: updateChange.object,
                   newValue: updateChange.newValue,
@@ -56,7 +62,7 @@ export class Undoer {
                 this.makeUndoable(updateChange.newValue)
               } else {
                 const updateChange = change as IObjectDidChange & { type: 'update' }
-                this.undoStack.push({
+                this.pushUndoEntry({
                   type: updateChange.type,
                   element: updateChange.object,
                   newValue: updateChange.newValue,
@@ -78,6 +84,21 @@ export class Undoer {
         }
       })
     }
+  }
+
+  private pushUndoEntry(entry: any): void {
+    this.undoStack.push(entry)
+    if (this.undoStack.length <= this.maxStackSize) return
+    // drop the oldest entries, but don't split a group of entries which are undone together
+    let dropCount = this.undoStack.length - this.maxStackSize
+    while (
+      dropCount < this.undoStack.length &&
+      this.undoStack[dropCount].timeStamp - this.undoStack[dropCount - 1].timeStamp <= 6
+    ) {
+      dropCount++
+    }
+    this.undoStack.splice(0, dropCount)
+    this.undoPosition -= dropCount
   }
 
   public undo(): void {

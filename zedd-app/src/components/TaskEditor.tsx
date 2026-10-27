@@ -8,7 +8,7 @@ import {
 import { format as formatDate, formatDistance } from 'date-fns'
 import { observer } from 'mobx-react-lite'
 import * as React from 'react'
-import { useCallback, useRef, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { InvalidPlatformUrlException, PlatformType } from 'zedd-platform'
 import { AppState } from '../AppState'
 import { Task } from '../entities/Task'
@@ -17,6 +17,7 @@ import { PlatformTaskSelect } from './PlatformTaskSelect'
 import { LoadingSpinner } from './LoadingSpinner'
 import { TaskSelect } from './TaskSelect'
 import { TaskActivitySelect } from './TaskActivitySelect'
+import { platform } from 'os'
 
 interface TaskEditorProps {
   state: AppState
@@ -90,11 +91,15 @@ export const TaskEditor = observer(
       guessPlatformIntId = task?.intId
     }
 
-    if (platformState.actionType === PlatformActionType.ImportTasks) {
-      setTimeout(() => {
+    const importSucceeded =
+      platformState.actionType === PlatformActionType.ImportTasks && platformState.success
+    useEffect(() => {
+      if (!importSucceeded) return
+      const timeout = setTimeout(() => {
         platformState.success = false
       }, 60000)
-    }
+      return () => clearTimeout(timeout)
+    }, [importSucceeded, platformState])
 
     return (
       <Grid container style={{ ...style, alignItems: 'center' }} spacing={2}>

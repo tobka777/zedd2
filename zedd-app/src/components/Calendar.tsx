@@ -144,16 +144,17 @@ const CalendarBase = <T extends Interval>({
     fixedShowInterval: undefined as { start: number; end: number } | undefined,
     virtualSlice: undefined as T | undefined,
     currentPositionValid: true,
-    lastPointTime: undefined as unknown as number | Date,
   }))
   const timeBlockDivs: HTMLDivElement[] = useRef([]).current
   timeBlockDivs.length = 0
+
+  const lastPointTime = useRef<Date | undefined>(undefined)
 
   // refresh every minute so that the "current time" bar moves correctly
   useEffect(() => {
     const refreshInterval = window.setInterval(() => (local.showTime = new Date()), 60_000)
     return () => window.clearInterval(refreshInterval)
-  })
+  }, [local])
 
   const startHour = local.fixedShowInterval?.start ?? adjustStartHour(minStartHour, showing, slices)
 
@@ -188,26 +189,22 @@ const CalendarBase = <T extends Interval>({
     [showing, startHour, timeBlockDivs],
   )
 
-  useEffect(() => {
-    window.addEventListener('keydown', paste)
-    return () => window.removeEventListener('keydown', paste)
-  }, [slices])
-
   const paste = useCallback(
     (e: KeyboardEvent) => {
       const slice = copiedSlice()
+      const pointTime = lastPointTime.current
       if (
         (e.ctrlKey || e.metaKey) &&
         e.key === 'v' &&
-        local.lastPointTime &&
+        pointTime &&
         slice &&
-        !slices.some((s) => isWithinInterval(local.lastPointTime, s))
+        !slices.some((s) => isWithinInterval(pointTime, s))
       ) {
-        const minTime = dateMax(slices.map((s) => s.end).filter((s) => s <= local.lastPointTime))
-        const maxTime = dateMin(slices.map((s) => s.start).filter((s) => local.lastPointTime < s))
+        const minTime = dateMax(slices.map((s) => s.end).filter((s) => s <= pointTime))
+        const maxTime = dateMin(slices.map((s) => s.start).filter((s) => pointTime < s))
         const sliceLength = differenceInMinutes(slice.end, slice.start)
         const middlePoint = sliceLength / 2
-        let start = roundToNearestMinutes(subMinutes(local.lastPointTime, middlePoint), {
+        let start = roundToNearestMinutes(subMinutes(pointTime, middlePoint), {
           nearestTo: 5,
         })
         let end = addMinutes(start, sliceLength)
@@ -221,14 +218,19 @@ const CalendarBase = <T extends Interval>({
         onSliceAdd(newSlice)
       }
     },
-    [slices, local.lastPointTime, copiedSlice],
+    [slices, copiedSlice, onSliceAdd],
   )
+
+  useEffect(() => {
+    window.addEventListener('keydown', paste)
+    return () => window.removeEventListener('keydown', paste)
+  }, [paste])
 
   const hoursBlockMouseMove = useCallback(
     (e: React.MouseEvent) => {
       const pointTime = viewportXYToTime(e.clientX, e.clientY)
       if (pointTime !== undefined) {
-        local.lastPointTime = pointTime
+        lastPointTime.current = pointTime
       }
       if (
         (e.ctrlKey || e.metaKey) &&
@@ -273,6 +275,7 @@ const CalendarBase = <T extends Interval>({
 
   const dragOngoing = useCallback(
     (e: MouseEvent) => {
+      if (0 === local.currentlyDragging.length) return
       const newDate = viewportXYToTime(e.clientX, e.clientY)
       if (newDate && isValid(newDate) && local.currentlyDragging.length) {
         const newDateRounded = roundToNearestMinutes(newDate, {

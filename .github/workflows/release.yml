@@ -7,15 +7,20 @@ on:
 jobs:
   publish:
     strategy:
+      fail-fast: false
       matrix:
-        os: [windows-latest, macos-latest]
+        include:
+        -  os: windows-latest
+           arch: x64
+        -  os: macos-latest
+           arch: arm64
     runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v7
       - uses: actions/setup-node@v7
         with:
           node-version: 25.3.0
-          architecture: "x64"
+          architecture: ${{ matrix.arch }}
 
       - name: install platform dependencies
         working-directory: ./zedd-platform
@@ -28,9 +33,21 @@ jobs:
         working-directory: ./zedd-app
         run: npm install --workspaces=false
 
+      - name: package app
+        working-directory: ./zedd-app
+        run: npm run package -- --arch=${{ matrix.arch }}
+
+      - name: ad-hoc sign macOS app
+        if: runner.os == 'macOS'
+        working-directory: ./zedd-app
+        run: |
+          app="out/zedd-app-darwin-${{ matrix.arch }}/zedd-app.app"
+          codesign --force --deep --sign - "$app"
+          codesign --verify --deep --strict --verbose=2 "$app"
+
       - name: build release
         working-directory: ./zedd-app
-        run: npm run make
+        run: npm run make -- --arch=${{ matrix.arch }} --skip-package
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       - name: create release
