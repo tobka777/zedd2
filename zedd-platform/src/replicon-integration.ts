@@ -5,12 +5,13 @@ import { PlatformExportFormat, Task, TaskActivity } from './model'
 import { ElementHandle, HTTPRequest } from 'puppeteer'
 import { What } from './model/what.model'
 import {
+  eachDayOfInterval,
+  format,
   isWithinInterval,
   min as dateMin,
   parse,
   parseISO,
   isValid,
-  differenceInDays,
 } from 'date-fns'
 import { enGB } from 'date-fns/locale'
 import partition from 'lodash/partition'
@@ -135,10 +136,13 @@ export class RepliconIntegration extends PlatformIntegration {
     await this.init()
     await this.goToTheTimesheet(false)
 
-    let what: What[] = Object.keys(whatt).map((dateString: string) => ({
-      day: parseISO(dateString),
-      work: whatt[dateString],
-    }))
+    const exportedDays = new Set(Object.keys(whatt))
+    let what: What[] = Object.keys(whatt)
+      .filter((dateString) => whatt[dateString].length > 0)
+      .map((dateString: string) => ({
+        day: parseISO(dateString),
+        work: whatt[dateString],
+      }))
 
     while (what.length > 0) {
       await this.chooseDateFromCalendar(what)
@@ -168,11 +172,17 @@ export class RepliconIntegration extends PlatformIntegration {
       const [relevant, others] = partition(what, (w) => isWithinInterval(w.day, { start, end }))
 
       await this.reopenTimesheet()
-      if (differenceInDays(end, start) < 7) {
-        // clean only if only one week, not clean on month end
-        // TODO intelligent cleanup
+      if (
+        eachDayOfInterval({ start, end }).every((d) => exportedDays.has(format(d, 'yyyy-MM-dd')))
+      ) {
         await this.clearAllTasks()
         await this.sleep(2)
+      } else {
+        await this.clearDays(
+          eachDayOfInterval({ start, end }).filter((d) =>
+            exportedDays.has(format(d, 'yyyy-MM-dd')),
+          ),
+        )
       }
 
       for (let i = 0; i < relevant.length; i++) {
@@ -184,7 +194,7 @@ export class RepliconIntegration extends PlatformIntegration {
             await this.addRow()
             await waitForTimeout(300)
             taskSearchButton = await this.clickElementWithContent(
-              '//td[.//span[contains(@class, "taskSelectorSearchByCategoryContainer")]//span[contains(@class, "placeholder") and contains(text(), "Select Project")]]',
+              '(//tbody[@sectiontype="rows"]/tr)[last()]/td[.//span[contains(@class, "taskSelectorSearchByCategoryContainer")]//span[contains(@class, "placeholder") and contains(text(), "Select Project")]]',
             )
           }
           await this.sleep(1)
@@ -525,7 +535,44 @@ export class RepliconIntegration extends PlatformIntegration {
     }
   }
 
+  /**
+   * Clears the fields of the given days in all rows of the opened timesheet.
+   */
+  private async clearDays(days: Date[]) {
+    const rowCount = (await $x(this.page, '//tbody[@sectiontype="rows"]/tr')).length
+    for (let i = 0; i < rowCount; i++) {
+      for (const day of days) {
+        // query again, as the table may be re-rendered after changing a field
+        const row = (await $x(this.page, '//tbody[@sectiontype="rows"]/tr'))[i]
+        const dayField = row && (await this.findDayField(row, day))
+        if (!dayField || !(await dayField.evaluate((el) => (el as HTMLInputElement).value))) {
+          continue
+        }
+        await this.clearField(dayField)
+        await this.page.keyboard.press('Tab')
+      }
+    }
+  }
+
   private async fillTaskDay(row: ElementHandle<Element>, work: WorkEntry, taskDay: Date) {
+    const dayField = await this.findDayField(row, taskDay)
+    if (!dayField) {
+      throw new Error('No day field for ' + taskDay.toDateString() + ' found')
+    }
+
+    await this.clearField(dayField)
+    await dayField.type(String(work.hours))
+
+    await this.commentTask(work.comment, dayField)
+  }
+
+  private async clearField(field: ElementHandle<Element>) {
+    await field.click()
+    await field.evaluate((el) => (el as HTMLInputElement).select())
+    await this.page.keyboard.press('Backspace')
+  }
+
+  private async findDayField(row: ElementHandle<Element>, taskDay: Date) {
     const formattedTaskDay = taskDay.toLocaleDateString('en-US', {
       weekday: 'short',
       day: 'numeric',
@@ -551,15 +598,7 @@ export class RepliconIntegration extends PlatformIntegration {
       }
     }
 
-    if (!dayFieldNode) {
-      throw new Error('No day field with ' + day + ' found')
-    }
-
-    const dayField = dayFieldNode as unknown as ElementHandle<Element>
-    await dayField.click()
-    await dayField.type(String(work.hours))
-
-    await this.commentTask(work.comment, dayField)
+    return dayFieldNode as ElementHandle<Element> | null
   }
 
   private async getRowTaskFromTable(work: WorkEntry) {

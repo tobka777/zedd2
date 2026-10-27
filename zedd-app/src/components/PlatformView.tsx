@@ -345,10 +345,11 @@ export const PlatformView = observer((props: PlatformViewProps) => {
 
   const projectTasksViewItems: PlatformExportFormat = {}
   const ottTaskMissingRepliconTask: WorkEntry[] = []
-  for (const w of intervals) {
-    const workEntries = eachDayOfInterval(w)
-      .flatMap((d) => platformExport[isoDayStr(d)] ?? [])
-      ?.filter((t) => t.platformType === 'OTT' && isTaskVisible(t))
+  for (const day of eachDayOfInterval(showing)) {
+    const dayKey = isoDayStr(day)
+    const workEntries = (platformExport[dayKey] ?? []).filter(
+      (t) => t.platformType === 'OTT' && isTaskVisible(t),
+    )
 
     for (const task of workEntries) {
       const projectData = platformState.tasks.find(
@@ -372,7 +373,7 @@ export const PlatformView = observer((props: PlatformViewProps) => {
           taskActivity: taskActivity,
           child: [],
         }
-        const projectItems = projectTasksViewItems[isoDayStr(w.start)]
+        const projectItems = projectTasksViewItems[dayKey]
         const projectItem = projectItems?.find(
           (item) =>
             item.projectName === projectData.projectName &&
@@ -387,9 +388,9 @@ export const PlatformView = observer((props: PlatformViewProps) => {
           groupTask.hours = task.hours
           groupTask.child?.push(task)
           if (projectItems) {
-            projectTasksViewItems[isoDayStr(w.start)].push(groupTask)
+            projectTasksViewItems[dayKey].push(groupTask)
           } else {
-            projectTasksViewItems[isoDayStr(w.start)] = [groupTask]
+            projectTasksViewItems[dayKey] = [groupTask]
           }
         }
       } else {

@@ -177,10 +177,8 @@ export class PlatformState {
           day,
           entries.filter((e) => e.platformType === platform),
         ])
-        const keepEmptyEntries = platform === 'OTT'
-        const exportTasksForPlatform = Object.fromEntries(
-          entriesForPlatform.filter(([_, entries]) => keepEmptyEntries || entries.length > 0),
-        )
+        // keep empty days, so the platform knows which days are part of the export
+        const exportTasksForPlatform = Object.fromEntries(entriesForPlatform)
 
         await this.platformIntegration.exportTasks(exportTasksForPlatform, submitTimesheets)
       }
