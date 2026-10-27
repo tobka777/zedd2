@@ -79,7 +79,23 @@ Download and run the latest release on [Github](https://github.com/tobka777/zedd
 
 - Windows (exe): `zedd-app-<release>.Setup.exe`
 - Windows (nupkg): `zedd-<release>-full.nupkg`
-- Mac (zip): `zedd-app-darwin-x64-<release>.zip`
+- Mac (zip, Apple Silicon): `zedd-app-darwin-arm64-<release>.zip`
+
+### First start
+
+The app is not signed with a paid certificate, so Windows and macOS show a warning when it is started for the first time.
+
+**Windows:** Microsoft Defender SmartScreen shows "Windows protected your PC". Click **More info** and then **Run anyway**.
+
+**macOS:** macOS reports that "zedd-app" cannot be opened because Apple cannot check it for malicious software.
+
+1. Unzip the download and move `zedd-app.app` to the Applications folder
+2. Open the app once and close the warning dialog
+3. Open **System Settings** → **Privacy & Security**
+4. Scroll down to the Security section, where zedd-app is listed as blocked, and click **Open Anyway**
+5. Confirm with your password and click **Open**
+
+After that the app starts without a warning.
 
 ### Requirements
 
