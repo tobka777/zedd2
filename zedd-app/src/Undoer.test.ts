@@ -1,5 +1,6 @@
 import * as assert from 'assert'
 import { isObservable, makeAutoObservable, observable } from 'mobx'
+import * as sinon from 'sinon'
 import { setTimeout } from 'timers'
 import { Undoer } from './Undoer'
 
@@ -306,6 +307,50 @@ describe('Undoer', () => {
       undoer.redo()
 
       assert.equal(foo.bar.e, 2)
+    })
+  })
+
+  describe('maxStackSize', () => {
+    let clock: sinon.SinonFakeTimers
+
+    beforeEach(() => (clock = sinon.useFakeTimers({ now: 1_000_000, toFake: ['Date'] })))
+    afterEach(() => clock.restore())
+
+    it('drops the oldest entries', () => {
+      const undoer = new Undoer(3)
+      const foo = observable({ bar: 0 })
+      undoer.makeUndoable(foo)
+
+      for (let i = 1; i <= 5; i++) {
+        clock.tick(100)
+        foo.bar = i
+      }
+
+      for (let i = 0; i < 5; i++) undoer.undo()
+      // only the last 3 changes (3, 4, 5) can be undone
+      assert.equal(foo.bar, 2)
+
+      for (let i = 0; i < 5; i++) undoer.redo()
+      assert.equal(foo.bar, 5)
+    })
+
+    it('does not split a group of entries which are undone together', () => {
+      const undoer = new Undoer(3)
+      const foo = observable({ bar: 0 })
+      undoer.makeUndoable(foo)
+
+      clock.tick(100)
+      foo.bar = 1
+      foo.bar = 2
+      clock.tick(100)
+      foo.bar = 3
+      foo.bar = 4
+
+      // stack would be 4 entries; the first group (1, 2) is dropped completely
+      undoer.undo()
+      assert.equal(foo.bar, 2)
+      undoer.undo()
+      assert.equal(foo.bar, 2)
     })
   })
 })

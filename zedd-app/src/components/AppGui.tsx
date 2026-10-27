@@ -185,17 +185,20 @@ export const AppGui = observer(
                 />
               )
             )}
-            <ErrorBoundary>
-              <AppBody
-                state={state}
-                platformState={platformState}
-                getTasksForSearchString={getTasksForSearchString}
-                display={!state.hoverMode}
-                taskSelectRef={taskSelectRef}
-                getLinksFromString={getLinksFromString}
-                settings={state.config}
-              />
-            </ErrorBoundary>
+            {/* don't render the body in hover mode, so it doesn't re-render on every slice change */}
+            {!state.hoverMode && (
+              <ErrorBoundary>
+                <AppBody
+                  state={state}
+                  platformState={platformState}
+                  getTasksForSearchString={getTasksForSearchString}
+                  display={true}
+                  taskSelectRef={taskSelectRef}
+                  getLinksFromString={getLinksFromString}
+                  settings={state.config}
+                />
+              </ErrorBoundary>
+            )}
           </ThemeProvider>
         </MuiThemeProvider>
       </StyledEngineProvider>

@@ -39,9 +39,21 @@ jobs:
       - name: build beta release 
         working-directory: ./zedd-app
         run: npm install --workspaces=false
+      - name: package app
+        working-directory: ./zedd-app
+        run: npm run package -- --arch=${{ matrix.arch }}
+
+      - name: ad-hoc sign macOS app
+        if: runner.os == 'macOS'
+        working-directory: ./zedd-app
+        run: |
+          app="out/zedd-app-darwin-${{ matrix.arch }}/zedd-app.app"
+          codesign --force --deep --sign - "$app"
+          codesign --verify --deep --strict --verbose=2 "$app"
+
       - name: build beta release
         working-directory: ./zedd-app
-        run: npm run make -- --arch=${{ matrix.arch }}
+        run: npm run make -- --arch=${{ matrix.arch }} --skip-package
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 

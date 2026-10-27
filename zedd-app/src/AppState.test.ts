@@ -394,4 +394,45 @@ describe('AppState', () => {
     //   )
     // })
   })
+
+  describe('getPreviousSlice / getNextSlice', () => {
+    let state: AppState
+    const d = (s: string) => dateParse(s, dateFormatString, new Date())
+    const add = (start: string, end: string, name: string) =>
+      state.addSlice(new TimeSlice(d(start), d(end), state.getTaskForName(name)))
+
+    beforeEach(() => {
+      state = new AppState()
+      add('2020-01-06 09:00', '2020-01-06 10:00', 'a')
+      add('2020-01-08 11:00', '2020-01-08 12:00', 'c')
+      add('2020-01-08 09:00', '2020-01-08 10:00', 'b')
+      add('2020-01-20 09:00', '2020-01-20 10:00', 'd')
+    })
+
+    const name = (s: TimeSlice | undefined) => s?.task.name
+
+    it('finds slices on the same day', () => {
+      assert.equal(name(state.getPreviousSlice({ start: d('2020-01-08 11:00'), end: 0 })), 'b')
+      assert.equal(name(state.getNextSlice({ start: d('2020-01-08 09:00'), end: 0 })), 'c')
+    })
+
+    it('finds slices on other days', () => {
+      assert.equal(name(state.getPreviousSlice({ start: d('2020-01-08 09:00'), end: 0 })), 'a')
+      assert.equal(name(state.getNextSlice({ start: d('2020-01-08 11:00'), end: 0 })), 'd')
+      assert.equal(name(state.getPreviousSlice({ start: d('2020-01-15 12:00'), end: 0 })), 'c')
+      assert.equal(name(state.getNextSlice({ start: d('2020-01-15 12:00'), end: 0 })), 'd')
+    })
+
+    it('returns undefined at the boundaries', () => {
+      assert.equal(state.getPreviousSlice({ start: d('2020-01-06 09:00'), end: 0 }), undefined)
+      assert.equal(state.getNextSlice({ start: d('2020-01-20 09:00'), end: 0 }), undefined)
+    })
+
+    it('reflects moved slices', () => {
+      const a = state.slices.find((s) => 'a' === s.task.name)!
+      a.setInterval(d('2020-01-25 09:00'), d('2020-01-25 10:00'))
+      assert.equal(state.getPreviousSlice({ start: d('2020-01-08 09:00'), end: 0 }), undefined)
+      assert.equal(name(state.getNextSlice({ start: d('2020-01-20 09:00'), end: 0 })), 'a')
+    })
+  })
 })

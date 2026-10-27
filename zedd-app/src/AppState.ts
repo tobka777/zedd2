@@ -29,7 +29,7 @@ import {
   subDays,
 } from 'date-fns'
 import { promises as fsp } from 'fs'
-import { sum } from 'lodash'
+import { sortedIndex, sortedLastIndex, sum } from 'lodash'
 import type { IObservableArray } from 'mobx'
 import { action, computed, intercept, makeObservable, observable, transaction } from 'mobx'
 import { createTransformer, ObservableGroupMap } from 'mobx-utils'
@@ -640,26 +640,55 @@ export class AppState {
     transaction(() => slicesToRemove.forEach((r) => this.slices.remove(r)))
   }
 
-  public getPreviousSlice(slice: Interval): TimeSlice | undefined {
-    return this.slices.reduce(
-      (result, s) => {
-        if (!isBefore(s.start, slice.start)) return result
-        if (!result || isAfter(s.start, result.start)) return s
-        return result
-      },
-      undefined as TimeSlice | undefined,
-    )
+  /**
+   * Ascending start-of-day timestamps of all days which have slices. Kept alive, as it is mostly
+   * accessed from event handlers (e.g. while dragging) outside of a reactive context.
+   */
+  @computed({ keepAlive: true })
+  private get sortedSliceDays(): number[] {
+    return Array.from(this.slicesByDay.keys()).sort((a, b) => a - b)
   }
 
+  /**
+   * Returns the slice which starts last before slice.start. Only looks at the day of slice.start
+   * and, if necessary, the previous days which have slices, instead of all slices.
+   */
+  public getPreviousSlice(slice: Interval): TimeSlice | undefined {
+    const days = this.sortedSliceDays
+    const startDay = startOfDay(slice.start).getTime()
+    for (let i = sortedLastIndex(days, startDay) - 1; i >= 0; i--) {
+      const result = this.slicesByDay.get(days[i])!.reduce(
+        (result, s) => {
+          if (!isBefore(s.start, slice.start)) return result
+          if (!result || isAfter(s.start, result.start)) return s
+          return result
+        },
+        undefined as TimeSlice | undefined,
+      )
+      if (result) return result
+    }
+    return undefined
+  }
+
+  /**
+   * Returns the slice which starts first after slice.start. Only looks at the day of slice.start
+   * and, if necessary, the following days which have slices, instead of all slices.
+   */
   public getNextSlice(slice: Interval): TimeSlice | undefined {
-    return this.slices.reduce(
-      (result, s) => {
-        if (!isAfter(s.start, slice.start)) return result
-        if (!result || isBefore(s.start, result.start)) return s
-        return result
-      },
-      undefined as TimeSlice | undefined,
-    )
+    const days = this.sortedSliceDays
+    const startDay = startOfDay(slice.start).getTime()
+    for (let i = sortedIndex(days, startDay); i < days.length; i++) {
+      const result = this.slicesByDay.get(days[i])!.reduce(
+        (result, s) => {
+          if (!isAfter(s.start, slice.start)) return result
+          if (!result || isBefore(s.start, result.start)) return s
+          return result
+        },
+        undefined as TimeSlice | undefined,
+      )
+      if (result) return result
+    }
+    return undefined
   }
 
   public getTaskForName(name: Task | string | undefined): Task {

@@ -308,7 +308,23 @@ async function setup() {
     () => AppState.cleanSaveDir(dataDir).catch((e) => console.error('Could not clean save dir', e)),
     60*60*1000,
   )
-  let taskSelectRef: HTMLInputElement | undefined = undefined
+  let taskSelectRef: HTMLInputElement | null = null
+  // The task select is not mounted in hover mode, so focusing has to wait until it is rendered.
+  let focusTaskSelectPending = false
+  const setTaskSelectRef = (r: HTMLInputElement | null) => {
+    taskSelectRef = r
+    if (r && focusTaskSelectPending) {
+      focusTaskSelectPending = false
+      r.focus()
+    }
+  }
+  const focusTaskSelect = () => {
+    if (taskSelectRef) {
+      taskSelectRef.focus()
+    } else {
+      focusTaskSelectPending = true
+    }
+  }
 
   currentWindowEvents.push([
     'close',
@@ -400,8 +416,7 @@ async function setup() {
               state.hoverMode = false
             }
             currentWindow.focus()
-            console.log(taskSelectRef)
-            taskSelectRef && taskSelectRef.focus()
+            focusTaskSelect()
           },
         },
 
@@ -528,7 +543,7 @@ async function setup() {
       root.render(
         React.createElement(AppGui, {
           showContextMenu: () => currentMenu.popup(),
-          taskSelectRef: (r) => (taskSelectRef = r),
+          taskSelectRef: setTaskSelectRef,
           state,
           checkCgJira,
           checkChromePath,
