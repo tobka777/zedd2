@@ -255,6 +255,24 @@ export class PlatformState {
     return this.resolveTask(intId) !== undefined
   }
 
+  /**
+   * Closes the browsers of all platforms, e.g. before zedd quits, so no Chrome keeps running.
+   */
+  public async quitBrowsers(): Promise<void> {
+    await Promise.all(
+      Object.values(this.integrationMap).map((integration) =>
+        integration.quitBrowser().catch((error) => console.error('Error quitting browser', error)),
+      ),
+    )
+  }
+
+  /**
+   * Kills the browsers of all platforms right away, for when zedd is closing and can't wait.
+   */
+  public killBrowsers(): void {
+    Object.values(this.integrationMap).forEach((integration) => integration.killBrowser())
+  }
+
   public killPlatform() {
     this._currentlyExportingTasks = false
     this._currentlyImportingTasks = false

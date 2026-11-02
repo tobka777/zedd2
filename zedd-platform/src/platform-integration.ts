@@ -2,6 +2,50 @@ import { PlatformExportFormat, Task } from './model'
 import { PlatformOptions } from './model/platform.options.model'
 import { $x, checkPlatformUrl } from './utils'
 import puppeteer, { Browser, ElementHandle, Page } from 'puppeteer'
+import { execFileSync } from 'child_process'
+
+const BROWSER_CLOSE_TIMEOUT_MS = 5_000
+
+/**
+ * Kills the Chrome launched by puppeteer for this browser, including its child processes. Only
+ * goes by the pid of the process puppeteer started, and only while it is still running, so other
+ * Chrome instances of the user are never affected.
+ */
+function killBrowserProcess(browser: Browser) {
+  const proc = browser.process()
+  if (!proc?.pid || proc.exitCode !== null || proc.signalCode !== null) return
+  try {
+    if (process.platform === 'win32') {
+      execFileSync('taskkill', ['/pid', String(proc.pid), '/T', '/F'], { stdio: 'ignore' })
+    } else {
+      // puppeteer starts Chrome as leader of its own process group
+      process.kill(-proc.pid, 'SIGKILL')
+    }
+  } catch (e) {
+    console.error('Could not kill browser process', e)
+  }
+}
+
+/**
+ * Closes the browser, and kills its process if closing fails or doesn't finish in time.
+ */
+async function closeOrKillBrowser(browser: Browser) {
+  let timer: ReturnType<typeof setTimeout> | undefined
+  const timeout = new Promise<'timeout'>((resolve) => {
+    timer = setTimeout(() => resolve('timeout'), BROWSER_CLOSE_TIMEOUT_MS)
+  })
+  try {
+    if ('timeout' === (await Promise.race([browser.close(), timeout]))) {
+      console.error('Browser did not close in time, killing it.')
+      killBrowserProcess(browser)
+    }
+  } catch (e) {
+    console.error('Could not close browser, killing it.', e)
+    killBrowserProcess(browser)
+  } finally {
+    clearTimeout(timer)
+  }
+}
 
 export abstract class PlatformIntegration {
   protected browser?: Browser
@@ -66,7 +110,21 @@ export abstract class PlatformIntegration {
     const browser = this.browser
     this.browser = undefined
     if (browser) {
-      await browser.close()
+      await closeOrKillBrowser(browser)
+    }
+  }
+
+  /**
+   * Kills the browser of the current run right away, for when zedd is closing and can't wait for
+   * {@link quitBrowser}.
+   */
+  killBrowser(): void {
+    clearTimeout(this.closeTimer)
+    this.closeTimer = undefined
+    const browser = this.browser
+    this.browser = undefined
+    if (browser) {
+      killBrowserProcess(browser)
     }
   }
 
