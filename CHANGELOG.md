@@ -1,6 +1,6 @@
 ## [Unreleased]
 
-- Fix: the saved state couldn't be loaded if the current task had no time booked yet (e.g. a new name entered while not timing); zedd then silently fell back to an older save (#111)
+- Fix: the saved state couldn't be loaded if the current task had no time booked and wasn't among the last 5 used tasks (e.g. a new name entered, then slices booked onto other tasks); zedd then silently fell back to an older save and overwrote the newer one (#111)
 
 ## [3.1.0] - 2026-10-27
 

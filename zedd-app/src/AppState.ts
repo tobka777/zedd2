@@ -291,8 +291,9 @@ export class AppState {
   public changingSliceTask: TimeSlice | undefined = undefined
 
   /**
-   * Stored by name only. Resolved in {@link AppState.loadFromJsonString}, as the task may have no
-   * slices (e.g. a new name entered while not timing), and then a reference couldn't be resolved.
+   * Stored by name only. Resolved in {@link AppState.loadFromJsonString}, as a reference could only
+   * be resolved if a slice or one of the last interacted tasks uses the task, e.g. not for a new
+   * name entered while not timing, after slices were booked onto 5 other tasks.
    */
   @observable
   @serializable(
