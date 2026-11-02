@@ -353,7 +353,8 @@ describe('AppState', () => {
       checkSlices('2020-01-01 11:00 - 2020-01-01 13:00 rebasing')
     })
 
-    it.only('alle Stände von Sonja lassen sich laden', async () => {
+    // needs local data files, run manually
+    it.skip('alle Stände von Sonja lassen sich laden', async () => {
       const dir = 'C:\\Users\\aleonhar\\Documents\\My Received Files\\data'
       for (const f of fs.readdirSync(dir)) {
         console.log('load ', f)
@@ -433,6 +434,32 @@ describe('AppState', () => {
       a.setInterval(d('2020-01-25 09:00'), d('2020-01-25 10:00'))
       assert.equal(state.getPreviousSlice({ start: d('2020-01-08 09:00'), end: 0 }), undefined)
       assert.equal(name(state.getNextSlice({ start: d('2020-01-20 09:00'), end: 0 })), 'a')
+    })
+  })
+
+  describe('loadFromJsonString', () => {
+    const roundtrip = (state: AppState) => AppState.loadFromJsonString(state.toJsonString())
+
+    it('loads a current task without slices (#111)', () => {
+      const state = new AppState()
+      state.currentTask = state.getTaskForName('new task')
+      assert.equal(roundtrip(state).currentTask.name, 'new task')
+    })
+
+    it('uses the task instance of the slices for the current task', () => {
+      const state = new AppState()
+      const d = (s: string) => dateParse(s, dateFormatString, new Date())
+      state.addSlice(
+        new TimeSlice(d('2020-01-06 09:00'), d('2020-01-06 10:00'), state.getTaskForName('a')),
+      )
+      state.currentTask = state.getTaskForName('a')
+      const loaded = roundtrip(state)
+      assert.equal(loaded.currentTask, loaded.slices[0].task)
+    })
+
+    it('loads the undefined task as current task', () => {
+      const loaded = roundtrip(new AppState())
+      assert.equal(loaded.currentTask.name, loaded.getUndefinedTask().name)
     })
   })
 })

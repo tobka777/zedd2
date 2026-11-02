@@ -1,3 +1,7 @@
+## [Unreleased]
+
+- Fix: the saved state couldn't be loaded if the current task had no time booked yet (e.g. a new name entered while not timing); zedd then silently fell back to an older save (#111)
+
 ## [3.1.0] - 2026-10-27
 
 - Feature: OTT export via the OTT API instead of UI automation: creates, updates and skips entries, deletes stale entries in the exported range, takes over the work location and writes comments
