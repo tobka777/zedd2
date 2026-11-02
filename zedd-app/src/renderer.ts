@@ -4,6 +4,7 @@ import {
   getCurrentWindow,
   Menu,
   getGlobal,
+  nativeImage,
   powerMonitor,
   screen as electronScreen,
   shell,
@@ -48,6 +49,7 @@ const userConfigFile = path.join(saveDir, 'zeddconfig.json')
 const d = (...x: any[]) => console.log('renderer.ts', ...x)
 
 const isWin = process.platform === 'win32'
+const isMac = process.platform === 'darwin'
 
 // Renderlog only in dev mode
 const forwardLogs = !!getGlobal('isDev') || !!process.env.ZEDD_FORWARD_LOGS
@@ -363,23 +365,43 @@ async function setup() {
   currentWindowEvents.push(['maximize', hoverModeOff])
   currentWindowEvents.push(['unmaximize', restoreUnmaximizedBoundsIfNotHoverMode])
   currentWindowEvents.push(['move', saveWindowBounds])
-  const currentIconImage = computed(() => {
+  const currentIconName = computed(() => {
     const NUMBER_OF_SAMPLES = 12
-    let iconExt = '.ico'
-    if (!isWin) {
-      iconExt = '_24.png'
-    }
-    if (state.timingInProgess) {
-      return path.join(
-        app.getAppPath(),
-        'icons',
-        'progress' + floor((state.getDayProgress(new Date()) % 1) * NUMBER_OF_SAMPLES) + iconExt,
-      )
-    } else {
-      return path.join(app.getAppPath(), 'icons', 'paused' + iconExt)
-    }
+    return state.timingInProgess
+      ? 'progress' + floor((state.getDayProgress(new Date()) % 1) * NUMBER_OF_SAMPLES)
+      : 'paused'
   })
-  const tray = new Tray(currentIconImage.get())
+  const currentIconImage = computed(() =>
+    path.join(app.getAppPath(), 'icons', currentIconName.get() + (isWin ? '.ico' : '_24.png')),
+  )
+  // The macOS menu bar sizes icons in points: a plain 24px png is shown at 24pt and fills the
+  // whole menu bar (and is blurry on retina). Use 16pt with a sharp 2x representation instead.
+  const macTrayImages = new Map<string, Electron.NativeImage>()
+  const getMacTrayImage = (iconName: string) => {
+    let image = macTrayImages.get(iconName)
+    if (!image) {
+      const iconPath = (res: number) =>
+        path.join(app.getAppPath(), 'icons', `${iconName}_${res}.png`)
+      image = nativeImage.createEmpty()
+      image.addRepresentation({
+        scaleFactor: 1,
+        buffer: nativeImage.createFromPath(iconPath(16)).toPNG(),
+      })
+      image.addRepresentation({
+        scaleFactor: 2,
+        buffer: nativeImage
+          .createFromPath(iconPath(128))
+          .resize({ width: 32, height: 32, quality: 'best' })
+          .toPNG(),
+      })
+      macTrayImages.set(iconName, image)
+    }
+    return image
+  }
+  const currentTrayImage = computed(() =>
+    isMac ? getMacTrayImage(currentIconName.get()) : currentIconImage.get(),
+  )
+  const tray = new Tray(currentTrayImage.get())
   tray.on('double-click', () => {
     getCurrentWindow().show()
   })
@@ -448,7 +470,7 @@ async function setup() {
   })
 
   const cleanupIconAutorun = autorun(() => {
-    tray.setImage(currentIconImage.get())
+    tray.setImage(currentTrayImage.get())
     currentWindow.setIcon(currentIconImage.get())
   })
 
