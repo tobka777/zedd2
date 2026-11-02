@@ -1,6 +1,6 @@
 ## [Unreleased]
 
-- Fix: tray icon was too large and blurry in the macOS menu bar (#75)
+- Fix: tray icon was too large, without padding and blurry in the macOS menu bar, and hardly visible in a light menu bar (#75)
 - Fix: minimize/maximize/close buttons in the title bar were empty on macOS
 - Fix: arrow in the date range picker ("Start → End") was missing on macOS
 

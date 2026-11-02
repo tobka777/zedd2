@@ -375,25 +375,26 @@ async function setup() {
     path.join(app.getAppPath(), 'icons', currentIconName.get() + (isWin ? '.ico' : '_24.png')),
   )
   // The macOS menu bar sizes icons in points: a plain 24px png is shown at 24pt and fills the
-  // whole menu bar (and is blurry on retina). Use 16pt with a sharp 2x representation instead.
+  // whole menu bar (and is blurry on retina). The icons are drawn edge to edge, so use 14pt (with a
+  // sharp 2x representation) to leave some padding, like the system icons.
+  // As a template image macOS tints the white icon to fit light and dark menu bars.
+  const MAC_TRAY_ICON_SIZE = 14
   const macTrayImages = new Map<string, Electron.NativeImage>()
   const getMacTrayImage = (iconName: string) => {
     let image = macTrayImages.get(iconName)
     if (!image) {
-      const iconPath = (res: number) =>
-        path.join(app.getAppPath(), 'icons', `${iconName}_${res}.png`)
+      const source = nativeImage.createFromPath(
+        path.join(app.getAppPath(), 'icons', `${iconName}_128.png`),
+      )
       image = nativeImage.createEmpty()
-      image.addRepresentation({
-        scaleFactor: 1,
-        buffer: nativeImage.createFromPath(iconPath(16)).toPNG(),
-      })
-      image.addRepresentation({
-        scaleFactor: 2,
-        buffer: nativeImage
-          .createFromPath(iconPath(128))
-          .resize({ width: 32, height: 32, quality: 'best' })
-          .toPNG(),
-      })
+      for (const scaleFactor of [1, 2]) {
+        const size = MAC_TRAY_ICON_SIZE * scaleFactor
+        image.addRepresentation({
+          scaleFactor,
+          buffer: source.resize({ width: size, height: size, quality: 'best' }).toPNG(),
+        })
+      }
+      image.setTemplateImage(true)
       macTrayImages.set(iconName, image)
     }
     return image
