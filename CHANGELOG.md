@@ -1,3 +1,7 @@
+## [Unreleased]
+
+- Fix: Chrome of an import/export could keep running in the background: it is now closed when zedd quits, and killed if closing fails or hangs (only the Chrome started by zedd, #113)
+
 ## [3.1.0] - 2026-10-27
 
 - Feature: OTT export via the OTT API instead of UI automation: creates, updates and skips entries, deletes stale entries in the exported range, takes over the work location and writes comments

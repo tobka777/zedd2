@@ -83,8 +83,15 @@ function showNotification(title: string, text: string, cb: () => void) {
   notification.onclick = cb
 }
 
+// set in setup(), so quitting can close the browsers of a running import/export first
+let beforeQuit: () => Promise<void> = async () => {
+  /* nothing yet */
+}
+
 function quit() {
-  ipcRenderer.send('quit')
+  beforeQuit()
+    .catch((error) => console.error('Error before quitting', error))
+    .finally(() => ipcRenderer.send('quit'))
 }
 
 function setupAutoUpdater(state: AppState, config: ZeddSettings) {
@@ -133,6 +140,7 @@ async function setup() {
   await mkdirIfNotExists(saveDir)
 
   const platformState = new PlatformState(platformDir)
+  beforeQuit = () => platformState.quitBrowsers()
 
   const config = (await fileExists(userConfigFile))
     ? await ZeddSettings.readFromFile(userConfigFile)
@@ -527,6 +535,8 @@ async function setup() {
   return {
     cleanup: (cleanup = () => {
       console.log('setup().cleanup')
+      // the window is going away (e.g. shutdown) without "Quit", so there's no time to close them
+      platformState.killBrowsers()
       clearInterval(saveInterval)
       if (saveIdleCallback !== undefined) cancelIdleCallback(saveIdleCallback)
       clearInterval(cleanSaveDirInterval)
