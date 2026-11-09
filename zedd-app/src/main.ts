@@ -1,5 +1,19 @@
 import * as remoteMain from '@electron/remote/main'
-import { app, BrowserWindow, ipcMain, session } from 'electron'
+import {
+  app,
+  BrowserWindow,
+  ipcMain,
+  MessageChannelMain,
+  session,
+  utilityProcess,
+  UtilityProcess,
+} from 'electron'
+import * as path from 'path'
+import {
+  BROWSER_WORKER_CONNECT,
+  BROWSER_WORKER_EXIT,
+  BROWSER_WORKER_PORT,
+} from './browserWorkerProtocol'
 
 // Log forwarder
 ipcMain.on('renderer-console', (_e, data: { level: string; text: string }) => {
@@ -91,6 +105,35 @@ const createWindow = () => {
     mainWindow = undefined
   })
 }
+
+// The platform integrations (Playwright + Edge) run in a separate process, so a crash there
+// doesn't take down the zedd window. Started on first use and again after it stopped.
+let browserWorker: UtilityProcess | undefined
+
+const getBrowserWorker = (): UtilityProcess => {
+  if (!browserWorker) {
+    const worker = utilityProcess.fork(path.join(__dirname, 'browser-worker.js'), [], {
+      serviceName: 'zedd browser',
+    })
+    worker.on('exit', (code) => {
+      if (browserWorker === worker) browserWorker = undefined
+      console.log('browser worker exited with code', code)
+      mainWindow?.webContents.send(BROWSER_WORKER_EXIT, code)
+    })
+    browserWorker = worker
+  }
+  return browserWorker
+}
+
+ipcMain.on(BROWSER_WORKER_CONNECT, (event) => {
+  const { port1, port2 } = new MessageChannelMain()
+  getBrowserWorker().postMessage('connect', [port1])
+  event.sender.postMessage(BROWSER_WORKER_PORT, null, [port2])
+})
+
+app.on('will-quit', () => {
+  browserWorker?.kill()
+})
 
 ipcMain.on('quit', () => {
   userQuit = true

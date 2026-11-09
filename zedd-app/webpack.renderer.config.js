@@ -15,11 +15,11 @@ module.exports = {
     // https://github.com/ZJONSSON/node-unzipper/issues/330 - bundle issue with unzipper
     alias: {
       '@aws-sdk/client-s3': false,
+      // never load Playwright in the window, it runs in the browser worker process
+      'playwright-core': false,
     },
   },
   externals: {
-    'playwright-core': 'commonjs playwright-core',
-
     'selenium-webdriver': 'commonjs selenium-webdriver',
 
     'selenium-webdriver/chrome': 'commonjs selenium-webdriver/chrome',

@@ -3,9 +3,7 @@ import { promises as fsp } from 'fs'
 import { computed, makeObservable, observable } from 'mobx'
 import * as path from 'path'
 import {
-  OTTIntegration,
   PlatformExportFormat,
-  PlatformIntegration,
   PlatformType,
   Task,
   TaskActivity,
@@ -13,8 +11,8 @@ import {
 } from 'zedd-platform'
 import './index.css'
 import { FILE_DATE_FORMAT, getLatestFileInDir, mkdirIfNotExists } from './util'
-import { RepliconIntegration } from 'zedd-platform/out/src/replicon-integration'
 import { PlatformOptions } from 'zedd-platform/out/src/model/platform.options.model'
+import { RemotePlatformIntegration } from './RemotePlatformIntegration'
 
 export enum PlatformActionType {
   SubmitTimesheet,
@@ -66,12 +64,12 @@ export class PlatformState {
   @observable
   private _taskActivities: TaskActivity[] = []
 
-  private platformIntegration?: PlatformIntegration
+  private platformIntegration?: RemotePlatformIntegration
 
   @observable
   private _tasksLastUpdated: Date | undefined
 
-  private integrationMap: Record<string, PlatformIntegration> = {}
+  private integrationMap: Record<string, RemotePlatformIntegration> = {}
 
   public constructor(public platformDir: string) {
     makeObservable(this)
@@ -143,6 +141,7 @@ export class PlatformState {
     const options: PlatformOptions = {
       headless: this.chromeHeadless,
       userDataDir: this.edgeProfileDir || undefined,
+      windowSize: { width: window.screen.availWidth, height: window.screen.availHeight },
     }
 
     if (this.integrationMap) {
@@ -156,8 +155,8 @@ export class PlatformState {
     }
 
     this.integrationMap = {
-      REPLICON: new RepliconIntegration(this.repliconLink, options),
-      OTT: new OTTIntegration(this.ottLink, options),
+      REPLICON: new RemotePlatformIntegration('REPLICON', this.repliconLink, options),
+      OTT: new RemotePlatformIntegration('OTT', this.ottLink, options),
     }
   }
 
@@ -233,11 +232,12 @@ export class PlatformState {
       throw new Error('No task found')
     }
 
-    const repliconIntegration = this.integrationMap['REPLICON'] as RepliconIntegration
-    this._taskActivities = await repliconIntegration.importTaskActivities((taskActivities) => {
-      infoNotify &&
-        infoNotify('Imported ' + taskActivities.length + ' task activities from REPLICON.')
-    })
+    this._taskActivities = await this.integrationMap['REPLICON'].importTaskActivities(
+      (taskActivities) => {
+        infoNotify &&
+          infoNotify('Imported ' + taskActivities.length + ' task activities from REPLICON.')
+      },
+    )
     this.saveTaskActivitiesToFile(this._taskActivities)
   }
 
@@ -297,7 +297,7 @@ export class PlatformState {
     const file = path.join(dir, 'recording_' + formatDate(new Date(), FILE_DATE_FORMAT) + '.json')
     this._currentlyImportingTasks = true
     try {
-      await (this.integrationMap['REPLICON'] as RepliconIntegration).recordApiCalls(file)
+      await this.integrationMap['REPLICON'].recordApiCalls(file)
     } finally {
       this._currentlyImportingTasks = false
     }
@@ -319,7 +319,7 @@ export class PlatformState {
   }
 
   private async importPlatformTasks(
-    platformIntegration: PlatformIntegration,
+    platformIntegration: RemotePlatformIntegration,
     notifyTasks?: (p: Task[]) => void,
   ): Promise<Task[]> {
     this.actionType = PlatformActionType.ImportTasks

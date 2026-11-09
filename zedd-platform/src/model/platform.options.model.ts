@@ -6,4 +6,9 @@ export interface PlatformOptions {
    * Without it, every run starts with a fresh profile.
    */
   userDataDir?: string
+  /**
+   * Size of the browser window, usually the available screen size. Passed in, as the integrations
+   * may run in a process without access to the screen.
+   */
+  windowSize?: { width: number; height: number }
 }

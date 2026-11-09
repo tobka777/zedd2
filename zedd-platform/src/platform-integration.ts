@@ -43,16 +43,14 @@ export abstract class PlatformIntegration {
    * device on its own, so no SSO extension is needed for the 2FA login.
    */
   private async launchEdge(headless: boolean | undefined): Promise<BrowserContext> {
-    const viewport = {
-      width: Math.round(window.screen.availWidth),
-      height: Math.round(window.screen.availHeight * 0.9),
-    }
+    const { width, height } = this.options.windowSize ?? { width: 1280, height: 900 }
+    const viewport = { width: Math.round(width), height: Math.round(height * 0.9) }
     const launchOptions: LaunchOptions = {
       channel: 'msedge',
       // Playwright passes --no-sandbox otherwise, which Edge warns about as unsupported
       chromiumSandbox: true,
       headless,
-      args: [`--window-size=${window.screen.availWidth},${window.screen.availHeight}`],
+      args: [`--window-size=${Math.round(width)},${Math.round(height)}`],
     }
     try {
       if (this.options.userDataDir) {
