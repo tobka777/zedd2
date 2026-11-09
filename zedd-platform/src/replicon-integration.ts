@@ -30,6 +30,8 @@ export interface RepliconApiRecording {
 const RECORDED_URL = /\/services\/|\.svc\/|\/wbs\//
 const TIMESHEET_URI = /urn:replicon-tenant:[^:"\/]+:timesheet:[0-9a-zA-Z-]+/
 const MAX_BODY_LENGTH = 50_000
+/** time the user has for the login (SSO, SAML, 2FA), like OTT waits for its table */
+const LOGIN_TIMEOUT_MS = 5 * 60_000
 
 export class RepliconIntegration extends PlatformIntegration {
   public constructor(platformLink: string, options: PlatformOptions) {
@@ -292,7 +294,13 @@ export class RepliconIntegration extends PlatformIntegration {
   }
 
   private async goToTheTimesheet(goToFirstNotCompleted: boolean) {
-    await this.forceGetTargetSite('home')
+    // Replicon shows its home page once the user is logged in
+    await this.forceGetTargetSite('home', LOGIN_TIMEOUT_MS).catch(() => {
+      throw new Error(
+        'The Replicon login was not completed within 5 minutes. Please log in in the Edge window ' +
+          "(if 'Open Edge in' is set to Background, switch to Foreground for the login).",
+      )
+    })
     const updatedUrl = this.page.url().replace(/home\/?$/, 'my/timesheet/current')
     await this.page.goto(updatedUrl)
     await this.forceGetTargetSite('timesheet')
