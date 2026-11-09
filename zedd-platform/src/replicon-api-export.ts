@@ -51,6 +51,7 @@ export function timeEntryParameters(
   userUri: string,
   day: string,
   work: WorkEntry,
+  extensionFieldValues: unknown[] = [],
 ): unknown {
   if (!work.projectUri) {
     throw new Error(
@@ -100,7 +101,7 @@ export function timeEntryParameters(
         timePair: null,
       },
       customMetadata,
-      extensionFieldValues: [],
+      extensionFieldValues,
     },
     unitOfWorkId: randomUUID(),
   }
@@ -142,6 +143,59 @@ async function reopenIfSubmitted(api: RepliconApi, timesheet: Timesheet) {
   }
 }
 
+/** an extension field of the tenant, e.g. the work location, as returned on a time entry */
+interface ExtensionFieldValue {
+  definition?: { uri?: string; displayText?: string; name?: string }
+  tag?: { uri?: string } | null
+  textValue?: string | null
+  numericValue?: number | null
+}
+
+/** The work location is a custom field of the tenant; it's recognized by its name. */
+const WORK_LOCATION = /location|standort|arbeitsort|einsatzort/i
+const WORK_LOCATION_LOOKBACK_DAYS = 56
+
+/** The work location fields of a time entry, reduced to what's needed to write them again. */
+function workLocationFields(entry: { extensionFieldValues?: ExtensionFieldValue[] }) {
+  return (entry.extensionFieldValues ?? [])
+    .filter(
+      (field) => field.definition?.uri && WORK_LOCATION.test(JSON.stringify(field.definition)),
+    )
+    .filter((field) => field.tag?.uri || field.textValue || field.numericValue != null)
+    .map((field) => ({
+      definition: { uri: field.definition!.uri },
+      ...(field.tag?.uri ? { tag: { uri: field.tag.uri } } : {}),
+      ...(field.textValue ? { textValue: field.textValue } : {}),
+      ...(field.numericValue != null ? { numericValue: field.numericValue } : {}),
+    }))
+}
+
+/**
+ * Finds the work location for each exported day, like the Replicon page fills it in: from an entry
+ * of that day, else from the latest entry before. Throws if there's none, before anything changes.
+ */
+async function getWorkLocations(api: RepliconApi, userUri: string, days: string[]) {
+  const sorted = [...days].sort()
+  const start = format(addDays(parseISO(sorted[0]), -WORK_LOCATION_LOOKBACK_DAYS), 'yyyy-MM-dd')
+  const entries = (await getTimeEntries(api, userUri, start, sorted[sorted.length - 1]))
+    .filter((entry) => entry.entryDate && workLocationFields(entry).length > 0)
+    .sort((a, b) => fromRepliconDate(a.entryDate!).localeCompare(fromRepliconDate(b.entryDate!)))
+  const locations = new Map<string, unknown[]>()
+  for (const day of sorted) {
+    const entry =
+      entries.find((e) => fromRepliconDate(e.entryDate!) === day) ??
+      [...entries].reverse().find((e) => fromRepliconDate(e.entryDate!) < day)
+    if (!entry) {
+      throw new Error(
+        `No work location found for ${day}. Please enter one entry with its work location by hand ` +
+          'in Replicon first; zedd takes the work location over from there.',
+      )
+    }
+    locations.set(day, workLocationFields(entry))
+  }
+  return locations
+}
+
 async function getTimeEntries(api: RepliconApi, userUri: string, start: string, end: string) {
   const entries = await api.request('TimeEntryService3.svc/GetTimeEntriesForUserAndDateRange', {
     user: { uri: userUri },
@@ -152,6 +206,7 @@ async function getTimeEntries(api: RepliconApi, userUri: string, start: string, 
     uri?: string
     entryDate?: RepliconDate
     revisionGroupUri?: string
+    extensionFieldValues?: ExtensionFieldValue[]
   }[]
 }
 
@@ -218,6 +273,10 @@ export async function exportViaApi(
   for (const day of Object.keys(data)) {
     data[day].forEach((work) => timeEntryParameters(tenant, userUri, day, work))
   }
+  const daysWithWork = Object.keys(data).filter((day) => data[day].some((w) => w.hours > 0))
+  const workLocations = daysWithWork.length
+    ? await getWorkLocations(api, userUri, daysWithWork)
+    : new Map<string, unknown[]>()
 
   const timesheets = new Map<string, Timesheet>()
   for (const day of Object.keys(data).sort()) {
@@ -238,7 +297,7 @@ export async function exportViaApi(
         for (const work of data[day].filter((w) => w.hours > 0)) {
           const result = await api.request(
             'TimeEntryService3.svc/PutTimeEntry',
-            timeEntryParameters(tenant, userUri, day, work),
+            timeEntryParameters(tenant, userUri, day, work, workLocations.get(day)),
           )
           const uri = TIME_ENTRY_URI.exec(JSON.stringify(result))?.[0]
           if (uri) newEntries.push(uri)

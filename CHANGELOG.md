@@ -1,5 +1,6 @@
 ## [Unreleased]
 
+- Fix: Replicon export via API sets the work location: taken from an entry of the same day, else from the latest entry before (like the Replicon page fills it in); the export stops before changing anything if there's none
 - Feature: Replicon login: zedd continues with 'Sign in with SAML' on the Replicon login page on its own and waits up to 5 minutes for the login
 - Feature: Replicon export via Replicon's web services instead of clicking through the timesheet: zedd only logs in with Edge (SSO), then reopens submitted timesheets if needed, replaces the entries of the exported days (task, hours, activity, comment) and submits if wanted. Replicon's own error messages are shown if something fails
 - Feature: Replicon import loads the projects directly instead of opening the task search
