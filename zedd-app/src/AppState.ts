@@ -291,10 +291,17 @@ export class AppState {
   public changingSliceTask: TimeSlice | undefined = undefined
 
   /**
-   * init last, so this.slices is already set
+   * Stored by name only. Resolved in {@link AppState.loadFromJsonString}, as a reference could only
+   * be resolved if a slice or one of the last interacted tasks uses the task, e.g. not for a new
+   * name entered while not timing, after slices were booked onto 5 other tasks.
    */
   @observable
-  @serializable(reference(Task))
+  @serializable(
+    custom(
+      (task: Task) => task.name,
+      (name: string) => new Task(name ?? '', []),
+    ),
+  )
   public currentTask: Task = this.getUndefinedTask()
 
   @observable
@@ -466,6 +473,12 @@ export class AppState {
 
   public static loadFromJsonString(json: string): AppState {
     const newState = deserialize(AppState, JSON.parse(json))
+    newState.undoer.notUndoable(() => {
+      // use the task instance of the slices, or keep the entered name if it has no slices yet
+      const name = newState.currentTask.name
+      newState.currentTask =
+        !name || 'UNDEFINED' === name ? newState.getUndefinedTask() : newState.getTaskForName(name)
+    })
     newState.undoer.reset()
     return newState
   }
