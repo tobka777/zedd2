@@ -11,8 +11,6 @@ import {
   set as dateSet,
   subSeconds,
 } from 'date-fns'
-import * as fs from 'fs'
-import * as path from 'path'
 import * as sinon from 'sinon'
 import { SinonSpy } from 'sinon'
 
@@ -351,15 +349,6 @@ describe('AppState', () => {
 
       waitUntil('13:00')
       checkSlices('2020-01-01 11:00 - 2020-01-01 13:00 rebasing')
-    })
-
-    // needs local data files, run manually
-    it.skip('alle Stände von Sonja lassen sich laden', async () => {
-      const dir = 'C:\\Users\\aleonhar\\Documents\\My Received Files\\data'
-      for (const f of fs.readdirSync(dir)) {
-        console.log('load ', f)
-        await AppState.loadFromJsonString(fs.readFileSync(path.join(dir, f), 'utf8'))
-      }
     })
 
     // it('is possible to switch task while in an existing slice', () => {
