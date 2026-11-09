@@ -28,12 +28,19 @@ export interface RepliconApiRecording {
 }
 
 const RECORDED_URL = /\/services\/|\.svc\/|\/wbs\//
+/** login and authentication calls may carry passwords or tokens, so they aren't recorded */
+const NOT_RECORDED_URL = /login|authentication|security|token|saml|oauth|password/i
+const SECRET_FIELD = /("[^"]*(password|token|secret)[^"]*"\s*:\s*)"[^"]*"/gi
+const redact = (body: string | undefined) => body?.replace(SECRET_FIELD, '$1"***"')
 const TIMESHEET_URI = /urn:replicon-tenant:[^:"\/]+:timesheet:[0-9a-zA-Z-]+/
 const MAX_BODY_LENGTH = 50_000
 /** time the user has for the login (SSO, SAML, 2FA), like OTT waits for its table */
 const LOGIN_TIMEOUT_MS = 5 * 60_000
 
 export class RepliconIntegration extends PlatformIntegration {
+  /** zedd only talks to and records Replicon's own hosts */
+  protected isRepliconHost = (host: string) => host.endsWith('.replicon.com')
+
   public constructor(platformLink: string, options: PlatformOptions) {
     super(platformLink, options)
   }
@@ -190,17 +197,24 @@ export class RepliconIntegration extends PlatformIntegration {
 
     this.page.on('response', async (response) => {
       const request = response.request()
-      if (!RECORDED_URL.test(request.url())) return
+      const url = new URL(request.url())
+      if (
+        !this.isRepliconHost(url.hostname) ||
+        !RECORDED_URL.test(request.url()) ||
+        NOT_RECORDED_URL.test(url.pathname)
+      ) {
+        return
+      }
       const call: RepliconRecordedCall = {
         time: new Date().toISOString(),
         method: request.method(),
         url: request.url(),
-        requestBody: request.postData()?.slice(0, MAX_BODY_LENGTH) ?? undefined,
+        requestBody: redact(request.postData()?.slice(0, MAX_BODY_LENGTH) ?? undefined),
         status: response.status(),
       }
       call.responseBody = await response
         .text()
-        .then((text) => text.slice(0, MAX_BODY_LENGTH))
+        .then((text) => redact(text.slice(0, MAX_BODY_LENGTH)))
         .catch(() => undefined)
       recording.timesheetUri ??= [call.url, call.requestBody, call.responseBody]
         .map((s) => s && TIMESHEET_URI.exec(s)?.[0])
@@ -219,7 +233,7 @@ export class RepliconIntegration extends PlatformIntegration {
     await this.sleep(5).catch(() => undefined)
 
     try {
-      const api = new RepliconApi(this.page)
+      const api = new RepliconApi(this.page, this.isRepliconHost)
       recording.servicesRoot = api.servicesRoot
       if (recording.timesheetUri) {
         for (const operation of [
@@ -257,7 +271,12 @@ export class RepliconIntegration extends PlatformIntegration {
     if (!currentTimesheetUri) {
       throw new Error('Could not find the Replicon timesheet after the login.')
     }
-    await exportViaApi(new RepliconApi(this.page), currentTimesheetUri, data, submitTimesheets)
+    await exportViaApi(
+      new RepliconApi(this.page, this.isRepliconHost),
+      currentTimesheetUri,
+      data,
+      submitTimesheets,
+    )
   }
 
   /**
