@@ -390,6 +390,7 @@ export class RepliconIntegration extends PlatformIntegration {
 
   private async forceGetTargetSite(searchedPartInLink: string, timeout = 60000) {
     const start = Date.now()
+    let samlLoginClicked = false
 
     while (true) {
       const currentUrl = this.page.url()
@@ -406,7 +407,45 @@ export class RepliconIntegration extends PlatformIntegration {
         throw new Error(`Timed out waiting for URL to contain: ${searchedPartInLink}`)
       }
 
+      // Replicon keeps its login in a session cookie, which Edge drops on close, so its login page
+      // comes up on every run. The Microsoft login behind SAML is kept in the persistent profile,
+      // so continuing with SAML usually signs in without any user interaction.
+      if (!samlLoginClicked) {
+        samlLoginClicked = await this.clickSamlLoginIfShown()
+      }
+
       await waitForTimeout(300)
+    }
+  }
+
+  /**
+   * Clicks "Sign in with SAML" if the Replicon login page is shown.
+   *
+   * @returns whether the button was clicked
+   */
+  private async clickSamlLoginIfShown(): Promise<boolean> {
+    try {
+      const candidates = await $x(
+        this.page,
+        "//*[self::button or self::a or self::input or @role='button']" +
+          "[contains(translate(normalize-space(.), 'saml', 'SAML'), 'SAML')" +
+          " or contains(translate(@value, 'saml', 'SAML'), 'SAML')]",
+      )
+      let button
+      for (const candidate of candidates) {
+        if (await candidate.isVisible()) {
+          button = candidate
+          break
+        }
+      }
+      if (!button) return false
+      console.log('[Replicon] login page shown, continuing with SAML')
+      await button.click({ timeout: 5000 })
+      return true
+    } catch (e) {
+      // the page may navigate while it is checked
+      console.warn('[Replicon] could not check for SAML login', e)
+      return false
     }
   }
 
