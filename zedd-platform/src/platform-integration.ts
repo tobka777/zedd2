@@ -46,6 +46,8 @@ export abstract class PlatformIntegration {
     }
     const launchOptions: LaunchOptions = {
       channel: 'msedge',
+      // Playwright passes --no-sandbox otherwise, which Edge warns about as unsupported
+      chromiumSandbox: true,
       headless: this.options.headless,
       args: [`--window-size=${window.screen.availWidth},${window.screen.availHeight}`],
     }
