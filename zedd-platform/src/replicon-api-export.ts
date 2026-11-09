@@ -4,13 +4,6 @@ import { PlatformExportFormat } from './model'
 import { WorkEntry } from './model/work-entry.model'
 import { RepliconApi } from './replicon-api'
 
-/*
- * Export to Replicon through its JSON web services instead of clicking through the timesheet page.
- * Payloads follow https://github.com/cheeloung/replicon-mcp (verified there against a live tenant)
- * and the operation signatures of Replicon's service help pages (…/services/<Service>.svc/help).
- * Only the activity metadata key is assumed.
- */
-
 const USER_URI = /urn:replicon-tenant:[^:"]+:user:[0-9]+/
 const TIMESHEET_STATUS_WAITING = /:waiting$/
 const TIMESHEET_STATUS_APPROVED = /:approved$/

@@ -207,6 +207,7 @@ function transform({ slices, showing, platformState }: PlatformViewProps): Platf
       hours: sum(workEntries.map((we) => we.hours)),
       projectName: workEntries[0].projectName,
       projectIntId: workEntries[0].projectIntId,
+      projectUri: workEntries[0].projectUri,
       taskIntId: workEntries[0].taskIntId,
       taskName: workEntries[0].taskName,
       platformType: workEntries[0].platformType,
