@@ -5,6 +5,9 @@ import { WorkEntry } from './model/work-entry.model'
 import { RepliconApi } from './replicon-api'
 
 const USER_URI = /urn:replicon-tenant:[^:"]+:user:[0-9]+/
+const TIME_ENTRY_URI = /urn:replicon-tenant:[^:"]+:time-entry:[0-9a-zA-Z-]+/
+/** project time carries project or task metadata; other entries (e.g. attendance only) are kept */
+const PROJECT_TIME = /time-entry-metadata-key:(project|task)"/
 const TIMESHEET_STATUS_WAITING = /:waiting$/
 const TIMESHEET_STATUS_APPROVED = /:approved$/
 
@@ -152,18 +155,23 @@ async function getTimeEntries(api: RepliconApi, userUri: string, start: string, 
   }[]
 }
 
-/** Deletes the existing time entries of the user on the given days. */
-async function deleteTimeEntries(api: RepliconApi, userUri: string, days: string[]) {
+/** The existing project time entries of the user on the given days. */
+async function getProjectTimeEntries(api: RepliconApi, userUri: string, days: string[]) {
   const daySet = new Set(days)
+  const uris: string[] = []
   for (const [start, end] of consecutiveRanges(days)) {
     for (const entry of await getTimeEntries(api, userUri, start, end)) {
       if (!entry.uri || (entry.entryDate && !daySet.has(fromRepliconDate(entry.entryDate)))) {
         continue
       }
-      await api.request('TimeEntryService3.svc/DeleteTimeEntry', { timeEntryUri: entry.uri })
+      if (PROJECT_TIME.test(JSON.stringify(entry))) uris.push(entry.uri)
     }
   }
+  return uris
 }
+
+const deleteTimeEntry = (api: RepliconApi, timeEntryUri: string) =>
+  api.request('TimeEntryService3.svc/DeleteTimeEntry', { timeEntryUri })
 
 /**
  * Submits the timesheet. Like the Replicon page, the revision groups of the entries are submitted
@@ -221,14 +229,31 @@ export async function exportViaApi(
 
   for (const timesheet of timesheets.values()) {
     await reopenIfSubmitted(api, timesheet)
-    await deleteTimeEntries(api, userUri, timesheet.days)
-    for (const day of timesheet.days) {
-      for (const work of data[day]) {
-        await api.request(
-          'TimeEntryService3.svc/PutTimeEntry',
-          timeEntryParameters(tenant, userUri, day, work),
-        )
+    const oldEntries = await getProjectTimeEntries(api, userUri, timesheet.days)
+
+    // write the new entries first, so a failure doesn't leave the days empty
+    const newEntries: string[] = []
+    try {
+      for (const day of timesheet.days) {
+        for (const work of data[day].filter((w) => w.hours > 0)) {
+          const result = await api.request(
+            'TimeEntryService3.svc/PutTimeEntry',
+            timeEntryParameters(tenant, userUri, day, work),
+          )
+          const uri = TIME_ENTRY_URI.exec(JSON.stringify(result))?.[0]
+          if (uri) newEntries.push(uri)
+        }
       }
+    } catch (e) {
+      // take back what was written, so the days keep their old entries
+      for (const uri of newEntries) {
+        await deleteTimeEntry(api, uri).catch((e2) => console.error('Could not undo ' + uri, e2))
+      }
+      throw e
+    }
+
+    for (const uri of oldEntries) {
+      await deleteTimeEntry(api, uri)
     }
     if (submitTimesheets) {
       await submit(api, userUri, timesheet)
