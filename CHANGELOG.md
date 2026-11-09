@@ -1,5 +1,6 @@
 ## [Unreleased]
 
+- Feature: 'Record Replicon API calls' in the settings records the web service calls of the Replicon page (no changes by zedd, no cookies/tokens), to prepare an export via Replicon's API instead of clicking through the page
 - Feature: Replicon and OTT now run in Microsoft Edge via Playwright instead of Chrome via Puppeteer. Edge signs in with the Microsoft work account of the device, so no SSO extension is needed for the 2FA login
 - Feature: zedd uses its own persistent Edge profile, so the login is kept between imports/exports; it can be reset in the settings
 - Feature: Edge windows of a running import/export are closed when zedd quits

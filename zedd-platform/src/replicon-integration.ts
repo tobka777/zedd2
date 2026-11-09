@@ -16,6 +16,32 @@ import {
 import { enGB } from 'date-fns/locale'
 import partition from 'lodash/partition'
 import { WorkEntry } from './model/work-entry.model'
+import { RepliconApi, RepliconApiResult } from './replicon-api'
+import { promises as fsp } from 'fs'
+
+/** One call of Replicon's web services, recorded while the user works in the timesheet. */
+export interface RepliconRecordedCall {
+  time: string
+  method: string
+  url: string
+  requestBody?: string
+  status?: number
+  responseBody?: string
+}
+
+export interface RepliconApiRecording {
+  recordedAt: string
+  servicesRoot?: string
+  timesheetUri?: string
+  /** read-only calls zedd made itself, to check that the API works with the browser session */
+  probe: Record<string, RepliconApiResult>
+  /** calls of the Replicon page while the user worked in it */
+  calls: RepliconRecordedCall[]
+}
+
+const RECORDED_URL = /\/services\/|\.svc\/|\/wbs\//
+const TIMESHEET_URI = /urn:replicon-tenant:[^:"\/]+:timesheet:[0-9a-zA-Z-]+/
+const MAX_BODY_LENGTH = 50_000
 
 export class RepliconIntegration extends PlatformIntegration {
   public constructor(platformLink: string, options: PlatformOptions) {
@@ -131,6 +157,85 @@ export class RepliconIntegration extends PlatformIntegration {
       return taskActivities
     }
     throw new Error('No task activities found')
+  }
+
+  /**
+   * Records the web service calls of the Replicon page, to learn the payloads for an API-based
+   * export. Opens the current timesheet in a visible Edge, checks read-only that the services work
+   * with the browser session, then records every call while the user works in the timesheet (e.g.
+   * reopen, enter time, submit), until the user closes the Edge window. Nothing is changed by zedd.
+   * Request headers (cookies, tokens) are not recorded.
+   *
+   * @param outFile - JSON file the recording is written to, also while recording
+   */
+  async recordApiCalls(outFile: string): Promise<RepliconApiRecording> {
+    await this.init(false)
+    // subscribed right away, so closing the window early isn't missed
+    const pageClosed = new Promise<void>((resolve) => this.page.once('close', () => resolve()))
+    const recording: RepliconApiRecording = {
+      recordedAt: new Date().toISOString(),
+      probe: {},
+      calls: [],
+    }
+    const save = () =>
+      fsp
+        .writeFile(outFile, JSON.stringify(recording, undefined, 2), 'utf8')
+        .catch((e) => console.error('Could not save Replicon API recording', e))
+
+    this.page.on('response', async (response) => {
+      const request = response.request()
+      if (!RECORDED_URL.test(request.url())) return
+      const call: RepliconRecordedCall = {
+        time: new Date().toISOString(),
+        method: request.method(),
+        url: request.url(),
+        requestBody: request.postData()?.slice(0, MAX_BODY_LENGTH) ?? undefined,
+        status: response.status(),
+      }
+      call.responseBody = await response
+        .text()
+        .then((text) => text.slice(0, MAX_BODY_LENGTH))
+        .catch(() => undefined)
+      recording.timesheetUri ??= [call.url, call.requestBody, call.responseBody]
+        .map((s) => s && TIMESHEET_URI.exec(s)?.[0])
+        .find(Boolean)
+      recording.calls.push(call)
+      await save()
+    })
+
+    try {
+      await this.goToTheTimesheet(false)
+    } catch (e) {
+      // e.g. the login didn't finish in time; the user can still navigate there themselves
+      console.error('Could not open the Replicon timesheet', e)
+    }
+    // give the page time for its own calls, which reveal the timesheet URI
+    await this.sleep(5).catch(() => undefined)
+
+    try {
+      const api = new RepliconApi(this.page)
+      recording.servicesRoot = api.servicesRoot
+      if (recording.timesheetUri) {
+        for (const operation of [
+          'TimesheetService1.svc/GetStandardTimesheet2',
+          'TimesheetService1.svc/GetTimesheetSummary',
+        ]) {
+          recording.probe[operation] = await api.call(operation, {
+            timesheetUri: recording.timesheetUri,
+          })
+        }
+      }
+    } catch (e) {
+      // e.g. the user closed the window early; keep what was recorded so far
+      console.error('Replicon API probe failed', e)
+    }
+    await save()
+
+    // record until the user closes the window (or the browser is closed after 10 minutes)
+    await pageClosed
+    await save()
+    await this.quitBrowser()
+    return recording
   }
 
   async exportTasks(whatt: PlatformExportFormat, submitTimesheets: boolean): Promise<void> {

@@ -282,6 +282,28 @@ export class PlatformState {
     await fsp.rm(this.edgeProfileDir, { recursive: true, force: true })
   }
 
+  /**
+   * Records the web service calls of the Replicon page while the user works in the timesheet, to
+   * build an API-based export. Nothing is changed by zedd; see RepliconIntegration.recordApiCalls.
+   *
+   * @returns the file the recording was written to
+   */
+  public async recordRepliconApiCalls(): Promise<string> {
+    if (this._currentlyExportingTasks || this._currentlyImportingTasks) {
+      throw new Error('Cannot record while an import/export is running.')
+    }
+    const dir = path.join(this.platformDir, 'replicon-api-recordings')
+    await mkdirIfNotExists(dir, { recursive: true })
+    const file = path.join(dir, 'recording_' + formatDate(new Date(), FILE_DATE_FORMAT) + '.json')
+    this._currentlyImportingTasks = true
+    try {
+      await (this.integrationMap['REPLICON'] as RepliconIntegration).recordApiCalls(file)
+    } finally {
+      this._currentlyImportingTasks = false
+    }
+    return file
+  }
+
   public killPlatform() {
     this._currentlyExportingTasks = false
     this._currentlyImportingTasks = false

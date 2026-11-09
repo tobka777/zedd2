@@ -17,10 +17,13 @@ export abstract class PlatformIntegration {
     this.options = options
   }
 
-  async init() {
+  /**
+   * @param headless - overrides the headless option, e.g. to show the browser to the user
+   */
+  async init(headless = this.options.headless) {
     checkPlatformUrl(this.platformLink)
     await this.quitBrowser()
-    const context = await this.launchEdge()
+    const context = await this.launchEdge(headless)
     this.context = context
     this.closeTimer = setTimeout(async () => {
       // only close the browser of this run, not one launched by a later run
@@ -39,7 +42,7 @@ export abstract class PlatformIntegration {
    * Starts the installed Microsoft Edge. Edge signs in with the Microsoft work account of the
    * device on its own, so no SSO extension is needed for the 2FA login.
    */
-  private async launchEdge(): Promise<BrowserContext> {
+  private async launchEdge(headless: boolean | undefined): Promise<BrowserContext> {
     const viewport = {
       width: Math.round(window.screen.availWidth),
       height: Math.round(window.screen.availHeight * 0.9),
@@ -48,7 +51,7 @@ export abstract class PlatformIntegration {
       channel: 'msedge',
       // Playwright passes --no-sandbox otherwise, which Edge warns about as unsupported
       chromiumSandbox: true,
-      headless: this.options.headless,
+      headless,
       args: [`--window-size=${window.screen.availWidth},${window.screen.availHeight}`],
     }
     try {
