@@ -6,6 +6,8 @@ export interface Task {
   intId: number
   projectIntId: number
   projectName: string
+  /** URI of the Replicon project, needed to write time entries via Replicon's web services */
+  projectUri?: string
   start?: Date
   end?: Date
   taskCode: string

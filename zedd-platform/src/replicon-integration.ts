@@ -414,6 +414,7 @@ export class RepliconIntegration extends PlatformIntegration {
           intId: taskJsonResponse.results[j].task.uri.split(':task:')[1],
           projectIntId: project.code,
           projectName: projectName,
+          projectUri: project.uri,
           start: undefined,
           end: undefined,
           taskCode: taskJsonResponse.results[j].task.name,

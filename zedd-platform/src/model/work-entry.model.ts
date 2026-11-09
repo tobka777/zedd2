@@ -4,6 +4,8 @@ export interface WorkEntry {
   id: string
   projectName: string
   projectIntId: number
+  /** URI of the Replicon project, see Task.projectUri */
+  projectUri?: string
   taskName: string
   taskIntId: number
   hours: number
