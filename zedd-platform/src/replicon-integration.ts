@@ -1,22 +1,10 @@
-import { $x, waitForSelector, waitForTimeout, waitForXPath } from './utils'
+import { $x, waitForSelector, waitForTimeout } from './utils'
 import { PlatformIntegration } from './platform-integration'
 import { PlatformOptions } from './model/platform.options.model'
 import { PlatformExportFormat, Task, TaskActivity } from './model'
 import { ElementHandle, Request } from 'playwright-core'
-import { What } from './model/what.model'
-import {
-  eachDayOfInterval,
-  format,
-  isWithinInterval,
-  min as dateMin,
-  parse,
-  parseISO,
-  isValid,
-} from 'date-fns'
-import { enGB } from 'date-fns/locale'
-import partition from 'lodash/partition'
-import { WorkEntry } from './model/work-entry.model'
 import { RepliconApi, RepliconApiResult } from './replicon-api'
+import { exportViaApi } from './replicon-api-export'
 import { promises as fsp } from 'fs'
 
 /** One call of Replicon's web services, recorded while the user works in the timesheet. */
@@ -50,9 +38,34 @@ export class RepliconIntegration extends PlatformIntegration {
 
   async importTasks(notifyTasks?: (p: Task[]) => void): Promise<Task[]> {
     await this.init()
+    const timesheetUri = this.watchTimesheetUri()
     await this.goToTheTimesheet(true)
     await waitForSelector(this.page, 'table.dataGrid > tbody[sectiontype="actions"]')
-    let taskTable = await waitForSelector(this.page, 'table.dataGrid')
+
+    const projects = await this.fetchProjects(await this.waitFor(timesheetUri, 10_000))
+    const tasks = await this.getTasksFromJson(projects.json, projects.tenant, projects.timesheet)
+
+    notifyTasks && notifyTasks(tasks)
+    await this.quitBrowser()
+    return tasks
+  }
+
+  /**
+   * Loads the projects of the timesheet from the URL the task search of the page uses. Requests it
+   * directly; only if that fails, the task search is opened in the page to find the URL.
+   */
+  private async fetchProjects(
+    timesheetUri: string | undefined,
+  ): Promise<{ json: any; tenant: string; timesheet: string }> {
+    if (timesheetUri) {
+      const url = `${new URL(this.page.url()).origin}/wbs/${timesheetUri}/projects?q=&c=100`
+      const json = await this.getJson(url).catch(() => undefined)
+      if (Array.isArray(json?.results)) {
+        const [tenant, timesheet] = this.extractTenantAndTimesheet(url)
+        return { json, tenant, timesheet }
+      }
+      console.warn('[Replicon] projects not available directly, opening the task search')
+    }
 
     const urlTaskPromise = new Promise<string>((resolve) => {
       const onRequest = (req: Request) => {
@@ -66,41 +79,32 @@ export class RepliconIntegration extends PlatformIntegration {
           resolve(url)
         }
       }
-
       this.page.on('request', onRequest)
     })
 
+    const taskTable = await waitForSelector(this.page, 'table.dataGrid')
     const addRowButton = await waitForSelector(
       taskTable!,
       'ul.actionList > li > a[aria-label="Add New TimeLine"]',
     )
     await addRowButton!.click()
-
     const taskSearchButton = await waitForSelector(this.page, 'td.timesheetSortableHeader')
     await taskSearchButton?.click()
-
     await this.clickSearchByCategory()
 
     const url = await urlTaskPromise
-
     const [tenant, timesheet] = this.extractTenantAndTimesheet(url)
+    return { json: await this.getJson(url), tenant, timesheet }
+  }
 
-    const projectJsonResponse = await this.page.evaluate(async (url) => {
+  private getJson(url: string): Promise<any> {
+    return this.page.evaluate(async (url) => {
       const response = await fetch(url, {
         method: 'GET',
-        headers: {
-          'Content-Type': 'application/json',
-        },
+        headers: { 'Content-Type': 'application/json' },
       })
-
       return response.json()
     }, url)
-
-    const tasks = await this.getTasksFromJson(projectJsonResponse, tenant, timesheet)
-
-    notifyTasks && notifyTasks(tasks)
-    await this.quitBrowser()
-    return tasks
   }
 
   /**
@@ -238,80 +242,41 @@ export class RepliconIntegration extends PlatformIntegration {
     return recording
   }
 
-  async exportTasks(whatt: PlatformExportFormat, submitTimesheets: boolean): Promise<void> {
+  /**
+   * Exports through Replicon's web services (see exportViaApi), with the browser only used for the
+   * SSO login: the existing entries of the exported days are replaced.
+   */
+  async exportTasks(data: PlatformExportFormat, submitTimesheets: boolean): Promise<void> {
+    if (Object.keys(data).length === 0) return
     await this.init()
+    const timesheetUri = this.watchTimesheetUri()
     await this.goToTheTimesheet(false)
-
-    const exportedDays = new Set(Object.keys(whatt))
-    let what: What[] = Object.keys(whatt)
-      .filter((dateString) => whatt[dateString].length > 0)
-      .map((dateString: string) => ({
-        day: parseISO(dateString),
-        work: whatt[dateString],
-      }))
-
-    while (what.length > 0) {
-      await this.chooseDateFromCalendar(what)
-      await waitForSelector(this.page, 'table.dataGrid')
-
-      await this.clickElementWithContent(
-        '(//tbody[@sectiontype="rows"]/tr)[last()]/td[contains(@class, "timesheetSortableHeader")]',
-      )
-
-      await this.clickSearchByCategory()
-
-      const timerange = await this.page.$eval('.timesheetPeriod > .timesheetPeriodSelect', (el) =>
-        el.innerHTML.trim(),
-      )
-      const [start, end] = timerange
-        .split(' - ')
-        .map((ds) => parse(ds.trim(), 'dd/MM/yyyy', new Date(), { locale: enGB }))
-
-      if (!isValid(start) || !isValid(end)) {
-        throw new Error(
-          "Datum '" +
-            timerange +
-            "' entspricht nicht dem Format dd/MM/yyyy. Dies kann in den Settings von Replicon angepasst werden.",
-        )
-      }
-
-      const [relevant, others] = partition(what, (w) => isWithinInterval(w.day, { start, end }))
-
-      await this.reopenTimesheet()
-      if (
-        eachDayOfInterval({ start, end }).every((d) => exportedDays.has(format(d, 'yyyy-MM-dd')))
-      ) {
-        await this.clearAllTasks()
-        await this.sleep(2)
-      } else {
-        await this.clearDays(
-          eachDayOfInterval({ start, end }).filter((d) =>
-            exportedDays.has(format(d, 'yyyy-MM-dd')),
-          ),
-        )
-      }
-
-      for (let i = 0; i < relevant.length; i++) {
-        for (let j = 0; j < relevant[i].work.length; j++) {
-          let work = relevant[i].work[j]
-          let row = await this.getRowTaskFromTable(work)
-          let taskSearchButton = null
-          if (!row) {
-            await this.addRow()
-            await waitForTimeout(300)
-            taskSearchButton = await this.clickElementWithContent(
-              '(//tbody[@sectiontype="rows"]/tr)[last()]/td[.//span[contains(@class, "taskSelectorSearchByCategoryContainer")]//span[contains(@class, "placeholder") and contains(text(), "Select Project")]]',
-            )
-          }
-          await this.sleep(1)
-          await this.addNewTask(row, work, relevant[i].day, taskSearchButton)
-        }
-      }
-
-      what = others
-      await this.sleep(2)
-      await this.finaliseTimesheet(submitTimesheets)
+    const currentTimesheetUri = await this.waitFor(timesheetUri, 15_000)
+    if (!currentTimesheetUri) {
+      throw new Error('Could not find the Replicon timesheet after the login.')
     }
+    await exportViaApi(new RepliconApi(this.page), currentTimesheetUri, data, submitTimesheets)
+  }
+
+  /**
+   * Remembers the first timesheet URI the Replicon page uses in its requests.
+   */
+  private watchTimesheetUri(): () => string | undefined {
+    let uri: string | undefined
+    this.page.on('request', (request) => {
+      uri ??= [request.url(), request.postData() ?? '']
+        .map((s) => TIMESHEET_URI.exec(s)?.[0])
+        .find(Boolean)
+    })
+    return () => uri
+  }
+
+  private async waitFor<T>(get: () => T | undefined, timeout: number): Promise<T | undefined> {
+    const start = Date.now()
+    while (get() === undefined && Date.now() - start < timeout) {
+      await waitForTimeout(300)
+    }
+    return get()
   }
 
   private async addRow() {
@@ -431,7 +396,8 @@ export class RepliconIntegration extends PlatformIntegration {
     let tasks: Task[] = []
 
     const coreUrlStart =
-      'https://eu3.replicon.com/wbs/urn:replicon-tenant:' +
+      new URL(this.page.url()).origin +
+      '/wbs/urn:replicon-tenant:' +
       tenant +
       ':timesheet:' +
       timesheet +
@@ -440,16 +406,7 @@ export class RepliconIntegration extends PlatformIntegration {
     for (let i = 0; i < projectJsonResponse.results.length; i++) {
       let project = projectJsonResponse.results[i].project
       let url = coreUrlStart + project.uri + coreUrlEnd
-      const taskJsonResponse = await this.page.evaluate(async (url) => {
-        const response = await fetch(url, {
-          method: 'GET',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-        })
-
-        return response.json()
-      }, url)
+      const taskJsonResponse = await this.getJson(url)
       for (let j = 0; j < taskJsonResponse.results.length; j++) {
         const projectName = project.name.replace(/^"|"$/g, '')
         let task: Task = {
@@ -467,375 +424,5 @@ export class RepliconIntegration extends PlatformIntegration {
     }
 
     return tasks
-  }
-
-  private async chooseDateFromCalendar(what: What[]) {
-    const minDate = dateMin(what.map((w) => w.day))
-
-    const minMonth = (minDate.getMonth() + 1).toString()
-
-    const calendar = await waitForSelector(this.page, '.timesheetPeriod')
-    await calendar!.click()
-
-    await this.selectElementWithContent(
-      '//select[contains(@class, "calendarSelect") and @aria-label="Month"][option]',
-      minMonth,
-    )
-    await this.selectElementWithContent(
-      '//select[contains(@class, "calendarSelect") and @aria-label="Year"][option]',
-      minDate.getFullYear().toString(),
-    )
-
-    let weeks = await this.page!.$$('.periodCalendarBody > .period')
-
-    for (let i = 0; i < weeks.length; i++) {
-      const weeksUpdate = await this.page!.$$('.periodCalendarBody > .period')
-      const weekEl = weeksUpdate[i]
-      const periodValue = await weekEl.evaluate((period) => period.getAttribute('value'))
-      const isSelected = await weekEl.evaluate((period) => period.classList.contains('selected'))
-      if (!(periodValue && /^\d{4}-\d{2}-\d{2}$/.test(periodValue))) {
-        throw new Error('Value date has wrong format')
-      }
-
-      const dateFromValue = new Date(periodValue)
-
-      if (isNaN(dateFromValue.getTime())) {
-        throw new Error('Date ist incorrect')
-      }
-
-      if (minMonth != (dateFromValue.getMonth() + 1).toString()) {
-        continue
-      }
-
-      const dayElements = await weekEl.$$('.dsday')
-
-      for (const dayEl of dayElements) {
-        const day = await dayEl.evaluate((node) => node.innerHTML)
-
-        if (day === minDate.getDate().toString()) {
-          if (isSelected) {
-            await dayEl.click()
-          } else {
-            await Promise.all([
-              this.page.waitForNavigation({ waitUntil: 'networkidle' }),
-              await dayEl.click(),
-            ])
-          }
-
-          return
-        }
-      }
-    }
-  }
-
-  private async selectElementWithContent(expression: string, option: string) {
-    const [node] = await $x(this.page, expression)
-
-    if (node) {
-      const button = node as unknown as ElementHandle<Element>
-      await button.selectOption(option)
-      return button
-    }
-
-    return null
-  }
-
-  private async addNewTask(
-    row: ElementHandle<Element> | null,
-    work: WorkEntry,
-    taskDay: Date,
-    taskSearchButton: ElementHandle<Element> | null,
-  ) {
-    row = await this.chooseTaskFromDropdown(row, taskSearchButton, work)
-
-    const [activitySelectNode] = await $x(row, ".//a[contains(., 'Select an Activity')]")
-    const activitySelect = activitySelectNode as unknown as ElementHandle<Element>
-    if (activitySelect) {
-      await activitySelect.click()
-
-      await waitForXPath(
-        this.page,
-        "//ul[contains(@class, 'divDropdownList')]//a[contains(text(), '" +
-          work.taskActivity +
-          "')]",
-        { visible: true },
-      )
-      await this.clickElementWithContent(
-        "//ul[contains(@class, 'divDropdownList')]//a[contains(text(), '" +
-          work.taskActivity +
-          "')]",
-      )
-    }
-
-    await this.fillTaskDay(row, work, taskDay)
-    await this.page.keyboard.down('Enter')
-    await this.page.keyboard.up('Enter')
-  }
-
-  private async chooseTaskFromDropdown(
-    row: ElementHandle<Element> | null,
-    taskdropdown: ElementHandle<Element> | null,
-    work: WorkEntry,
-  ) {
-    if (!row) {
-      const taskSearchButton = await taskdropdown!.$('input[placeholder="Type to search"]')
-      await taskSearchButton!.type(String(work.projectIntId))
-      await this.chooseTaskFromOptions(
-        work.projectName + ' - ',
-        'ul.divDropdownList > li.highlighted.hasChild',
-      )
-      await waitForSelector(this.page, 'ul.divDropdownList > li.highlighted.hasChild', {
-        hidden: true,
-        timeout: 5000,
-      })
-      await taskSearchButton!.type(work.taskCode + ' - ' + work.taskCode)
-      await this.chooseTaskFromOptions(
-        work.taskCode + ' - ' + work.taskCode,
-        'ul.divDropdownList > li.highlighted.flatTaskItem',
-      )
-      await this.page.waitForFunction(
-        (projectIntId) => {
-          const tbody = document.evaluate(
-            '//tbody[@sectiontype="rows"]',
-            document,
-            null,
-            XPathResult.FIRST_ORDERED_NODE_TYPE,
-            null,
-          ).singleNodeValue as HTMLElement
-
-          return tbody && tbody.innerHTML.includes(projectIntId)
-        },
-        String(work.projectIntId),
-        { timeout: 5000 },
-      )
-      row = await this.getRowTaskFromTable(work)
-    }
-
-    if (!row) {
-      throw new Error('No row found')
-    }
-    return row
-  }
-
-  private async chooseTaskFromOptions(searchedText: string, expression: string) {
-    while (true) {
-      await this.page.keyboard.down('ArrowDown')
-      await this.page.keyboard.up('ArrowDown')
-      let li = null
-      try {
-        li = await waitForSelector(this.page, expression, {
-          timeout: 1000,
-        })
-      } catch (e) {
-        li = null
-      }
-      if (li) {
-        const code = await li.evaluate((el) => {
-          el.classList.remove('highlighted')
-          return (el as HTMLElement).innerText
-        })
-
-        if (code.includes(searchedText)) {
-          await this.page.keyboard.down('Enter')
-          await this.page.keyboard.up('Enter')
-
-          break
-        }
-      }
-    }
-  }
-
-  /**
-   * Clears the fields of the given days in all rows of the opened timesheet.
-   */
-  private async clearDays(days: Date[]) {
-    const rowCount = (await $x(this.page, '//tbody[@sectiontype="rows"]/tr')).length
-    for (let i = 0; i < rowCount; i++) {
-      for (const day of days) {
-        // query again, as the table may be re-rendered after changing a field
-        const row = (await $x(this.page, '//tbody[@sectiontype="rows"]/tr'))[i]
-        const dayField = row && (await this.findDayField(row, day))
-        if (!dayField || !(await dayField.evaluate((el) => (el as HTMLInputElement).value))) {
-          continue
-        }
-        await this.clearField(dayField)
-        await this.page.keyboard.press('Tab')
-      }
-    }
-  }
-
-  private async fillTaskDay(row: ElementHandle<Element>, work: WorkEntry, taskDay: Date) {
-    const dayField = await this.findDayField(row, taskDay)
-    if (!dayField) {
-      throw new Error('No day field for ' + taskDay.toDateString() + ' found')
-    }
-
-    await this.clearField(dayField)
-    await dayField.type(String(work.hours))
-
-    await this.commentTask(work.comment, dayField)
-  }
-
-  private async clearField(field: ElementHandle<Element>) {
-    await field.click()
-    await field.evaluate((el) => (el as HTMLInputElement).select())
-    await this.page.keyboard.press('Backspace')
-  }
-
-  private async findDayField(row: ElementHandle<Element>, taskDay: Date) {
-    const formattedTaskDay = taskDay.toLocaleDateString('en-US', {
-      weekday: 'short',
-      day: 'numeric',
-    })
-    const [weekday, day] = formattedTaskDay.replace(',', '').split(' ')
-
-    const days = await $x(row, './/td[contains(@class,"day")]/input')
-    let dayFieldNode = null
-
-    for (let dayNode of days) {
-      const node = dayNode as unknown as ElementHandle<Element>
-      let isSearchedRow = await node.evaluate(
-        (el, { weekday, day }) => {
-          let arialLabel = el.getAttribute('aria-label')
-          return arialLabel && arialLabel.includes(day + ' ' + weekday)
-        },
-        { weekday, day },
-      )
-      if (isSearchedRow) {
-        dayFieldNode = node
-        break
-      }
-    }
-
-    return dayFieldNode as ElementHandle<Element> | null
-  }
-
-  private async getRowTaskFromTable(work: WorkEntry) {
-    const projectKey = String(work.projectIntId)
-
-    for (let attempt = 1; attempt <= 3; attempt++) {
-      if (attempt > 1) {
-        await this.sleep(0.4)
-      }
-
-      const rows = await $x(this.page, '//tbody[@sectiontype="rows"]/tr')
-      for (const rowNode of rows) {
-        const row = rowNode as ElementHandle<Element>
-        const taskCell = await row.$('.timesheetTaskNameFormat')
-        const activityCell = await row.$('.activity')
-        if (!taskCell || !activityCell) continue
-
-        const projectMatches = await taskCell.evaluate((el, key) => {
-          const text = el.querySelector('div')?.textContent ?? ''
-          const needle = '- ' + key
-          for (let i = text.indexOf(needle); i !== -1; i = text.indexOf(needle, i + 1)) {
-            if (!/[A-Za-z0-9]/.test(text.charAt(i + needle.length))) return true
-          }
-          return false
-        }, projectKey)
-        const taskMatches = await taskCell.evaluate(
-          (el, taskCode) =>
-            el.querySelectorAll('div')[1]?.textContent?.trim().split(' - ')[0] === taskCode,
-          work.taskCode,
-        )
-        const activityMatches = await activityCell.evaluate(
-          (el, taskActivity) =>
-            el?.textContent?.trim() === taskActivity ||
-            el?.textContent?.trim() === 'Select an Activity',
-          work.taskActivity,
-        )
-
-        if (projectMatches && taskMatches && activityMatches) {
-          return row
-        }
-      }
-    }
-
-    return null
-  }
-
-  private async commentTask(comment: string | undefined, dayField: ElementHandle<Element>) {
-    if (comment) {
-      dayField = (
-        await this.page.evaluateHandle((el) => {
-          while (el && el.parentElement && !el.classList.contains('day')) {
-            el = el.parentElement
-          }
-          return el
-        }, dayField)
-      ).asElement() as ElementHandle<Element>
-      if (dayField) {
-        const commentPlus = await waitForSelector(
-          dayField,
-          '.componentAllocationEntryDetailIndicator > .indicator',
-        )
-        await commentPlus?.click()
-        const textArea = await waitForSelector(this.page, '.contextPopup textarea.commentBox', {
-          visible: true,
-        })
-        await textArea?.type(comment)
-        const okButton = await waitForSelector(this.page, '.contextPopup input#okButton')
-        await okButton?.click()
-      }
-    }
-  }
-
-  private async reopenTimesheet() {
-    const reopenButton = await this.clickElementWithContent('//input[@value="Reopen"]')
-    if (reopenButton) {
-      await waitForXPath(this.page, '//h1[text()="Reopen Timesheet"]')
-      const confirmReopenButton = await waitForSelector(
-        this.page,
-        'div.buttonRow > input.important[value="Reopen"]',
-      )
-      await confirmReopenButton?.click()
-    }
-  }
-
-  private async clearAllTasks() {
-    const clearAllButton = await waitForSelector(this.page, 'input.clearall')
-    await clearAllButton?.click()
-    await waitForSelector(this.page, 'div[aria-label="Clear Timesheet Data"]')
-
-    const confirmClearButton = await waitForSelector(
-      this.page,
-      'input.important[value="Clear Time Entries"]',
-    )
-    await confirmClearButton?.click()
-
-    await waitForSelector(this.page, 'div[aria-label="Clear Timesheet Data"]', { visible: false })
-  }
-
-  private async finaliseTimesheet(submitTimesheets: boolean) {
-    await this.page.keyboard.press('Tab')
-    if (submitTimesheets) {
-      let submit = await this.clickElementWithContent(
-        "//button[contains(text(), 'Submit for Approval')]",
-      )
-      if (submit) {
-        await waitForXPath(
-          this.page,
-          "//span[contains(@class, 'statusSubmitting')]/span[contains(@class, 'statusName') and contains(text(), 'Submitting')]",
-          {
-            hidden: true,
-          },
-        )
-      } else {
-        let resubmit = await this.clickElementWithContent(
-          "//button[contains(text(), 'Resubmit for Approval')]",
-        )
-        if (resubmit) {
-          await waitForXPath(this.page, "//div[contains(@aria-label, 'Resubmit Timesheet')]")
-          let confirmResubmitButton = await waitForSelector(
-            this.page,
-            'input[value^="Resubmit for Approval"]',
-          )
-          await confirmResubmitButton?.click()
-          await waitForXPath(this.page, "//div[contains(@aria-label, 'Resubmit Timesheet')]", {
-            hidden: true,
-          })
-        }
-      }
-    }
   }
 }

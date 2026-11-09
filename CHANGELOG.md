@@ -1,5 +1,8 @@
 ## [Unreleased]
 
+- Feature: Replicon export via Replicon's web services instead of clicking through the timesheet: zedd only logs in with Edge (SSO), then reopens submitted timesheets if needed, replaces the entries of the exported days (task, hours, activity, comment) and submits if wanted. Replicon's own error messages are shown if something fails
+- Feature: Replicon import loads the projects directly instead of opening the task search
+- Fix: Replicon tasks are loaded from the swimlane of the tenant instead of always eu3.replicon.com
 - Fix: Edge/Playwright now run in a separate background process, so a crash there (e.g. 'Isolate::PushStackTraceAndDie') no longer takes down zedd; the import/export shows an error and the next try starts the process again
 - Feature: 'Record Replicon API calls' in the settings records the web service calls of the Replicon page (no changes by zedd, no cookies/tokens), to prepare an export via Replicon's API instead of clicking through the page
 - Feature: Replicon and OTT now run in Microsoft Edge via Playwright instead of Chrome via Puppeteer. Edge signs in with the Microsoft work account of the device, so no SSO extension is needed for the 2FA login

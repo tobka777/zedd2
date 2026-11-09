@@ -177,7 +177,10 @@ export class PlatformState {
         this.platformIntegration = this.integrationMap[platform]
         const entriesForPlatform = Object.entries(platformExport).map(([day, entries]) => [
           day,
-          entries.filter((e) => e.platformType === platform),
+          entries
+            .filter((e) => e.platformType === platform)
+            // the export via Replicon's web services needs the URI of the activity
+            .map((e) => ({ ...e, taskActivityUri: this.resolveActivity(e.taskActivity!)?.uri })),
         ])
         // keep empty days, so the platform knows which days are part of the export
         const exportTasksForPlatform = Object.fromEntries(entriesForPlatform)
