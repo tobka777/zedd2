@@ -28,11 +28,14 @@ export class PlatformState {
 
   public repliconActivity: string = ''
 
-  public chromeExe: string = ''
-
   public chromedriverExe: string = ''
 
   public chromeHeadless: boolean = false
+
+  /**
+   * Directory of the persistent zedd Edge profile, which keeps the Microsoft login between runs.
+   */
+  public edgeProfileDir: string = ''
 
   /**
    * The name of the "platform resource" you are filling out
@@ -139,7 +142,7 @@ export class PlatformState {
 
     const options: PlatformOptions = {
       headless: this.chromeHeadless,
-      executablePath: this.chromeExe,
+      userDataDir: this.edgeProfileDir || undefined,
     }
 
     if (this.integrationMap) {
@@ -253,6 +256,30 @@ export class PlatformState {
 
   public isValidTaskIntId(intId: number | undefined): boolean {
     return this.resolveTask(intId) !== undefined
+  }
+
+  /**
+   * Closes the browsers of all platforms, e.g. before zedd quits. With the persistent profile, an
+   * Edge left open would block the next import/export.
+   */
+  public async quitBrowsers(): Promise<void> {
+    await Promise.all(
+      Object.values(this.integrationMap).map((integration) =>
+        integration.quitBrowser().catch((error) => console.error('Error quitting browser', error)),
+      ),
+    )
+  }
+
+  /**
+   * Deletes the persistent zedd Edge profile (logins). It is created again on the next run.
+   */
+  public async resetEdgeProfile(): Promise<void> {
+    if (this._currentlyExportingTasks || this._currentlyImportingTasks) {
+      throw new Error('Cannot reset the Edge profile while an import/export is running.')
+    }
+    if (!this.edgeProfileDir) return
+    await this.quitBrowsers()
+    await fsp.rm(this.edgeProfileDir, { recursive: true, force: true })
   }
 
   public killPlatform() {

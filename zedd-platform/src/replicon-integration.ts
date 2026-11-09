@@ -1,8 +1,8 @@
-import { $x, waitForTimeout, waitForXPath } from './utils'
+import { $x, waitForSelector, waitForTimeout, waitForXPath } from './utils'
 import { PlatformIntegration } from './platform-integration'
 import { PlatformOptions } from './model/platform.options.model'
 import { PlatformExportFormat, Task, TaskActivity } from './model'
-import { ElementHandle, HTTPRequest } from 'puppeteer'
+import { ElementHandle, Request } from 'playwright-core'
 import { What } from './model/what.model'
 import {
   eachDayOfInterval,
@@ -25,11 +25,11 @@ export class RepliconIntegration extends PlatformIntegration {
   async importTasks(notifyTasks?: (p: Task[]) => void): Promise<Task[]> {
     await this.init()
     await this.goToTheTimesheet(true)
-    await this.page.waitForSelector('table.dataGrid > tbody[sectiontype="actions"]')
-    let taskTable = await this.page.waitForSelector('table.dataGrid')
+    await waitForSelector(this.page, 'table.dataGrid > tbody[sectiontype="actions"]')
+    let taskTable = await waitForSelector(this.page, 'table.dataGrid')
 
     const urlTaskPromise = new Promise<string>((resolve) => {
-      const onRequest = async (req: HTTPRequest) => {
+      const onRequest = (req: Request) => {
         const url = req.url()
         if (
           url.includes('replicon-tenant') &&
@@ -44,12 +44,13 @@ export class RepliconIntegration extends PlatformIntegration {
       this.page.on('request', onRequest)
     })
 
-    const addRowButton = await taskTable?.waitForSelector(
+    const addRowButton = await waitForSelector(
+      taskTable!,
       'ul.actionList > li > a[aria-label="Add New TimeLine"]',
     )
     await addRowButton!.click()
 
-    const taskSearchButton = await this.page.waitForSelector('td.timesheetSortableHeader')
+    const taskSearchButton = await waitForSelector(this.page, 'td.timesheetSortableHeader')
     await taskSearchButton?.click()
 
     await this.clickSearchByCategory()
@@ -104,7 +105,7 @@ export class RepliconIntegration extends PlatformIntegration {
 
     if (activitySelect) {
       await activitySelect?.click()
-      await this.page.waitForSelector('td.activity > span')
+      await waitForSelector(this.page, 'td.activity > span')
 
       const taskActivities = await new Promise<TaskActivity[]>((resolve, reject) => {
         this.page.on('response', async (res) => {
@@ -146,7 +147,7 @@ export class RepliconIntegration extends PlatformIntegration {
 
     while (what.length > 0) {
       await this.chooseDateFromCalendar(what)
-      await this.page.waitForSelector('table.dataGrid')
+      await waitForSelector(this.page, 'table.dataGrid')
 
       await this.clickElementWithContent(
         '(//tbody[@sectiontype="rows"]/tr)[last()]/td[contains(@class, "timesheetSortableHeader")]',
@@ -214,10 +215,9 @@ export class RepliconIntegration extends PlatformIntegration {
     await this.page.click('table.dataGrid > tbody[sectiontype="actions"] a#add-new-timeline')
 
     await this.page.waitForFunction(
-      (selector, count) => document.querySelectorAll(selector).length > count,
+      ({ selector, count }) => document.querySelectorAll(selector).length > count,
+      { selector: 'tbody[sectiontype="rows"] tr', count: prevRows.length },
       { timeout: 5000 },
-      'tbody[sectiontype="rows"] tr',
-      prevRows.length,
     )
   }
 
@@ -229,16 +229,21 @@ export class RepliconIntegration extends PlatformIntegration {
     let actions = null
     while (actions === null && goToFirstNotCompleted) {
       try {
-        actions = await this.page.waitForSelector('table.dataGrid > tbody[sectiontype="actions"]', {
-          timeout: 1000,
-        })
+        actions = await waitForSelector(
+          this.page,
+          'table.dataGrid > tbody[sectiontype="actions"]',
+          {
+            timeout: 1000,
+          },
+        )
       } catch (ex) {
         actions = null
-        const nextArrow = await this.page.waitForSelector(
+        const nextArrow = await waitForSelector(
+          this.page,
           '.timesheetPeriod > a[aria-label="Next Timesheet"]',
         )
         await nextArrow?.click()
-        await this.page.waitForFunction(() => document.readyState === 'complete', {
+        await this.page.waitForFunction(() => document.readyState === 'complete', undefined, {
           timeout: 10000,
         })
       }
@@ -293,7 +298,7 @@ export class RepliconIntegration extends PlatformIntegration {
       const currentUrl = this.page.url()
 
       if (currentUrl.includes(searchedPartInLink)) {
-        await this.page.waitForFunction(() => document.readyState === 'complete', {
+        await this.page.waitForFunction(() => document.readyState === 'complete', undefined, {
           timeout: 30000,
         })
 
@@ -364,7 +369,7 @@ export class RepliconIntegration extends PlatformIntegration {
 
     const minMonth = (minDate.getMonth() + 1).toString()
 
-    const calendar = await this.page.waitForSelector('.timesheetPeriod')
+    const calendar = await waitForSelector(this.page, '.timesheetPeriod')
     await calendar!.click()
 
     await this.selectElementWithContent(
@@ -376,7 +381,7 @@ export class RepliconIntegration extends PlatformIntegration {
       minDate.getFullYear().toString(),
     )
 
-    let weeks: ElementHandle[] = await this.page!.$$('.periodCalendarBody > .period')
+    let weeks = await this.page!.$$('.periodCalendarBody > .period')
 
     for (let i = 0; i < weeks.length; i++) {
       const weeksUpdate = await this.page!.$$('.periodCalendarBody > .period')
@@ -407,7 +412,7 @@ export class RepliconIntegration extends PlatformIntegration {
             await dayEl.click()
           } else {
             await Promise.all([
-              this.page.waitForNavigation({ waitUntil: 'networkidle0' }),
+              this.page.waitForNavigation({ waitUntil: 'networkidle' }),
               await dayEl.click(),
             ])
           }
@@ -423,7 +428,7 @@ export class RepliconIntegration extends PlatformIntegration {
 
     if (node) {
       const button = node as unknown as ElementHandle<Element>
-      await button.select(option)
+      await button.selectOption(option)
       return button
     }
 
@@ -474,7 +479,7 @@ export class RepliconIntegration extends PlatformIntegration {
         work.projectName + ' - ',
         'ul.divDropdownList > li.highlighted.hasChild',
       )
-      await this.page.waitForSelector('ul.divDropdownList > li.highlighted.hasChild', {
+      await waitForSelector(this.page, 'ul.divDropdownList > li.highlighted.hasChild', {
         hidden: true,
         timeout: 5000,
       })
@@ -495,8 +500,8 @@ export class RepliconIntegration extends PlatformIntegration {
 
           return tbody && tbody.innerHTML.includes(projectIntId)
         },
-        { timeout: 5000 },
         String(work.projectIntId),
+        { timeout: 5000 },
       )
       row = await this.getRowTaskFromTable(work)
     }
@@ -513,7 +518,7 @@ export class RepliconIntegration extends PlatformIntegration {
       await this.page.keyboard.up('ArrowDown')
       let li = null
       try {
-        li = await this.page.waitForSelector(expression, {
+        li = await waitForSelector(this.page, expression, {
           timeout: 1000,
         })
       } catch (e) {
@@ -585,12 +590,11 @@ export class RepliconIntegration extends PlatformIntegration {
     for (let dayNode of days) {
       const node = dayNode as unknown as ElementHandle<Element>
       let isSearchedRow = await node.evaluate(
-        (el, weekday, day) => {
+        (el, { weekday, day }) => {
           let arialLabel = el.getAttribute('aria-label')
           return arialLabel && arialLabel.includes(day + ' ' + weekday)
         },
-        weekday,
-        day,
+        { weekday, day },
       )
       if (isSearchedRow) {
         dayFieldNode = node
@@ -647,22 +651,25 @@ export class RepliconIntegration extends PlatformIntegration {
 
   private async commentTask(comment: string | undefined, dayField: ElementHandle<Element>) {
     if (comment) {
-      dayField = (await this.page.evaluateHandle((el) => {
-        while (el && el.parentElement && !el.classList.contains('day')) {
-          el = el.parentElement
-        }
-        return el
-      }, dayField)) as ElementHandle<Element>
+      dayField = (
+        await this.page.evaluateHandle((el) => {
+          while (el && el.parentElement && !el.classList.contains('day')) {
+            el = el.parentElement
+          }
+          return el
+        }, dayField)
+      ).asElement() as ElementHandle<Element>
       if (dayField) {
-        const commentPlus = await dayField.waitForSelector(
+        const commentPlus = await waitForSelector(
+          dayField,
           '.componentAllocationEntryDetailIndicator > .indicator',
         )
         await commentPlus?.click()
-        const textArea = await this.page.waitForSelector('.contextPopup textarea.commentBox', {
+        const textArea = await waitForSelector(this.page, '.contextPopup textarea.commentBox', {
           visible: true,
         })
         await textArea?.type(comment)
-        const okButton = await this.page.waitForSelector('.contextPopup input#okButton')
+        const okButton = await waitForSelector(this.page, '.contextPopup input#okButton')
         await okButton?.click()
       }
     }
@@ -672,7 +679,8 @@ export class RepliconIntegration extends PlatformIntegration {
     const reopenButton = await this.clickElementWithContent('//input[@value="Reopen"]')
     if (reopenButton) {
       await waitForXPath(this.page, '//h1[text()="Reopen Timesheet"]')
-      const confirmReopenButton = await this.page.waitForSelector(
+      const confirmReopenButton = await waitForSelector(
+        this.page,
         'div.buttonRow > input.important[value="Reopen"]',
       )
       await confirmReopenButton?.click()
@@ -680,16 +688,17 @@ export class RepliconIntegration extends PlatformIntegration {
   }
 
   private async clearAllTasks() {
-    const clearAllButton = await this.page.waitForSelector('input.clearall')
+    const clearAllButton = await waitForSelector(this.page, 'input.clearall')
     await clearAllButton?.click()
-    await this.page.waitForSelector('div[aria-label="Clear Timesheet Data"]')
+    await waitForSelector(this.page, 'div[aria-label="Clear Timesheet Data"]')
 
-    const confirmClearButton = await this.page.waitForSelector(
+    const confirmClearButton = await waitForSelector(
+      this.page,
       'input.important[value="Clear Time Entries"]',
     )
     await confirmClearButton?.click()
 
-    await this.page.waitForSelector('div[aria-label="Clear Timesheet Data"]', { visible: false })
+    await waitForSelector(this.page, 'div[aria-label="Clear Timesheet Data"]', { visible: false })
   }
 
   private async finaliseTimesheet(submitTimesheets: boolean) {
@@ -712,7 +721,8 @@ export class RepliconIntegration extends PlatformIntegration {
         )
         if (resubmit) {
           await waitForXPath(this.page, "//div[contains(@aria-label, 'Resubmit Timesheet')]")
-          let confirmResubmitButton = await this.page.waitForSelector(
+          let confirmResubmitButton = await waitForSelector(
+            this.page,
             'input[value^="Resubmit for Approval"]',
           )
           await confirmResubmitButton?.click()

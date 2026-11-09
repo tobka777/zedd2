@@ -11,7 +11,7 @@ import {
 } from './model/ott-work-log.model'
 import { OttWorkLocation } from './ott-work-location'
 import { PlatformIntegration } from './platform-integration'
-import { magicToken, getCurrentMonthDatePath } from './utils'
+import { magicToken, getCurrentMonthDatePath, waitForSelector } from './utils'
 import {
   eachDayOfInterval,
   endOfMonth,
@@ -58,8 +58,9 @@ export class OTTIntegration extends PlatformIntegration {
   }
 
   private attachAuthCapture(): void {
-    this.page.on('request', (request) => {
-      const authorization = request.headers()['authorization']
+    this.page.on('request', async (request) => {
+      // headers() leaves out some headers, allHeaders() has all of them
+      const authorization = (await request.allHeaders())['authorization']
 
       if (authorization && request.url().includes('/lean/wsr/protected/')) {
         this.authorizationHeader = authorization
@@ -71,7 +72,7 @@ export class OTTIntegration extends PlatformIntegration {
     await this.init()
     this.attachAuthCapture()
     await this.page.reload()
-    await this.page.waitForSelector('[role="table"]')
+    await waitForSelector(this.page, '[role="table"]')
     const user = await this.fetchUser()
     this.userId = user.id
     const currentMonthDatePath = getCurrentMonthDatePath()
@@ -114,7 +115,7 @@ export class OTTIntegration extends PlatformIntegration {
     await this.init()
     this.attachAuthCapture()
     await this.page.reload()
-    await this.page.waitForSelector('[role="table"]')
+    await waitForSelector(this.page, '[role="table"]')
   }
 
   /**

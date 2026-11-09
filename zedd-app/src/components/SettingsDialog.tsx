@@ -60,6 +60,9 @@ export const SettingsDialog = observer(
         checking?: true
       },
     )
+    const [edgeProfileReset, setEdgeProfileReset] = useState(
+      {} as { error?: any; ok?: true; resetting?: true },
+    )
     const [cgJiraStatus, setCgJiraStatus] = useState(
       {} as { error?: any; ok?: true; checking?: true },
     )
@@ -289,7 +292,7 @@ export const SettingsDialog = observer(
             </Grid>
 
             <Grid size={{ xs: 4 }}>
-              <FormLabel>Open Chrome in</FormLabel>
+              <FormLabel>Open Edge in</FormLabel>
             </Grid>
             <Grid size={{ xs: 8 }} component={'label'}>
               Foreground
@@ -298,6 +301,35 @@ export const SettingsDialog = observer(
                 onChange={(_, checked) => (settings.chromeHeadless = !!checked)}
               />
               Background
+            </Grid>
+
+            <Grid size={{ xs: 4 }}>
+              <Tooltip title='zedd uses its own Microsoft Edge profile, which keeps the Microsoft login between imports/exports.'>
+                <FormLabel>Edge profile</FormLabel>
+              </Tooltip>
+            </Grid>
+            <Grid size={{ xs: 8 }}>
+              <Button
+                disabled={!!edgeProfileReset.resetting}
+                onClick={async () => {
+                  setEdgeProfileReset({ resetting: true })
+                  try {
+                    await platformState.resetEdgeProfile()
+                    setEdgeProfileReset({ ok: true })
+                  } catch (error) {
+                    setEdgeProfileReset({ error })
+                  }
+                }}
+              >
+                Reset Edge profile
+              </Button>
+              {edgeProfileReset.error ? (
+                <span style={{ color: theme.palette.error.main }}>
+                  {'' + edgeProfileReset.error}
+                </span>
+              ) : edgeProfileReset.ok ? (
+                <span style={{ color: theme.palette.success.main }}>Profile deleted.</span>
+              ) : null}
             </Grid>
 
             <Grid size={{ xs: 4 }}>

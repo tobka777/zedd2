@@ -45,6 +45,14 @@ const platformDir = path.join(saveDir, 'platform')
 
 const userConfigFile = path.join(saveDir, 'zeddconfig.json')
 
+// LOCALAPPDATA on Windows, so the Edge profile isn't synced with a roaming user profile
+const edgeProfileDir = path.join(
+  process.platform === 'win32' && process.env['LOCALAPPDATA']
+    ? path.join(process.env['LOCALAPPDATA'], 'zedd')
+    : app.getPath('userData'),
+  'edge-profile-v1',
+)
+
 const d = (...x: any[]) => console.log('renderer.ts', ...x)
 
 const isWin = process.platform === 'win32'
@@ -83,8 +91,15 @@ function showNotification(title: string, text: string, cb: () => void) {
   notification.onclick = cb
 }
 
+// set in setup(), so quitting can close the browsers of a running import/export first
+let beforeQuit: () => Promise<void> = async () => {
+  /* nothing yet */
+}
+
 function quit() {
-  ipcRenderer.send('quit')
+  beforeQuit()
+    .catch((error) => console.error('Error before quitting', error))
+    .finally(() => ipcRenderer.send('quit'))
 }
 
 function setupAutoUpdater(state: AppState, config: ZeddSettings) {
@@ -133,6 +148,8 @@ async function setup() {
   await mkdirIfNotExists(saveDir)
 
   const platformState = new PlatformState(platformDir)
+  platformState.edgeProfileDir = edgeProfileDir
+  beforeQuit = () => platformState.quitBrowsers()
 
   const config = (await fileExists(userConfigFile))
     ? await ZeddSettings.readFromFile(userConfigFile)
@@ -261,7 +278,6 @@ async function setup() {
       console.log('chromedriver missing or has wrong version')
       installChromeDriver(requiredChromeDriverVersion, chromeDriverDir, false)
     }
-    platformState.chromeExe = state.config.chromePath
     platformState.chromedriverExe = chromeDriverPath
     await platformState.setIntegrationMap()
     return { chromeVersion, chromeDriverVersion: requiredChromeDriverVersion }

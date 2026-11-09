@@ -18,7 +18,7 @@ module.exports = {
     },
   },
   externals: {
-    puppeteer: 'commonjs puppeteer',
+    'playwright-core': 'commonjs playwright-core',
 
     'selenium-webdriver': 'commonjs selenium-webdriver',
 

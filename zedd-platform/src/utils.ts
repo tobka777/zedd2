@@ -1,4 +1,4 @@
-import { ElementHandle, Page, WaitForSelectorOptions } from 'puppeteer'
+import { ElementHandle, Page } from 'playwright-core'
 import { InvalidPlatformUrlException } from './exception'
 
 export function checkPlatformUrl(urlToCheck: unknown): asserts urlToCheck is string {
@@ -13,22 +13,45 @@ export function checkPlatformUrl(urlToCheck: unknown): asserts urlToCheck is str
 }
 
 export async function clearInput(input: ElementHandle<any> | null) {
-  await input?.click({ count: 3 })
+  await input?.click({ clickCount: 3 })
   await input?.press('Backspace')
 }
 
-type XPathContext = { $$(selector: string): Promise<ElementHandle<Element>[]> }
+type QueryContext = { $$(selector: string): Promise<ElementHandle<SVGElement | HTMLElement>[]> }
 
-export function $x(ctx: XPathContext, expression: string): Promise<ElementHandle<Element>[]> {
-  return ctx.$$('xpath/' + expression)
+export function $x(ctx: QueryContext, expression: string): Promise<ElementHandle<Element>[]> {
+  return ctx.$$('xpath=' + expression) as Promise<ElementHandle<Element>[]>
+}
+
+export interface WaitOptions {
+  /** wait until the element is visible */
+  visible?: boolean
+  /** wait until the element is hidden or detached; resolves to null then */
+  hidden?: boolean
+  timeout?: number
+}
+
+type WaitContext = Pick<Page, 'waitForSelector'> | Pick<ElementHandle, 'waitForSelector'>
+
+/**
+ * Waits for a selector like puppeteer did: by default only until the element is in the DOM, while
+ * Playwright waits until it is visible.
+ */
+export async function waitForSelector(
+  ctx: WaitContext,
+  selector: string,
+  { visible, hidden, timeout }: WaitOptions = {},
+): Promise<ElementHandle<Element> | null> {
+  const state = hidden ? 'hidden' : visible ? 'visible' : 'attached'
+  return (await ctx.waitForSelector(selector, { state, timeout })) as ElementHandle<Element> | null
 }
 
 export function waitForXPath(
   page: Page,
   expression: string,
-  options?: WaitForSelectorOptions,
+  options?: WaitOptions,
 ): Promise<ElementHandle<Element> | null> {
-  return page.waitForSelector('xpath/' + expression, options)
+  return waitForSelector(page, 'xpath=' + expression, options)
 }
 
 export function waitForTimeout(ms: number): Promise<void> {

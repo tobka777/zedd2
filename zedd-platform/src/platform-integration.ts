@@ -1,10 +1,12 @@
 import { PlatformExportFormat, Task } from './model'
 import { PlatformOptions } from './model/platform.options.model'
 import { $x, checkPlatformUrl } from './utils'
-import puppeteer, { Browser, ElementHandle, Page } from 'puppeteer'
+import { BrowserContext, chromium, ElementHandle, LaunchOptions, Page } from 'playwright-core'
+
+const BROWSER_CLOSE_TIMEOUT_MS = 10_000
 
 export abstract class PlatformIntegration {
-  protected browser?: Browser
+  protected context?: BrowserContext
   protected page!: Page
   protected platformLink: string
   protected options: PlatformOptions
@@ -18,27 +20,60 @@ export abstract class PlatformIntegration {
   async init() {
     checkPlatformUrl(this.platformLink)
     await this.quitBrowser()
-    const browser = await puppeteer.launch({
-      headless: this.options.headless,
-      executablePath: this.options.executablePath,
-      args: [`--window-size=${window.screen.availWidth},${window.screen.availHeight}`],
-      defaultViewport: {
-        width: Math.round(window.screen.availWidth),
-        height: Math.round(window.screen.availHeight * 0.9),
-      },
-    })
-    this.browser = browser
+    const context = await this.launchEdge()
+    this.context = context
     this.closeTimer = setTimeout(async () => {
       // only close the browser of this run, not one launched by a later run
-      if (this.browser !== browser) return
+      if (this.context !== context) return
       console.error('Timeout: Browser closed after 10 minutes.')
       await this.quitBrowser()
     }, 600_000)
 
-    this.page = await browser.newPage()
+    this.page = context.pages()[0] ?? (await context.newPage())
     this.page.setDefaultTimeout(100_000)
 
     await this.page.goto(this.platformLink)
+  }
+
+  /**
+   * Starts the installed Microsoft Edge. Edge signs in with the Microsoft work account of the
+   * device on its own, so no SSO extension is needed for the 2FA login.
+   */
+  private async launchEdge(): Promise<BrowserContext> {
+    const viewport = {
+      width: Math.round(window.screen.availWidth),
+      height: Math.round(window.screen.availHeight * 0.9),
+    }
+    const launchOptions: LaunchOptions = {
+      channel: 'msedge',
+      headless: this.options.headless,
+      args: [`--window-size=${window.screen.availWidth},${window.screen.availHeight}`],
+    }
+    try {
+      if (this.options.userDataDir) {
+        return await chromium.launchPersistentContext(this.options.userDataDir, {
+          ...launchOptions,
+          viewport,
+        })
+      }
+      const browser = await chromium.launch(launchOptions)
+      return await browser.newContext({ viewport })
+    } catch (e) {
+      const message = e instanceof Error ? e.message : String(e)
+      if (/distribution 'msedge' is not found/i.test(message)) {
+        throw new Error(
+          'Microsoft Edge is not installed. Please install it: https://www.microsoft.com/edge',
+        )
+      }
+      if (this.options.userDataDir) {
+        throw new Error(
+          `Could not start Microsoft Edge with the zedd profile (${this.options.userDataDir}). ` +
+            'Is an Edge window of a previous import/export still open? Close it and try again.\n' +
+            message,
+        )
+      }
+      throw e
+    }
   }
 
   /**
@@ -58,15 +93,34 @@ export abstract class PlatformIntegration {
   abstract exportTasks(data: PlatformExportFormat, submitTimesheets: boolean): Promise<void>
 
   /**
-   * Closes the browser of the current run, if any. Safe to call multiple times.
+   * Closes the browser of the current run, if any. Safe to call multiple times. If Edge doesn't close
+   * normally, Playwright kills it (only the Edge it started, by its pid).
    */
   async quitBrowser(): Promise<void> {
     clearTimeout(this.closeTimer)
     this.closeTimer = undefined
-    const browser = this.browser
-    this.browser = undefined
-    if (browser) {
-      await browser.close()
+    const context = this.context
+    this.context = undefined
+    if (context) {
+      let timer: ReturnType<typeof setTimeout> | undefined
+      const timeout = new Promise<'timeout'>((resolve) => {
+        timer = setTimeout(() => resolve('timeout'), BROWSER_CLOSE_TIMEOUT_MS)
+      })
+      try {
+        // without a persistent profile, closing the context doesn't close the browser
+        const close = async () => {
+          const browser = context.browser()
+          await context.close()
+          if (browser?.isConnected()) await browser.close()
+        }
+        if ('timeout' === (await Promise.race([close(), timeout]))) {
+          console.error('Edge did not close in time.')
+        }
+      } catch (e) {
+        console.error('Could not close Edge.', e)
+      } finally {
+        clearTimeout(timer)
+      }
     }
   }
 

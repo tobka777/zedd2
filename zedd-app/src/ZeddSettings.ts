@@ -68,7 +68,7 @@ export class ZeddSettings {
   public repliconActivity = ''
 
   /**
-   * Open Chrome / Selenium in headless mode (background)
+   * Open Edge (Replicon/OTT) and Chrome (Selenium) in headless mode (background)
    */
   @observable
   @serializable
