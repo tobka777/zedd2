@@ -8,7 +8,7 @@ import type { PlatformOptions } from 'zedd-platform/out/src/model/platform.optio
 export type BrowserWorkerPlatform = 'REPLICON' | 'OTT'
 
 export type BrowserWorkerMethod =
-  'importTasks' | 'importTaskActivities' | 'exportTasks' | 'recordApiCalls' | 'quitBrowser'
+  'importTasks' | 'importTaskActivities' | 'exportTasks' | 'quitBrowser'
 
 export interface BrowserWorkerRequest {
   id: number

@@ -19,7 +19,6 @@ import {
 import { useTheme } from '@mui/material/styles'
 import * as React from 'react'
 import { useState } from 'react'
-import { shell } from '@electron/remote'
 import { observer } from 'mobx-react-lite'
 import { PlatformState } from '../PlatformState'
 import { ZeddSettings } from '../ZeddSettings'
@@ -43,9 +42,6 @@ export const SettingsDialog = observer(
     settings: ZeddSettings
     checkCgJira: (cgJira: ZeddSettings['cgJira']) => Promise<any>
   }) => {
-    const [repliconRecording, setRepliconRecording] = useState(
-      {} as { error?: any; file?: string; recording?: true },
-    )
     const [edgeProfileReset, setEdgeProfileReset] = useState(
       {} as { error?: any; ok?: true; resetting?: true },
     )
@@ -302,38 +298,6 @@ export const SettingsDialog = observer(
                 </span>
               ) : edgeProfileReset.ok ? (
                 <span style={{ color: theme.palette.success.main }}>Profile deleted.</span>
-              ) : null}
-            </Grid>
-
-            <Grid size={{ xs: 4 }}>
-              <Tooltip title='Opens your current Replicon timesheet in Edge and records the calls the Replicon page makes while you work in it (e.g. reopen, enter time, submit), until you close the Edge window. zedd changes nothing. Cookies and tokens are not recorded.'>
-                <FormLabel>Replicon API recording</FormLabel>
-              </Tooltip>
-            </Grid>
-            <Grid size={{ xs: 8 }}>
-              <Button
-                disabled={!!repliconRecording.recording}
-                onClick={async () => {
-                  setRepliconRecording({ recording: true })
-                  try {
-                    setRepliconRecording({ file: await platformState.recordRepliconApiCalls() })
-                  } catch (error) {
-                    setRepliconRecording({ error })
-                  }
-                }}
-              >
-                {repliconRecording.recording
-                  ? 'Recording… close Edge to stop'
-                  : 'Record Replicon API calls'}
-              </Button>
-              {repliconRecording.error ? (
-                <span style={{ color: theme.palette.error.main }}>
-                  {'' + repliconRecording.error}
-                </span>
-              ) : repliconRecording.file ? (
-                <Button onClick={() => shell.showItemInFolder(repliconRecording.file!)}>
-                  Show recording
-                </Button>
               ) : null}
             </Grid>
 

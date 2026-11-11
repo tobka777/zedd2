@@ -1,7 +1,6 @@
 import { ipcRenderer } from 'electron'
 import type { PlatformExportFormat, Task, TaskActivity } from 'zedd-platform'
 import type { PlatformOptions } from 'zedd-platform/out/src/model/platform.options.model'
-import type { RepliconApiRecording } from 'zedd-platform/out/src/replicon/replicon-integration'
 import {
   BROWSER_WORKER_CONNECT,
   BROWSER_WORKER_EXIT,
@@ -113,10 +112,6 @@ export class RemotePlatformIntegration {
 
   public exportTasks(data: PlatformExportFormat, submitTimesheets: boolean): Promise<void> {
     return this.call('exportTasks', [data, submitTimesheets])
-  }
-
-  public recordApiCalls(outFile: string): Promise<RepliconApiRecording> {
-    return this.call('recordApiCalls', [outFile])
   }
 
   public quitBrowser(): Promise<void> {

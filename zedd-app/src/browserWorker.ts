@@ -50,8 +50,6 @@ async function handle(
         request.args[0] as Parameters<PlatformIntegration['exportTasks']>[0],
         request.args[1] as boolean,
       )
-    case 'recordApiCalls':
-      return (integration as RepliconIntegration).recordApiCalls(request.args[0] as string)
     case 'quitBrowser':
       return integration.quitBrowser()
   }
