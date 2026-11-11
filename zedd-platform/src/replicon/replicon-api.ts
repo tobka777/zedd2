@@ -1,21 +1,12 @@
 import { Page } from 'playwright-core'
 
-export interface RepliconApiResult<T = unknown> {
-  status: number
-  data?: T
-  error?: unknown
-  text: string
-}
-
 export class RepliconApi {
-  public constructor(
-    private readonly page: Page,
-    private readonly isAllowedHost = (host: string) => host.endsWith('.replicon.com'),
-  ) {}
+  public constructor(private readonly page: Page) {}
 
-  public get servicesRoot(): string {
+  private get servicesRoot(): string {
     const url = new URL(this.page.url())
-    if (!this.isAllowedHost(url.hostname)) {
+    // zedd only talks to Replicon's own hosts
+    if (!url.hostname.endsWith('.replicon.com')) {
       throw new Error(`The browser doesn't show Replicon (but ${url.hostname}). Is the login done?`)
     }
     const companyKey = url.pathname.split('/')[1]
@@ -23,13 +14,14 @@ export class RepliconApi {
   }
 
   /**
-   * Posts a request to one of Replicon's web services and returns the response.
+   * Posts a request to one of Replicon's web services from inside the logged-in page and returns
+   * the payload of the response. Throws if the request fails or Replicon reports an error.
    *
    * @param operation - path of the operation below the services root
    * @param body - the parameters of the operation, sent as JSON
    */
-  public async call<T = unknown>(operation: string, body: unknown): Promise<RepliconApiResult<T>> {
-    return this.page.evaluate(
+  public async request<T = any>(operation: string, body: unknown): Promise<T> {
+    const result = await this.page.evaluate(
       async ({ url, body }) => {
         const response = await fetch(url, {
           method: 'POST',
@@ -44,22 +36,16 @@ export class RepliconApi {
         } catch {
           json = undefined
         }
-        return {
-          status: response.status,
-          data: json?.d,
-          error: json?.error,
-          text: text.slice(0, 20_000),
-        }
+        return { status: response.status, data: json?.d, error: json?.error, text }
       },
       { url: this.servicesRoot + operation, body },
     )
-  }
-
-  public async request<T = any>(operation: string, body: unknown): Promise<T> {
-    const result = await this.call<T>(operation, body)
     console.log('[Replicon API]', operation, result.status)
     if (result.status !== 200 || (result.error !== undefined && result.error !== null)) {
-      const details = result.error !== undefined ? JSON.stringify(result.error) : result.text
+      const details =
+        result.error !== undefined && result.error !== null
+          ? JSON.stringify(result.error)
+          : result.text
       throw new Error(
         `Replicon ${operation} failed (HTTP ${result.status}): ${details.slice(0, 1000)}`,
       )

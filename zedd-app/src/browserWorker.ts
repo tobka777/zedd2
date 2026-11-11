@@ -1,7 +1,3 @@
-/**
- * Runs in a separate Electron utility process: drives Edge through Playwright for the Replicon and
- * OTT integrations. The renderer talks to it through a MessagePort (see RemotePlatformIntegration).
- */
 import type { MessagePortMain } from 'electron'
 import { OTTIntegration } from 'zedd-platform/out/src/ott/ott-integration'
 import type { PlatformIntegration } from 'zedd-platform/out/src/platform-integration'
@@ -19,9 +15,6 @@ interface Entry {
 
 const integrations = new Map<BrowserWorkerPlatform, Entry>()
 
-/**
- * Returns the integration of the platform, created anew if its link or options changed.
- */
 async function getIntegration(request: BrowserWorkerRequest): Promise<PlatformIntegration> {
   const key = JSON.stringify([request.platformLink, request.options])
   const entry = integrations.get(request.platform)
@@ -72,10 +65,8 @@ function serve(port: MessagePortMain) {
   port.start()
 }
 
-// the main process hands over a port for every renderer that connects
 process.parentPort.on('message', ({ ports }) => ports.forEach(serve))
 
-// close the browsers before this process ends, so no Edge keeps running with the profile
 process.on('SIGTERM', async () => {
   await Promise.all([...integrations.values()].map(({ integration }) => integration.quitBrowser()))
   process.exit(0)

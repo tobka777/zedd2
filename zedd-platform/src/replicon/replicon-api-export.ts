@@ -6,12 +6,11 @@ import { RepliconApi } from './replicon-api'
 
 const USER_URI = /urn:replicon-tenant:[^:"]+:user:[0-9]+/
 const TIME_ENTRY_URI = /urn:replicon-tenant:[^:"]+:time-entry:[0-9a-zA-Z-]+/
-/** project time carries project or task metadata; other entries (e.g. attendance only) are kept */
 const PROJECT_TIME = /time-entry-metadata-key:(project|task)"/
 const TIMESHEET_STATUS_WAITING = /:waiting$/
 const TIMESHEET_STATUS_APPROVED = /:approved$/
 
-export interface RepliconDate {
+interface RepliconDate {
   year: number
   month: number
   day: number
@@ -20,10 +19,8 @@ export interface RepliconDate {
 interface Timesheet {
   uri: string
   statusUri?: string
-  /** first and last day of the timesheet period, if Replicon tells them */
   start?: string
   end?: string
-  /** the exported days in this timesheet */
   days: string[]
 }
 
@@ -40,7 +37,6 @@ const toRepliconDate = (isoDay: string): RepliconDate => {
 const fromRepliconDate = (d: RepliconDate) =>
   `${d.year}-${String(d.month).padStart(2, '0')}-${String(d.day).padStart(2, '0')}`
 
-/** Splits days into ranges of consecutive days. */
 function consecutiveRanges(days: string[]): [string, string][] {
   const ranges: [string, string][] = []
   for (const day of [...days].sort()) {
@@ -54,7 +50,6 @@ function consecutiveRanges(days: string[]): [string, string][] {
   return ranges
 }
 
-/** Builds the PutTimeEntry parameters for one work entry. */
 function timeEntryParameters(
   tenant: string,
   userUri: string,
@@ -77,7 +72,6 @@ function timeEntryParameters(
     },
   ]
   if (work.taskActivityUri) {
-    // assumed: activities are set like project and task, with their own metadata key
     customMetadata.push({
       keyUri: 'urn:replicon:time-entry-metadata-key:activity',
       value: { uri: work.taskActivityUri },
@@ -94,7 +88,6 @@ function timeEntryParameters(
       target: { parameterCorrelationId: randomUUID() },
       user: { uri: userUri },
       entryDate: toRepliconDate(day),
-      // both are needed, or the entry is missing from Replicon's timesheet report
       timeAllocationTypeUris: [
         'urn:replicon:time-allocation-type:attendance',
         'urn:replicon:time-allocation-type:project',
@@ -116,7 +109,6 @@ function timeEntryParameters(
   }
 }
 
-/** Finds the owner of a timesheet, i.e. the user to export for. */
 async function getTimesheetOwner(api: RepliconApi, timesheetUri: string): Promise<string> {
   const owner = await api.request('TimesheetService1.svc/GetTimesheetOwner', { timesheetUri })
   const userUri = USER_URI.exec(JSON.stringify(owner))?.[0]
@@ -131,7 +123,6 @@ const isRepliconDate = (d: unknown): d is RepliconDate =>
   typeof (d as RepliconDate)?.month === 'number' &&
   typeof (d as RepliconDate)?.day === 'number'
 
-/** The timesheet of a day, with its period if Replicon tells it. */
 async function getTimesheetForDay(
   api: RepliconApi,
   userUri: string,
@@ -168,7 +159,6 @@ async function reopen(api: RepliconApi, timesheet: Timesheet) {
   })
 }
 
-/** an extension field of the tenant, e.g. the work location, as returned on a time entry */
 interface ExtensionFieldValue {
   definition?: { uri?: string; displayText?: string; name?: string }
   tag?: { uri?: string } | null
@@ -176,11 +166,9 @@ interface ExtensionFieldValue {
   numericValue?: number | null
 }
 
-/** The work location is a custom field of the tenant; it's recognized by its name. */
 const WORK_LOCATION = /location|standort|arbeitsort|einsatzort/i
 const WORK_LOCATION_LOOKBACK_DAYS = 56
 
-/** The work location fields of a time entry, reduced to what's needed to write them again. */
 function workLocationFields(entry: { extensionFieldValues?: ExtensionFieldValue[] }) {
   return (entry.extensionFieldValues ?? [])
     .filter(
@@ -195,10 +183,6 @@ function workLocationFields(entry: { extensionFieldValues?: ExtensionFieldValue[
     }))
 }
 
-/**
- * Finds the work location for each exported day: from an entry of that day, else from the latest
- * entry before. Throws if there's none, before anything changes.
- */
 async function getWorkLocations(api: RepliconApi, userUri: string, days: string[]) {
   const sorted = [...days].sort()
   const start = format(addDays(parseISO(sorted[0]), -WORK_LOCATION_LOOKBACK_DAYS), 'yyyy-MM-dd')
@@ -239,7 +223,6 @@ interface TimeEntry {
   interval?: { hours?: { hours?: number; minutes?: number } | null } | null
 }
 
-/** The existing project time entries of the user on the given days. */
 async function getProjectTimeEntries(api: RepliconApi, userUri: string, days: string[]) {
   const daySet = new Set(days)
   const result: TimeEntry[] = []
@@ -258,11 +241,9 @@ const metadata = (entry: TimeEntry, key: string) =>
   entry.customMetadata?.find((m) => m.keyUri === 'urn:replicon:time-entry-metadata-key:' + key)
     ?.value
 
-/** What makes an entry the same, to see if a timesheet already has the time zedd would write. */
 const entryKey = (day: string, taskUri = '', minutes: number, comment = '', activityUri = '') =>
   JSON.stringify([day, taskUri, minutes, comment, activityUri])
 
-/** Whether the existing entries are exactly the work zedd would write for these days. */
 function isUnchanged(
   tenant: string,
   timesheet: Timesheet,
@@ -297,10 +278,6 @@ function isUnchanged(
 const deleteTimeEntry = (api: RepliconApi, timeEntryUri: string) =>
   api.request('TimeEntryService3.svc/DeleteTimeEntry', { timeEntryUri })
 
-/**
- * Submits the timesheet. The revision groups of the entries are submitted first, which Replicon
- * requires before the timesheet can be submitted.
- */
 async function submit(api: RepliconApi, userUri: string, timesheet: Timesheet) {
   const days = [...timesheet.days].sort()
   const entries = await getTimeEntries(
@@ -327,20 +304,6 @@ async function submit(api: RepliconApi, userUri: string, timesheet: Timesheet) {
   })
 }
 
-/**
- * Writes the work entries of the exported days to Replicon: the existing entries of these days are
- * replaced, days without work entries are cleared.
- *
- * Replicon periods don't have to match the exported days, e.g. a month-end splits a week, or a
- * period is longer than a week. So:
- * - a timesheet that already has exactly the exported time isn't touched, even if it's approved;
- *   an approved one with other time stops the export before anything changes
- * - with submitTimesheets, a timesheet is only submitted once its period is over or exported up
- *   to its last day; until then its time is only saved, so it can still be completed later
- * - a timesheet that was submitted before is submitted again after the change
- *
- * @param currentTimesheetUri - a timesheet of the user, to find the user and the tenant
- */
 export async function exportViaApi(
   api: RepliconApi,
   currentTimesheetUri: string,
@@ -350,7 +313,6 @@ export async function exportViaApi(
   const tenant = /urn:replicon-tenant:([^:]+):/.exec(currentTimesheetUri)![1]
   const userUri = await getTimesheetOwner(api, currentTimesheetUri)
 
-  // check everything before changing anything
   for (const day of Object.keys(data)) {
     data[day].forEach((work) => timeEntryParameters(tenant, userUri, day, work))
   }
@@ -359,7 +321,6 @@ export async function exportViaApi(
     ? await getWorkLocations(api, userUri, daysWithWork)
     : new Map<string, unknown[]>()
 
-  // days of a known period don't need their own request
   const days = Object.keys(data).sort()
   const timesheets: Timesheet[] = []
   for (const day of days) {
@@ -406,7 +367,6 @@ export async function exportViaApi(
 
     if (waiting) await reopen(api, timesheet)
 
-    // write the new entries first, so a failure doesn't leave the days empty
     const newEntries: string[] = []
     try {
       for (const day of timesheet.days) {
@@ -420,7 +380,6 @@ export async function exportViaApi(
         }
       }
     } catch (e) {
-      // take back what was written, so the days keep their old entries
       for (const uri of newEntries) {
         await deleteTimeEntry(api, uri).catch((e2) => console.error('Could not undo ' + uri, e2))
       }

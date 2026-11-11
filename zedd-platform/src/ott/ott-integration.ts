@@ -59,7 +59,6 @@ export class OTTIntegration extends PlatformIntegration {
 
   private attachAuthCapture(): void {
     this.page.on('request', async (request) => {
-      // headers() leaves out some headers, allHeaders() has all of them
       const authorization = (await request.allHeaders())['authorization']
 
       if (authorization && request.url().includes('/lean/wsr/protected/')) {

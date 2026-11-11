@@ -17,10 +17,6 @@ interface Pending {
   notify?: (value: any) => void
 }
 
-/**
- * Connection to the browser worker process. Connects on first use and again after the worker
- * stopped; requests of a stopped worker fail with an error instead of hanging.
- */
 class BrowserWorkerClient {
   private port?: Promise<MessagePort>
   private nextId = 1
@@ -76,9 +72,6 @@ class BrowserWorkerClient {
 
 let client: BrowserWorkerClient | undefined
 
-/**
- * Stands in for a platform integration of zedd-platform, which runs in the browser worker process.
- */
 export class RemotePlatformIntegration {
   public constructor(
     private readonly platform: BrowserWorkerPlatform,
@@ -115,7 +108,6 @@ export class RemotePlatformIntegration {
   }
 
   public quitBrowser(): Promise<void> {
-    // nothing to quit if the worker isn't running
     return client ? this.call('quitBrowser') : Promise.resolve()
   }
 }

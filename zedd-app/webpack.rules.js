@@ -11,7 +11,8 @@ module.exports = [
     use: 'node-loader',
   },
   {
-    test: /\.(m?js|node|selenium-webdriver)$/,
+    // add |selenium-webdriver for Clarity, which is inactive (see zedd-platform/src/clarity)
+    test: /\.(m?js|node)$/,
     parser: { amd: false },
     use: {
       loader: '@vercel/webpack-asset-relocator-loader',

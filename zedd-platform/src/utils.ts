@@ -18,21 +18,13 @@ export function $x(ctx: QueryContext, expression: string): Promise<ElementHandle
   return ctx.$$('xpath=' + expression) as Promise<ElementHandle<Element>[]>
 }
 
-export interface WaitOptions {
-  visible?: boolean
-  hidden?: boolean
-  timeout?: number
-}
-
-type WaitContext = Pick<Page, 'waitForSelector'> | Pick<ElementHandle, 'waitForSelector'>
-
-export async function waitForSelector(
-  ctx: WaitContext,
+/** Waits until the element is in the DOM, like Puppeteer did (Playwright waits until it's visible). */
+export function waitForSelector(
+  page: Page,
   selector: string,
-  { visible, hidden, timeout }: WaitOptions = {},
-): Promise<ElementHandle<Element> | null> {
-  const state = hidden ? 'hidden' : visible ? 'visible' : 'attached'
-  return (await ctx.waitForSelector(selector, { state, timeout })) as ElementHandle<Element> | null
+  options: { timeout?: number } = {},
+): Promise<ElementHandle<SVGElement | HTMLElement>> {
+  return page.waitForSelector(selector, { state: 'attached', ...options })
 }
 
 export function waitForTimeout(ms: number): Promise<void> {

@@ -22,18 +22,7 @@ export class PlatformState {
 
   public chromeHeadless: boolean = false
 
-  /**
-   * Directory of the persistent zedd Edge profile, which keeps the Microsoft login between runs.
-   */
   public edgeProfileDir: string = ''
-
-  /**
-   * The name of the "platform resource" you are filling out
-   * timesheets for, i.e. yourself. this is only required
-   * if you have the right ins platform to fill timesheets for
-   * others.
-   */
-  public resourceName: string | undefined
 
   @observable
   public error = ''
@@ -171,10 +160,8 @@ export class PlatformState {
           day,
           entries
             .filter((e) => e.platformType === platform)
-            // the export via Replicon's web services needs the URI of the activity
             .map((e) => ({ ...e, taskActivityUri: this.resolveActivity(e.taskActivity!)?.uri })),
         ])
-        // keep empty days, so the platform knows which days are part of the export
         const exportTasksForPlatform = Object.fromEntries(entriesForPlatform)
 
         await this.platformIntegration.exportTasks(exportTasksForPlatform, submitTimesheets)
@@ -253,10 +240,6 @@ export class PlatformState {
     return this.resolveTask(intId) !== undefined
   }
 
-  /**
-   * Closes the browsers of all platforms, e.g. before zedd quits. With the persistent profile, an
-   * Edge left open would block the next import/export.
-   */
   public async quitBrowsers(): Promise<void> {
     await Promise.all(
       Object.values(this.integrationMap).map((integration) =>
@@ -265,9 +248,6 @@ export class PlatformState {
     )
   }
 
-  /**
-   * Deletes the persistent zedd Edge profile (logins). It is created again on the next run.
-   */
   public async resetEdgeProfile(): Promise<void> {
     if (this._currentlyExportingTasks || this._currentlyImportingTasks) {
       throw new Error('Cannot reset the Edge profile while an import/export is running.')

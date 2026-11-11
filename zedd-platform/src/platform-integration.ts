@@ -17,16 +17,12 @@ export abstract class PlatformIntegration {
     this.options = options
   }
 
-  /**
-   * @param headless - overrides the headless option, e.g. to show the browser to the user
-   */
   async init(headless = this.options.headless) {
     checkPlatformUrl(this.platformLink)
     await this.quitBrowser()
     const context = await this.launchEdge(headless)
     this.context = context
     this.closeTimer = setTimeout(async () => {
-      // only close the browser of this run, not one launched by a later run
       if (this.context !== context) return
       console.error('Timeout: Browser closed after 10 minutes.')
       await this.quitBrowser()
@@ -38,10 +34,6 @@ export abstract class PlatformIntegration {
     await this.page.goto(this.platformLink)
   }
 
-  /**
-   * Starts the installed Microsoft Edge. Edge signs in with the Microsoft work account of the
-   * device on its own, so no SSO extension is needed for the 2FA login.
-   */
   private async launchEdge(headless: boolean | undefined): Promise<BrowserContext> {
     const { width, height } = this.options.windowSize ?? { width: 1280, height: 900 }
     const viewport = { width: Math.round(width), height: Math.round(height * 0.9) }
@@ -95,10 +87,7 @@ export abstract class PlatformIntegration {
    */
   abstract exportTasks(data: PlatformExportFormat, submitTimesheets: boolean): Promise<void>
 
-  /**
-   * Closes the browser of the current run, if any. Safe to call multiple times. If Edge doesn't close
-   * normally, Playwright kills it (only the Edge it started, by its pid).
-   */
+
   async quitBrowser(): Promise<void> {
     clearTimeout(this.closeTimer)
     this.closeTimer = undefined
@@ -110,7 +99,6 @@ export abstract class PlatformIntegration {
         timer = setTimeout(() => resolve('timeout'), BROWSER_CLOSE_TIMEOUT_MS)
       })
       try {
-        // without a persistent profile, closing the context doesn't close the browser
         const close = async () => {
           const browser = context.browser()
           await context.close()

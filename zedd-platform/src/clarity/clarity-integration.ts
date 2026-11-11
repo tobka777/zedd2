@@ -1,3 +1,9 @@
+/**
+ * INACTIVE: the Clarity integration isn't built or used at the moment. It still drives Chrome via
+ * Selenium and chromedriver, which zedd no longer installs (Replicon and OTT use Edge via Playwright).
+ *
+ */
+// @ts-nocheck
 import {
   Builder as WebDriverBuilder,
   By,

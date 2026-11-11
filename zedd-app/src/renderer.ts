@@ -39,7 +39,6 @@ const platformDir = path.join(saveDir, 'platform')
 
 const userConfigFile = path.join(saveDir, 'zeddconfig.json')
 
-// LOCALAPPDATA on Windows, so the Edge profile isn't synced with a roaming user profile
 const edgeProfileDir = path.join(
   process.platform === 'win32' && process.env['LOCALAPPDATA']
     ? path.join(process.env['LOCALAPPDATA'], 'zedd')
@@ -86,10 +85,7 @@ function showNotification(title: string, text: string, cb: () => void) {
   notification.onclick = cb
 }
 
-// set in setup(), so quitting can close the browsers of a running import/export first
-let beforeQuit: () => Promise<void> = async () => {
-  /* nothing yet */
-}
+let beforeQuit = async () => {}
 
 function quit() {
   beforeQuit()

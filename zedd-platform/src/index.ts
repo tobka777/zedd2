@@ -1,7 +1,7 @@
 export * from './platform-integration'
-export * from './clarity/clarity-integration'
+// Clarity is inactive, see src/clarity/clarity-integration.ts
+// export * from './clarity/clarity-integration'
 export * from './ott/ott-integration'
 export * from './ott/ott-work-location'
 export * from './model'
 export * from './exception'
-export * from './replicon/replicon-api'

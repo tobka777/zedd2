@@ -4,7 +4,6 @@ export interface WorkEntry {
   id: string
   projectName: string
   projectIntId: number
-  /** URI of the Replicon project, see Task.projectUri */
   projectUri?: string
   taskName: string
   taskIntId: number
@@ -13,7 +12,6 @@ export interface WorkEntry {
   platformType: PlatformType
   comment?: string
   taskActivity?: string
-  /** URI of the Replicon activity, for the export via Replicon's web services */
   taskActivityUri?: string
   child?: WorkEntry[]
 }
