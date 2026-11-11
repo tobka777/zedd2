@@ -35,14 +35,14 @@ export const DateRangePicker = ({
       <TextField
         aria-describedby={id}
         onClick={handleClick}
-        label='Start 🡢 End'
+        label='Start → End'
         slotProps={{
           input: {
             readOnly: true,
           },
         }}
         style={{ minWidth: '20rem' }}
-        value={formatDate(value.start, 'E, do MMMM') + ' 🡢 ' + formatDate(value.end, 'E, do MMMM')}
+        value={formatDate(value.start, 'E, do MMMM') + ' → ' + formatDate(value.end, 'E, do MMMM')}
       />
       <Popover
         id={id}
