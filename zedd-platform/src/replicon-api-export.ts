@@ -20,10 +20,19 @@ export interface RepliconDate {
 interface Timesheet {
   uri: string
   statusUri?: string
+  /** first and last day of the timesheet period, if Replicon tells them */
+  start?: string
+  end?: string
+  /** the exported days in this timesheet */
   days: string[]
 }
 
-export const toRepliconDate = (isoDay: string): RepliconDate => {
+interface RepliconDateRange {
+  startDate?: RepliconDate
+  endDate?: RepliconDate
+}
+
+const toRepliconDate = (isoDay: string): RepliconDate => {
   const [year, month, day] = isoDay.split('-').map(Number)
   return { year, month, day }
 }
@@ -32,7 +41,7 @@ const fromRepliconDate = (d: RepliconDate) =>
   `${d.year}-${String(d.month).padStart(2, '0')}-${String(d.day).padStart(2, '0')}`
 
 /** Splits days into ranges of consecutive days. */
-export function consecutiveRanges(days: string[]): [string, string][] {
+function consecutiveRanges(days: string[]): [string, string][] {
   const ranges: [string, string][] = []
   for (const day of [...days].sort()) {
     const last = ranges[ranges.length - 1]
@@ -46,7 +55,7 @@ export function consecutiveRanges(days: string[]): [string, string][] {
 }
 
 /** Builds the PutTimeEntry parameters for one work entry. */
-export function timeEntryParameters(
+function timeEntryParameters(
   tenant: string,
   userUri: string,
   day: string,
@@ -108,7 +117,7 @@ export function timeEntryParameters(
 }
 
 /** Finds the owner of a timesheet, i.e. the user to export for. */
-export async function getTimesheetOwner(api: RepliconApi, timesheetUri: string): Promise<string> {
+async function getTimesheetOwner(api: RepliconApi, timesheetUri: string): Promise<string> {
   const owner = await api.request('TimesheetService1.svc/GetTimesheetOwner', { timesheetUri })
   const userUri = USER_URI.exec(JSON.stringify(owner))?.[0]
   if (!userUri) {
@@ -117,7 +126,17 @@ export async function getTimesheetOwner(api: RepliconApi, timesheetUri: string):
   return userUri
 }
 
-async function getTimesheetForDay(api: RepliconApi, userUri: string, day: string) {
+const isRepliconDate = (d: unknown): d is RepliconDate =>
+  typeof (d as RepliconDate)?.year === 'number' &&
+  typeof (d as RepliconDate)?.month === 'number' &&
+  typeof (d as RepliconDate)?.day === 'number'
+
+/** The timesheet of a day, with its period if Replicon tells it. */
+async function getTimesheetForDay(
+  api: RepliconApi,
+  userUri: string,
+  day: string,
+): Promise<Omit<Timesheet, 'days'>> {
   const details = await api.request('TimesheetService1.svc/GetTimesheetDetailsForDate', {
     userUri,
     date: toRepliconDate(day),
@@ -125,22 +144,28 @@ async function getTimesheetForDay(api: RepliconApi, userUri: string, day: string
   })
   const uri: string | undefined = details?.timesheet?.uri
   if (!uri) throw new Error('No Replicon timesheet found for ' + day)
-  return { uri, statusUri: details.timesheet.statusUri as string | undefined }
+  let range: RepliconDateRange | undefined = details.timesheet.dateRange
+  if (!isRepliconDate(range?.startDate) || !isRepliconDate(range?.endDate)) {
+    range = await api
+      .request('TimesheetService1.svc/GetTimesheetDetails', { timesheetUri: uri })
+      .then((d) => d?.dateRange)
+      .catch((e) => console.warn('Could not get the period of the timesheet ' + uri, e))
+  }
+  const known = isRepliconDate(range?.startDate) && isRepliconDate(range?.endDate)
+  return {
+    uri,
+    statusUri: details.timesheet.statusUri as string | undefined,
+    start: known ? fromRepliconDate(range!.startDate!) : undefined,
+    end: known ? fromRepliconDate(range!.endDate!) : undefined,
+  }
 }
 
-async function reopenIfSubmitted(api: RepliconApi, timesheet: Timesheet) {
-  if (timesheet.statusUri && TIMESHEET_STATUS_APPROVED.test(timesheet.statusUri)) {
-    throw new Error(
-      `The Replicon timesheet of ${timesheet.days[0]} is already approved and can't be changed.`,
-    )
-  }
-  if (timesheet.statusUri && TIMESHEET_STATUS_WAITING.test(timesheet.statusUri)) {
-    await api.request('TimesheetApprovalService1.svc/Reopen', {
-      timesheetUri: timesheet.uri,
-      unitOfWorkId: randomUUID(),
-      comments: 'Reopened by zedd to export time',
-    })
-  }
+async function reopen(api: RepliconApi, timesheet: Timesheet) {
+  await api.request('TimesheetApprovalService1.svc/Reopen', {
+    timesheetUri: timesheet.uri,
+    unitOfWorkId: randomUUID(),
+    comments: 'Reopened by zedd to export time',
+  })
 }
 
 /** an extension field of the tenant, e.g. the work location, as returned on a time entry */
@@ -171,8 +196,8 @@ function workLocationFields(entry: { extensionFieldValues?: ExtensionFieldValue[
 }
 
 /**
- * Finds the work location for each exported day, like the Replicon page fills it in: from an entry
- * of that day, else from the latest entry before. Throws if there's none, before anything changes.
+ * Finds the work location for each exported day: from an entry of that day, else from the latest
+ * entry before. Throws if there's none, before anything changes.
  */
 async function getWorkLocations(api: RepliconApi, userUri: string, days: string[]) {
   const sorted = [...days].sort()
@@ -202,42 +227,90 @@ async function getTimeEntries(api: RepliconApi, userUri: string, start: string, 
     dateRange: { startDate: toRepliconDate(start), endDate: toRepliconDate(end) },
     asOf: null,
   })
-  return (Array.isArray(entries) ? entries : []) as {
-    uri?: string
-    entryDate?: RepliconDate
-    revisionGroupUri?: string
-    extensionFieldValues?: ExtensionFieldValue[]
-  }[]
+  return (Array.isArray(entries) ? entries : []) as TimeEntry[]
+}
+
+interface TimeEntry {
+  uri?: string
+  entryDate?: RepliconDate
+  revisionGroupUri?: string
+  extensionFieldValues?: ExtensionFieldValue[]
+  customMetadata?: { keyUri?: string; value?: { uri?: string; text?: string } | null }[]
+  interval?: { hours?: { hours?: number; minutes?: number } | null } | null
 }
 
 /** The existing project time entries of the user on the given days. */
 async function getProjectTimeEntries(api: RepliconApi, userUri: string, days: string[]) {
   const daySet = new Set(days)
-  const uris: string[] = []
+  const result: TimeEntry[] = []
   for (const [start, end] of consecutiveRanges(days)) {
     for (const entry of await getTimeEntries(api, userUri, start, end)) {
       if (!entry.uri || (entry.entryDate && !daySet.has(fromRepliconDate(entry.entryDate)))) {
         continue
       }
-      if (PROJECT_TIME.test(JSON.stringify(entry))) uris.push(entry.uri)
+      if (PROJECT_TIME.test(JSON.stringify(entry))) result.push(entry)
     }
   }
-  return uris
+  return result
+}
+
+const metadata = (entry: TimeEntry, key: string) =>
+  entry.customMetadata?.find((m) => m.keyUri === 'urn:replicon:time-entry-metadata-key:' + key)
+    ?.value
+
+/** What makes an entry the same, to see if a timesheet already has the time zedd would write. */
+const entryKey = (day: string, taskUri = '', minutes: number, comment = '', activityUri = '') =>
+  JSON.stringify([day, taskUri, minutes, comment, activityUri])
+
+/** Whether the existing entries are exactly the work zedd would write for these days. */
+function isUnchanged(
+  tenant: string,
+  timesheet: Timesheet,
+  oldEntries: TimeEntry[],
+  data: PlatformExportFormat,
+) {
+  const oldKeys = oldEntries.map((e) =>
+    entryKey(
+      e.entryDate ? fromRepliconDate(e.entryDate) : '',
+      metadata(e, 'task')?.uri,
+      (e.interval?.hours?.hours ?? NaN) * 60 + (e.interval?.hours?.minutes ?? 0),
+      metadata(e, 'comments')?.text,
+      metadata(e, 'activity')?.uri,
+    ),
+  )
+  const newKeys = timesheet.days.flatMap((day) =>
+    data[day]
+      .filter((w) => w.hours > 0)
+      .map((w) =>
+        entryKey(
+          day,
+          `urn:replicon-tenant:${tenant}:task:${w.taskIntId}`,
+          Math.round(w.hours * 60),
+          w.comment || '',
+          w.taskActivityUri,
+        ),
+      ),
+  )
+  return JSON.stringify(oldKeys.sort()) === JSON.stringify(newKeys.sort())
 }
 
 const deleteTimeEntry = (api: RepliconApi, timeEntryUri: string) =>
   api.request('TimeEntryService3.svc/DeleteTimeEntry', { timeEntryUri })
 
 /**
- * Submits the timesheet. Like the Replicon page, the revision groups of the entries are submitted
- * first, which some tenants require before the timesheet can be submitted.
+ * Submits the timesheet. The revision groups of the entries are submitted first, which Replicon
+ * requires before the timesheet can be submitted.
  */
 async function submit(api: RepliconApi, userUri: string, timesheet: Timesheet) {
   const days = [...timesheet.days].sort()
-  const entries = await getTimeEntries(api, userUri, days[0], days[days.length - 1])
+  const entries = await getTimeEntries(
+    api,
+    userUri,
+    timesheet.start ?? days[0],
+    timesheet.end ?? days[days.length - 1],
+  )
   const revisionGroups = new Set(entries.map((e) => e.revisionGroupUri).filter(Boolean))
   for (const timeEntryRevisionGroupUri of revisionGroups) {
-    // may already be submitted from a previous attempt, so a failure doesn't stop the submit
     await api
       .request('TimeEntryRevisionGroupApprovalService1.svc/Submit', {
         timeEntryRevisionGroupUri,
@@ -257,6 +330,14 @@ async function submit(api: RepliconApi, userUri: string, timesheet: Timesheet) {
 /**
  * Writes the work entries of the exported days to Replicon: the existing entries of these days are
  * replaced, days without work entries are cleared.
+ *
+ * Replicon periods don't have to match the exported days, e.g. a month-end splits a week, or a
+ * period is longer than a week. So:
+ * - a timesheet that already has exactly the exported time isn't touched, even if it's approved;
+ *   an approved one with other time stops the export before anything changes
+ * - with submitTimesheets, a timesheet is only submitted once its period is over or exported up
+ *   to its last day; until then its time is only saved, so it can still be completed later
+ * - a timesheet that was submitted before is submitted again after the change
  *
  * @param currentTimesheetUri - a timesheet of the user, to find the user and the tenant
  */
@@ -278,17 +359,52 @@ export async function exportViaApi(
     ? await getWorkLocations(api, userUri, daysWithWork)
     : new Map<string, unknown[]>()
 
-  const timesheets = new Map<string, Timesheet>()
-  for (const day of Object.keys(data).sort()) {
-    const { uri, statusUri } = await getTimesheetForDay(api, userUri, day)
-    const timesheet = timesheets.get(uri) ?? { uri, statusUri, days: [] }
+  // days of a known period don't need their own request
+  const days = Object.keys(data).sort()
+  const timesheets: Timesheet[] = []
+  for (const day of days) {
+    let timesheet = timesheets.find((t) => t.start && t.end && t.start <= day && day <= t.end)
+    if (!timesheet) {
+      const found = await getTimesheetForDay(api, userUri, day)
+      timesheet = timesheets.find((t) => t.uri === found.uri)
+      if (!timesheet) {
+        timesheet = { ...found, days: [] }
+        timesheets.push(timesheet)
+      }
+    }
     timesheet.days.push(day)
-    timesheets.set(uri, timesheet)
   }
 
-  for (const timesheet of timesheets.values()) {
-    await reopenIfSubmitted(api, timesheet)
-    const oldEntries = await getProjectTimeEntries(api, userUri, timesheet.days)
+  const oldEntries = new Map<Timesheet, TimeEntry[]>()
+  const unchanged = new Set<Timesheet>()
+  for (const timesheet of timesheets) {
+    const entries = await getProjectTimeEntries(api, userUri, timesheet.days)
+    oldEntries.set(timesheet, entries)
+    if (isUnchanged(tenant, timesheet, entries, data)) {
+      unchanged.add(timesheet)
+    } else if (timesheet.statusUri && TIMESHEET_STATUS_APPROVED.test(timesheet.statusUri)) {
+      throw new Error(
+        `The Replicon timesheet of ${timesheet.start ?? timesheet.days[0]} is already approved ` +
+          "and has other time than zedd. Approved timesheets can't be changed; please export " +
+          'without its days.',
+      )
+    }
+  }
+
+  const lastDay = days[days.length - 1]
+  const today = format(new Date(), 'yyyy-MM-dd')
+  for (const timesheet of timesheets) {
+    const approved = !!timesheet.statusUri && TIMESHEET_STATUS_APPROVED.test(timesheet.statusUri)
+    const waiting = !!timesheet.statusUri && TIMESHEET_STATUS_WAITING.test(timesheet.statusUri)
+    const periodOver = !timesheet.end || timesheet.end <= lastDay || timesheet.end < today
+    const submitNow = submitTimesheets && periodOver && !approved && !waiting
+
+    if (unchanged.has(timesheet)) {
+      if (submitNow) await submit(api, userUri, timesheet)
+      continue
+    }
+
+    if (waiting) await reopen(api, timesheet)
 
     // write the new entries first, so a failure doesn't leave the days empty
     const newEntries: string[] = []
@@ -311,10 +427,10 @@ export async function exportViaApi(
       throw e
     }
 
-    for (const uri of oldEntries) {
-      await deleteTimeEntry(api, uri)
+    for (const entry of oldEntries.get(timesheet)!) {
+      await deleteTimeEntry(api, entry.uri!)
     }
-    if (submitTimesheets) {
+    if (submitNow || waiting) {
       await submit(api, userUri, timesheet)
     }
   }
