@@ -19,19 +19,13 @@ export function $x(ctx: QueryContext, expression: string): Promise<ElementHandle
 }
 
 export interface WaitOptions {
-  /** wait until the element is visible */
   visible?: boolean
-  /** wait until the element is hidden or detached; resolves to null then */
   hidden?: boolean
   timeout?: number
 }
 
 type WaitContext = Pick<Page, 'waitForSelector'> | Pick<ElementHandle, 'waitForSelector'>
 
-/**
- * Waits for a selector like puppeteer did: by default only until the element is in the DOM, while
- * Playwright waits until it is visible.
- */
 export async function waitForSelector(
   ctx: WaitContext,
   selector: string,

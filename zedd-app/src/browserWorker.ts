@@ -3,9 +3,9 @@
  * OTT integrations. The renderer talks to it through a MessagePort (see RemotePlatformIntegration).
  */
 import type { MessagePortMain } from 'electron'
-import { OTTIntegration } from 'zedd-platform/out/src/ott-integration'
+import { OTTIntegration } from 'zedd-platform/out/src/ott/ott-integration'
 import type { PlatformIntegration } from 'zedd-platform/out/src/platform-integration'
-import { RepliconIntegration } from 'zedd-platform/out/src/replicon-integration'
+import { RepliconIntegration } from 'zedd-platform/out/src/replicon/replicon-integration'
 import type {
   BrowserWorkerPlatform,
   BrowserWorkerRequest,

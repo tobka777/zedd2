@@ -1,7 +1,7 @@
 import { randomUUID } from 'crypto'
 import { addDays, format, parseISO } from 'date-fns'
-import { PlatformExportFormat } from './model'
-import { WorkEntry } from './model/work-entry.model'
+import { PlatformExportFormat } from '../model'
+import { WorkEntry } from '../model/work-entry.model'
 import { RepliconApi } from './replicon-api'
 
 const USER_URI = /urn:replicon-tenant:[^:"]+:user:[0-9]+/

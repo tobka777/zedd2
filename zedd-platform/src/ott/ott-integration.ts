@@ -1,6 +1,6 @@
-import { PlatformExportFormat, Task } from './model'
-import { PlatformOptions } from './model/platform.options.model'
-import { WorkEntry } from './model/work-entry.model'
+import { PlatformExportFormat, Task } from '../model'
+import { PlatformOptions } from '../model/platform.options.model'
+import { WorkEntry } from '../model/work-entry.model'
 import {
   OttAssignedIssue,
   OttDeleteTimeEntry,
@@ -8,10 +8,10 @@ import {
   OttProjectCode,
   OttTimeEntry,
   OttWorkLogData,
-} from './model/ott-work-log.model'
+} from './ott-work-log.model'
 import { OttWorkLocation } from './ott-work-location'
-import { PlatformIntegration } from './platform-integration'
-import { magicToken, getCurrentMonthDatePath, waitForSelector } from './utils'
+import { PlatformIntegration } from '../platform-integration'
+import { magicToken, getCurrentMonthDatePath, waitForSelector } from '../utils'
 import {
   eachDayOfInterval,
   endOfMonth,

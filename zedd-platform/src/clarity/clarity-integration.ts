@@ -32,11 +32,11 @@ import {
 } from 'date-fns'
 import { de } from 'date-fns/locale'
 import uniq from 'lodash/uniq'
-import { Project } from './model/projekt.model'
-import { Task } from './model/task.model'
-import { PlatformExportFormat } from './model/platform-export-format.model'
-import { checkPlatformUrl } from './utils'
-import { WorkEntry } from './model/work-entry.model'
+import { Project } from '../model/projekt.model'
+import { Task } from '../model/task.model'
+import { PlatformExportFormat } from '../model/platform-export-format.model'
+import { checkPlatformUrl } from '../utils'
+import { WorkEntry } from '../model/work-entry.model'
 
 const CONTROL_KEY: string = process.platform === 'darwin' ? Key.COMMAND : Key.CONTROL
 
