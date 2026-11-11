@@ -12,11 +12,6 @@ export function checkPlatformUrl(urlToCheck: unknown): asserts urlToCheck is str
   }
 }
 
-export async function clearInput(input: ElementHandle<any> | null) {
-  await input?.click({ clickCount: 3 })
-  await input?.press('Backspace')
-}
-
 type QueryContext = { $$(selector: string): Promise<ElementHandle<SVGElement | HTMLElement>[]> }
 
 export function $x(ctx: QueryContext, expression: string): Promise<ElementHandle<Element>[]> {
@@ -44,14 +39,6 @@ export async function waitForSelector(
 ): Promise<ElementHandle<Element> | null> {
   const state = hidden ? 'hidden' : visible ? 'visible' : 'attached'
   return (await ctx.waitForSelector(selector, { state, timeout })) as ElementHandle<Element> | null
-}
-
-export function waitForXPath(
-  page: Page,
-  expression: string,
-  options?: WaitOptions,
-): Promise<ElementHandle<Element> | null> {
-  return waitForSelector(page, 'xpath=' + expression, options)
 }
 
 export function waitForTimeout(ms: number): Promise<void> {

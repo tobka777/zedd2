@@ -1,7 +1,7 @@
 import { PlatformExportFormat, Task } from './model'
 import { PlatformOptions } from './model/platform.options.model'
-import { $x, checkPlatformUrl } from './utils'
-import { BrowserContext, chromium, ElementHandle, LaunchOptions, Page } from 'playwright-core'
+import { checkPlatformUrl } from './utils'
+import { BrowserContext, chromium, LaunchOptions, Page } from 'playwright-core'
 
 const BROWSER_CLOSE_TIMEOUT_MS = 10_000
 
@@ -125,18 +125,6 @@ export abstract class PlatformIntegration {
         clearTimeout(timer)
       }
     }
-  }
-
-  protected async clickElementWithContent(expression: string) {
-    const [node] = await $x(this.page, expression)
-
-    if (node) {
-      const button = node as unknown as ElementHandle<Element>
-      await button.click()
-      return button
-    }
-
-    return null
   }
 
   protected async sleep(seconds: number) {

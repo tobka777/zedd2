@@ -2,7 +2,7 @@ import { $x, waitForSelector, waitForTimeout } from './utils'
 import { PlatformIntegration } from './platform-integration'
 import { PlatformOptions } from './model/platform.options.model'
 import { PlatformExportFormat, Task, TaskActivity } from './model'
-import { ElementHandle, Request } from 'playwright-core'
+import { ElementHandle } from 'playwright-core'
 import { RepliconApi, RepliconApiResult } from './replicon-api'
 import { exportViaApi } from './replicon-api-export'
 import { promises as fsp } from 'fs'
@@ -34,7 +34,7 @@ const SECRET_FIELD = /("[^"]*(password|token|secret)[^"]*"\s*:\s*)"[^"]*"/gi
 const redact = (body: string | undefined) => body?.replace(SECRET_FIELD, '$1"***"')
 const TIMESHEET_URI = /urn:replicon-tenant:[^:"\/]+:timesheet:[0-9a-zA-Z-]+/
 const MAX_BODY_LENGTH = 50_000
-/** time the user has for the login (SSO, SAML, 2FA), like OTT waits for its table */
+/** time the user has for the login (SSO, SAML, 2FA) */
 const LOGIN_TIMEOUT_MS = 5 * 60_000
 
 export class RepliconIntegration extends PlatformIntegration {
@@ -51,59 +51,30 @@ export class RepliconIntegration extends PlatformIntegration {
     await this.goToTheTimesheet(true)
     await waitForSelector(this.page, 'table.dataGrid > tbody[sectiontype="actions"]')
 
-    const projects = await this.fetchProjects(await this.waitFor(timesheetUri, 10_000))
-    const tasks = await this.getTasksFromJson(projects.json, projects.tenant, projects.timesheet)
+    const currentTimesheetUri = await this.waitFor(timesheetUri, 10_000)
+    const projects = await this.fetchProjects(currentTimesheetUri)
+    const tasks = await this.getTasksFromJson(projects, currentTimesheetUri!)
 
     notifyTasks && notifyTasks(tasks)
     await this.quitBrowser()
     return tasks
   }
 
-  /**
-   * Loads the projects of the timesheet from the URL the task search of the page uses. Requests it
-   * directly; only if that fails, the task search is opened in the page to find the URL.
-   */
-  private async fetchProjects(
-    timesheetUri: string | undefined,
-  ): Promise<{ json: any; tenant: string; timesheet: string }> {
-    if (timesheetUri) {
-      const url = `${new URL(this.page.url()).origin}/wbs/${timesheetUri}/projects?q=&c=100`
-      const json = await this.getJson(url).catch(() => undefined)
-      if (Array.isArray(json?.results)) {
-        const [tenant, timesheet] = this.extractTenantAndTimesheet(url)
-        return { json, tenant, timesheet }
-      }
-      console.warn('[Replicon] projects not available directly, opening the task search')
+  /** Loads the projects of the timesheet from the URL the task search of the page uses. */
+  private async fetchProjects(timesheetUri: string | undefined): Promise<any> {
+    if (!timesheetUri) {
+      throw new Error('Could not find the Replicon timesheet after the login.')
     }
+    const json = await this.getJson(this.wbsUrl(timesheetUri, 'projects?q=&c=100'))
+    if (!Array.isArray(json?.results)) {
+      throw new Error('Could not load the projects of the Replicon timesheet.')
+    }
+    return json
+  }
 
-    const urlTaskPromise = new Promise<string>((resolve) => {
-      const onRequest = (req: Request) => {
-        const url = req.url()
-        if (
-          url.includes('replicon-tenant') &&
-          url.includes('timesheet') &&
-          url.includes('projects')
-        ) {
-          this.page.off('request', onRequest)
-          resolve(url)
-        }
-      }
-      this.page.on('request', onRequest)
-    })
-
-    const taskTable = await waitForSelector(this.page, 'table.dataGrid')
-    const addRowButton = await waitForSelector(
-      taskTable!,
-      'ul.actionList > li > a[aria-label="Add New TimeLine"]',
-    )
-    await addRowButton!.click()
-    const taskSearchButton = await waitForSelector(this.page, 'td.timesheetSortableHeader')
-    await taskSearchButton?.click()
-    await this.clickSearchByCategory()
-
-    const url = await urlTaskPromise
-    const [tenant, timesheet] = this.extractTenantAndTimesheet(url)
-    return { json: await this.getJson(url), tenant, timesheet }
+  /** a URL of the work breakdown structure the timesheet page uses for its task search */
+  private wbsUrl(timesheetUri: string, path: string) {
+    return `${new URL(this.page.url()).origin}/wbs/${timesheetUri}/${path}`
   }
 
   private getJson(url: string): Promise<any> {
@@ -347,47 +318,6 @@ export class RepliconIntegration extends PlatformIntegration {
     }
   }
 
-  private async clickSearchByCategory() {
-    const nodes = await $x(this.page, "//span[text()='Search By Category']")
-
-    for (let i = 0; i < nodes.length; i++) {
-      const button = nodes[i] as unknown as ElementHandle<Element>
-
-      const targetNodeHandle = await this.page.evaluate((el) => {
-        let current: Element | null = el
-
-        while (
-          current &&
-          current.parentElement &&
-          current.tagName.toLowerCase() !== 'task-selector-navigation-bar'
-        ) {
-          if (
-            current.classList.contains('searchByCategory') &&
-            current.classList.contains('active')
-          ) {
-            return null
-          }
-          current = current.parentElement
-        }
-
-        if (
-          current?.getAttribute &&
-          current
-            .getAttribute('params')
-            ?.includes('currentTab: params.navigationBarParams.currentTab')
-        ) {
-          return current as Element
-        }
-
-        return null
-      }, button)
-
-      if (targetNodeHandle) {
-        await button.click()
-      }
-    }
-  }
-
   private async forceGetTargetSite(searchedPartInLink: string, timeout = 60000) {
     const start = Date.now()
     let samlLoginClicked = false
@@ -407,9 +337,8 @@ export class RepliconIntegration extends PlatformIntegration {
         throw new Error(`Timed out waiting for URL to contain: ${searchedPartInLink}`)
       }
 
-      // Replicon keeps its login in a session cookie, which Edge drops on close, so its login page
-      // comes up on every run. The Microsoft login behind SAML is kept in the persistent profile,
-      // so continuing with SAML usually signs in without any user interaction.
+      // Replicon's login page comes up on every run. The Microsoft login behind SAML is kept in the
+      // persistent profile, so continuing with SAML usually signs in without any user interaction.
       if (!samlLoginClicked) {
         samlLoginClicked = await this.clickSamlLoginIfShown()
       }
@@ -449,47 +378,27 @@ export class RepliconIntegration extends PlatformIntegration {
     }
   }
 
-  private extractTenantAndTimesheet(url: string): [string, string] {
-    const match = url.match(/urn:replicon-tenant:([^:]+):timesheet:([^/]+)/)
-    if (match) {
-      const [, tenant, timesheet] = match
-      return [tenant, timesheet]
-    }
-    return ['', '']
-  }
-
-  private async getTasksFromJson(projectJsonResponse: any, tenant: string, timesheet: string) {
-    let tasks: Task[] = []
-
-    const coreUrlStart =
-      new URL(this.page.url()).origin +
-      '/wbs/urn:replicon-tenant:' +
-      tenant +
-      ':timesheet:' +
-      timesheet +
-      '/tasks?pj='
-    const coreUrlEnd = '&q=&c=100'
-    for (let i = 0; i < projectJsonResponse.results.length; i++) {
-      let project = projectJsonResponse.results[i].project
-      let url = coreUrlStart + project.uri + coreUrlEnd
-      const taskJsonResponse = await this.getJson(url)
-      for (let j = 0; j < taskJsonResponse.results.length; j++) {
-        const projectName = project.name.replace(/^"|"$/g, '')
-        let task: Task = {
+  private async getTasksFromJson(projectJsonResponse: any, timesheetUri: string) {
+    const tasks: Task[] = []
+    for (const { project } of projectJsonResponse.results) {
+      const taskJsonResponse = await this.getJson(
+        this.wbsUrl(timesheetUri, `tasks?pj=${project.uri}&q=&c=100`),
+      )
+      const projectName = project.name.replace(/^"|"$/g, '')
+      for (const { task } of taskJsonResponse.results) {
+        tasks.push({
           name: projectName,
-          intId: taskJsonResponse.results[j].task.uri.split(':task:')[1],
+          intId: task.uri.split(':task:')[1],
           projectIntId: project.code,
-          projectName: projectName,
+          projectName,
           projectUri: project.uri,
           start: undefined,
           end: undefined,
-          taskCode: taskJsonResponse.results[j].task.name,
+          taskCode: task.name,
           typ: 'REPLICON',
-        }
-        tasks.push(task)
+        })
       }
     }
-
     return tasks
   }
 }
