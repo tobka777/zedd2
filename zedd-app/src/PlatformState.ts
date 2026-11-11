@@ -2,13 +2,7 @@ import { format as formatDate, parseISO } from 'date-fns'
 import { promises as fsp } from 'fs'
 import { computed, makeObservable, observable } from 'mobx'
 import * as path from 'path'
-import {
-  PlatformExportFormat,
-  PlatformType,
-  Task,
-  TaskActivity,
-  webDriverQuit,
-} from 'zedd-platform'
+import { PlatformExportFormat, PlatformType, Task, TaskActivity } from 'zedd-platform'
 import './index.css'
 import { FILE_DATE_FORMAT, getLatestFileInDir, mkdirIfNotExists } from './util'
 import { PlatformOptions } from 'zedd-platform/out/src/model/platform.options.model'
@@ -25,8 +19,6 @@ export class PlatformState {
   public repliconLink: string = ''
 
   public repliconActivity: string = ''
-
-  public chromedriverExe: string = ''
 
   public chromeHeadless: boolean = false
 
@@ -310,7 +302,6 @@ export class PlatformState {
   public killPlatform() {
     this._currentlyExportingTasks = false
     this._currentlyImportingTasks = false
-    webDriverQuit()
     this.platformIntegration?.quitBrowser()
   }
 

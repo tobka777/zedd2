@@ -9,7 +9,6 @@ import {
   FormControlLabel,
   FormLabel,
   Grid,
-  IconButton,
   InputAdornment,
   Radio,
   RadioGroup,
@@ -19,9 +18,8 @@ import {
 } from '@mui/material'
 import { useTheme } from '@mui/material/styles'
 import * as React from 'react'
-import { useEffect, useState } from 'react'
-import { dialog, shell } from '@electron/remote'
-import { MoreHoriz as PickFileIcon } from '@mui/icons-material'
+import { useState } from 'react'
+import { shell } from '@electron/remote'
 import { observer } from 'mobx-react-lite'
 import { PlatformState } from '../PlatformState'
 import { ZeddSettings } from '../ZeddSettings'
@@ -39,27 +37,12 @@ export const SettingsDialog = observer(
     platformState,
     settings,
     checkCgJira,
-    checkChromePath,
   }: {
     done: () => void
     platformState: PlatformState
     settings: ZeddSettings
     checkCgJira: (cgJira: ZeddSettings['cgJira']) => Promise<any>
-    checkChromePath: () => Promise<{
-      chromeVersion: string
-      chromeDriverVersion: string
-    }>
   }) => {
-    const [chromeStatus, setChromeStatus] = useState(
-      {} as {
-        error?: any
-        ok?: {
-          chromeVersion: string
-          chromeDriverVersion: string
-        }
-        checking?: true
-      },
-    )
     const [repliconRecording, setRepliconRecording] = useState(
       {} as { error?: any; file?: string; recording?: true },
     )
@@ -74,19 +57,6 @@ export const SettingsDialog = observer(
     const [textFieldRepliconLink, setTextFieldRepliconLink] = useState(settings.repliconLink)
 
     const theme = useTheme()
-
-    const updateChromeStatusDebounced = useDebouncedCallback(
-      () => {
-        setChromeStatus({ checking: true })
-        checkChromePath()
-          .then((versions) => setChromeStatus({ ok: versions }))
-          .catch((error) => setChromeStatus({ error }))
-      },
-      [checkChromePath],
-      1000,
-    )
-
-    useEffect(updateChromeStatusDebounced, [updateChromeStatusDebounced])
 
     const checkCgJiraDebounced = useDebouncedCallback(
       () => {
@@ -495,60 +465,9 @@ export const SettingsDialog = observer(
                 onChange={(e) => (settings.jira2.url = e.target.value.trim())}
               />
             </Grid>
-
-            <Grid size={{ xs: 4 }}>
-              <FormLabel>Chrome Path</FormLabel>
-            </Grid>
-            <Grid size={{ xs: 8 }} style={{ minHeight: '4em' }}>
-              <TextField
-                style={{ width: '100%' }}
-                value={settings.chromePath}
-                onChange={(e) => {
-                  settings.chromePath = e.target.value
-                  updateChromeStatusDebounced()
-                }}
-                slotProps={{
-                  input: {
-                    endAdornment: (
-                      <InputAdornment position='end'>
-                        <IconButton
-                          aria-label='toggle password visibility'
-                          size='small'
-                          onClick={async () => {
-                            const result = await dialog.showOpenDialog({
-                              defaultPath: settings.chromePath,
-                              filters: [{ name: 'Executable', extensions: ['exe'] }],
-                              properties: ['openFile'],
-                            })
-                            if (result.filePaths[0]) {
-                              settings.chromePath = result.filePaths[0]
-                              updateChromeStatusDebounced()
-                            }
-                          }}
-                          edge='end'
-                        >
-                          <PickFileIcon />
-                        </IconButton>
-                      </InputAdornment>
-                    ),
-                  },
-                }}
-              />
-              {chromeStatus.error ? (
-                <span style={{ color: theme.palette.error.main }}>{'' + chromeStatus.error}</span>
-              ) : chromeStatus.ok ? (
-                <span style={{ color: theme.palette.success.main }}>
-                  OK! Chrome Version: {chromeStatus.ok.chromeVersion}, Chrome Driver Version:{' '}
-                  {chromeStatus.ok.chromeDriverVersion}
-                </span>
-              ) : (
-                <CircularProgress size='0.8em' />
-              )}
-            </Grid>
           </Grid>
         </DialogContent>
         <DialogActions>
-          <Button onClick={() => updateChromeStatusDebounced()}>Recheck Chrome</Button>
           <Button onClick={(_) => done()} color='primary'>
             Done
           </Button>

@@ -99,7 +99,7 @@ After that the app starts without a warning.
 
 ### Requirements
 
-- [Chrome](https://www.google.com/chrome/de/download-chrome/) with version 115 or newer must be installed
+- [Microsoft Edge](https://www.microsoft.com/edge) must be installed for the Replicon and OTT import/export (preinstalled on Windows)
 
 ## Contributing 👨‍🔧
 

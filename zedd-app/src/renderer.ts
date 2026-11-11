@@ -29,13 +29,6 @@ import {
 } from './plJiraConnector'
 import { fileExists, floor, formatHoursBT, formatHoursHHmm, mkdirIfNotExists } from './util'
 import { ZeddSettings } from './ZeddSettings'
-import {
-  getChromeDriverVersion,
-  getChromeVersion,
-  getLatestChromeDriverVersion,
-  getNonEnvPathChromePath,
-  installChromeDriver,
-} from './chromeDriverMgmt'
 import { suggestedTaskMenuItems } from './menuUtil'
 configureMobx({ enforceActions: 'never' })
 
@@ -231,60 +224,6 @@ async function setup() {
   getTasksFromAssignedJiraIssues(platformState.tasks)
     .then((e) => (state.assignedIssueTasks = e.map((t) => state.normalizeTask(t))))
     .catch((error) => state.addMessage(error.message))
-
-  const checkChromePath = async (): Promise<{
-    chromeVersion: string
-    chromeDriverVersion: string
-  }> => {
-    if (!state.config.chromePath) {
-      state.config.chromePath = (await getNonEnvPathChromePath()) ?? ''
-      if (!state.config.chromePath) {
-        throw new Error(
-          'Could not find chrome.exe in standard locations! Is it installed?' +
-            ' https://www.google.com/chrome',
-        )
-      }
-    }
-    if (!(await fileExists(state.config.chromePath))) {
-      throw new Error(
-        `Could not find specified path '${state.config.chromePath}'!` +
-          ' Set to empty to try standard locations.',
-      )
-    }
-    console.log('configured chrome path', state.config.chromePath)
-    const chromeVersion = await getChromeVersion(state.config.chromePath)
-    console.log('current chrome version', chromeVersion)
-    if (parseInt(chromeVersion.split('.')[0]) < 115) {
-      // Requirement Check if Chrome newer than 115
-      throw new Error(
-        `Chrome ${chromeVersion} is not supported. Update Chrome to version 115 or newer!`,
-      )
-    }
-
-    const requiredChromeDriverVersion = await getLatestChromeDriverVersion(chromeVersion)
-    const chromeDriverDir = path.join(
-      app.getPath('appData'),
-      'chromedriver',
-      'darwin' === process.platform ? process.arch : '',
-    )
-    await mkdirIfNotExists(chromeDriverDir, { recursive: true })
-    let chromedriver = 'chromedriver'
-    if (isWin) {
-      chromedriver += '.exe'
-    }
-    const chromeDriverPath = path.join(chromeDriverDir, chromedriver)
-    if (
-      !(await fileExists(chromeDriverPath)) ||
-      requiredChromeDriverVersion !== (await getChromeDriverVersion(chromeDriverPath))
-    ) {
-      console.log('chromedriver missing or has wrong version')
-      installChromeDriver(requiredChromeDriverVersion, chromeDriverDir, false)
-    }
-    platformState.chromedriverExe = chromeDriverPath
-    await platformState.setIntegrationMap()
-    return { chromeVersion, chromeDriverVersion: requiredChromeDriverVersion }
-  }
-  checkChromePath().catch((error) => state.addMessage(error.message))
 
   const boundsContained = (outer: Rectangle, inner: Rectangle, margin = 0) =>
     outer.x - inner.x <= margin &&
@@ -589,7 +528,6 @@ async function setup() {
           taskSelectRef: setTaskSelectRef,
           state,
           checkCgJira,
-          checkChromePath,
           platformState: platformState,
           menuItems: getMenuItems(state),
           getTasksForSearchString: (s) =>

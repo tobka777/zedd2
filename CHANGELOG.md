@@ -1,6 +1,9 @@
 ## [Unreleased]
 
-- Fix: Replicon export via API sets the work location: taken from an entry of the same day, else from the latest entry before (like the Replicon page fills it in); the export stops before changing anything if there's none
+- Fix: Replicon export with timesheet periods that don't match the exported days (e.g. a week split at the month end, or periods longer than a week): timesheets that already have exactly the exported time are left untouched, also approved ones; with 'submit', a timesheet is only submitted once its period is over or exported up to its last day
+- Fix: Replicon export looks up each timesheet once instead of once per day
+- Fix: zedd no longer checks for Chrome or downloads chromedriver at every start; the Chrome path setting is removed
+- Fix: Replicon export via API sets the work location: taken from an entry of the same day, else from the latest entry before; the export stops before changing anything if there's none
 - Feature: Replicon login: zedd continues with 'Sign in with SAML' on the Replicon login page on its own and waits up to 5 minutes for the login
 - Feature: Replicon export via Replicon's web services instead of clicking through the timesheet: zedd only logs in with Edge (SSO), then reopens submitted timesheets if needed, replaces the entries of the exported days (task, hours, activity, comment) and submits if wanted. Replicon's own error messages are shown if something fails
 - Feature: Replicon import loads the projects directly instead of opening the task search
