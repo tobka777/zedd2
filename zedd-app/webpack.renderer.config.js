@@ -18,9 +18,6 @@ module.exports = {
     },
   },
   externals: {
-    // for Clarity, which is inactive (see zedd-platform/src/clarity/clarity-integration.ts)
-    // 'selenium-webdriver': 'commonjs selenium-webdriver',
-    // 'selenium-webdriver/chrome': 'commonjs selenium-webdriver/chrome',
     'win-ca': 'commonjs win-ca',
   },
 }

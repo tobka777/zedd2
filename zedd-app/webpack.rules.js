@@ -11,7 +11,6 @@ module.exports = [
     use: 'node-loader',
   },
   {
-    // add |selenium-webdriver for Clarity, which is inactive (see zedd-platform/src/clarity)
     test: /\.(m?js|node)$/,
     parser: { amd: false },
     use: {

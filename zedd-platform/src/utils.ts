@@ -18,7 +18,6 @@ export function $x(ctx: QueryContext, expression: string): Promise<ElementHandle
   return ctx.$$('xpath=' + expression) as Promise<ElementHandle<Element>[]>
 }
 
-/** Waits until the element is in the DOM, like Puppeteer did (Playwright waits until it's visible). */
 export function waitForSelector(
   page: Page,
   selector: string,
