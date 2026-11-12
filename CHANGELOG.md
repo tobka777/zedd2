@@ -1,11 +1,7 @@
 ## [Unreleased]
 
-- Feature: Replicon and OTT now run in Microsoft Edge via Playwright instead of Chrome via Puppeteer. Edge signs in with the Microsoft work account of the device, so no SSO extension is needed for the 2FA login. Edge runs in a separate background process, so a crash there no longer takes down zedd, and its windows are closed when zedd quits. Requires Microsoft Edge to be installed (Windows and Mac); zedd no longer checks for Chrome or downloads chromedriver at start, and the Chrome path setting is removed
+- Feature: Replicon and OTT now run in Microsoft Edge via Playwright instead of Chrome via Puppeteer. Edge signs in with the Microsoft work account of the device. Edge runs in a separate background process.
 - Feature: zedd uses its own persistent Edge profile, so the login is kept between imports/exports; it can be reset in the settings
-- Feature: Replicon login: zedd continues with 'Sign in with SAML' on the Replicon login page on its own and waits up to 5 minutes for the login
-- Feature: Replicon export via Replicon's web services instead of clicking through the timesheet: zedd only logs in with Edge (SSO), then replaces the entries of the exported days (task, hours, activity, comment, work location) and submits if wanted. The work location is taken from an entry of the same day, else from the latest entry before. Timesheets that already have exactly the exported time are left untouched; submitted ones are reopened and submitted again; with 'submit', a timesheet is only submitted once its period is over or exported up to its last day. The export stops before changing anything if a work location is missing or an approved timesheet would change, and shows Replicon's own error messages if something fails
-- Feature: Replicon import loads the projects directly instead of opening the task search. Replicon tasks now remember their project; please import the Replicon tasks once before the first export
-- Fix: Replicon tasks are loaded from the swimlane of the tenant instead of always eu3.replicon.com
 - Fix: tray icon was too large, without padding and blurry in the macOS menu bar, and hardly visible in a light menu bar (#75)
 - Fix: minimize/maximize/close buttons in the title bar were empty on macOS
 - Fix: arrow in the date range picker ("Start → End") was missing on macOS
