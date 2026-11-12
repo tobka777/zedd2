@@ -1,3 +1,9 @@
+/**
+ * INACTIVE: the Clarity integration isn't built or used at the moment. It still drives Chrome via
+ * Selenium and chromedriver, which zedd no longer installs (Replicon and OTT use Edge via Playwright).
+ *
+ */
+// @ts-nocheck
 import {
   Builder as WebDriverBuilder,
   By,
@@ -32,11 +38,11 @@ import {
 } from 'date-fns'
 import { de } from 'date-fns/locale'
 import uniq from 'lodash/uniq'
-import { Project } from './model/projekt.model'
-import { Task } from './model/task.model'
-import { PlatformExportFormat } from './model/platform-export-format.model'
-import { checkPlatformUrl } from './utils'
-import { WorkEntry } from './model/work-entry.model'
+import { Project } from '../model/projekt.model'
+import { Task } from '../model/task.model'
+import { PlatformExportFormat } from '../model/platform-export-format.model'
+import { checkPlatformUrl } from '../utils'
+import { WorkEntry } from '../model/work-entry.model'
 
 const CONTROL_KEY: string = process.platform === 'darwin' ? Key.COMMAND : Key.CONTROL
 

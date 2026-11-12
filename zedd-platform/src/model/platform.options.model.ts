@@ -1,4 +1,5 @@
 export interface PlatformOptions {
   headless?: boolean
-  executablePath?: string
+  userDataDir?: string
+  windowSize?: { width: number; height: number }
 }

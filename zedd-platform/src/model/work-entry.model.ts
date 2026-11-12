@@ -4,6 +4,7 @@ export interface WorkEntry {
   id: string
   projectName: string
   projectIntId: number
+  projectUri?: string
   taskName: string
   taskIntId: number
   hours: number
@@ -11,5 +12,6 @@ export interface WorkEntry {
   platformType: PlatformType
   comment?: string
   taskActivity?: string
+  taskActivityUri?: string
   child?: WorkEntry[]
 }

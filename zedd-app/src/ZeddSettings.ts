@@ -68,7 +68,7 @@ export class ZeddSettings {
   public repliconActivity = ''
 
   /**
-   * Open Chrome / Selenium in headless mode (background)
+   * Open Edge (Replicon/OTT) in headless mode (background); the name is kept for saved settings
    */
   @observable
   @serializable
@@ -111,10 +111,6 @@ export class ZeddSettings {
     ),
   )
   public updateServer = 'https://hazel-peach.now.sh'
-
-  @observable
-  @serializable
-  public chromePath: string = ''
 
   @observable
   @serializable
