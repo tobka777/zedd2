@@ -1,4 +1,4 @@
-import { ElementHandle, Page, WaitForSelectorOptions } from 'puppeteer'
+import { ElementHandle, Page } from 'playwright-core'
 import { InvalidPlatformUrlException } from './exception'
 
 export function checkPlatformUrl(urlToCheck: unknown): asserts urlToCheck is string {
@@ -12,23 +12,18 @@ export function checkPlatformUrl(urlToCheck: unknown): asserts urlToCheck is str
   }
 }
 
-export async function clearInput(input: ElementHandle<any> | null) {
-  await input?.click({ count: 3 })
-  await input?.press('Backspace')
+type QueryContext = { $$(selector: string): Promise<ElementHandle<SVGElement | HTMLElement>[]> }
+
+export function $x(ctx: QueryContext, expression: string): Promise<ElementHandle<Element>[]> {
+  return ctx.$$('xpath=' + expression) as Promise<ElementHandle<Element>[]>
 }
 
-type XPathContext = { $$(selector: string): Promise<ElementHandle<Element>[]> }
-
-export function $x(ctx: XPathContext, expression: string): Promise<ElementHandle<Element>[]> {
-  return ctx.$$('xpath/' + expression)
-}
-
-export function waitForXPath(
+export function waitForSelector(
   page: Page,
-  expression: string,
-  options?: WaitForSelectorOptions,
-): Promise<ElementHandle<Element> | null> {
-  return page.waitForSelector('xpath/' + expression, options)
+  selector: string,
+  options: { timeout?: number } = {},
+): Promise<ElementHandle<SVGElement | HTMLElement>> {
+  return page.waitForSelector(selector, { state: 'attached', ...options })
 }
 
 export function waitForTimeout(ms: number): Promise<void> {

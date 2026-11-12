@@ -92,8 +92,7 @@
     }
   },
   "dependencies": {
-    "puppeteer": "25.3.0",
-    "selenium-webdriver": "^4.46.0",
+    "playwright-core": "1.65.0",
     "win-ca": "^3.5.1"
   },
   "devDependencies": {
@@ -120,15 +119,12 @@
     "@types/react": "^19.2.17",
     "@types/react-date-range": "^1.4.10",
     "@types/react-dom": "^19.2.3",
-    "@types/selenium-webdriver": "^4.35.6",
     "@types/sinon": "^22.0.0",
-    "@types/unzipper": "^0.10.11",
     "@types/webpack-env": "^1.18.8",
     "@types/webpack-node-externals": "^3.0.4",
     "@typescript-eslint/eslint-plugin": "^8.65.0",
     "@typescript-eslint/parser": "^8.65.0",
     "@vercel/webpack-asset-relocator-loader": "1.10.0",
-    "async-which": "^1.0.3",
     "chroma.ts": "^1.0.10",
     "convert-svg-to-png": "^0.7.1",
     "cross-env": "^10.1.0",
@@ -162,12 +158,9 @@
     "sinon": "^22.1.0",
     "sleep-promise": "^9.1.0",
     "style-loader": "^4.0.0",
-    "sudo-prompt": "^9.2.1",
-    "tmp-promise": "^3.0.3",
     "ts-loader": "^9.6.2",
     "ts-node": "^10.9.2",
     "typescript": "^6.0.3",
-    "unzipper": "^0.12.5",
     "zedd-platform": "file:../zedd-platform"
   },
   "overrides": {

@@ -1,10 +1,14 @@
 module.exports = {
-  /**
-   * This is the main entry point for your application, it's the first file
-   * that runs in the main process.
-   */
-  entry: './src/main.ts',
-  // Put your normal webpack config below here
+  entry: {
+    index: './src/main.ts',
+    'browser-worker': './src/browserWorker.ts',
+  },
+  output: {
+    filename: '[name].js',
+  },
+  externals: {
+    'playwright-core': 'commonjs playwright-core',
+  },
   module: {
     rules: require('./webpack.rules'),
   },

@@ -2,19 +2,11 @@ import { format as formatDate, parseISO } from 'date-fns'
 import { promises as fsp } from 'fs'
 import { computed, makeObservable, observable } from 'mobx'
 import * as path from 'path'
-import {
-  OTTIntegration,
-  PlatformExportFormat,
-  PlatformIntegration,
-  PlatformType,
-  Task,
-  TaskActivity,
-  webDriverQuit,
-} from 'zedd-platform'
+import { PlatformExportFormat, PlatformType, Task, TaskActivity } from 'zedd-platform'
 import './index.css'
 import { FILE_DATE_FORMAT, getLatestFileInDir, mkdirIfNotExists } from './util'
-import { RepliconIntegration } from 'zedd-platform/out/src/replicon-integration'
 import { PlatformOptions } from 'zedd-platform/out/src/model/platform.options.model'
+import { RemotePlatformIntegration } from './RemotePlatformIntegration'
 
 export enum PlatformActionType {
   SubmitTimesheet,
@@ -28,19 +20,9 @@ export class PlatformState {
 
   public repliconActivity: string = ''
 
-  public chromeExe: string = ''
-
-  public chromedriverExe: string = ''
-
   public chromeHeadless: boolean = false
 
-  /**
-   * The name of the "platform resource" you are filling out
-   * timesheets for, i.e. yourself. this is only required
-   * if you have the right ins platform to fill timesheets for
-   * others.
-   */
-  public resourceName: string | undefined
+  public edgeProfileDir: string = ''
 
   @observable
   public error = ''
@@ -63,12 +45,12 @@ export class PlatformState {
   @observable
   private _taskActivities: TaskActivity[] = []
 
-  private platformIntegration?: PlatformIntegration
+  private platformIntegration?: RemotePlatformIntegration
 
   @observable
   private _tasksLastUpdated: Date | undefined
 
-  private integrationMap: Record<string, PlatformIntegration> = {}
+  private integrationMap: Record<string, RemotePlatformIntegration> = {}
 
   public constructor(public platformDir: string) {
     makeObservable(this)
@@ -139,7 +121,8 @@ export class PlatformState {
 
     const options: PlatformOptions = {
       headless: this.chromeHeadless,
-      executablePath: this.chromeExe,
+      userDataDir: this.edgeProfileDir || undefined,
+      windowSize: { width: window.screen.availWidth, height: window.screen.availHeight },
     }
 
     if (this.integrationMap) {
@@ -153,8 +136,8 @@ export class PlatformState {
     }
 
     this.integrationMap = {
-      REPLICON: new RepliconIntegration(this.repliconLink, options),
-      OTT: new OTTIntegration(this.ottLink, options),
+      REPLICON: new RemotePlatformIntegration('REPLICON', this.repliconLink, options),
+      OTT: new RemotePlatformIntegration('OTT', this.ottLink, options),
     }
   }
 
@@ -175,9 +158,10 @@ export class PlatformState {
         this.platformIntegration = this.integrationMap[platform]
         const entriesForPlatform = Object.entries(platformExport).map(([day, entries]) => [
           day,
-          entries.filter((e) => e.platformType === platform),
+          entries
+            .filter((e) => e.platformType === platform)
+            .map((e) => ({ ...e, taskActivityUri: this.resolveActivity(e.taskActivity!)?.uri })),
         ])
-        // keep empty days, so the platform knows which days are part of the export
         const exportTasksForPlatform = Object.fromEntries(entriesForPlatform)
 
         await this.platformIntegration.exportTasks(exportTasksForPlatform, submitTimesheets)
@@ -230,11 +214,12 @@ export class PlatformState {
       throw new Error('No task found')
     }
 
-    const repliconIntegration = this.integrationMap['REPLICON'] as RepliconIntegration
-    this._taskActivities = await repliconIntegration.importTaskActivities((taskActivities) => {
-      infoNotify &&
-        infoNotify('Imported ' + taskActivities.length + ' task activities from REPLICON.')
-    })
+    this._taskActivities = await this.integrationMap['REPLICON'].importTaskActivities(
+      (taskActivities) => {
+        infoNotify &&
+          infoNotify('Imported ' + taskActivities.length + ' task activities from REPLICON.')
+      },
+    )
     this.saveTaskActivitiesToFile(this._taskActivities)
   }
 
@@ -255,10 +240,26 @@ export class PlatformState {
     return this.resolveTask(intId) !== undefined
   }
 
+  public async quitBrowsers(): Promise<void> {
+    await Promise.all(
+      Object.values(this.integrationMap).map((integration) =>
+        integration.quitBrowser().catch((error) => console.error('Error quitting browser', error)),
+      ),
+    )
+  }
+
+  public async resetEdgeProfile(): Promise<void> {
+    if (this._currentlyExportingTasks || this._currentlyImportingTasks) {
+      throw new Error('Cannot reset the Edge profile while an import/export is running.')
+    }
+    if (!this.edgeProfileDir) return
+    await this.quitBrowsers()
+    await fsp.rm(this.edgeProfileDir, { recursive: true, force: true })
+  }
+
   public killPlatform() {
     this._currentlyExportingTasks = false
     this._currentlyImportingTasks = false
-    webDriverQuit()
     this.platformIntegration?.quitBrowser()
   }
 
@@ -270,7 +271,7 @@ export class PlatformState {
   }
 
   private async importPlatformTasks(
-    platformIntegration: PlatformIntegration,
+    platformIntegration: RemotePlatformIntegration,
     notifyTasks?: (p: Task[]) => void,
   ): Promise<Task[]> {
     this.actionType = PlatformActionType.ImportTasks

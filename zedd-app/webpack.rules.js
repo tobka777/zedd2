@@ -11,7 +11,7 @@ module.exports = [
     use: 'node-loader',
   },
   {
-    test: /\.(m?js|node|selenium-webdriver)$/,
+    test: /\.(m?js|node)$/,
     parser: { amd: false },
     use: {
       loader: '@vercel/webpack-asset-relocator-loader',
