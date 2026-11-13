@@ -66,7 +66,6 @@ export class OTTIntegration extends PlatformIntegration {
       try {
         authorization = await request.headerValue('authorization')
       } catch {
-        // The frame of this request may already be gone – nothing to capture.
       }
 
       if (authorization) {
@@ -75,10 +74,6 @@ export class OTTIntegration extends PlatformIntegration {
     })
   }
 
-  /**
-   * Polls for the captured OTT authorization header until it is set or the deadline passes.
-   * @returns true when the header was captured within the timeout, false otherwise.
-   */
   private async waitForAuthorizationHeader(): Promise<boolean> {
     const deadline = Date.now() + 15_000
     while (!this.authorizationHeader && Date.now() < deadline) {
@@ -139,10 +134,6 @@ export class OTTIntegration extends PlatformIntegration {
     }
   }
 
-  /**
-   * Runs the given read against OTT, re-arming the idle timeout before it and retrying
-   * once when the navigation detached the frame behind the page.
-   */
   private async withNavigationRetry<T>(read: () => Promise<T>): Promise<T> {
     this.keepBrowserAlive()
     try {
