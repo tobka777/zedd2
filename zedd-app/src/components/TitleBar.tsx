@@ -1,6 +1,9 @@
 import { AppBar, Badge, Button, Menu as MuiMenu, MenuItem, Tooltip } from '@mui/material'
 import { useTheme } from '@mui/material/styles'
 import {
+  Close as CloseIcon,
+  CropSquare as MaximizeIcon,
+  FilterNone as RestoreIcon,
   Menu as MenuIcon,
   PlayArrow as PlayArrowIcon,
   Remove as ToHoverIcon,
@@ -188,8 +191,7 @@ export const TitleBar = observer(({ state, menuItems, showContextMenu }: TitleBa
           onClick={() => (state.hoverMode = false)}
           style={{ color: 'inherit', borderRadius: 0, ['WebkitAppRegion' as any]: 'no-drag' }}
         >
-          {local.maximized ? '🗖' : '🗗︎'}
-          {/* <ExpandIcon /> */}
+          {local.maximized ? <MaximizeIcon /> : <RestoreIcon />}
         </Button>
       )}
       {!state.hoverMode && (
@@ -197,7 +199,7 @@ export const TitleBar = observer(({ state, menuItems, showContextMenu }: TitleBa
           onClick={() => toggleWindowMaximized(getCurrentWindow())}
           style={{ color: 'inherit', borderRadius: 0, ['WebkitAppRegion' as any]: 'no-drag' }}
         >
-          {local.maximized ? '🗗︎' : '🗖'}
+          {local.maximized ? <RestoreIcon /> : <MaximizeIcon />}
         </Button>
       )}
       {!state.hoverMode && (
@@ -205,7 +207,7 @@ export const TitleBar = observer(({ state, menuItems, showContextMenu }: TitleBa
           onClick={() => getCurrentWindow().hide()}
           style={{ color: 'inherit', borderRadius: 0, ['WebkitAppRegion' as any]: 'no-drag' }}
         >
-          🗙︎
+          <CloseIcon />
         </Button>
       )}
     </AppBar>

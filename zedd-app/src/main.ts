@@ -1,7 +1,20 @@
 import * as remoteMain from '@electron/remote/main'
-import { app, BrowserWindow, ipcMain, session } from 'electron'
+import {
+  app,
+  BrowserWindow,
+  ipcMain,
+  MessageChannelMain,
+  session,
+  utilityProcess,
+  UtilityProcess,
+} from 'electron'
+import * as path from 'path'
+import {
+  BROWSER_WORKER_CONNECT,
+  BROWSER_WORKER_EXIT,
+  BROWSER_WORKER_PORT,
+} from './browserWorkerProtocol'
 
-// Log forwarder
 ipcMain.on('renderer-console', (_e, data: { level: string; text: string }) => {
   if (data.level === 'error' || data.level === 'warn') {
     console.error('[renderer]', data.text)
@@ -21,21 +34,16 @@ app.setAppUserModelId(global.appUserModelId)
 app.commandLine.appendSwitch('disable-features', 'OutOfBlinkCors')
 process.env.ELECTRON_DISABLE_SECURITY_WARNINGS = '1'
 
-// Handle creating/removing shortcuts on Windows when installing/uninstalling.
 if (require('electron-squirrel-startup')) {
-  // eslint-disable-line global-require
   app.quit()
 }
 if (!app.requestSingleInstanceLock()) {
   app.quit()
 }
 
-// Keep a global reference of the window object, if you don't, the window will
-// be closed automatically when the JavaScript object is garbage collected.
 let mainWindow: BrowserWindow | undefined
 
 app.on('second-instance', (_event, _commandLine, _workingDirectory) => {
-  // Someone tried to run a second instance, we should focus our window.
   if (mainWindow) {
     mainWindow.show()
     mainWindow.focus()
@@ -44,17 +52,6 @@ app.on('second-instance', (_event, _commandLine, _workingDirectory) => {
 
 let userQuit: boolean = false
 const createWindow = () => {
-  if (global.isDev) {
-    // BrowserWindow.addDevToolsExtension(
-    //   path.join(
-    //     homedir(),
-    //     // react-devtools
-    //     'AppData/Local/Google/Chrome/User Data/Default/Extensions/fmkadmapgofadopljbjfkapdkoienihi/4.8.2_0',
-    //   ),
-    // )
-  }
-
-  // Create the browser window.
   mainWindow = new BrowserWindow({
     width: 800,
     height: 600,
@@ -70,36 +67,52 @@ const createWindow = () => {
   mainWindow.loadURL(MAIN_WINDOW_WEBPACK_ENTRY)
 
   if (global.isDev) {
-    // Open the DevTools.
     mainWindow.webContents.openDevTools()
   }
 
-  // This must be done here, because registered callbacks in the renderer
-  // process are async and preventDefault is ignored
   mainWindow.on('close', (e) => {
     if (!userQuit) {
       e.preventDefault()
     }
   })
-  // mainWindow.on('minimize', () => mainWindow!.hide())
 
-  // Emitted when the window is closed.
   mainWindow.on('closed', () => {
-    // Dereference the window object, usually you would store windows
-    // in an array if your app supports multi windows, this is the time
-    // when you should delete the corresponding element.
     mainWindow = undefined
   })
 }
+
+let browserWorker: UtilityProcess | undefined
+
+const getBrowserWorker = (): UtilityProcess => {
+  if (!browserWorker) {
+    const worker = utilityProcess.fork(path.join(__dirname, 'browser-worker.js'), [], {
+      serviceName: 'zedd browser',
+    })
+    worker.on('exit', (code) => {
+      if (browserWorker === worker) browserWorker = undefined
+      console.log('browser worker exited with code', code)
+      mainWindow?.webContents.send(BROWSER_WORKER_EXIT, code)
+    })
+    browserWorker = worker
+  }
+  return browserWorker
+}
+
+ipcMain.on(BROWSER_WORKER_CONNECT, (event) => {
+  const { port1, port2 } = new MessageChannelMain()
+  getBrowserWorker().postMessage('connect', [port1])
+  event.sender.postMessage(BROWSER_WORKER_PORT, null, [port2])
+})
+
+app.on('will-quit', () => {
+  browserWorker?.kill()
+})
 
 ipcMain.on('quit', () => {
   userQuit = true
   app.quit()
 })
 
-// This method will be called when Electron has finished
-// initialization and is ready to create browser windows.
-// Some APIs can only be used after this event occurs.
 app.on('ready', () => {
   session.defaultSession.webRequest.onBeforeSendHeaders((details, callback) => {
     details.requestHeaders['User-Agent'] = 'zedd-app'
@@ -108,22 +121,14 @@ app.on('ready', () => {
   createWindow()
 })
 
-// Quit when all windows are closed.
 app.on('window-all-closed', () => {
-  // On OS X it is common for applications and their menu bar
-  // to stay active until the user quits explicitly with Cmd + Q
   if (process.platform !== 'darwin') {
     app.quit()
   }
 })
 
 app.on('activate', () => {
-  // On OS X it's common to re-create a window in the app when the
-  // dock icon is clicked and there are no other windows open.
   if (null === mainWindow) {
     createWindow()
   }
 })
-
-// In this file you can include the rest of your app's specific main process
-// code. You can also put them in separate files and import them here.

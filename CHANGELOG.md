@@ -1,3 +1,11 @@
+## [Unreleased]
+
+- Feature: Replicon and OTT now run in Microsoft Edge via Playwright instead of Chrome via Puppeteer. Edge signs in with the Microsoft work account of the device. Edge runs in a separate background process.
+- Feature: zedd uses its own persistent Edge profile, so the login is kept between imports/exports; it can be reset in the settings
+- Fix: tray icon was too large, without padding and blurry in the macOS menu bar, and hardly visible in a light menu bar (#75)
+- Fix: minimize/maximize/close buttons in the title bar were empty on macOS
+- Fix: arrow in the date range picker ("Start → End") was missing on macOS
+
 ## [3.1.0] - 2026-10-27
 
 - Feature: OTT export via the OTT API instead of UI automation: creates, updates and skips entries, deletes stale entries in the exported range, takes over the work location and writes comments

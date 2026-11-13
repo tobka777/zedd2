@@ -4,6 +4,7 @@ import {
   getCurrentWindow,
   Menu,
   getGlobal,
+  nativeImage,
   powerMonitor,
   screen as electronScreen,
   shell,
@@ -28,13 +29,6 @@ import {
 } from './plJiraConnector'
 import { fileExists, floor, formatHoursBT, formatHoursHHmm, mkdirIfNotExists } from './util'
 import { ZeddSettings } from './ZeddSettings'
-import {
-  getChromeDriverVersion,
-  getChromeVersion,
-  getLatestChromeDriverVersion,
-  getNonEnvPathChromePath,
-  installChromeDriver,
-} from './chromeDriverMgmt'
 import { suggestedTaskMenuItems } from './menuUtil'
 configureMobx({ enforceActions: 'never' })
 
@@ -45,9 +39,17 @@ const platformDir = path.join(saveDir, 'platform')
 
 const userConfigFile = path.join(saveDir, 'zeddconfig.json')
 
+const edgeProfileDir = path.join(
+  process.platform === 'win32' && process.env['LOCALAPPDATA']
+    ? path.join(process.env['LOCALAPPDATA'], 'zedd')
+    : app.getPath('userData'),
+  'edge-profile-v1',
+)
+
 const d = (...x: any[]) => console.log('renderer.ts', ...x)
 
 const isWin = process.platform === 'win32'
+const isMac = process.platform === 'darwin'
 
 // Renderlog only in dev mode
 const forwardLogs = !!getGlobal('isDev') || !!process.env.ZEDD_FORWARD_LOGS
@@ -83,8 +85,12 @@ function showNotification(title: string, text: string, cb: () => void) {
   notification.onclick = cb
 }
 
+let beforeQuit = async () => {}
+
 function quit() {
-  ipcRenderer.send('quit')
+  beforeQuit()
+    .catch((error) => console.error('Error before quitting', error))
+    .finally(() => ipcRenderer.send('quit'))
 }
 
 function setupAutoUpdater(state: AppState, config: ZeddSettings) {
@@ -133,6 +139,8 @@ async function setup() {
   await mkdirIfNotExists(saveDir)
 
   const platformState = new PlatformState(platformDir)
+  platformState.edgeProfileDir = edgeProfileDir
+  beforeQuit = () => platformState.quitBrowsers()
 
   const config = (await fileExists(userConfigFile))
     ? await ZeddSettings.readFromFile(userConfigFile)
@@ -212,61 +220,6 @@ async function setup() {
   getTasksFromAssignedJiraIssues(platformState.tasks)
     .then((e) => (state.assignedIssueTasks = e.map((t) => state.normalizeTask(t))))
     .catch((error) => state.addMessage(error.message))
-
-  const checkChromePath = async (): Promise<{
-    chromeVersion: string
-    chromeDriverVersion: string
-  }> => {
-    if (!state.config.chromePath) {
-      state.config.chromePath = (await getNonEnvPathChromePath()) ?? ''
-      if (!state.config.chromePath) {
-        throw new Error(
-          'Could not find chrome.exe in standard locations! Is it installed?' +
-            ' https://www.google.com/chrome',
-        )
-      }
-    }
-    if (!(await fileExists(state.config.chromePath))) {
-      throw new Error(
-        `Could not find specified path '${state.config.chromePath}'!` +
-          ' Set to empty to try standard locations.',
-      )
-    }
-    console.log('configured chrome path', state.config.chromePath)
-    const chromeVersion = await getChromeVersion(state.config.chromePath)
-    console.log('current chrome version', chromeVersion)
-    if (parseInt(chromeVersion.split('.')[0]) < 115) {
-      // Requirement Check if Chrome newer than 115
-      throw new Error(
-        `Chrome ${chromeVersion} is not supported. Update Chrome to version 115 or newer!`,
-      )
-    }
-
-    const requiredChromeDriverVersion = await getLatestChromeDriverVersion(chromeVersion)
-    const chromeDriverDir = path.join(
-      app.getPath('appData'),
-      'chromedriver',
-      'darwin' === process.platform ? process.arch : '',
-    )
-    await mkdirIfNotExists(chromeDriverDir, { recursive: true })
-    let chromedriver = 'chromedriver'
-    if (isWin) {
-      chromedriver += '.exe'
-    }
-    const chromeDriverPath = path.join(chromeDriverDir, chromedriver)
-    if (
-      !(await fileExists(chromeDriverPath)) ||
-      requiredChromeDriverVersion !== (await getChromeDriverVersion(chromeDriverPath))
-    ) {
-      console.log('chromedriver missing or has wrong version')
-      installChromeDriver(requiredChromeDriverVersion, chromeDriverDir, false)
-    }
-    platformState.chromeExe = state.config.chromePath
-    platformState.chromedriverExe = chromeDriverPath
-    await platformState.setIntegrationMap()
-    return { chromeVersion, chromeDriverVersion: requiredChromeDriverVersion }
-  }
-  checkChromePath().catch((error) => state.addMessage(error.message))
 
   const boundsContained = (outer: Rectangle, inner: Rectangle, margin = 0) =>
     outer.x - inner.x <= margin &&
@@ -363,23 +316,44 @@ async function setup() {
   currentWindowEvents.push(['maximize', hoverModeOff])
   currentWindowEvents.push(['unmaximize', restoreUnmaximizedBoundsIfNotHoverMode])
   currentWindowEvents.push(['move', saveWindowBounds])
-  const currentIconImage = computed(() => {
+  const currentIconName = computed(() => {
     const NUMBER_OF_SAMPLES = 12
-    let iconExt = '.ico'
-    if (!isWin) {
-      iconExt = '_24.png'
-    }
-    if (state.timingInProgess) {
-      return path.join(
-        app.getAppPath(),
-        'icons',
-        'progress' + floor((state.getDayProgress(new Date()) % 1) * NUMBER_OF_SAMPLES) + iconExt,
-      )
-    } else {
-      return path.join(app.getAppPath(), 'icons', 'paused' + iconExt)
-    }
+    return state.timingInProgess
+      ? 'progress' + floor((state.getDayProgress(new Date()) % 1) * NUMBER_OF_SAMPLES)
+      : 'paused'
   })
-  const tray = new Tray(currentIconImage.get())
+  const currentIconImage = computed(() =>
+    path.join(app.getAppPath(), 'icons', currentIconName.get() + (isWin ? '.ico' : '_24.png')),
+  )
+  // The macOS menu bar sizes icons in points: a plain 24px png is shown at 24pt and fills the
+  // whole menu bar (and is blurry on retina). The icons are drawn edge to edge, so use 14pt (with a
+  // sharp 2x representation) to leave some padding, like the system icons.
+  // As a template image macOS tints the white icon to fit light and dark menu bars.
+  const MAC_TRAY_ICON_SIZE = 14
+  const macTrayImages = new Map<string, Electron.NativeImage>()
+  const getMacTrayImage = (iconName: string) => {
+    let image = macTrayImages.get(iconName)
+    if (!image) {
+      const source = nativeImage.createFromPath(
+        path.join(app.getAppPath(), 'icons', `${iconName}_128.png`),
+      )
+      image = nativeImage.createEmpty()
+      for (const scaleFactor of [1, 2]) {
+        const size = MAC_TRAY_ICON_SIZE * scaleFactor
+        image.addRepresentation({
+          scaleFactor,
+          buffer: source.resize({ width: size, height: size, quality: 'best' }).toPNG(),
+        })
+      }
+      image.setTemplateImage(true)
+      macTrayImages.set(iconName, image)
+    }
+    return image
+  }
+  const currentTrayImage = computed(() =>
+    isMac ? getMacTrayImage(currentIconName.get()) : currentIconImage.get(),
+  )
+  const tray = new Tray(currentTrayImage.get())
   tray.on('double-click', () => {
     getCurrentWindow().show()
   })
@@ -448,7 +422,7 @@ async function setup() {
   })
 
   const cleanupIconAutorun = autorun(() => {
-    tray.setImage(currentIconImage.get())
+    tray.setImage(currentTrayImage.get())
     currentWindow.setIcon(currentIconImage.get())
   })
 
@@ -550,7 +524,6 @@ async function setup() {
           taskSelectRef: setTaskSelectRef,
           state,
           checkCgJira,
-          checkChromePath,
           platformState: platformState,
           menuItems: getMenuItems(state),
           getTasksForSearchString: (s) =>

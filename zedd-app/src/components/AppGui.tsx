@@ -39,7 +39,6 @@ export interface AppGuiProps {
   getTasksForSearchString: (s: string) => Promise<Task[]>
   menuItems: { label: string; click: () => void }[]
   checkCgJira: (cg: ZeddSettings['cgJira']) => Promise<any>
-  checkChromePath: () => Promise<any>
   showContextMenu: () => void
   taskSelectRef?: (r: HTMLInputElement) => void
   getLinksFromString: (s: string) => [string, string][]
@@ -52,7 +51,6 @@ export const AppGui = observer(
     getTasksForSearchString,
     checkCgJira,
     menuItems,
-    checkChromePath,
     showContextMenu,
     taskSelectRef,
     getLinksFromString,
@@ -151,7 +149,6 @@ export const AppGui = observer(
                   state.settingsDialogOpen = false
                 }}
                 checkCgJira={checkCgJira}
-                checkChromePath={checkChromePath}
                 settings={state.config}
                 platformState={platformState}
               />
