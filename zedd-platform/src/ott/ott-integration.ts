@@ -21,6 +21,7 @@ import {
   parseISO,
   startOfMonth,
 } from 'date-fns'
+import { Page } from 'playwright-core'
 export class OTTIntegration extends PlatformIntegration {
   private authorizationHeader?: string
   private userId?: number
@@ -57,21 +58,32 @@ export class OTTIntegration extends PlatformIntegration {
     }
   }
 
-  private attachAuthCapture(): void {
-    this.page.on('request', async (request) => {
-      const authorization = (await request.allHeaders())['authorization']
+  protected override onPageCreated(page: Page): void {
+    page.on('request', async (request) => {
+      if (!request.url().includes('/lean/wsr/protected/')) return
 
-      if (authorization && request.url().includes('/lean/wsr/protected/')) {
+      let authorization: string | null = null
+      try {
+        authorization = await request.headerValue('authorization')
+      } catch {
+      }
+
+      if (authorization) {
         this.authorizationHeader = authorization
       }
     })
   }
 
+  private async waitForAuthorizationHeader(): Promise<boolean> {
+    const deadline = Date.now() + 15_000
+    while (!this.authorizationHeader && Date.now() < deadline) {
+      await new Promise((resolve) => setTimeout(resolve, 200))
+    }
+    return Boolean(this.authorizationHeader)
+  }
+
   override async importTasks(notifyTasks?: (p: Task[]) => void): Promise<Task[]> {
-    await this.init()
-    this.attachAuthCapture()
-    await this.page.reload()
-    await waitForSelector(this.page, '[role="table"]')
+    await this.login()
     const user = await this.fetchUser()
     this.userId = user.id
     const currentMonthDatePath = getCurrentMonthDatePath()
@@ -112,9 +124,30 @@ export class OTTIntegration extends PlatformIntegration {
 
   private async login(): Promise<void> {
     await this.init()
-    this.attachAuthCapture()
+    await waitForSelector(this.page, '[role="table"]', { timeout: 300_000 })
+    if (await this.waitForAuthorizationHeader()) return
+
     await this.page.reload()
-    await waitForSelector(this.page, '[role="table"]')
+    await waitForSelector(this.page, '[role="table"]', { timeout: 300_000 })
+    if (!(await this.waitForAuthorizationHeader())) {
+      throw new Error('No authorization header captured from OTT')
+    }
+  }
+
+  private async withNavigationRetry<T>(read: () => Promise<T>): Promise<T> {
+    this.keepBrowserAlive()
+    try {
+      return await read()
+    } catch (e) {
+      const message = e instanceof Error ? e.message : String(e)
+      if (
+        /Execution context was destroyed|frame (was|got) detached|detached frame/i.test(message)
+      ) {
+        await waitForSelector(this.page, '[role="table"]', { timeout: 300_000 })
+        return read()
+      }
+      throw e
+    }
   }
 
   /**
@@ -370,22 +403,25 @@ export class OTTIntegration extends PlatformIntegration {
     if (!this.authorizationHeader) {
       throw new Error('No username captured')
     }
+    const auth = this.authorizationHeader
 
-    const userData = await this.page.evaluate(async (auth) => {
-      const response = await fetch('/lean/wsr/protected/users/data', {
-        method: 'GET',
-        headers: {
-          authorization: auth,
-        },
-        credentials: 'include',
-      })
+    const userData = await this.withNavigationRetry(() =>
+      this.page.evaluate(async (auth) => {
+        const response = await fetch('/lean/wsr/protected/users/data', {
+          method: 'GET',
+          headers: {
+            authorization: auth,
+          },
+          credentials: 'include',
+        })
 
-      if (!response.ok) {
-        throw new Error(`HTTP ${response.status} ${response.statusText}`)
-      }
+        if (!response.ok) {
+          throw new Error(`HTTP ${response.status} ${response.statusText}`)
+        }
 
-      return response.json()
-    }, this.authorizationHeader)
+        return response.json()
+      }, auth),
+    )
 
     const login = userData?.data?.[0]?.login
     const id = userData?.data?.[0]?.id
@@ -407,32 +443,35 @@ export class OTTIntegration extends PlatformIntegration {
     if (!this.authorizationHeader) {
       throw new Error('No username captured')
     }
+    const auth = this.authorizationHeader
 
-    return this.page.evaluate(
-      async ({ userNameMagic, datePath, auth }) => {
-        const response = await fetch(
-          `/lean/wsr/protected/ott/getMemberWorkLogData/${userNameMagic}/${userNameMagic}/${datePath}/All`,
-          {
-            method: 'GET',
-            headers: {
-              authorization: auth,
+    return this.withNavigationRetry(() =>
+      this.page.evaluate(
+        async ({ userNameMagic, datePath, auth }) => {
+          const response = await fetch(
+            `/lean/wsr/protected/ott/getMemberWorkLogData/${userNameMagic}/${userNameMagic}/${datePath}/All`,
+            {
+              method: 'GET',
+              headers: {
+                authorization: auth,
+              },
+              credentials: 'include',
             },
-            credentials: 'include',
-          },
-        )
+          )
 
-        if (!response.ok) {
-          throw new Error(`HTTP ${response.status} ${response.statusText}`)
-        }
+          if (!response.ok) {
+            throw new Error(`HTTP ${response.status} ${response.statusText}`)
+          }
 
-        const json = await response.json()
-        return json.data[0]
-      },
-      {
-        userNameMagic,
-        datePath,
-        auth: this.authorizationHeader,
-      },
+          const json = await response.json()
+          return json.data[0]
+        },
+        {
+          userNameMagic,
+          datePath,
+          auth,
+        },
+      ),
     )
   }
 
@@ -586,6 +625,7 @@ export class OTTIntegration extends PlatformIntegration {
     if (!this.authorizationHeader) {
       throw new Error('No authorization header captured')
     }
+    this.keepBrowserAlive()
     return this.page.evaluate(
       async ({ method, path, auth, body }) => {
         const response = await fetch(path, {

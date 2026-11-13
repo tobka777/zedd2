@@ -4,6 +4,7 @@ import { checkPlatformUrl } from './utils'
 import { BrowserContext, chromium, LaunchOptions, Page } from 'playwright-core'
 
 const BROWSER_CLOSE_TIMEOUT_MS = 10_000
+const BROWSER_IDLE_TIMEOUT_MS = 600_000
 
 export abstract class PlatformIntegration {
   protected context?: BrowserContext
@@ -22,17 +23,29 @@ export abstract class PlatformIntegration {
     await this.quitBrowser()
     const context = await this.launchEdge(headless)
     this.context = context
-    this.closeTimer = setTimeout(async () => {
-      if (this.context !== context) return
-      console.error('Timeout: Browser closed after 10 minutes.')
-      await this.quitBrowser()
-    }, 600_000)
+    this.armCloseTimer(context)
 
     this.page = context.pages()[0] ?? (await context.newPage())
     this.page.setDefaultTimeout(100_000)
+    this.onPageCreated(this.page)
 
     await this.page.goto(this.platformLink)
   }
+
+  private armCloseTimer(context: BrowserContext): void {
+    clearTimeout(this.closeTimer)
+    this.closeTimer = setTimeout(async () => {
+      if (this.context !== context) return
+      console.error('Timeout: Browser closed after 10 minutes without activity.')
+      await this.quitBrowser()
+    }, BROWSER_IDLE_TIMEOUT_MS)
+  }
+
+  protected keepBrowserAlive(): void {
+    if (this.context) this.armCloseTimer(this.context)
+  }
+
+  protected onPageCreated(page: Page): void {}
 
   private async launchEdge(headless: boolean | undefined): Promise<BrowserContext> {
     const { width, height } = this.options.windowSize ?? { width: 1280, height: 900 }
@@ -85,7 +98,6 @@ export abstract class PlatformIntegration {
    * @param submitTimesheets - whether to submit the timesheet for approval afterwards
    */
   abstract exportTasks(data: PlatformExportFormat, submitTimesheets: boolean): Promise<void>
-
 
   async quitBrowser(): Promise<void> {
     clearTimeout(this.closeTimer)
