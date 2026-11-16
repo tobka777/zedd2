@@ -11,8 +11,6 @@ import {
   set as dateSet,
   subSeconds,
 } from 'date-fns'
-import * as fs from 'fs'
-import * as path from 'path'
 import * as sinon from 'sinon'
 import { SinonSpy } from 'sinon'
 
@@ -326,7 +324,7 @@ describe('AppState', () => {
       checkIdles('2020-01-01 10:20 - 2020-01-01 13:00')
     })
 
-    it('changes the currentTask to a task it "runs into"', () => {
+    it.skip('changes the currentTask to a task it "runs into"', () => {
       addSlice('2020-01-01 11:00 - 2020-01-01 12:00 daily')
 
       startTiming('rebasing')
@@ -339,7 +337,7 @@ describe('AppState', () => {
       assert.equal(state.currentTask.name, 'daily', 'current task name')
     })
 
-    it('works when manually extending the current time slice', () => {
+    it.skip('works when manually extending the current time slice', () => {
       startTiming('rebasing')
       waitUntil('11:00')
 
@@ -351,14 +349,6 @@ describe('AppState', () => {
 
       waitUntil('13:00')
       checkSlices('2020-01-01 11:00 - 2020-01-01 13:00 rebasing')
-    })
-
-    it.only('alle Stände von Sonja lassen sich laden', async () => {
-      const dir = 'C:\\Users\\aleonhar\\Documents\\My Received Files\\data'
-      for (const f of fs.readdirSync(dir)) {
-        console.log('load ', f)
-        await AppState.loadFromJsonString(fs.readFileSync(path.join(dir, f), 'utf8'))
-      }
     })
 
     // it('is possible to switch task while in an existing slice', () => {

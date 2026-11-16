@@ -1,7 +1,7 @@
 import * as assert from 'assert'
 import { smartRound } from './PlatformView'
 
-describe.only('smartRound', () => {
+describe('smartRound', () => {
   it('works for [2.1, 2.1] nearestTo=0.25', () => {
     const smartRounded = smartRound(
       [

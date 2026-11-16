@@ -3,7 +3,6 @@ import * as React from 'react'
 import { Autocomplete, TextField, Chip } from '@mui/material'
 import { StandardTextFieldProps } from '@mui/material/TextField'
 import { PlatformState } from '../PlatformState'
-import { Task } from 'zedd-platform'
 
 export type PlatformTaskSelectProps = {
   platformState: PlatformState
