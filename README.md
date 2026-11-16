@@ -101,6 +101,17 @@ After that the app starts without a warning.
 
 - [Microsoft Edge](https://www.microsoft.com/edge) must be installed for the Replicon and OTT import/export (preinstalled on Windows)
 
+### Replicon and OTT login
+
+zedd opens Replicon and OTT in Microsoft Edge with its own Edge profile, so the login is kept between imports and exports.
+
+- **First login:** set `Open Edge in` in the settings to **Foreground** and run an import. Log in in the Edge window. After that you can switch to **Background**; in the background, zedd stops after 5 minutes if a login is needed.
+- **Login problems:** click `Reset Edge profile` in the settings and log in again.
+
+### Replicon export
+
+zedd exports to Replicon via Replicon's web services and takes the work location of each day over from your latest Replicon entry of the previous 8 weeks. If there is none, the export stops with "No work location found". Then enter one entry with its work location by hand in Replicon and export again.
+
 ## Contributing 👨‍🔧
 
 Pull requests are welcome. For major changes, please open an [GitHub Issues](https://github.com/tobka777/zedd2/issues) first to discuss what you would like to change.

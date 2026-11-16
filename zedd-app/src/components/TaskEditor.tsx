@@ -17,7 +17,6 @@ import { PlatformTaskSelect } from './PlatformTaskSelect'
 import { LoadingSpinner } from './LoadingSpinner'
 import { TaskSelect } from './TaskSelect'
 import { TaskActivitySelect } from './TaskActivitySelect'
-import { platform } from 'os'
 
 interface TaskEditorProps {
   state: AppState
@@ -51,7 +50,12 @@ export const TaskEditor = observer(
             state.addMessage(`Import from ${platformType} finished.`, 'info', 8000)
           }
         } catch (e) {
-          state.addMessage('Failed to fetch platform integrations: ' + e.message, 'error', 4000)
+          state.addMessage(
+            'Failed to fetch platform integrations: ' +
+              (e instanceof Error ? e.message : String(e)),
+            'error',
+            4000,
+          )
         }
       },
       [platformState, state],
@@ -74,7 +78,11 @@ export const TaskEditor = observer(
             )
           })
       } catch (e: any) {
-        state.addMessage('Failed to fetch platform integrations: ' + e.message, 'error', 4000)
+        state.addMessage(
+          'Failed to fetch platform integrations: ' + (e instanceof Error ? e.message : String(e)),
+          'error',
+          4000,
+        )
       }
     }, [platformState, state])
 
@@ -117,7 +125,7 @@ export const TaskEditor = observer(
             inputRef={taskSelectRef}
             value={value}
             onChange={(_, t) => {
-              onTaskSelectChange(state.getTaskForName(t))
+              onTaskSelectChange(state.getTaskForName(t ?? undefined))
             }}
             fullWidth
             style={{ flex: '1 1 auto', width: '100%' }}
