@@ -273,9 +273,11 @@ export const SettingsDialog = observer(
             </Grid>
 
             <Grid size={{ xs: 4 }}>
-              <Tooltip title='zedd uses its own Microsoft Edge profile, which keeps the Microsoft login between imports/exports.'>
-                <FormLabel>Edge profile</FormLabel>
-              </Tooltip>
+              <FormLabel>Edge profile</FormLabel>
+              <div style={{ fontSize: 'small' }}>
+                zedd uses its own Microsoft Edge profile, which keeps the Microsoft login between
+                imports/exports.
+              </div>
             </Grid>
             <Grid size={{ xs: 8 }}>
               <Button

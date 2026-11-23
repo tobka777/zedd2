@@ -37,7 +37,7 @@ import {
 import { groupBy, remove, sortBy, uniqBy } from 'lodash'
 import { observer } from 'mobx-react-lite'
 import * as React from 'react'
-import { useRef, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { PlatformExportFormat, PlatformType, Task } from 'zedd-platform'
 import { useTheme } from '@mui/material/styles'
 
@@ -291,6 +291,16 @@ export const PlatformView = observer((props: PlatformViewProps) => {
   const [platformViewFilterProject, setPlatformViewFilterProject] = useState('')
   const [popperOpen, setPopperOpen] = useState(false)
   const anchorRef = useRef(null)
+
+  const exportSucceeded =
+    platformState.actionType === PlatformActionType.SubmitTimesheet && platformState.success
+  useEffect(() => {
+    if (!exportSucceeded) return
+    const timeout = setTimeout(() => {
+      platformState.success = false
+    }, 60000)
+    return () => clearTimeout(timeout)
+  }, [exportSucceeded, platformState])
 
   const noOfDays = differenceInDays(showing.end, showing.start)
   const groupBy = noOfDays > 366 ? 'year' : noOfDays > 64 ? 'month' : noOfDays > 21 ? 'week' : 'day'
@@ -574,10 +584,10 @@ export const PlatformView = observer((props: PlatformViewProps) => {
             ref={anchorRef}
             endIcon={
               <>
-                {platformState.currentlyImportingTasks === false && <ExportIcon />}
-                {platformState.actionType === PlatformActionType.ImportTasks && (
+                {platformState.currentlyExportingTasks === false && <ExportIcon />}
+                {platformState.actionType === PlatformActionType.SubmitTimesheet && (
                   <LoadingSpinner
-                    loading={platformState.currentlyImportingTasks}
+                    loading={platformState.currentlyExportingTasks}
                     error={platformState.error !== ''}
                     success={platformState.success}
                   />

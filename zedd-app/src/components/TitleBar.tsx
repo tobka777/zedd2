@@ -2,8 +2,8 @@ import { AppBar, Badge, Button, Menu as MuiMenu, MenuItem, Tooltip } from '@mui/
 import { useTheme } from '@mui/material/styles'
 import {
   Close as CloseIcon,
-  CropSquare as MaximizeIcon,
-  FilterNone as RestoreIcon,
+  CropSquare as CropSquareIcon,
+  FilterNone as FilterNoneIcon,
   Menu as MenuIcon,
   PlayArrow as PlayArrowIcon,
   Remove as ToHoverIcon,
@@ -24,6 +24,12 @@ interface TitleBarProps {
   menuItems: { label: string; click: () => void }[]
   showContextMenu: () => void
 }
+// window buttons: a bit smaller than the default 24px; FilterNone is turned around so the full
+// square is in front at the bottom left, like the restore button of Windows
+const windowIconSize = { fontSize: 18 }
+const MaximizeIcon = () => <CropSquareIcon sx={windowIconSize} />
+const RestoreIcon = () => <FilterNoneIcon sx={{ ...windowIconSize, transform: 'rotate(180deg)' }} />
+
 const toggleWindowMaximized = (bw: BrowserWindow) =>
   bw.isMaximized() ? bw.unmaximize() : bw.maximize()
 
