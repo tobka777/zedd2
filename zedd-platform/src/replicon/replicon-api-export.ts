@@ -343,12 +343,6 @@ export async function exportViaApi(
     oldEntries.set(timesheet, entries)
     if (isUnchanged(tenant, timesheet, entries, data)) {
       unchanged.add(timesheet)
-    } else if (timesheet.statusUri && TIMESHEET_STATUS_APPROVED.test(timesheet.statusUri)) {
-      throw new Error(
-        `The Replicon timesheet of ${timesheet.start ?? timesheet.days[0]} is already approved ` +
-          "and has other time than zedd. Approved timesheets can't be changed; please export " +
-          'without its days.',
-      )
     }
   }
 
@@ -358,14 +352,16 @@ export async function exportViaApi(
     const approved = !!timesheet.statusUri && TIMESHEET_STATUS_APPROVED.test(timesheet.statusUri)
     const waiting = !!timesheet.statusUri && TIMESHEET_STATUS_WAITING.test(timesheet.statusUri)
     const periodOver = !timesheet.end || timesheet.end <= lastDay || timesheet.end < today
-    const submitNow = submitTimesheets && periodOver && !approved && !waiting
+    // already submitted (waiting for approval or approved): reopen to change it, submit again after
+    const submitted = approved || waiting
+    const submitNow = submitTimesheets && periodOver && !submitted
 
     if (unchanged.has(timesheet)) {
       if (submitNow) await submit(api, userUri, timesheet)
       continue
     }
 
-    if (waiting) await reopen(api, timesheet)
+    if (submitted) await reopen(api, timesheet)
 
     const newEntries: string[] = []
     try {
@@ -383,13 +379,19 @@ export async function exportViaApi(
       for (const uri of newEntries) {
         await deleteTimeEntry(api, uri).catch((e2) => console.error('Could not undo ' + uri, e2))
       }
+      if (submitted) {
+        // the old entries are still there, so leave the timesheet submitted as it was
+        await submit(api, userUri, timesheet).catch((e2) =>
+          console.error('Could not submit the reopened timesheet ' + timesheet.uri + ' again', e2),
+        )
+      }
       throw e
     }
 
     for (const entry of oldEntries.get(timesheet)!) {
       await deleteTimeEntry(api, entry.uri!)
     }
-    if (submitNow || waiting) {
+    if (submitNow || submitted) {
       await submit(api, userUri, timesheet)
     }
   }

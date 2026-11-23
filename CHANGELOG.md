@@ -1,3 +1,7 @@
+## [Unreleased]
+
+- Feature: Replicon export reopens already approved timesheets too, writes the time and submits them again; before, the export stopped with an error
+
 ## [3.2.0] - 2026-11-19
 
 - Feature: Replicon export via the Replicon API instead of UI automation: creates, updates and skips entries, deletes stale entries in the exported range, takes over the work location and writes comments
