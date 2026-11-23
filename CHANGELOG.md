@@ -1,3 +1,7 @@
+## [Unreleased]
+
+- Fix: the export button showed the progress and check of the import instead of its own; it now shows a spinner while exporting and a check when the export succeeded
+
 ## [3.2.0] - 2026-11-19
 
 - Feature: Replicon export via the Replicon API instead of UI automation: creates, updates and skips entries, deletes stale entries in the exported range, takes over the work location and writes comments

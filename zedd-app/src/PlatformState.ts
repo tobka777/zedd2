@@ -147,28 +147,42 @@ export class PlatformState {
   ): Promise<void> {
     this.actionType = PlatformActionType.SubmitTimesheet
     console.log('exporting timesheets', platformExport)
+    // state is set once for the whole export, so "ALL" shows the spinner until the last platform
+    // is done and the check only after all of them succeeded
+    this.clearPlatformState(false)
     try {
-      this.clearPlatformState(false)
-      if (platform === 'ALL') {
-        for (const [key] of Object.entries(this.integrationMap)) {
-          await this.export(key as PlatformType, platformExport, submitTimesheets)
-        }
-      } else {
-        this.platformIntegration = this.integrationMap[platform]
-        const entriesForPlatform = Object.entries(platformExport).map(([day, entries]) => [
-          day,
-          entries
-            .filter((e) => e.platformType === platform)
-            .map((e) => ({ ...e, taskActivityUri: this.resolveActivity(e.taskActivity!)?.uri })),
-        ])
-        const exportTasksForPlatform = Object.fromEntries(entriesForPlatform)
-
-        await this.platformIntegration.exportTasks(exportTasksForPlatform, submitTimesheets)
+      const platforms =
+        platform === 'ALL' ? (Object.keys(this.integrationMap) as PlatformType[]) : [platform]
+      for (const p of platforms) {
+        await this.exportToPlatform(p, platformExport, submitTimesheets)
       }
       this.success = true
+    } catch (error) {
+      this.error = error instanceof Error ? error.message : String(error)
+      throw error
+    } finally {
+      this._currentlyExportingTasks = false
+    }
+  }
+
+  private async exportToPlatform(
+    platform: PlatformType,
+    platformExport: PlatformExportFormat,
+    submitTimesheets: boolean,
+  ): Promise<void> {
+    this.platformIntegration = this.integrationMap[platform]
+    try {
+      const entriesForPlatform = Object.entries(platformExport).map(([day, entries]) => [
+        day,
+        entries
+          .filter((e) => e.platformType === platform)
+          .map((e) => ({ ...e, taskActivityUri: this.resolveActivity(e.taskActivity!)?.uri })),
+      ])
+      const exportTasksForPlatform = Object.fromEntries(entriesForPlatform)
+
+      await this.platformIntegration.exportTasks(exportTasksForPlatform, submitTimesheets)
     } finally {
       await this.platformIntegration?.quitBrowser()
-      this._currentlyExportingTasks = false
     }
   }
 
